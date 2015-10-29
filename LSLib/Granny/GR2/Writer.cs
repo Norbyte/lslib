@@ -224,9 +224,8 @@ namespace LSLib.Granny.GR2
             }
         }
 
-        internal void WriteStruct(StructDefinition definition, object node, bool allowRecursion = true)
+        internal void AlignWrite()
         {
-            if (node == null) throw new ArgumentNullException();
             if (Writer == MainWriter)
             {
                 // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
@@ -243,7 +242,13 @@ namespace LSLib.Granny.GR2
                     Writer.Write((Byte)0);
                 }
             }
+        }
 
+        internal void WriteStruct(StructDefinition definition, object node, bool allowRecursion = true)
+        {
+            if (node == null) throw new ArgumentNullException();
+
+            AlignWrite();
             StoreObjectOffset(node);
 
             foreach (var member in definition.Members)
@@ -272,6 +277,9 @@ namespace LSLib.Granny.GR2
 
         internal void WriteArray(MemberDefinition arrayDefn, Type elementType, System.Collections.IList list)
         {
+            bool dataArea = arrayDefn.DataArea || (Writer == DataWriter);
+            AlignWrite();
+
             switch (arrayDefn.Type)
             {
                 case MemberType.ArrayOfReferences:
@@ -279,13 +287,18 @@ namespace LSLib.Granny.GR2
                         // Serializing as a struct member is nooooot a very good idea here.
                         // Debug.Assert(kind != SerializationKind.UserMember);
 
+                        // Reference lists are always written to the data area
+                        var oldWriter = Writer;
+                        Writer = DataWriter;
+
                         StoreObjectOffset(list);
                         for (int i = 0; i < list.Count; i++)
                         {
                             WriteReference(list[i]);
-                            GR2.QueueStructWrite(Type, arrayDefn, elementType, list[i]);
+                            GR2.QueueStructWrite(Type, dataArea, arrayDefn, elementType, list[i]);
                         }
 
+                        Writer = oldWriter;
                         break;
                     }
 
@@ -370,6 +383,7 @@ namespace LSLib.Granny.GR2
         private void WriteElement(MemberDefinition definition, Type propertyType, object node)
         {
             var type = definition.CachedField.FieldType;
+            bool dataArea = definition.DataArea || (Writer == DataWriter);
             // var kind = definition.SerializationKind;
             // Debug.Assert(kind == SerializationKind.Builtin || !definition.IsScalar);
             // if (node == null && propertyType != null && !definition.IsScalar && kind == SerializationKind.Builtin)
@@ -393,7 +407,7 @@ namespace LSLib.Granny.GR2
                         WriteReference(node);
                         if (node != null)
                         {
-                            GR2.QueueStructWrite(Type, definition, type, node);
+                            GR2.QueueStructWrite(Type, dataArea, definition, type, node);
 
                             /*if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
                                 node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
@@ -418,7 +432,7 @@ namespace LSLib.Granny.GR2
                             WriteStructReference(GR2.LookupStructDefinition(inferredType));
                             WriteReference(node);
 
-                            GR2.QueueStructWrite(Type, definition, inferredType, node);
+                            GR2.QueueStructWrite(Type, dataArea, definition, inferredType, node);
 
                             /*if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
                                 node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
@@ -442,7 +456,7 @@ namespace LSLib.Granny.GR2
 
                         if (list != null && list.Count > 0)
                         {
-                            GR2.QueueArrayWrite(Type, type.GetGenericArguments().Single(), definition, list);
+                            GR2.QueueArrayWrite(Type, dataArea, type.GetGenericArguments().Single(), definition, list);
 
                             /*var items = node as System.Collections.IList;
                             var type = items.GetType().GetGenericArguments().Single();
@@ -481,7 +495,7 @@ namespace LSLib.Granny.GR2
 
                         if (list != null && list.Count > 0)
                         {
-                            GR2.QueueArrayWrite(Type, type.GetGenericArguments().Single(), definition, list);
+                            GR2.QueueArrayWrite(Type, dataArea, type.GetGenericArguments().Single(), definition, list);
                         }
                         break;
                     }
@@ -502,7 +516,7 @@ namespace LSLib.Granny.GR2
 
                             WriteStructReference(GR2.LookupStructDefinition(inferredType));
                             WriteArrayIndicesReference(list);
-                            GR2.QueueArrayWrite(Type, inferredType, definition, list);
+                            GR2.QueueArrayWrite(Type, dataArea, inferredType, definition, list);
                         }
                         else
                         {
@@ -680,6 +694,7 @@ namespace LSLib.Granny.GR2
         struct QueuedSerialization
         {
             public SectionType section;
+            public bool dataArea;
             public MemberDefinition member;
             public Type type;
             public object obj;
@@ -688,6 +703,7 @@ namespace LSLib.Granny.GR2
         struct QueuedArraySerialization
         {
             public SectionType section;
+            public bool dataArea;
             public Type elementType;
             public MemberDefinition member;
             public System.Collections.IList list;
@@ -731,6 +747,11 @@ namespace LSLib.Granny.GR2
 
         public void FlushPendingWrites()
         {
+            if (ArrayWrites.Count == 0 && StructWrites.Count == 0 && StringWrites.Count == 0)
+            {
+                return;
+            }
+
             var arrayWrites = ArrayWrites;
             var structWrites = StructWrites;
             var stringWrites = StringWrites;
@@ -742,7 +763,15 @@ namespace LSLib.Granny.GR2
             {
                 if (!ObjectOffsets.ContainsKey(write.obj))
                 {
-                    Sections[(int)write.section].WriteStruct(write.type, write.obj);
+                    var section = Sections[(int)write.section];
+                    var oldWriter = section.Writer;
+                    if (write.dataArea)
+                    {
+                        section.Writer = section.DataWriter;
+                    }
+
+                    section.WriteStruct(write.type, write.obj);
+                    section.Writer = oldWriter;
                 }
             }
 
@@ -750,7 +779,15 @@ namespace LSLib.Granny.GR2
             {
                 if (!ObjectOffsets.ContainsKey(write.list))
                 {
-                    Sections[(int)write.section].WriteArray(write.member, write.elementType, write.list);
+                    var section = Sections[(int)write.section];
+                    var oldWriter = section.Writer;
+                    if (write.dataArea)
+                    {
+                        section.Writer = section.DataWriter;
+                    }
+
+                    section.WriteArray(write.member, write.elementType, write.list);
+                    section.Writer = oldWriter;
                 }
             }
 
@@ -971,10 +1008,11 @@ namespace LSLib.Granny.GR2
             return defn;
         }
 
-        internal void QueueStructWrite(SectionType section, MemberDefinition member, Type type, object obj)
+        internal void QueueStructWrite(SectionType section, bool dataArea, MemberDefinition member, Type type, object obj)
         {
             QueuedSerialization serialization;
             serialization.section = section;
+            serialization.dataArea = dataArea;
             if (member.PreferredSection != SectionType.Invalid)
                 serialization.section = member.PreferredSection;
             else if (member.SectionSelector != null)
@@ -985,10 +1023,11 @@ namespace LSLib.Granny.GR2
             StructWrites.Add(serialization);
         }
 
-        internal void QueueArrayWrite(SectionType section, Type elementType, MemberDefinition member, System.Collections.IList list)
+        internal void QueueArrayWrite(SectionType section, bool dataArea, Type elementType, MemberDefinition member, System.Collections.IList list)
         {
             QueuedArraySerialization serialization;
             serialization.section = section;
+            serialization.dataArea = dataArea;
             if (member.PreferredSection != SectionType.Invalid)
                 serialization.section = member.PreferredSection;
             else if (member.SectionSelector != null)

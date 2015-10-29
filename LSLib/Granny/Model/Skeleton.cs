@@ -34,6 +34,7 @@ namespace LSLib.Granny.Model
     public class BoneExtendedData
     {
         public string UserDefinedProperties;
+        [Serialization(DataArea = true)]
         public BoneMaxProperties MaxProperties;
         public int GBufferObjId;
         public int MotionBlur_Type;

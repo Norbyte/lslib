@@ -18,6 +18,7 @@ namespace LSLib.Granny.Model
         public string Name;
         public Skeleton Skeleton;
         public Transform InitialPlacement;
+        [Serialization(DataArea = true)]
         public List<MeshBinding> MeshBindings;
         [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;

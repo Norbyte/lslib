@@ -375,6 +375,7 @@ namespace LSLib.Granny.Model
         public VertexData PrimaryVertexData;
         public List<MorphTarget> MorphTargets;
         public TriTopology PrimaryTopology;
+        [Serialization(DataArea = true)]
         public List<MaterialBinding> MaterialBindings;
         public List<BoneBinding> BoneBindings;
         [Serialization(Type = MemberType.VariantReference)]

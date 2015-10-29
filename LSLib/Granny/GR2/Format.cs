@@ -602,6 +602,10 @@ namespace LSLib.Granny.GR2
         public StructDefinition WriteDefinition;
         public SectionType PreferredSection = SectionType.Invalid;
         /// <summary>
+        /// Should we save this member to the data area?
+        /// </summary>
+        public bool DataArea = false;
+        /// <summary>
         /// The Granny type we should save when serializing this field
         /// (Mainly used to provide a type definition for user-defined serializers)
         /// </summary>
@@ -705,6 +709,8 @@ namespace LSLib.Granny.GR2
 
                 if (serialization.Section != SectionType.Invalid)
                     PreferredSection = serialization.Section;
+
+                DataArea = serialization.DataArea;
 
                 if (serialization.Type != MemberType.Invalid)
                     Type = serialization.Type;
@@ -941,6 +947,10 @@ namespace LSLib.Granny.GR2
         /// Which section should this field be serialized into
         /// </summary>
         public SectionType Section = SectionType.Invalid;
+        /// <summary>
+        /// Should we save this member to the data area?
+        /// </summary>
+        public bool DataArea = false;
         /// <summary>
         /// Override Granny member type
         /// </summary>
