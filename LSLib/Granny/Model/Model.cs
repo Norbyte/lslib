@@ -347,8 +347,8 @@ namespace LSLib.Granny.Model
             }
 
             // TODO
-            // if (influenceCounts.Count != mesh.PrimaryVertexData.Vertices.Count)
-            //    throw new Exception("Vertex influence count differs from vertex count.");
+            if (influenceCounts.Count != mesh.OriginalToConsolidatedVertexIndexMap.Count)
+                Utils.Warn(String.Format("Vertex influence count ({0}) differs from vertex count ({1})", influenceCounts.Count, mesh.OriginalToConsolidatedVertexIndexMap.Count));
 
             List<Single> weights = null;
 
@@ -460,6 +460,16 @@ namespace LSLib.Granny.Model
                 vertex.FinalizeInfluences();
             }
 
+            // Warn if we have vertices that are not influenced by any bone
+            int notInfluenced = 0;
+            foreach (var vertex in mesh.PrimaryVertexData.Vertices)
+            {
+                if (vertex.BoneWeights[0] == 0) notInfluenced++;
+            }
+
+            if (notInfluenced > 0)
+                Utils.Warn(String.Format("{0} vertices are not influenced by any bone", notInfluenced));
+
 
             if (skin.bind_shape_matrix != null)
             {
@@ -560,6 +570,61 @@ namespace LSLib.Granny.Model
             }
         }
 
+        public void PostLoad()
+        {
+            foreach (var skeleton in Skeletons)
+            {
+                var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);
+                if (!hasSkinnedMeshes || skeleton.Bones.Count == 1)
+                {
+                    skeleton.IsDummy = true;
+                    Utils.Info(String.Format("Skeleton '{0}' marked as dummy", skeleton.Name));
+                }
+            }
+        }
+
+        public void PreSave()
+        {
+            // TODO: Add an option to enable/disable dummy skeleton generation
+            foreach (var model in Models)
+            {
+                if (model.Skeleton == null)
+                {
+                    Utils.Info(String.Format("Generating dummy skeleton for model '{0}'", model.Name));
+                    var skeleton = new Skeleton();
+                    skeleton.Name = model.Name;
+                    skeleton.LODType = 0;
+                    skeleton.IsDummy = true;
+                    Skeletons.Add(skeleton);
+
+                    var bone = new Bone();
+                    bone.Name = model.Name;
+                    bone.ParentIndex = -1;
+                    skeleton.Bones = new List<Bone> { bone };
+                    bone.Transform = new Transform();
+
+                    // TODO: Transform / IWT is not always identity on dummy bones!
+                    skeleton.UpdateInverseWorldTransforms();
+                    model.Skeleton = skeleton;
+
+                    foreach (var mesh in model.MeshBindings)
+                    {
+                        if (mesh.Mesh.BoneBindings != null && mesh.Mesh.BoneBindings.Count > 0)
+                        {
+                            throw new Exception("Failed to generate dummy skeleton: Mesh already has bone bindings.");
+                        }
+
+                        var binding = new BoneBinding();
+                        binding.BoneName = bone.Name;
+                        // TODO: Calculate bounding box!
+                        binding.OBBMin = new float[] { -10, -10, -10 };
+                        binding.OBBMax = new float[] { 10, 10, 10 };
+                        mesh.Mesh.BoneBindings = new List<BoneBinding> { binding };
+                    }
+                }
+            }
+        }
+
         public void ImportFromCollada(string inputPath)
         {
             var collada = COLLADA.Load(inputPath);
@@ -572,10 +637,11 @@ namespace LSLib.Granny.Model
             TriTopologies = new List<TriTopology>();
             Meshes = new List<Mesh>();
             Models = new List<Model>();
-            ColladaGeometries = new Dictionary<string, Mesh>();
-            SkinnedMeshes = new HashSet<string>();
             TrackGroups = new List<TrackGroup>();
             Animations = new List<Animation>();
+
+            ColladaGeometries = new Dictionary<string, Mesh>();
+            SkinnedMeshes = new HashSet<string>();
 
             var collGeometries = new List<geometry>();
             var collSkins = new List<skin>();
@@ -671,7 +737,10 @@ namespace LSLib.Granny.Model
                 ImportSkin(skin);
             }
 
-            ImportAnimations(collAnimations);
+            if (collAnimations.Count > 0)
+            {
+                ImportAnimations(collAnimations);
+            }
 
             var rootModel = new Model();
             rootModel.Name = "Unnamed"; // TODO
@@ -690,6 +759,10 @@ namespace LSLib.Granny.Model
             }
 
             Models.Add(rootModel);
+            // TODO: make this an option!
+            if (Skeletons.Count > 0)
+            Skeletons[0].UpdateInverseWorldTransforms();
+            PostLoad();
         }
 
         public void ExportToCollada(string outputPath)
@@ -721,7 +794,7 @@ namespace LSLib.Granny.Model
             foreach (var model in Models)
             {
                 string skelRef = null;
-                if (model.Skeleton != null && model.Skeleton.Bones.Count > 1)
+                if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1)
                 {
                     var skeleton = model.MakeSkeleton();
                     geomNodes.Add(skeleton);

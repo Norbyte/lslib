@@ -42,6 +42,32 @@ namespace LSLib.Granny.GR2
         public Quaternion Rotation = Quaternion.Identity;
         public Matrix3 ScaleShear = Matrix3.Identity;
 
+        public static Transform FromMatrix4(Matrix4 mat)
+        {
+            var transform = new Transform();
+            var translation = mat.ExtractTranslation();
+            transform.Translation = translation;
+
+            if (translation != Vector3.Zero)
+                transform.Flags |= (int)Transform.TransformFlags.HasTranslation;
+
+            var rotation = mat.ExtractRotation();
+            transform.Rotation = rotation;
+
+            if (rotation != Quaternion.Identity)
+                transform.Flags |= (int)Transform.TransformFlags.HasRotation;
+
+            var scale = mat.ExtractScale();
+            transform.ScaleShear[0, 0] = scale[0];
+            transform.ScaleShear[1, 1] = scale[1];
+            transform.ScaleShear[2, 2] = scale[2];
+
+            if (transform.ScaleShear != Matrix3.Identity)
+                transform.Flags |= (int)Transform.TransformFlags.HasScaleShear;
+
+            return transform;
+        }
+
         public Matrix4 ToMatrix4()
         {
             Matrix3 rotation;

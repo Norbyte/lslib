@@ -8,7 +8,7 @@ using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model.CurveData
 {
-    class CurveRegistry
+    public class CurveRegistry
     {
         private static Dictionary<Type, CurveFormat> TypeToFormatMap;
         private static Dictionary<String, Type> NameToTypeMap;
@@ -50,6 +50,13 @@ namespace LSLib.Granny.Model.CurveData
             Register(typeof(D3I1K8uC8u), CurveFormat.D3I1K8uC8u);
         }
 
+        public static Dictionary<String, Type> GetAllTypes()
+        {
+            Init();
+
+            return NameToTypeMap;
+        }
+
         public static Type Resolve(String name)
         {
             Init();
@@ -65,12 +72,11 @@ namespace LSLib.Granny.Model.CurveData
     public enum CurveFormat
     {
         // Types:
-        // Da: (animation?) 3x3 matrix
+        // Da: (animation) 3x3 matrix
         // D[1-4]: 1 - 4 component vector
-        // I[1-3]: ???
-        // n: ???
+        // I[1/3]: 1/3 values for the main diagonal, others are zero
+        // n: Normalized quaternion
         // Constant: Constant vector/matrix
-        // 32f: Float, 32-bit
         // K[n][nothing/u/f]: n-bit value for knots; u = unsigned; f = floating point
         // C[n][nothing/u/f]: n-bit value for controls; u = unsigned; f = floating point
         DaKeyframes32f = 0,

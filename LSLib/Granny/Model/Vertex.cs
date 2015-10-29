@@ -1,4 +1,5 @@
 ﻿using LSLib.Granny.GR2;
+using LSLib.Granny.Model.VertexFormat;
 using OpenTK;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,19 @@ namespace LSLib.Granny.Model
                 else throw new IndexOutOfRangeException("Illegal bone influence index: " + index);
             }
         }
+    }
+
+    /// <summary>
+    /// Describes the type we use for serializing this vertex format
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class VertexPrototypeAttribute : System.Attribute
+    {
+        /// <summary>
+        /// The Granny prototype we should save when serializing this vertex format
+        /// (Used to provide a type definition skeleton for the serializer)
+        /// </summary>
+        public Type Prototype;
     }
 
     public abstract class Vertex
@@ -143,213 +157,89 @@ namespace LSLib.Granny.Model
             }
         }
 
+        public static Type Prototype(Type type)
+        {
+            var attrs = type.GetCustomAttributes(typeof(VertexPrototypeAttribute), true);
+            if (attrs.Length > 0)
+            {
+                VertexPrototypeAttribute proto = attrs[0] as VertexPrototypeAttribute;
+                return proto.Prototype;
+            }
+
+            throw new ArgumentException("Class doesn't have a vertex prototype");
+        }
+
+        public Type Prototype()
+        {
+            return Prototype(GetType());
+        }
+
         public abstract bool HasBoneInfluences();
         public abstract void Serialize(WritableSection section);
         public abstract void Unserialize(GR2Reader reader);
-        public abstract Type Prototype();
     }
 
-    [StructSerialization(MixedMarshal = true)]
-    internal class Vertex_PNGBT33332_Prototype
+    public class VertexFormatRegistry
     {
-        [Serialization(ArraySize = 3)]
-        public float[] Position;
-        [Serialization(ArraySize = 3)]
-        public float[] Normal;
-        [Serialization(ArraySize = 3)]
-        public float[] Tangent;
-        [Serialization(ArraySize = 3)]
-        public float[] Binormal;
-        [Serialization(ArraySize = 2)]
-        public float[] TextureCoordinates0;
-    }
+        private static Dictionary<String, Type> NameToTypeMap;
+        private static Dictionary<Type, Type> PrototypeMap;
 
-    public class Vertex_PNGBT33332 : Vertex
-    {
-        public override bool HasBoneInfluences()
+        private static void Register(Type type)
         {
-            return false;
+            NameToTypeMap.Add(type.Name, type);
+            PrototypeMap.Add(Vertex.Prototype(type), type);
         }
 
-        public override void Serialize(WritableSection section)
+        private static void Init()
         {
-            WriteVector3(section, Position);
-            WriteVector3(section, Normal);
-            WriteVector3(section, Tangent);
-            WriteVector3(section, Binormal);
-            WriteVector2(section, TextureCoordinates0);
+            if (NameToTypeMap != null)
+            {
+                return;
+            }
+
+            NameToTypeMap = new Dictionary<String, Type>();
+            PrototypeMap = new Dictionary<Type, Type>();
+
+            Register(typeof(PNGBDT333342));
+            Register(typeof(PNGBT33332));
+            Register(typeof(PWNGBT343332));
+            Register(typeof(PWNT3432));
         }
 
-        public override void Unserialize(GR2Reader reader)
+        public static Type Resolve(String name)
         {
-            Position = ReadVector3(reader);
-            Normal = ReadVector3(reader);
-            Tangent = ReadVector3(reader);
-            Binormal = ReadVector3(reader);
-            TextureCoordinates0 = ReadVector2(reader);
+            Init();
+
+            Type type = null;
+            if (!NameToTypeMap.TryGetValue(name, out type))
+                throw new ParsingException("Unsupported vertex format: " + name);
+
+            return type;
         }
 
-        public override Type Prototype()
+        public static Type FindByStruct(StructDefinition defn)
         {
-            return typeof(Vertex_PNGBT33332_Prototype);
-        }
-    }
+            Init();
 
-    [StructSerialization(MixedMarshal = true)]
-    internal class Vertex_PNGBDT333342_Prototype
-    {
-        [Serialization(ArraySize = 3)]
-        public float[] Position;
-        [Serialization(ArraySize = 3)]
-        public float[] Normal;
-        [Serialization(ArraySize = 3)]
-        public float[] Tangent;
-        [Serialization(ArraySize = 3)]
-        public float[] Binormal;
-        [Serialization(ArraySize = 4)]
-        public float[] DiffuseColor0;
-        [Serialization(ArraySize = 2)]
-        public float[] TextureCoordinates0;
-    }
+            foreach (var proto in PrototypeMap)
+            {
+                if (CompareType(defn, proto.Key))
+                {
+                    return proto.Value;
+                }
+            }
 
-    public class Vertex_PNGBDT333342 : Vertex
-    {
-        public override bool HasBoneInfluences()
-        {
-            return false;
+            throw new Exception("The specified vertex format was not recognized.");
         }
 
-        public override void Serialize(WritableSection section)
+        public static Dictionary<String, Type> GetAllTypes()
         {
-            WriteVector3(section, Position);
-            WriteVector3(section, Normal);
-            WriteVector3(section, Tangent);
-            WriteVector3(section, Binormal);
-            WriteVector4(section, DiffuseColor0);
-            WriteVector2(section, TextureCoordinates0);
+            Init();
+
+            return NameToTypeMap;
         }
 
-        public override void Unserialize(GR2Reader reader)
-        {
-            Position = ReadVector3(reader);
-            Normal = ReadVector3(reader);
-            Tangent = ReadVector3(reader);
-            Binormal = ReadVector3(reader);
-            DiffuseColor0 = ReadVector4(reader);
-            TextureCoordinates0 = ReadVector2(reader);
-        }
-
-        public override Type Prototype()
-        {
-            return typeof(Vertex_PNGBDT333342_Prototype);
-        }
-    }
-
-    [StructSerialization(MixedMarshal = true)]
-    internal class Vertex_PWNGBT343332_Prototype
-    {
-        [Serialization(ArraySize = 3)]
-        public float[] Position;
-        [Serialization(ArraySize = 4, Type = MemberType.NormalUInt8)]
-        public byte[] BoneWeights;
-        [Serialization(ArraySize = 4)]
-        public byte[] BoneIndices;
-        [Serialization(ArraySize = 3)]
-        public float[] Normal;
-        [Serialization(ArraySize = 3)]
-        public float[] Tangent;
-        [Serialization(ArraySize = 3)]
-        public float[] Binormal;
-        [Serialization(ArraySize = 2)]
-        public float[] TextureCoordinates0;
-    }
-
-    public class Vertex_PWNGBT343332 : Vertex
-    {
-        public override bool HasBoneInfluences()
-        {
-            return true;
-        }
-
-        public override void Serialize(WritableSection section)
-        {
-            WriteVector3(section, Position);
-            WriteInfluences(section, BoneWeights);
-            WriteInfluences(section, BoneIndices);
-            WriteVector3(section, Normal);
-            WriteVector3(section, Tangent);
-            WriteVector3(section, Binormal);
-            WriteVector2(section, TextureCoordinates0);
-        }
-
-        public override void Unserialize(GR2Reader reader)
-        {
-            Position = ReadVector3(reader);
-            BoneWeights = ReadInfluences(reader);
-            BoneIndices = ReadInfluences(reader);
-            Normal = ReadVector3(reader);
-            Tangent = ReadVector3(reader);
-            Binormal = ReadVector3(reader);
-            TextureCoordinates0 = ReadVector2(reader);
-        }
-
-        public override Type Prototype()
-        {
-            return typeof(Vertex_PWNGBT343332_Prototype);
-        }
-    }
-
-    [StructSerialization(MixedMarshal = true)]
-    internal class Vertex_PWNT343332_Prototype
-    {
-        [Serialization(ArraySize = 3)]
-        public float[] Position;
-        [Serialization(ArraySize = 4, Type = MemberType.NormalUInt8)]
-        public byte[] BoneWeights;
-        [Serialization(ArraySize = 4)]
-        public byte[] BoneIndices;
-        [Serialization(ArraySize = 3)]
-        public float[] Normal;
-        [Serialization(ArraySize = 2)]
-        public float[] TextureCoordinates0;
-    }
-
-    public class Vertex_PWNT343332 : Vertex
-    {
-        public override bool HasBoneInfluences()
-        {
-            return true;
-        }
-
-        public override void Serialize(WritableSection section)
-        {
-            WriteVector3(section, Position);
-            WriteInfluences(section, BoneWeights);
-            WriteInfluences(section, BoneIndices);
-            WriteVector3(section, Normal);
-            WriteVector2(section, TextureCoordinates0);
-        }
-
-        public override void Unserialize(GR2Reader reader)
-        {
-            Position = ReadVector3(reader);
-            BoneWeights = ReadInfluences(reader);
-            BoneIndices = ReadInfluences(reader);
-            Normal = ReadVector3(reader);
-            TextureCoordinates0 = ReadVector2(reader);
-        }
-
-        public override Type Prototype()
-        {
-            return typeof(Vertex_PWNT343332_Prototype);
-        }
-    }
-
-    public class VertexSerializer : VariantTypeSelector, NodeSerializer, SectionSelector
-    {
-        private Dictionary<object, Type> VertexTypeCache = new Dictionary<object,Type>();
-
-        private bool CompareType(StructDefinition defn, Type type)
+        private static bool CompareType(StructDefinition defn, Type type)
         {
             var fields = type.GetFields();
             if (defn.Members.Count != fields.Length)
@@ -374,6 +264,12 @@ namespace LSLib.Granny.Model
 
             return true;
         }
+    }
+
+
+    public class VertexSerializer : VariantTypeSelector, NodeSerializer, SectionSelector
+    {
+        private Dictionary<object, Type> VertexTypeCache = new Dictionary<object,Type>();
 
         public SectionType SelectSection(MemberDefinition member, Type type, object obj)
         {
@@ -398,20 +294,7 @@ namespace LSLib.Granny.Model
 
         public Type SelectType(MemberDefinition member, StructDefinition defn, object parent)
         {
-            if (CompareType(defn, typeof(Vertex_PNGBT33332_Prototype)))
-            {
-                return typeof(Vertex_PNGBT33332);
-            }
-            else if (CompareType(defn, typeof(Vertex_PNGBDT333342_Prototype)))
-            {
-                return typeof(Vertex_PNGBDT333342);
-            }
-            else if (CompareType(defn, typeof(Vertex_PWNGBT343332_Prototype)))
-            {
-                return typeof(Vertex_PWNGBT343332);
-            }
-            else
-                throw new Exception("The specified vertex format was not recognized.");
+            return VertexFormatRegistry.FindByStruct(defn);
         }
 
         public object Read(GR2Reader reader, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)

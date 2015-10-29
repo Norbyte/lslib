@@ -5,6 +5,7 @@ using System.Text;
 using Collada141;
 using OpenTK;
 using LSLib.Granny.GR2;
+using LSLib.Granny.Model.VertexFormat;
 
 namespace LSLib.Granny.Model
 {
@@ -294,9 +295,9 @@ namespace LSLib.Granny.Model
             {
                 Vertex vertex;
                 if (IsSkinned)
-                    vertex = new Vertex_PWNGBT343332();
+                    vertex = new PWNGBT343332();
                 else
-                    vertex = new Vertex_PNGBT33332();
+                    vertex = new PNGBT33332();
 
                 vertex.Position = positions[vert];
 

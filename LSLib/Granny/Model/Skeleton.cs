@@ -70,6 +70,17 @@ namespace LSLib.Granny.Model
             return iwt.Inverted();
         }
 
+        public void UpdateInverseWorldTransform(List<Bone> bones)
+        {
+            var iwt = CalculateInverseWorldTransform(bones);
+            InverseWorldTransform = new float[] {
+                iwt[0, 0], iwt[0, 1], iwt[0, 2], iwt[0, 3], 
+                iwt[1, 0], iwt[1, 1], iwt[1, 2], iwt[1, 3], 
+                iwt[2, 0], iwt[2, 1], iwt[2, 2], iwt[2, 3], 
+                iwt[3, 0], iwt[3, 1], iwt[3, 2], iwt[3, 3]
+            };
+        }
+
         public static Bone FromCollada(node bone, int parentIndex, List<Bone> bones, Dictionary<string, Bone> boneSIDs, Dictionary<string, Bone> boneIDs)
         {
             var transMat = ColladaHelpers.TransformFromNode(bone);
@@ -78,19 +89,16 @@ namespace LSLib.Granny.Model
             var myIndex = bones.Count;
             bones.Add(colladaBone);
             boneSIDs.Add(bone.sid, colladaBone);
-            boneIDs.Add(bone.id, colladaBone);
+            if (bone.id != null)
+            {
+                boneIDs.Add(bone.id, colladaBone);
+            }
+
             colladaBone.ParentIndex = parentIndex;
             colladaBone.Name = bone.name;
             colladaBone.LODError = 0; // TODO
             colladaBone.Transform = transMat.transform;
-
-            var iwt = colladaBone.CalculateInverseWorldTransform(bones);
-            colladaBone.InverseWorldTransform = new float[] {
-                iwt[0, 0], iwt[0, 1], iwt[0, 2], iwt[0, 3], 
-                iwt[1, 0], iwt[1, 1], iwt[1, 2], iwt[1, 3], 
-                iwt[2, 0], iwt[2, 1], iwt[2, 2], iwt[2, 3], 
-                iwt[3, 0], iwt[3, 1], iwt[3, 2], iwt[3, 3]
-            };
+            colladaBone.UpdateInverseWorldTransform(bones);
 
             if (bone.node1 != null)
             {
@@ -245,6 +253,9 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<string, Bone> BonesByID;
 
+        [Serialization(Kind = SerializationKind.None)]
+        public bool IsDummy = false;
+
         public static Skeleton FromCollada(node root)
         {
             var skeleton = new Skeleton();
@@ -260,6 +271,14 @@ namespace LSLib.Granny.Model
         public Bone GetBoneByName(string name)
         {
             return Bones.FirstOrDefault(b => b.Name == name);
+        }
+
+        public void UpdateInverseWorldTransforms()
+        {
+            foreach (var bone in Bones)
+            {
+                bone.UpdateInverseWorldTransform(Bones);
+            }
         }
     }
 }
