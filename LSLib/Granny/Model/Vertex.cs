@@ -250,7 +250,7 @@ namespace LSLib.Granny.Model
     {
         [Serialization(ArraySize = 3)]
         public float[] Position;
-        [Serialization(ArraySize = 4)]
+        [Serialization(ArraySize = 4, Type = MemberType.NormalUInt8)]
         public byte[] BoneWeights;
         [Serialization(ArraySize = 4)]
         public byte[] BoneIndices;
@@ -304,7 +304,7 @@ namespace LSLib.Granny.Model
     {
         [Serialization(ArraySize = 3)]
         public float[] Position;
-        [Serialization(ArraySize = 4)]
+        [Serialization(ArraySize = 4, Type = MemberType.NormalUInt8)]
         public byte[] BoneWeights;
         [Serialization(ArraySize = 4)]
         public byte[] BoneIndices;
