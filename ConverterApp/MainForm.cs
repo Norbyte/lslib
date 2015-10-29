@@ -1,5 +1,6 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
+using LSLib.LS;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,7 +9,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ConverterApp
@@ -20,6 +20,23 @@ namespace ConverterApp
         public MainForm()
         {
             InitializeComponent();
+            compressionMethod.SelectedIndex = 4;
+            gr2Game.SelectedIndex = 0;
+        }
+
+        public void PackageProgressUpdate(string status, long numerator, long denominator)
+        {
+            packageProgressLabel.Text = status;
+            if (denominator == 0)
+            {
+                packageProgress.Value = 0;
+            }
+            else
+            {
+                packageProgress.Value = (int)(numerator * 100 / denominator);
+            }
+
+            Application.DoEvents();
         }
 
         private Root LoadGR2(string inPath)
@@ -170,12 +187,26 @@ namespace ConverterApp
                 settings.OutputFormat = ExportFormat.DAE;
             }
 
+            if (gr2Game.SelectedIndex == 0)
+            {
+                settings.Is64Bit = false;
+                settings.AlternateSignature = false;
+                settings.VersionTag = Header.Tag_DOS;
+            }
+            else
+            {
+                settings.Is64Bit = true;
+                settings.AlternateSignature = true;
+                settings.VersionTag = Header.Tag_DOSEE;
+            }
+
             settings.ExportNormals = exportNormals.Checked;
             settings.ExportTangents = exportTangents.Checked;
             settings.ExportUVs = exportUVs.Checked;
             settings.RecalculateNormals = recalculateNormals.Checked;
             settings.RecalculateTangents = recalculateTangents.Checked;
             settings.RecalculateIWT = recalculateJointIWT.Checked;
+            settings.BuildDummySkeleton = buildDummySkeleton.Checked;
             settings.CompactIndices = use16bitIndex.Checked;
             settings.DeduplicateVertices = deduplicateVertices.Checked;
             settings.DeduplicateUVs = filterUVs.Checked;
@@ -272,6 +303,96 @@ namespace ConverterApp
             {
                 MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void packageBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = packageFileDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                packagePath.Text = packageFileDlg.FileName;
+            }
+        }
+
+        private void exportPathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = exportPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                extractionPath.Text = exportPathDlg.SelectedPath;
+            }
+        }
+
+        private void extractPackageBtn_Click(object sender, EventArgs e)
+        {
+            extractPackageBtn.Enabled = false;
+            try
+            {
+                var packager = new Packager();
+                packager.progressUpdate += this.PackageProgressUpdate;
+                packager.UncompressPackage(packagePath.Text, extractionPath.Text);
+                MessageBox.Show("Package extracted successfully.");
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                packageProgressLabel.Text = "";
+                packageProgress.Value = 0;
+                extractPackageBtn.Enabled = true;
+            }
+        }
+
+        private void createPackageBtn_Click(object sender, EventArgs e)
+        {
+            createPackageBtn.Enabled = false;
+            try
+            {
+                CompressionMethod compression = CompressionMethod.None;
+                bool fastCompression = true;
+                switch (compressionMethod.SelectedIndex)
+                {
+                    case 1:
+                        compression = CompressionMethod.Zlib;
+                        break;
+
+                    case 2:
+                        compression = CompressionMethod.Zlib;
+                        fastCompression = false;
+                        break;
+
+                    case 3:
+                        compression = CompressionMethod.LZ4;
+                        break;
+
+                    case 4:
+                        compression = CompressionMethod.LZ4;
+                        fastCompression = false;
+                        break;
+                }
+
+                var packager = new Packager();
+                packager.progressUpdate += this.PackageProgressUpdate;
+                packager.CreatePackage(packagePath.Text, extractionPath.Text, compression, fastCompression);
+                MessageBox.Show("Package created successfully.");
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Package Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                packageProgressLabel.Text = "";
+                packageProgress.Value = 0;
+                createPackageBtn.Enabled = true;
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

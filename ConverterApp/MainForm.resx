@@ -126,4 +126,10 @@
   <metadata name="conformSkeletonFileDlg.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>260, 17</value>
   </metadata>
+  <metadata name="packageFileDlg.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>442, 17</value>
+  </metadata>
+  <metadata name="exportPathDlg.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>576, 17</value>
+  </metadata>
 </root>

@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LSLib</RootNamespace>
     <AssemblyName>LSLib</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,8 +30,13 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LZ4, Version=1.0.9.93, Culture=neutral, PublicKeyToken=62e1b5ec1eec9bdd, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\lz4net.1.0.9.93\lib\net4-client\LZ4.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -88,8 +94,10 @@
     <Compile Include="LS\LSXWriter.cs" />
     <Compile Include="LS\Matrix.cs" />
     <Compile Include="LS\NodeAttribute.cs" />
+    <Compile Include="LS\Package.cs" />
     <Compile Include="LS\Resource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="packages.config" />
     <None Include="Stats\DOSStats.cs" />
     <None Include="Stats\PropertyDefinition.cs" />
     <None Include="Stats\StatDefinition.cs" />
@@ -102,7 +110,6 @@
       <Name>OpenTK</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(TargetPath) "%25USERPROFILE%25\My Documents\Larian Studios\Divinity Original Sin\EditorPlugins\$(TargetFileName)"</PostBuildEvent>
