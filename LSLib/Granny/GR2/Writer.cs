@@ -343,25 +343,12 @@ namespace LSLib.Granny.GR2
 
         internal void WriteInstance(MemberDefinition definition, Type propertyType, object node)
         {
-            //if (definition.SerializationKind == SerializationKind.UserRaw)
-            //    return definition.Serializer.Read(this, null, definition, 0, parent);
-
             if (definition.ArraySize == 0)
             {
                 WriteElement(definition, propertyType, node);
                 return;
             }
 
-            /*if (definition.SerializationKind == SerializationKind.UserMember)
-            {
-                // Do unserialization directly on the whole array if per-member serialization was requested.
-                // This mode is a bit odd, as we resolve StructRef-s for non-arrays, but don't for array types.
-                StructDefinition defn = null;
-                if (definition.Definition.IsValid)
-                    defn = definition.Definition.Resolve(this);
-                return definition.Serializer.Read(this, defn, definition, definition.ArraySize, parent);
-            }
-            else */
             if (propertyType.IsArray)
             {
                 // If the property is a native array (ie. SomeType[]), create an array instance and set its values
@@ -390,18 +377,10 @@ namespace LSLib.Granny.GR2
         {
             var type = definition.CachedField.FieldType;
             bool dataArea = definition.DataArea || (Writer == DataWriter);
-            // var kind = definition.SerializationKind;
-            // Debug.Assert(kind == SerializationKind.Builtin || !definition.IsScalar);
-            // if (node == null && propertyType != null && !definition.IsScalar && kind == SerializationKind.Builtin)
-            //    node = Helpers.CreateInstance(propertyType);
 
             switch (definition.Type)
             {
                 case MemberType.Inline:
-                    //if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
-                    //    node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
-                    //else
-                    // TODO: Use the StructDefn here?
                     if (definition.SerializationKind == SerializationKind.UserMember)
                         definition.Serializer.Write(this.GR2, this, definition, node);
                     else
@@ -414,11 +393,6 @@ namespace LSLib.Granny.GR2
                         if (node != null)
                         {
                             GR2.QueueStructWrite(Type, dataArea, definition, type, node);
-
-                            /*if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
-                                node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
-                            else
-                                node = ReadStruct(definition.Definition.Resolve(this), node, parent);*/
                         }
                         break;
                     }
@@ -439,11 +413,6 @@ namespace LSLib.Granny.GR2
                             WriteReference(node);
 
                             GR2.QueueStructWrite(Type, dataArea, definition, inferredType, node);
-
-                            /*if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
-                                node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
-                            else
-                                node = ReadStruct(structRef.Resolve(this), node, parent);*/
                         }
                         else
                         {
@@ -463,32 +432,6 @@ namespace LSLib.Granny.GR2
                         if (list != null && list.Count > 0)
                         {
                             GR2.QueueArrayWrite(Type, dataArea, type.GetGenericArguments().Single(), definition, list);
-
-                            /*var items = node as System.Collections.IList;
-                            var type = items.GetType().GetGenericArguments().Single();
-
-                            var refs = indices.Resolve(this);
-                            var originalPos = Stream.Position;
-                            for (int i = 0; i < refs.Count; i++)
-                            {
-                                Seek(refs[i]);
-                                if (kind == SerializationKind.UserElement)
-                                {
-                                    object element = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
-                                    items.Add(element);
-                                }
-                                else
-                                {
-                                    object element = Helpers.CreateInstance(type);
-                                    // TODO: Only create a new instance if we don't have a CachedStruct available!
-                                    element = ReadStruct(definition.Definition.Resolve(this), element, parent);
-                                    items.Add(element);
-
-                                }
-                            }
-
-                            Stream.Seek(originalPos, SeekOrigin.Begin);
-                            node = items;*/
                         }
 
                         break;
@@ -529,52 +472,6 @@ namespace LSLib.Granny.GR2
                             WriteStructReference(null);
                             WriteArrayIndicesReference(list);
                         }
-
-
-                        /*
-                        Debug.Assert(itemsRef.IsValid == (itemsRef.Size != 0));
-                         * if (itemsRef.IsValid && parent != null && (node != null || kind == SerializationKind.UserMember))
-                        {
-                            Debug.Assert(structRef.IsValid);
-                            var structType = structRef.Resolve(this);
-                            var originalPos = Stream.Position;
-                            Seek(itemsRef);
-
-                            if (kind == SerializationKind.UserMember)
-                            {
-                                // For ReferenceTo(Variant)Array, we start serialization after resolving the array ref itself.
-                                node = definition.Serializer.Read(this, structType, definition, itemsRef.Size, parent);
-                            }
-                            else
-                            {
-                                var items = node as System.Collections.IList;
-                                var type = items.GetType().GetGenericArguments().Single();
-                                for (int i = 0; i < itemsRef.Size; i++)
-                                {
-#if DEBUG_GR2_SERIALIZATION
-                                    System.Console.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
-#endif
-                                    if (kind == SerializationKind.UserElement)
-                                    {
-                                        object element = definition.Serializer.Read(this, structType, definition, 0, parent);
-                                        items.Add(element);
-                                    }
-                                    else
-                                    {
-                                        object element = Helpers.CreateInstance(type);
-                                        element = ReadStruct(structType, element, parent);
-                                        items.Add(element);
-                                    }
-#if DEBUG_GR2_SERIALIZATION
-                                    System.Console.WriteLine(" === End Struct === ");
-#endif
-                                }
-                            }
-
-                            Stream.Seek(originalPos, SeekOrigin.Begin);
-                        }
-                        else
-                            node = null;*/
                         break;
                     }
 
@@ -1027,31 +924,5 @@ namespace LSLib.Granny.GR2
             serialization.str = s;
             StringWrites.Add(serialization);
         }
-
-        /*internal void Seek(SectionReference reference)
-        {
-            Debug.Assert(reference.IsValid);
-            Seek(reference.Section, reference.Offset);
-        }
-
-        internal void Seek(RelocatableReference reference)
-        {
-            Debug.Assert(reference.IsValid);
-            Debug.Assert(reference.Offset <= Header.fileSize);
-            Stream.Position = reference.Offset;
-        }
-
-        internal void Seek(UInt32 section, UInt32 offset)
-        {
-            Debug.Assert(section < Sections.Count);
-            Debug.Assert(offset <= Sections[(int)section].Header.uncompressedSize);
-            Stream.Position = Sections[(int)section].Header.offsetInFile + offset;
-        }
-
-        internal void Seek(Section section, UInt32 offset)
-        {
-            Debug.Assert(offset <= section.Header.uncompressedSize);
-            Stream.Position = section.Header.offsetInFile + offset;
-        }*/
     }
 }
