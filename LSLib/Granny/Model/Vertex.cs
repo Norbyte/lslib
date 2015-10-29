@@ -157,6 +157,14 @@ namespace LSLib.Granny.Model
             }
         }
 
+        public void Transform(Matrix4 transformation)
+        {
+            Position = Vector3.TransformPosition(Position, transformation);
+            Normal = Vector3.TransformNormal(Normal, transformation);
+            Tangent = Vector3.TransformNormal(Tangent, transformation);
+            Binormal = Vector3.TransformNormal(Binormal, transformation);
+        }
+
         public static Type Prototype(Type type)
         {
             var attrs = type.GetCustomAttributes(typeof(VertexPrototypeAttribute), true);

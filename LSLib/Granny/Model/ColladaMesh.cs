@@ -206,16 +206,16 @@ namespace LSLib.Granny.Model
                     foreach (var count in vertexCounts)
                     {
                         if (count != 3)
-                            throw new Exception("Only triangles are supported");
+                            throw new ParsingException("Non-triangle found in COLLADA polylist. Make sure that all geometries are triangulated.");
                     }
                 }
             }
 
             if (Indices == null || Inputs == null)
-                throw new Exception("No valid triangle source found, expected <triangles> or <polylist>");
+                throw new ParsingException("No valid triangle source found, expected <triangles> or <polylist>");
 
             if (Indices.Count % (Inputs.Length * 3) != 0 || Indices.Count / Inputs.Length / 3 != TriangleCount)
-                throw new Exception("Triangle input stride / vertex count mismatch.");
+                throw new ParsingException("Triangle input stride / vertex count mismatch.");
         }
 
         private void ImportVertices()
@@ -224,17 +224,17 @@ namespace LSLib.Granny.Model
             foreach (var input in Mesh.vertices.input)
             {
                 if (input.source[0] != '#')
-                    throw new Exception("Only ID references are supported for vertex input sources");
+                    throw new ParsingException("Only ID references are supported for vertex input sources");
 
                 Source inputSource = null;
                 if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
-                    throw new Exception("Vertex input source does not exist: " + input.source);
+                    throw new ParsingException("Vertex input source does not exist: " + input.source);
 
                 List<Single> x = null, y = null, z = null;
                 if (!inputSource.FloatParams.TryGetValue("X", out x) ||
                     !inputSource.FloatParams.TryGetValue("Y", out y) ||
                     !inputSource.FloatParams.TryGetValue("Z", out z))
-                    throw new Exception("Vertex input source " + input.source + " must have X, Y, Z float attributes");
+                    throw new ParsingException("Vertex input source " + input.source + " must have X, Y, Z float attributes");
 
                 var vertices = new List<Vector3>(x.Count);
                 for (var i = 0; i < x.Count; i++)
@@ -268,17 +268,17 @@ namespace LSLib.Granny.Model
                     normalInputIndex = (int)input.offset;
 
                     if (input.source[0] != '#')
-                        throw new Exception("Only ID references are supported for Normal input sources");
+                        throw new ParsingException("Only ID references are supported for Normal input sources");
 
                     Source inputSource = null;
                     if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
-                        throw new Exception("Normal input source does not exist: " + input.source);
+                        throw new ParsingException("Normal input source does not exist: " + input.source);
 
                     List<Single> x = null, y = null, z = null;
                     if (!inputSource.FloatParams.TryGetValue("X", out x) ||
                         !inputSource.FloatParams.TryGetValue("Y", out y) ||
                         !inputSource.FloatParams.TryGetValue("Z", out z))
-                        throw new Exception("Normal input source " + input.source + " must have X, Y, Z float attributes");
+                        throw new ParsingException("Normal input source " + input.source + " must have X, Y, Z float attributes");
 
                     for (var i = 0; i < x.Count; i++)
                     {
@@ -288,7 +288,7 @@ namespace LSLib.Granny.Model
             }
 
             if (VertexInputIndex == -1)
-                throw new Exception("Required triangle input semantic missing: VERTEX");
+                throw new ParsingException("Required triangle input semantic missing: VERTEX");
 
             Vertices = new List<Vertex>(positions.Count);
             for (var vert = 0; vert < positions.Count; vert++)
@@ -346,16 +346,16 @@ namespace LSLib.Granny.Model
                     UVInputIndex = (int)input.offset;
 
                     if (input.source[0] != '#')
-                        throw new Exception("Only ID references are supported for UV input sources");
+                        throw new ParsingException("Only ID references are supported for UV input sources");
 
                     Source inputSource = null;
                     if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
-                        throw new Exception("UV input source does not exist: " + input.source);
+                        throw new ParsingException("UV input source does not exist: " + input.source);
 
                     List<Single> s = null, t = null;
                     if (!inputSource.FloatParams.TryGetValue("S", out s) ||
                         !inputSource.FloatParams.TryGetValue("T", out t))
-                        throw new Exception("UV input source " + input.source + " must have S, T float attributes");
+                        throw new ParsingException("UV input source " + input.source + " must have S, T float attributes");
 
                     for (var i = 0; i < s.Count; i++)
                     {
@@ -384,6 +384,7 @@ namespace LSLib.Granny.Model
             ImportVertices();
 
             // TODO: This should be done before deduplication!
+            // TODO: Move this to somewhere else ... ?
             if (!HasNormals)
             {
                 Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));

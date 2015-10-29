@@ -44,17 +44,17 @@ namespace LSLib.Granny.Model
             }
 
             if (sampler == null)
-                throw new Exception("Animation " + Animation.id + " has no sampler!");
+                throw new ParsingException("Animation " + Animation.id + " has no sampler!");
 
             Source inputSource = null, outputSource = null, interpolationSource = null;
             foreach (var input in sampler.input)
             {
                 if (input.source[0] != '#')
-                    throw new Exception("Only ID references are supported for animation input sources");
+                    throw new ParsingException("Only ID references are supported for animation input sources");
 
                 Source source;
                 if (!Sources.TryGetValue(input.source.Substring(1), out source))
-                    throw new Exception("Animation sampler " + input.semantic + " references nonexistent source: " + input.source);
+                    throw new ParsingException("Animation sampler " + input.semantic + " references nonexistent source: " + input.source);
 
                 switch (input.semantic)
                 {
@@ -76,22 +76,22 @@ namespace LSLib.Granny.Model
             }
 
             if (inputSource == null || outputSource == null || interpolationSource == null)
-                throw new Exception("Animation " + Animation.id + " must have an INPUT, OUTPUT and INTERPOLATION sampler input!");
+                throw new ParsingException("Animation " + Animation.id + " must have an INPUT, OUTPUT and INTERPOLATION sampler input!");
 
             if (!inputSource.FloatParams.TryGetValue("TIME", out Times))
                 Times = inputSource.FloatParams.Values.SingleOrDefault();
 
             if (Times == null)
-                throw new Exception("Animation " + Animation.id + " INPUT must have a TIME parameter!");
+                throw new ParsingException("Animation " + Animation.id + " INPUT must have a TIME parameter!");
 
             if (!outputSource.MatrixParams.TryGetValue("TRANSFORM", out Transforms))
                 Transforms = outputSource.MatrixParams.Values.SingleOrDefault();
 
             if (Transforms == null)
-                throw new Exception("Animation " + Animation.id + " OUTPUT must have a TRANSFORM parameter!");
+                throw new ParsingException("Animation " + Animation.id + " OUTPUT must have a TRANSFORM parameter!");
 
             if (Transforms.Count != Times.Count)
-                throw new Exception("Animation " + Animation.id + " has different time and transform counts!");
+                throw new ParsingException("Animation " + Animation.id + " has different time and transform counts!");
 
             for (var i = 0; i < Transforms.Count; i++ )
             {
@@ -114,18 +114,18 @@ namespace LSLib.Granny.Model
             }
 
             if (channel == null)
-                throw new Exception("Animation " + Animation.id + " has no channel!");
+                throw new ParsingException("Animation " + Animation.id + " has no channel!");
 
             var parts = channel.target.Split(new char[] { '/' });
             if (parts.Length != 2)
-                throw new Exception("Unsupported channel target format: " + channel.target);
+                throw new ParsingException("Unsupported channel target format: " + channel.target);
 
             Bone bone = null;
             if (!skeleton.BonesByID.TryGetValue(parts[0], out bone))
-                throw new Exception("Animation channel references nonexistent bone: " + parts[0]);
+                throw new ParsingException("Animation channel references nonexistent bone: " + parts[0]);
 
             if (bone.TransformSID != parts[1])
-                throw new Exception("Animation channel references nonexistent transform or transform is not float4x4: " + channel.target);
+                throw new ParsingException("Animation channel references nonexistent transform or transform is not float4x4: " + channel.target);
 
             Bone = bone;
         }

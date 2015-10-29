@@ -70,8 +70,11 @@
     <Compile Include="Granny\Model\CurveData\DaK16uC16u.cs" />
     <Compile Include="Granny\Model\CurveData\DaK32fC32f.cs" />
     <Compile Include="Granny\Model\CurveData\DaK8uC8u.cs" />
+    <Compile Include="Granny\Model\Exporter.cs" />
+    <Compile Include="Granny\Model\Metadata.cs" />
     <Compile Include="Granny\Model\Mesh.cs" />
     <Compile Include="Granny\Model\Model.cs" />
+    <Compile Include="Granny\Model\Root.cs" />
     <Compile Include="Granny\Model\Skeleton.cs" />
     <Compile Include="Granny\Model\Vertex.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNGBDT333342.cs" />

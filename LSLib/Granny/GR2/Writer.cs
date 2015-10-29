@@ -621,6 +621,9 @@ namespace LSLib.Granny.GR2
         internal Dictionary<object, SectionReference> DataObjectOffsets = new Dictionary<object, SectionReference>();
         internal HashSet<string> Strings = new HashSet<string>();
 
+        // Version tag that will be written to the GR2 file
+        public UInt32 VersionTag = Header.Tag;
+
         public GR2Writer()
         {
             this.Stream = new MemoryStream();
@@ -816,7 +819,7 @@ namespace LSLib.Granny.GR2
             header.rootType = new SectionReference(); // Updated after serialization is finished
             header.rootNode = new SectionReference(); // Updated after serialization is finished
             header.numSections = (UInt32)SectionType.Max + 1;
-            header.tag = Header.Tag; // Use an obsolete version tag to prevent Granny from memory mapping the structs
+            header.tag = VersionTag;
             header.extraTags = new UInt32[Header.ExtraTagCount];
             for (int i = 0; i < Header.ExtraTagCount; i++)
                 header.extraTags[i] = 0;

@@ -48,6 +48,21 @@ namespace LSLib.Granny.Model
             }
         }
 
+        public void MakeIdentityMapping(List<Vertex> vertices)
+        {
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                DeduplicatedPositions.Add(vertices[i]);
+                VertexDeduplicationMap.Add(i, i);
+            }
+
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                DeduplicatedUVs.Add(vertices[i].TextureCoordinates0);
+                UVDeduplicationMap.Add(i, i);
+            }
+        }
+
         public void Deduplicate(List<Vertex> vertices)
         {
             var positions = new Dictionary<Vector3, int>(new VertexPositionComparer());
@@ -100,18 +115,27 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public VertexDeduplicator Deduplicator;
 
-        private void Deduplicate()
+        public void Deduplicate()
         {
+            Deduplicator = new VertexDeduplicator();
+            Deduplicator.Deduplicate(Vertices);
+        }
+
+        private void EnsureDeduplicationMap()
+        {
+            // Makes sure that we have an original -> duplicate vertex index map to work with.
+            // If we don't, it creates an identity mapping between the original and the Collada vertices.
+            // To deduplicate GR2 vertex data, Deduplicate() should be called before any Collada export call.
             if (Deduplicator == null)
             {
                 Deduplicator = new VertexDeduplicator();
-                Deduplicator.Deduplicate(Vertices);
+                Deduplicator.MakeIdentityMapping(Vertices);
             }
         }
 
         public source MakeColladaPositions(string name)
         {
-            Deduplicate();
+            EnsureDeduplicationMap();
 
             int index = 0;
             var positions = new float[Deduplicator.DeduplicatedPositions.Count * 3];
@@ -128,7 +152,7 @@ namespace LSLib.Granny.Model
 
         public source MakeColladaNormals(string name)
         {
-            Deduplicate();
+            EnsureDeduplicationMap();
 
             int index = 0;
             var normals = new float[Deduplicator.DeduplicatedPositions.Count * 3];
@@ -145,7 +169,7 @@ namespace LSLib.Granny.Model
 
         public source MakeColladaTangents(string name)
         {
-            Deduplicate();
+            EnsureDeduplicationMap();
 
             int index = 0;
             var tangents = new float[Deduplicator.DeduplicatedPositions.Count * 3];
@@ -162,7 +186,7 @@ namespace LSLib.Granny.Model
 
         public source MakeColladaBinormals(string name)
         {
-            Deduplicate();
+            EnsureDeduplicationMap();
 
             int index = 0;
             var binormals = new float[Deduplicator.DeduplicatedPositions.Count * 3];
@@ -179,7 +203,7 @@ namespace LSLib.Granny.Model
 
         public source MakeColladaUVs(string name)
         {
-            Deduplicate();
+            EnsureDeduplicationMap();
 
             int index = 0;
             var uvs = new float[Deduplicator.DeduplicatedUVs.Count * 2];
@@ -194,7 +218,7 @@ namespace LSLib.Granny.Model
 
         public source MakeBoneWeights(string name)
         {
-            Deduplicate();
+            EnsureDeduplicationMap();
 
             var weights = new List<float>(Deduplicator.DeduplicatedPositions.Count);
             foreach (var vertex in Deduplicator.DeduplicatedPositions)
@@ -208,6 +232,14 @@ namespace LSLib.Granny.Model
             }
 
             return ColladaUtils.MakeFloatSource(name, "weights", new string[] { "WEIGHT" }, weights.ToArray());
+        }
+
+        public void Transform(Matrix4 transformation)
+        {
+            foreach (var vertex in Vertices)
+            {
+                vertex.Transform(transformation);
+            }
         }
     }
 
@@ -244,7 +276,7 @@ namespace LSLib.Granny.Model
         [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
         public List<Int32> Indices;
         [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex16), Kind = SerializationKind.UserMember, Serializer = typeof(Int16ListSerializer))]
-        public List<Int32> Indices16;
+        public List<Int16> Indices16;
         [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
         public List<Int32> VertexToVertexMap;
         [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
