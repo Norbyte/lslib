@@ -449,6 +449,11 @@ namespace LSLib.Granny.Model
                 }
             }
 
+            foreach (var vertex in mesh.PrimaryVertexData.Vertices)
+            {
+                vertex.FinalizeInfluences();
+            }
+
 
             if (skin.bind_shape_matrix != null)
             {

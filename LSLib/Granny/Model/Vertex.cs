@@ -126,8 +126,19 @@ namespace LSLib.Granny.Model
                 {
                     // BoneIndices refers to Mesh.BoneBindings[index], not Skeleton.Bones[index] !
                     BoneIndices[influence] = boneIndex;
-                    BoneWeights[influence] = (byte)(weight * 255);
+                    BoneWeights[influence] = (byte)(Math.Round(weight * 255));
                     break;
+                }
+            }
+        }
+
+        public void FinalizeInfluences()
+        {
+            for (var influence = 1; influence < 4; influence++)
+            {
+                if (BoneWeights[influence] == 0)
+                {
+                    BoneIndices[influence] = BoneIndices[0];
                 }
             }
         }
