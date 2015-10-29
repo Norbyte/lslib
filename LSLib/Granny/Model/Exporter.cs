@@ -132,6 +132,48 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void GenerateDummySkeleton(Root root)
+        {
+            // TODO: Add an option to enable/disable dummy skeleton generation
+            foreach (var model in root.Models)
+            {
+                if (model.Skeleton == null)
+                {
+                    Utils.Info(String.Format("Generating dummy skeleton for model '{0}'", model.Name));
+                    var skeleton = new Skeleton();
+                    skeleton.Name = model.Name;
+                    skeleton.LODType = 0;
+                    skeleton.IsDummy = true;
+                    root.Skeletons.Add(skeleton);
+
+                    var bone = new Bone();
+                    bone.Name = model.Name;
+                    bone.ParentIndex = -1;
+                    skeleton.Bones = new List<Bone> { bone };
+                    bone.Transform = new Transform();
+
+                    // TODO: Transform / IWT is not always identity on dummy bones!
+                    skeleton.UpdateInverseWorldTransforms();
+                    model.Skeleton = skeleton;
+
+                    foreach (var mesh in model.MeshBindings)
+                    {
+                        if (mesh.Mesh.BoneBindings != null && mesh.Mesh.BoneBindings.Count > 0)
+                        {
+                            throw new ParsingException("Failed to generate dummy skeleton: Mesh already has bone bindings.");
+                        }
+
+                        var binding = new BoneBinding();
+                        binding.BoneName = bone.Name;
+                        // TODO: Calculate bounding box!
+                        binding.OBBMin = new float[] { -10, -10, -10 };
+                        binding.OBBMax = new float[] { 10, 10, 10 };
+                        mesh.Mesh.BoneBindings = new List<BoneBinding> { binding };
+                    }
+                }
+            }
+        }
+
         private void ConformSkeleton(Skeleton skeleton, Skeleton conformToSkeleton)
         {
             skeleton.LODType = conformToSkeleton.LODType;
@@ -276,6 +318,11 @@ namespace LSLib.Granny.Model
                 {
                     throw new ExportException("Failed to conform skeleton:\n" + e.Message + "\nCheck bone counts and ordering.");
                 }
+            }
+
+            if (Options.BuildDummySkeleton)
+            {
+                GenerateDummySkeleton(Root);
             }
             
             // This option should be handled after everything else, as it converts Indices

@@ -546,44 +546,6 @@ namespace LSLib.Granny.Model
 
         public void PreSave()
         {
-            // TODO: Add an option to enable/disable dummy skeleton generation
-            foreach (var model in Models)
-            {
-                if (model.Skeleton == null)
-                {
-                    Utils.Info(String.Format("Generating dummy skeleton for model '{0}'", model.Name));
-                    var skeleton = new Skeleton();
-                    skeleton.Name = model.Name;
-                    skeleton.LODType = 0;
-                    skeleton.IsDummy = true;
-                    Skeletons.Add(skeleton);
-
-                    var bone = new Bone();
-                    bone.Name = model.Name;
-                    bone.ParentIndex = -1;
-                    skeleton.Bones = new List<Bone> { bone };
-                    bone.Transform = new Transform();
-
-                    // TODO: Transform / IWT is not always identity on dummy bones!
-                    skeleton.UpdateInverseWorldTransforms();
-                    model.Skeleton = skeleton;
-
-                    foreach (var mesh in model.MeshBindings)
-                    {
-                        if (mesh.Mesh.BoneBindings != null && mesh.Mesh.BoneBindings.Count > 0)
-                        {
-                            throw new ParsingException("Failed to generate dummy skeleton: Mesh already has bone bindings.");
-                        }
-
-                        var binding = new BoneBinding();
-                        binding.BoneName = bone.Name;
-                        // TODO: Calculate bounding box!
-                        binding.OBBMin = new float[] { -10, -10, -10 };
-                        binding.OBBMax = new float[] { 10, 10, 10 };
-                        mesh.Mesh.BoneBindings = new List<BoneBinding> { binding };
-                    }
-                }
-            }
         }
 
         public void ImportFromCollada(string inputPath)
