@@ -48,7 +48,7 @@ namespace LSLib.Granny.GR2
             GR2 = writer;
         }
 
-        public void Finalize()
+        public void Finish()
         {
             var dataOffset = (UInt32)MainStream.Length;
             
@@ -733,7 +733,7 @@ namespace LSLib.Granny.GR2
                 {
                     section.Header.secondaryDataOffset = (UInt32)section.MainStream.Length;
                     section.Header.secondaryDataOffset2 = (UInt32)section.MainStream.Length;
-                    section.Finalize();
+                    section.Finish();
                 }
 
                 var relocSection = Sections[(int)SectionType.Discardable];
