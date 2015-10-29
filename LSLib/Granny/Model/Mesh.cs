@@ -97,7 +97,7 @@ namespace LSLib.Granny.Model
 
     public class VertexData
     {
-        [Serialization(Type = MemberType.ReferenceToVariantArray, Section = SectionType.RigidVertex,
+        [Serialization(Type = MemberType.ReferenceToVariantArray, SectionSelector = typeof(VertexSerializer),
             TypeSelector = typeof(VertexSerializer), Serializer = typeof(VertexSerializer),
             Kind = SerializationKind.UserElement)]
         public List<Vertex> Vertices;
@@ -384,7 +384,7 @@ namespace LSLib.Granny.Model
 
                     case "Tangent":
                     case "Binormal":
-                        // We don't export these as apps will recalculate these themselves if needed.
+                        // We don't export these as apps will recalculate these ourselves if needed.
                         break;
 
                     /*case "Tangent":

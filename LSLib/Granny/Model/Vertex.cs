@@ -330,7 +330,7 @@ namespace LSLib.Granny.Model
         }
     }
 
-    public class VertexSerializer : VariantTypeSelector, NodeSerializer
+    public class VertexSerializer : VariantTypeSelector, NodeSerializer, SectionSelector
     {
         private Dictionary<object, Type> VertexTypeCache = new Dictionary<object,Type>();
 
@@ -358,6 +358,18 @@ namespace LSLib.Granny.Model
             }
 
             return true;
+        }
+
+        public SectionType SelectSection(MemberDefinition member, Type type, object obj)
+        {
+            var vertices = obj as System.Collections.IList;
+            if (vertices == null || vertices.Count == 0)
+                return SectionType.RigidVertex;
+
+            if ((vertices[0] as Vertex).HasBoneInfluences())
+                return SectionType.DeformableVertex;
+            else
+                return SectionType.RigidVertex;
         }
 
         public Type SelectType(MemberDefinition member, object node)

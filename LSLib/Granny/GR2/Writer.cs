@@ -826,6 +826,8 @@ namespace LSLib.Granny.GR2
             serialization.section = section;
             if (member.PreferredSection != SectionType.Invalid)
                 serialization.section = member.PreferredSection;
+            else if (member.SectionSelector != null)
+                serialization.section = member.SectionSelector.SelectSection(member, type, obj);
             serialization.type = type;
             serialization.member = member;
             serialization.obj = obj;
@@ -838,6 +840,8 @@ namespace LSLib.Granny.GR2
             serialization.section = section;
             if (member.PreferredSection != SectionType.Invalid)
                 serialization.section = member.PreferredSection;
+            else if (member.SectionSelector != null)
+                serialization.section = member.SectionSelector.SelectSection(member, elementType, list);
             serialization.elementType = elementType;
             serialization.member = member;
             serialization.list = list;
