@@ -26,3 +26,22 @@
 *.exe
 *.out
 *.app
+
+# MSVC
+*.user
+*.vsp
+*.suo
+*.sdf
+*.psess
+
+/ipch
+/Debug
+/Release
+/x64
+
+*/bin
+*/obj
+*/Debug
+*/Release
+*/x64
+/external/bullet-2.77

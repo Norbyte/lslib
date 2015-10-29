@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{46372C50-4288-4B8E-AF21-C934560600E0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LSLib</RootNamespace>
+    <AssemblyName>LSLib</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Granny\Collada.cs" />
+    <Compile Include="Granny\ColladaAnimation.cs" />
+    <Compile Include="Granny\ColladaSchema.cs" />
+    <Compile Include="Granny\CRC32.cs" />
+    <Compile Include="Granny\GR2.cs" />
+    <Compile Include="Granny\GR2\Format.cs" />
+    <Compile Include="Granny\GR2\Helpers.cs" />
+    <Compile Include="Granny\GR2\Reader.cs" />
+    <Compile Include="Granny\GR2\Writer.cs" />
+    <Compile Include="Granny\Model\Animation.cs" />
+    <Compile Include="Granny\Model\ColladaHelpers.cs" />
+    <Compile Include="Granny\Model\ColladaMesh.cs" />
+    <Compile Include="Granny\Model\CurveData\AnimationCurveData.cs" />
+    <Compile Include="Granny\Model\CurveData\D3Constant32f.cs" />
+    <Compile Include="Granny\Model\CurveData\D3I1K16uC16u.cs" />
+    <Compile Include="Granny\Model\CurveData\D3I1K32fC32f.cs" />
+    <Compile Include="Granny\Model\CurveData\D3I1K8uC8u.cs" />
+    <Compile Include="Granny\Model\CurveData\D3K16uC16u.cs" />
+    <Compile Include="Granny\Model\CurveData\D3K8uC8u.cs" />
+    <Compile Include="Granny\Model\CurveData\D4Constant32f.cs" />
+    <Compile Include="Granny\Model\CurveData\D4nK16uC15u.cs" />
+    <Compile Include="Granny\Model\CurveData\D4nK8uC7u.cs" />
+    <Compile Include="Granny\Model\CurveData\D9I1K16uC16u.cs" />
+    <Compile Include="Granny\Model\CurveData\D9I1K8uC8u.cs" />
+    <Compile Include="Granny\Model\CurveData\D9I3K16uC16u.cs" />
+    <Compile Include="Granny\Model\CurveData\D9I3K8uC8u.cs" />
+    <Compile Include="Granny\Model\CurveData\DaConstant32f.cs" />
+    <Compile Include="Granny\Model\CurveData\DaIdentity.cs" />
+    <Compile Include="Granny\Model\CurveData\DaK16uC16u.cs" />
+    <Compile Include="Granny\Model\CurveData\DaK32fC32f.cs" />
+    <Compile Include="Granny\Model\CurveData\DaK8uC8u.cs" />
+    <Compile Include="Granny\Model\Mesh.cs" />
+    <Compile Include="Granny\Model\Model.cs" />
+    <Compile Include="Granny\Model\Skeleton.cs" />
+    <Compile Include="Granny\Model\Vertex.cs" />
+    <Compile Include="LS\LSBReader.cs" />
+    <Compile Include="LS\LSBWriter.cs" />
+    <Compile Include="LS\LSXReader.cs" />
+    <Compile Include="LS\LSXWriter.cs" />
+    <Compile Include="LS\Matrix.cs" />
+    <Compile Include="LS\NodeAttribute.cs" />
+    <Compile Include="LS\Resource.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Stats\DOSStats.cs" />
+    <None Include="Stats\PropertyDefinition.cs" />
+    <None Include="Stats\StatDefinition.cs" />
+    <None Include="Stats\StatsDatabase.cs" />
+    <None Include="Stats\StatsDataLoader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTK\OpenTK.csproj">
+      <Project>{abb9db44-14f2-46e0-a4b8-b46c300ca982}</Project>
+      <Name>OpenTK</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetPath) "%25USERPROFILE%25\My Documents\Larian Studios\Divinity Original Sin\EditorPlugins\$(TargetFileName)"</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
