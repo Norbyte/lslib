@@ -8,9 +8,33 @@ using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
 {
+    public class BoneMaxProperties
+    {
+        public sbyte Hide;
+        public sbyte Freeze;
+        public sbyte SeeThrough;
+        public sbyte DisplayAsBox;
+        public sbyte BackfaceCull;
+        public sbyte Trajectory;
+        public sbyte VertexTicks;
+        public sbyte IgnoreExtents;
+        public sbyte ShowFrozenInGray;
+        public sbyte Renderable;
+        public sbyte InheritVisibility;
+        public sbyte VisibleToCamera;
+        public sbyte VisibleToReflectionRefraction;
+        public sbyte ReceiveShadows;
+        public sbyte CastShadows;
+        public sbyte ApplyAtmospherics;
+        public sbyte RenderOccludedObjects;
+        [Serialization(ArraySize = 3)]
+        public sbyte[] Unused;
+    }
+
     public class BoneExtendedData
     {
         public string UserDefinedProperties;
+        public BoneMaxProperties MaxProperties;
         public int GBufferObjId;
         public int MotionBlur_Type;
         public float MotionBlur_Multiplier;
@@ -24,6 +48,7 @@ namespace LSLib.Granny.Model
         [Serialization(ArraySize = 16)]
         public float[] InverseWorldTransform;
         public float LODError;
+        [Serialization(Type = MemberType.VariantReference)]
         public BoneExtendedData ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]

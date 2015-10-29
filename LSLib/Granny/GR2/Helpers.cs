@@ -83,6 +83,25 @@ namespace LSLib.Granny.GR2
     }
 
 
+    class Int16ListSerializer : NodeSerializer
+    {
+        public object Read(GR2Reader gr2, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)
+        {
+            var controls = new List<Int16>((int)arraySize);
+            for (int i = 0; i < arraySize; i++)
+                controls.Add(gr2.Reader.ReadInt16());
+            return controls;
+        }
+
+        public void Write(GR2Writer writer, WritableSection section, MemberDefinition member, object obj)
+        {
+            var items = obj as List<Int16>;
+            for (int i = 0; i < items.Count; i++)
+                section.Writer.Write(items[i]);
+        }
+    }
+
+
     class UInt32ListSerializer : NodeSerializer
     {
         public object Read(GR2Reader gr2, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)

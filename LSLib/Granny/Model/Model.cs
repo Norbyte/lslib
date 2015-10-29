@@ -19,6 +19,7 @@ namespace LSLib.Granny.Model
         public Skeleton Skeleton;
         public Transform InitialPlacement;
         public List<MeshBinding> MeshBindings;
+        [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
 
         public node MakeBone(int index, Bone bone)
@@ -193,8 +194,8 @@ namespace LSLib.Granny.Model
         public ArtToolInfo ArtToolInfo;
         public ExporterInfo ExporterInfo;
         public string FromFileName;
-        // public List<Texture> Textures;
-        // public List<Material> Materials;
+        public List<Texture> Textures;
+        public List<Material> Materials;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Skeleton> Skeletons;
         [Serialization(Type = MemberType.ArrayOfReferences)]
@@ -209,6 +210,7 @@ namespace LSLib.Granny.Model
         public List<TrackGroup> TrackGroups;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Animation> Animations;
+        public object ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<string, Mesh> ColladaGeometries;

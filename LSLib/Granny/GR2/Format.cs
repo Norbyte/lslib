@@ -55,6 +55,33 @@ namespace LSLib.Granny.GR2
             transform[3, 3] = 1.0f;
             return transform;
         }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("Rotation: (");
+            sb.Append(Rotation.X);
+            sb.Append(", ");
+            sb.Append(Rotation.Y);
+            sb.Append(", ");
+            sb.Append(Rotation.Z);
+            sb.Append(", ");
+            sb.Append(Rotation.W);
+            sb.Append("); Translation: (");
+            sb.Append(Translation.X);
+            sb.Append(", ");
+            sb.Append(Translation.Y);
+            sb.Append(", ");
+            sb.Append(Translation.Z);
+            sb.Append("); Scale: (");
+            sb.Append(ScaleShear[0, 0]);
+            sb.Append(", ");
+            sb.Append(ScaleShear[1, 1]);
+            sb.Append(", ");
+            sb.Append(ScaleShear[2, 2]);
+            sb.Append(")");
+            return sb.ToString();
+        }
     }
 
     /// <summary>

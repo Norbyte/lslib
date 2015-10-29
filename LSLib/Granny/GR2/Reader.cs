@@ -25,6 +25,9 @@ namespace LSLib.Granny.GR2
         internal List<Section> Sections = new List<Section>();
         internal Dictionary<StructReference, StructDefinition> Types = new Dictionary<StructReference, StructDefinition>();
         private Dictionary<UInt32, object> CachedStructs = new Dictionary<UInt32, object>();
+#if DEBUG_GR2_SERIALIZATION
+        private HashSet<StructReference> DebugPendingResolve = new HashSet<StructReference>();
+#endif
 
         public GR2Reader(Stream stream)
         {
@@ -372,7 +375,16 @@ namespace LSLib.Granny.GR2
                     description = String.Format("    {0}: {1}", defn.Name, defn.Type.ToString());
 
                 if (defn.Definition.IsValid)
+                {
+                    if (!DebugPendingResolve.Contains(defn.Definition))
+                    {
+                        DebugPendingResolve.Add(defn.Definition);
+                        System.Console.WriteLine(String.Format(" ===== Debug resolve for {0:X8} ===== ", defn.Definition.Offset));
+                        defn.Definition.Resolve(this);
+                        System.Console.WriteLine(String.Format(" ===== End debug resolve for {0:X8} ===== ", defn.Definition.Offset));
+                    }
                     description += String.Format(" <struct {0:X8}>", defn.Definition.Offset);
+                }
 
                 if (defn.Extra[0] != 0 || defn.Extra[1] != 0 || defn.Extra[2] != 0)
                     description += String.Format(" Extra: {0} {1} {2}", defn.Extra[0], defn.Extra[1], defn.Extra[2]);

@@ -95,6 +95,15 @@ namespace LSLib.Granny.Model
         }
     }
 
+    public class VertexAnnotationSet
+    {
+        public string Name;
+        [Serialization(Type = MemberType.ReferenceToVariantArray)]
+        public List<object> VertexAnnotations;
+        public Int32 IndicesMapFromVertexToAnnotation;
+        public List<TriIndex> VertexAnnotationIndices;
+    }
+
     public class VertexData
     {
         [Serialization(Type = MemberType.ReferenceToVariantArray, SectionSelector = typeof(VertexSerializer),
@@ -102,6 +111,7 @@ namespace LSLib.Granny.Model
             Kind = SerializationKind.UserElement)]
         public List<Vertex> Vertices;
         public List<VertexComponentName> VertexComponentNames;
+        public List<VertexAnnotationSet> VertexAnnotationSets;
         [Serialization(Kind = SerializationKind.None)]
         public VertexDeduplicator Deduplicator;
 
@@ -228,12 +238,39 @@ namespace LSLib.Granny.Model
         public int Int32;
     }
 
+    public class TriIndex16
+    {
+        public int Int16;
+    }
+
+    public class TriAnnotationSet
+    {
+        public string Name;
+        [Serialization(Type = MemberType.ReferenceToVariantArray)]
+        public object TriAnnotations;
+        public Int32 IndicesMapFromTriToAnnotation;
+        [Serialization(Section = SectionType.RigidIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> TriAnnotationIndices;
+    }
+
     public class TriTopology
     {
         public List<TriTopologyGroup> Groups;
-        [Serialization(Section = SectionType.RigidIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
         public List<Int32> Indices;
-        // TODO: Bones?
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex16), Kind = SerializationKind.UserMember, Serializer = typeof(Int16ListSerializer))]
+        public List<Int32> Indices16;
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> VertexToVertexMap;
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> VertexToTriangleMap;
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> SideToNeighborMap;
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> BonesForTriangle;
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> TriangleToBoneIndices;
+        public List<TriAnnotationSet> TriAnnotationSets;
 
         public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, Dictionary<int, int> uvMaps)
         {
@@ -278,12 +315,61 @@ namespace LSLib.Granny.Model
         public float[] OBBMin;
         [Serialization(ArraySize = 3)]
         public float[] OBBMax;
-        // TriangleIndices
+        [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
+        public List<Int32> TriangleIndices;
+    }
+    
+    public class MaterialReference
+    {
+        public Material Map;
+    }
+
+    public class TextureLayout
+    {
+        public Int32 BytesPerPixel;
+        [Serialization(ArraySize = 4)]
+        public Int32[] ShiftForComponent;
+        [Serialization(ArraySize = 4)]
+        public Int32[] BitsForComponent;
+    }
+
+    public class PixelByte
+    {
+        public Byte UInt8;
+    }
+
+    public class TextureMipLevel
+    {
+        public Int32 Stride;
+        public List<PixelByte> PixelBytes;
+    }
+
+    public class TextureImage
+    {
+        public List<TextureMipLevel> MIPLevels;
+    }
+
+    public class Texture
+    {
+        public string FromFileName;
+        public Int32 TextureType;
+        public Int32 Width;
+        public Int32 Height;
+        public Int32 Encoding;
+        public Int32 SubFormat;
+        [Serialization(Type = MemberType.Inline)]
+        public TextureLayout Layout;
+        public List<TextureImage> Images;
+        public object ExtendedData;
     }
 
     public class Material
     {
-        // TODO
+        public string Name;
+        public string Usage;
+        public List<MaterialReference> Maps;
+        public Texture Texture;
+        public object ExtendedData;
     }
 
     public class MaterialBinding
@@ -291,15 +377,23 @@ namespace LSLib.Granny.Model
         public Material Material;
     }
 
+    public class MorphTarget
+    {
+        public string ScalarName;
+        public VertexData VertexData;
+        public Int32 DataIsDeltas;
+    }
+
     public class Mesh
     {
         public string Name;
         public VertexData PrimaryVertexData;
-        // MorphTargets
+        public List<MorphTarget> MorphTargets;
         public TriTopology PrimaryTopology;
         public List<MaterialBinding> MaterialBindings;
         public List<BoneBinding> BoneBindings;
-        // ExtendedData
+        [Serialization(Type = MemberType.VariantReference)]
+        public object ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;

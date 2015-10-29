@@ -12,7 +12,7 @@ namespace LSLib.Granny.Model
 {
     public class AnimationCurve
     {
-        [Serialization(TypeSelector = typeof(AnimationCurveDataTypeSelector))]
+        [Serialization(TypeSelector = typeof(AnimationCurveDataTypeSelector), Type = MemberType.VariantReference)]
         public AnimationCurveData CurveData;
     }
 
@@ -32,9 +32,9 @@ namespace LSLib.Granny.Model
         public string Name;
         public int Flags;
         [Serialization(Type = MemberType.Inline)]
-        public AnimationCurve PositionCurve;
-        [Serialization(Type = MemberType.Inline)]
         public AnimationCurve OrientationCurve;
+        [Serialization(Type = MemberType.Inline)]
+        public AnimationCurve PositionCurve;
         [Serialization(Type = MemberType.Inline)]
         public AnimationCurve ScaleShearCurve;
         [Serialization(Kind = SerializationKind.None)]
@@ -43,8 +43,8 @@ namespace LSLib.Granny.Model
         private List<Keyframe> mergeKeyframes()
         {
             var keyframes = new SortedList<float, Keyframe>();
-            PositionCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Position);
             OrientationCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Rotation);
+            PositionCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Position);
             ScaleShearCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.ScaleShear);
 
             float mergeThreshold = 0.00001f;
@@ -244,31 +244,56 @@ namespace LSLib.Granny.Model
 
     public class VectorTrack
     {
-        // TODO
+        public string Name;
+        public UInt32 TrackKey;
+        public Int32 Dimension;
+        [Serialization(Type = MemberType.Inline)]
+        public AnimationCurve ValueCurve;
     }
 
     public class TransformLODError
     {
-        // TODO
+        public Single Real32;
+    }
+
+    public class TextTrackEntry
+    {
+        public Single TimeStamp;
+        public string Text;
     }
 
     public class TextTrack
     {
-        // TODO
+        public string Name;
+        public List<TextTrackEntry> Entries;
+    }
+
+    public class PeriodicLoop
+    {
+        public Single Radius;
+        public Single dAngle;
+        public Single dZ;
+        [Serialization(ArraySize = 3)]
+        public Single[] BasisX;
+        [Serialization(ArraySize = 3)]
+        public Single[] BasisY;
+        [Serialization(ArraySize = 3)]
+        public Single[] Axis;
     }
 
     public class TrackGroup
     {
         public string Name;
-        //public List<VectorTrack> VectorTracks;
+        public List<VectorTrack> VectorTracks;
         public List<TransformTrack> TransformTracks;
-        //public List<TransformLODError> TransformLODErrors;
-        //public List<TextTrack> TextTracks;
+        public List<TransformLODError> TransformLODErrors;
+        public List<TextTrack> TextTracks;
         public Transform InitialPlacement;
         public int AccumulationFlags;
         [Serialization(ArraySize = 3)]
         public float[] LoopTranslation;
-        public object PeriodicLoop;
+        public PeriodicLoop PeriodicLoop;
+        [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
 
         public List<animation> ExportAnimations()
@@ -291,8 +316,9 @@ namespace LSLib.Granny.Model
         public float Oversampling;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<TrackGroup> TrackGroups;
-        public int DefaultLoopCount;
-        public int Flags;
+        public Int32 DefaultLoopCount;
+        public Int32 Flags;
+        [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
 
         public List<animation> ExportAnimations()
