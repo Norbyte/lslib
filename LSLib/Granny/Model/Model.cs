@@ -76,8 +76,8 @@ namespace LSLib.Granny.Model
         public Single[] UpVector;
         [Serialization(ArraySize = 3)]
         public Single[] BackVector;
-        //[Serialization(Prototype = typeof(ArtToolExtendedData))]
-        //public object ExtendedData;
+        [Serialization(Type = MemberType.VariantReference)]
+        public object ExtendedData;
     }
 
     public class ExporterInfo
@@ -87,8 +87,8 @@ namespace LSLib.Granny.Model
         public Int32 ExporterMinorRevision;
         public Int32 ExporterCustomization;
         public Int32 ExporterBuildNumber;
-        //[Serialization(Prototype = typeof(ExporterExtendedData))]
-        //public object ExtendedData;
+        [Serialization(Type = MemberType.VariantReference)]
+        public object ExtendedData;
     }
 
     internal class Source
@@ -210,6 +210,7 @@ namespace LSLib.Granny.Model
         public List<TrackGroup> TrackGroups;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Animation> Animations;
+        [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]

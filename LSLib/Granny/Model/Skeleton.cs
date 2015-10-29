@@ -235,6 +235,8 @@ namespace LSLib.Granny.Model
         public string Name;
         public List<Bone> Bones;
         public int LODType;
+        [Serialization(Type = MemberType.VariantReference)]
+        public object ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<string, Bone> BonesBySID;
