@@ -441,6 +441,7 @@ namespace LSLib.Granny.GR2
                 if (memberType != MemberType.Inline)
                     CachedStructs.Add(offset, node);
 
+                definition.MapType(node);
                 foreach (var member in definition.Members)
                 {
                     var field = member.LookupFieldInfo(node);

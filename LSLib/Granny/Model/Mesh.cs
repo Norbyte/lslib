@@ -8,21 +8,6 @@ using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
 {
-
-    public class VertexComponentName
-    {
-        public VertexComponentName()
-        {
-        }
-
-        public VertexComponentName(String name)
-        {
-            String = name;
-        }
-
-        public string String;
-    }
-
     public class VertexDeduplicator
     {
         public Dictionary<int, int> VertexDeduplicationMap = new Dictionary<int, int>();
@@ -110,7 +95,7 @@ namespace LSLib.Granny.Model
             TypeSelector = typeof(VertexSerializer), Serializer = typeof(VertexSerializer),
             Kind = SerializationKind.UserElement)]
         public List<Vertex> Vertices;
-        public List<VertexComponentName> VertexComponentNames;
+        public List<GrannyString> VertexComponentNames;
         public List<VertexAnnotationSet> VertexAnnotationSets;
         [Serialization(Kind = SerializationKind.None)]
         public VertexDeduplicator Deduplicator;
@@ -407,17 +392,17 @@ namespace LSLib.Granny.Model
             m.Name = "Unnamed";
 
             m.PrimaryVertexData = new VertexData();
-            var components = new List<VertexComponentName>();
-            components.Add(new VertexComponentName("Position"));
+            var components = new List<GrannyString>();
+            components.Add(new GrannyString("Position"));
             if (isSkinned)
             {
-                components.Add(new VertexComponentName("BoneWeights"));
-                components.Add(new VertexComponentName("BoneIndices"));
+                components.Add(new GrannyString("BoneWeights"));
+                components.Add(new GrannyString("BoneIndices"));
             }
-            components.Add(new VertexComponentName("Normal"));
-            components.Add(new VertexComponentName("Tangent"));
-            components.Add(new VertexComponentName("Binormal"));
-            components.Add(new VertexComponentName("MaxChannel_1"));
+            components.Add(new GrannyString("Normal"));
+            components.Add(new GrannyString("Tangent"));
+            components.Add(new GrannyString("Binormal"));
+            components.Add(new GrannyString("MaxChannel_1"));
             m.PrimaryVertexData.VertexComponentNames = components;
             m.PrimaryVertexData.Vertices = collada.ConsolidatedVertices;
 

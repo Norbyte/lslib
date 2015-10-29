@@ -107,7 +107,7 @@ namespace LSLib.Granny.GR2
         public void WriteMemberDefinition(MemberDefinition defn)
         {
             Writer.Write((UInt32)defn.Type);
-            WriteStringReference(defn.Name);
+            WriteStringReference(defn.GrannyName);
             WriteStructReference(defn.WriteDefinition);
             Writer.Write(defn.ArraySize);
             for (var i = 0; i < MemberDefinition.ExtraTagCount; i++)

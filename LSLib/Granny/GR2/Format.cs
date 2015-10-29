@@ -9,6 +9,24 @@ using System.Reflection;
 
 namespace LSLib.Granny.GR2
 {
+    public class GrannyString
+    {
+        public String String;
+
+        public GrannyString()
+        {
+        }
+
+        public GrannyString(String s)
+        {
+            String = s;
+        }
+
+        public override string ToString()
+        {
+            return String;
+        }
+    }
 
     public class Transform
     {
@@ -563,6 +581,7 @@ namespace LSLib.Granny.GR2
 
         public MemberType Type = MemberType.Invalid;
         public string Name;
+        public string GrannyName;
         public StructReference Definition;
         public UInt32 ArraySize;
         /// <summary>
@@ -702,6 +721,9 @@ namespace LSLib.Granny.GR2
                 if (writer != null && serialization.Prototype != null)
                     WriteDefinition = writer.LookupStructDefinition(serialization.Prototype);
 
+                if (serialization.Name != null)
+                    GrannyName = serialization.Name;
+
                 Prototype = serialization.Prototype;
                 SerializationKind = serialization.Kind;
                 ArraySize = serialization.ArraySize;
@@ -714,12 +736,18 @@ namespace LSLib.Granny.GR2
                 return CachedField;
 
             var field = instance.GetType().GetField(Name);
+            AssignFieldInfo(field);
+            return field;
+        }
+
+        public void AssignFieldInfo(FieldInfo field)
+        {
+            Debug.Assert(!HasCachedField);
             CachedField = field;
             HasCachedField = true;
 
             if (field != null)
                 LoadAttributes(field, null);
-            return field;
         }
 
         public static MemberDefinition CreateFromFieldInfo(FieldInfo info, GR2Writer writer)
@@ -727,6 +755,7 @@ namespace LSLib.Granny.GR2
             var member = new MemberDefinition();
             var type = info.FieldType;
             member.Name = info.Name;
+            member.GrannyName = info.Name;
             member.Extra = new UInt32[] { 0, 0, 0 };
             member.CachedField = info;
             member.HasCachedField = true;
@@ -800,6 +829,39 @@ namespace LSLib.Granny.GR2
             foreach (var member in Members)
                 size += member.Size(gr2);
             return size;
+        }
+
+        public void MapType(object instance)
+        {
+            if (Type == null)
+            {
+                Type = instance.GetType();
+                foreach (var field in Type.GetFields(BindingFlags.Instance | BindingFlags.Public))
+                {
+                    var name = field.Name;
+                    var attrs = field.GetCustomAttributes(typeof(SerializationAttribute), true);
+                    if (attrs.Length > 0)
+                    {
+                        SerializationAttribute serialization = attrs[0] as SerializationAttribute;
+                        if (serialization.Name != null)
+                        {
+                            name = serialization.Name;
+                        }
+                    }
+
+                    foreach (var member in Members)
+                    {
+                        if (member.Name == name)
+                        {
+                            member.AssignFieldInfo(field);
+                        }
+                    }
+                }
+            }
+
+            // If this assertion is triggered it most likely is because multiple C# types
+            // were assigned to the same Granny type in different places in the class definitions
+            Debug.Assert(Type == instance.GetType());
         }
 
         public void LoadFromType(Type type, GR2Writer writer)
@@ -908,5 +970,9 @@ namespace LSLib.Granny.GR2
         /// In what way should we serialize this item
         /// </summary>
         public SerializationKind Kind = SerializationKind.Builtin;
+        /// <summary>
+        /// Member name in the serialized file
+        /// </summary>
+        public String Name;
     }
 }
