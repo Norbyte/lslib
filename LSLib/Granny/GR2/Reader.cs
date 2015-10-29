@@ -217,7 +217,10 @@ namespace LSLib.Granny.GR2
                 Stream.Position = oldPos;
 
 #if DEBUG_GR2_SERIALIZATION
-                System.Console.WriteLine(String.Format("    {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
+                System.Console.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
+                System.Console.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}", 
+                    offsetInSection + section.Header.offsetInFile, 
+                    reference.Offset + Sections[(int)reference.Section].Header.offsetInFile));
 #endif
             }
         }
@@ -520,6 +523,10 @@ namespace LSLib.Granny.GR2
 
         private object ReadElement(MemberDefinition definition, object node, Type propertyType, object parent)
         {
+#if DEBUG_GR2_SERIALIZATION
+            var offsetInFile = Stream.Position;
+#endif
+
             var kind = definition.SerializationKind;
             Debug.Assert(kind == SerializationKind.Builtin || !definition.IsScalar);
             if (node == null && 
@@ -592,7 +599,7 @@ namespace LSLib.Granny.GR2
                                 var originalPos = Stream.Position;
                                 Seek(r);
 #if DEBUG_GR2_SERIALIZATION
-                                System.Console.WriteLine(String.Format(" === Typed Struct {0} === ", definition.Name));
+                                System.Console.WriteLine(String.Format(" === Variant Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
 #endif
                                 if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
                                     node = definition.Serializer.Read(this, structDefn, definition, 0, parent);
@@ -615,6 +622,9 @@ namespace LSLib.Granny.GR2
                         Debug.Assert(kind != SerializationKind.UserMember);
                         Debug.Assert(definition.Definition.IsValid);
                         var indices = ReadArrayIndicesReference();
+#if DEBUG_GR2_SERIALIZATION
+                        System.Console.WriteLine(String.Format("    Array of references at [{0:X8}]", indices.Offset));
+#endif
 
                         Debug.Assert(indices.IsValid == (indices.Size != 0));
 
@@ -792,9 +802,9 @@ namespace LSLib.Granny.GR2
 
 #if DEBUG_GR2_SERIALIZATION
             if (node != null)
-                System.Console.WriteLine(String.Format("    {0}: {1}", definition.Name, node.ToString()));
+                System.Console.WriteLine(String.Format("    [{0:X8}] {1}: {2}", offsetInFile, definition.Name, node.ToString()));
             else
-                System.Console.WriteLine(String.Format("    {0}: <null>", definition.Name));
+                System.Console.WriteLine(String.Format("    [{0:X8}] {1}: <null>", offsetInFile, definition.Name));
 #endif
 
             return node;
