@@ -149,6 +149,7 @@ namespace LSLib.Granny.Model
         public abstract Type Prototype();
     }
 
+    [StructSerialization(MixedMarshal = true)]
     internal class Vertex_PNGBT33332_Prototype
     {
         [Serialization(ArraySize = 3)]
@@ -194,6 +195,7 @@ namespace LSLib.Granny.Model
         }
     }
 
+    [StructSerialization(MixedMarshal = true)]
     internal class Vertex_PNGBDT333342_Prototype
     {
         [Serialization(ArraySize = 3)]
@@ -243,6 +245,7 @@ namespace LSLib.Granny.Model
         }
     }
 
+    [StructSerialization(MixedMarshal = true)]
     internal class Vertex_PWNGBT343332_Prototype
     {
         [Serialization(ArraySize = 3)]
@@ -296,6 +299,7 @@ namespace LSLib.Granny.Model
         }
     }
 
+    [StructSerialization(MixedMarshal = true)]
     internal class Vertex_PWNT343332_Prototype
     {
         [Serialization(ArraySize = 3)]

@@ -683,6 +683,7 @@ namespace LSLib.Granny.GR2
                 case MemberType.BinormalInt16:
                 case MemberType.UInt16:
                 case MemberType.NormalUInt16:
+                case MemberType.Real16:
                     return 2;
 
                 case MemberType.String:
@@ -828,6 +829,10 @@ namespace LSLib.Granny.GR2
     {
         public Type Type;
         public List<MemberDefinition> Members = new List<MemberDefinition>();
+        /// <summary>
+        /// Should we do mixed marshalling on this struct?
+        /// </summary>
+        public bool MixedMarshal = false;
 
         public UInt32 Size(GR2Reader gr2)
         {
@@ -873,6 +878,14 @@ namespace LSLib.Granny.GR2
         public void LoadFromType(Type type, GR2Writer writer)
         {
             Type = type;
+
+            var attrs = type.GetCustomAttributes(typeof(StructSerializationAttribute), true);
+            if (attrs.Length > 0)
+            {
+                StructSerializationAttribute serialization = attrs[0] as StructSerializationAttribute;
+                MixedMarshal = serialization.MixedMarshal;
+            }
+
             foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
             {
                 var member = MemberDefinition.CreateFromFieldInfo(field, writer);
@@ -984,5 +997,17 @@ namespace LSLib.Granny.GR2
         /// Member name in the serialized file
         /// </summary>
         public String Name;
+    }
+
+    /// <summary>
+    /// Tells the Granny serializer about the way we want it to write a struct to the .GR2 file.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class StructSerializationAttribute : System.Attribute
+    {
+        /// <summary>
+        /// Should we do mixed marshalling on this struct?
+        /// </summary>
+        public bool MixedMarshal = false;
     }
 }

@@ -9,6 +9,13 @@ using OpenTK;
 
 namespace LSLib.Granny.GR2
 {
+    public class MixedMarshallingData
+    {
+        public object Obj;
+        public UInt32 Count;
+        public StructDefinition Type;
+    }
+
     public class WritableSection : Section
     {
         public SectionType Type;
@@ -19,12 +26,13 @@ namespace LSLib.Granny.GR2
         public BinaryWriter DataWriter;
 
         public BinaryWriter Writer;
+        public GR2Writer GR2;
 
         public Dictionary<UInt32, object> Fixups = new Dictionary<UInt32, object>();
-
         // Fixups for the data area that we'll need to update after serialization is finished
         public Dictionary<UInt32, object> DataFixups = new Dictionary<UInt32, object>();
-        public GR2Writer GR2;
+
+        public List<MixedMarshallingData> MixedMarshalling = new List<MixedMarshallingData>();
 
         public WritableSection(SectionType type, GR2Writer writer)
         {
@@ -83,6 +91,32 @@ namespace LSLib.Granny.GR2
             {
                 DataFixups.Add((UInt32)DataStream.Position, o);
             }
+        }
+
+        internal void AddMixedMarshalling(object o, UInt32 count, StructDefinition type)
+        {
+            var marshal = new MixedMarshallingData();
+            marshal.Obj = o;
+            marshal.Count = count;
+            marshal.Type = type;
+            MixedMarshalling.Add(marshal);
+        }
+
+        internal void CheckMixedMarshalling(object o, Type type, UInt32 count)
+        {
+            if (type.IsClass)
+            {
+                var defn = GR2.LookupStructDefinition(type);
+                if (defn.MixedMarshal)
+                {
+                    AddMixedMarshalling(o, count, defn);
+                }
+            }
+        }
+
+        internal void CheckMixedMarshalling(object o, UInt32 count)
+        {
+            CheckMixedMarshalling(o, o.GetType(), count);
         }
 
         public void WriteReference(object o)
@@ -276,6 +310,7 @@ namespace LSLib.Granny.GR2
                 case MemberType.ReferenceToVariantArray:
                     {
                         StoreObjectOffset(list);
+
                         if (arrayDefn.SerializationKind == SerializationKind.UserMember)
                         {
                             arrayDefn.Serializer.Write(this.GR2, this, arrayDefn, list);
@@ -284,6 +319,7 @@ namespace LSLib.Granny.GR2
                         {
                             for (int i = 0; i < list.Count; i++)
                             {
+                                StoreObjectOffset(list[i]);
                                 arrayDefn.Serializer.Write(this.GR2, this, arrayDefn, list[i]);
                             }
                         }
@@ -626,18 +662,17 @@ namespace LSLib.Granny.GR2
             }
         }
 
-        internal void WriteSectionMixedMarshallingRelocations(Section section)
+        internal void WriteSectionMixedMarshallingRelocations(WritableSection section)
         {
-            /*Stream.Seek(section.Header.mixedMarshallingDataOffset, SeekOrigin.Begin);
-            for (int i = 0; i < section.Header.numMixedMarshallingData; i++)
+            section.Header.numMixedMarshallingData = (UInt32)section.MixedMarshalling.Count;
+            section.Header.mixedMarshallingDataOffset = (UInt32)MainStream.Position;
+
+            foreach (var marshal in section.MixedMarshalling)
             {
-                UInt32 count = Reader.ReadUInt32();
-                UInt32 offsetInSection = Reader.ReadUInt32();
-                Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
-                var type = ReadSectionReference();
-                var typeDefn = new StructReference();
-                typeDefn.Offset = Sections[(int)type.Section].Header.offsetInFile + type.Offset;
-            }*/
+                Writer.Write(marshal.Count);
+                Writer.Write(GR2.ObjectOffsets[marshal.Obj].Offset);
+                WriteSectionReference(GR2.ObjectOffsets[marshal.Type]);
+            }
         }
 
         internal void WriteSectionReference(SectionReference r)
@@ -808,11 +843,6 @@ namespace LSLib.Granny.GR2
                 foreach (var section in Sections)
                 {
                     relocSection.WriteSectionRelocations(section);
-                }
-
-                // TODO: This should be done before applying relocations?
-                foreach (var section in Sections)
-                {
                     relocSection.WriteSectionMixedMarshallingRelocations(section);
                 }
 
@@ -968,6 +998,8 @@ namespace LSLib.Granny.GR2
             serialization.type = type;
             serialization.member = member;
             serialization.obj = obj;
+
+            Sections[(int)serialization.section].CheckMixedMarshalling(obj, type, 1);
             StructWrites.Add(serialization);
         }
 
@@ -983,6 +1015,8 @@ namespace LSLib.Granny.GR2
             serialization.elementType = elementType;
             serialization.member = member;
             serialization.list = list;
+
+            Sections[(int)serialization.section].CheckMixedMarshalling(list[0], elementType, (UInt32)list.Count);
             ArrayWrites.Add(serialization);
         }
 

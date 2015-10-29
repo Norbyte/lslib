@@ -186,6 +186,7 @@ namespace LSLib.Granny.Model.CurveData
         }
     }
 
+    [StructSerialization(MixedMarshal = true)]
     abstract public class AnimationCurveData
     {
         public enum ExportType
