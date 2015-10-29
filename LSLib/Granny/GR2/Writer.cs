@@ -126,7 +126,10 @@ namespace LSLib.Granny.GR2
                 AddFixup(o);
             }
 
-            Writer.Write((UInt32)0);
+            if (GR2.Magic.Is32Bit)
+                Writer.Write((UInt32)0);
+            else
+                Writer.Write((UInt64)0);
         }
 
         public void WriteStructReference(StructDefinition defn)
@@ -141,7 +144,10 @@ namespace LSLib.Granny.GR2
                 }
             }
             
-            Writer.Write((UInt32)0);
+            if (GR2.Magic.Is32Bit)
+                Writer.Write((UInt32)0);
+            else
+                Writer.Write((UInt64)0);
         }
 
         public void WriteStringReference(string s)
@@ -157,7 +163,10 @@ namespace LSLib.Granny.GR2
                 }
             }
 
-            Writer.Write((UInt32)0);
+            if (GR2.Magic.Is32Bit)
+                Writer.Write((UInt32)0);
+            else
+                Writer.Write((UInt64)0);
         }
 
         public void WriteArrayReference(System.Collections.IList list)
@@ -172,7 +181,10 @@ namespace LSLib.Granny.GR2
                 Writer.Write((UInt32)0);
             }
 
-            Writer.Write((UInt32)0);
+            if (GR2.Magic.Is32Bit)
+                Writer.Write((UInt32)0);
+            else
+                Writer.Write((UInt64)0);
         }
 
         public void WriteArrayIndicesReference(System.Collections.IList list)
@@ -188,16 +200,24 @@ namespace LSLib.Granny.GR2
             Writer.Write(defn.ArraySize);
             for (var i = 0; i < MemberDefinition.ExtraTagCount; i++)
                 Writer.Write(defn.Extra[i]);
-            Writer.Write(defn.Unknown);
+            if (GR2.Magic.Is32Bit)
+                Writer.Write(defn.Unknown);
+            else
+                Writer.Write((UInt64)defn.Unknown);
         }
 
         public void WriteStructDefinition(StructDefinition defn)
         {
             Debug.Assert(Writer == MainWriter);
             GR2.ObjectOffsets[defn] = new SectionReference(Type, (UInt32)MainStream.Position);
+
+            var tag = GR2.Header.tag;
             foreach (var member in defn.Members)
             {
-                WriteMemberDefinition(member);
+                if (member.ShouldSerialize(tag))
+                {
+                    WriteMemberDefinition(member);
+                }
             }
 
             var end = new MemberDefinition();
@@ -255,13 +275,17 @@ namespace LSLib.Granny.GR2
             AlignWrite();
             StoreObjectOffset(node);
 
+            var tag = GR2.Header.tag;
             foreach (var member in definition.Members)
             {
-                var value = member.CachedField.GetValue(node);
-                if (member.SerializationKind == SerializationKind.UserRaw)
-                    member.Serializer.Write(this.GR2, this, member, value);
-                else
-                    WriteInstance(member, member.CachedField.FieldType, value);
+                if (member.ShouldSerialize(tag))
+                {
+                    var value = member.CachedField.GetValue(node);
+                    if (member.SerializationKind == SerializationKind.UserRaw)
+                        member.Serializer.Write(this.GR2, this, member, value);
+                    else
+                        WriteInstance(member, member.CachedField.FieldType, value);
+                }
             }
 
             // When the struct is empty, we need to write a dummy byte to make sure that another 
@@ -622,7 +646,13 @@ namespace LSLib.Granny.GR2
         internal HashSet<string> Strings = new HashSet<string>();
 
         // Version tag that will be written to the GR2 file
-        public UInt32 VersionTag = Header.Tag;
+        public UInt32 VersionTag = Header.DefaultTag;
+
+        // Format of the GR2 file
+        public Magic.Format Format = Magic.Format.LittleEndian32;
+
+        // Use alternate GR2 magic value?
+        public bool AlternateMagic = false;
 
         public GR2Writer()
         {
@@ -699,10 +729,10 @@ namespace LSLib.Granny.GR2
         {
             using (this.Writer = new BinaryWriter(Stream))
             {
-                Magic = InitMagic();
+                this.Magic = InitMagic();
                 WriteMagic(Magic);
 
-                Header = InitHeader();
+                this.Header = InitHeader();
                 WriteHeader(Header);
 
                 for (int i = 0; i < Header.numSections; i++)
@@ -797,6 +827,7 @@ namespace LSLib.Granny.GR2
             magic.reserved1 = 0;
             magic.reserved2 = 0;
 
+            magic.SetFormat(Format, AlternateMagic);
             return magic;
         }
 

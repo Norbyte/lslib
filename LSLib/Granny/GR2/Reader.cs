@@ -1,4 +1,5 @@
 ﻿// #define DEBUG_GR2_SERIALIZATION
+// #define DEBUG_GR2_FORMAT_DIFFERENCES
 
 using System;
 using System.IO;
@@ -48,8 +49,8 @@ namespace LSLib.Granny.GR2
             {
                 Magic = ReadMagic();
 
-                if (Magic.format != Magic.Format.LittleEndian32)
-                    throw new ParsingException("Only 32-bit little-endian GR2 files are supported");
+                if (Magic.format != Magic.Format.LittleEndian32 && Magic.format != Magic.Format.LittleEndian64)
+                    throw new ParsingException("Only little-endian GR2 files are supported");
 
                 Header = ReadHeader();
                 for (int i = 0; i < Header.numSections; i++)
@@ -308,21 +309,30 @@ namespace LSLib.Granny.GR2
         public RelocatableReference ReadReference()
         {
             var reference = new RelocatableReference();
-            reference.Offset = Reader.ReadUInt32();
+            if (Magic.Is32Bit)
+                reference.Offset = Reader.ReadUInt32();
+            else
+                reference.Offset = Reader.ReadUInt64();
             return reference;
         }
 
         public StructReference ReadStructReference()
         {
             var reference = new StructReference();
-            reference.Offset = Reader.ReadUInt32();
+            if (Magic.Is32Bit)
+                reference.Offset = Reader.ReadUInt32();
+            else
+                reference.Offset = Reader.ReadUInt64();
             return reference;
         }
 
         public StringReference ReadStringReference()
         {
             var reference = new StringReference();
-            reference.Offset = Reader.ReadUInt32();
+            if (Magic.Is32Bit)
+                reference.Offset = Reader.ReadUInt32();
+            else
+                reference.Offset = Reader.ReadUInt64();
             return reference;
         }
 
@@ -330,7 +340,10 @@ namespace LSLib.Granny.GR2
         {
             var reference = new ArrayReference();
             reference.Size = Reader.ReadUInt32();
-            reference.Offset = Reader.ReadUInt32();
+            if (Magic.Is32Bit)
+                reference.Offset = Reader.ReadUInt32();
+            else
+                reference.Offset = Reader.ReadUInt64();
             return reference;
         }
 
@@ -338,7 +351,10 @@ namespace LSLib.Granny.GR2
         {
             var reference = new ArrayIndicesReference();
             reference.Size = Reader.ReadUInt32();
-            reference.Offset = Reader.ReadUInt32();
+            if (Magic.Is32Bit)
+                reference.Offset = Reader.ReadUInt32();
+            else
+                reference.Offset = Reader.ReadUInt64();
             Debug.Assert(!reference.IsValid || reference.Offset + reference.Size * 4 <= Header.fileSize);
             return reference;
         }
@@ -357,13 +373,20 @@ namespace LSLib.Granny.GR2
             var name = ReadStringReference();
             Debug.Assert(!defn.IsValid || name.IsValid);
             if (defn.IsValid)
+            {
                 defn.Name = name.Resolve(this);
+                defn.GrannyName = defn.Name;
+            }
             defn.Definition = ReadStructReference();
             defn.ArraySize = Reader.ReadUInt32();
             defn.Extra = new UInt32[MemberDefinition.ExtraTagCount];
             for (var i = 0; i < MemberDefinition.ExtraTagCount; i++)
                 defn.Extra[i] = Reader.ReadUInt32();
-            defn.Unknown = Reader.ReadUInt32();
+            // TODO 64-bit: ???
+            if (Magic.Is32Bit)
+                defn.Unknown = Reader.ReadUInt32();
+            else
+                defn.Unknown = (UInt32)Reader.ReadUInt64();
 
             Debug.Assert(defn.Unknown == 0);
 
@@ -440,6 +463,51 @@ namespace LSLib.Granny.GR2
                 // They also cannot be referenced from multiple locations, so caching them is of no use.
                 if (memberType != MemberType.Inline)
                     CachedStructs.Add(offset, node);
+
+#if DEBUG_GR2_FORMAT_DIFFERENCES
+                // Create a struct definition from this instance and check if the GR2 type differs from the local type.
+                var localDefn = new StructDefinition();
+                localDefn.LoadFromType(node.GetType(), null);
+
+                var localMembers = localDefn.Members.Where(m => m.ShouldSerialize(Header.tag)).ToList();
+                var defnMembers = definition.Members.Where(m => m.ShouldSerialize(Header.tag)).ToList();
+
+                if (localMembers.Count != defnMembers.Count)
+                {
+                    Trace.TraceWarning(String.Format("Struct {0} differs: Field count differs ({1} vs {2})", node.GetType().Name, localMembers.Count, defnMembers.Count));
+                }
+                else
+                {
+                    for (int i = 0; i < localMembers.Count; i++)
+                    {
+                        var member = localMembers[i];
+                        var local = defnMembers[i];
+                        if (member.Type != local.Type)
+                        {
+                            Trace.TraceWarning(String.Format(
+                                "Struct {0}: Field {1} type differs ({1} vs {2})",
+                                node.GetType().Name, local.Name, local.Type, member.Type
+                            ));
+                        }
+
+                        if (!member.GrannyName.Equals(local.GrannyName))
+                        {
+                            Trace.TraceWarning(String.Format(
+                                "Struct {0}: Field {1} name differs ({1} vs {2})",
+                                node.GetType().Name, local.Name, local.GrannyName, member.GrannyName
+                            ));
+                        }
+
+                        if (member.ArraySize != local.ArraySize)
+                        {
+                            Trace.TraceWarning(String.Format(
+                                "Struct {0}: Field {1} array size differs ({1} vs {2})",
+                                node.GetType().Name, local.Name, local.ArraySize, member.ArraySize
+                            ));
+                        }
+                    }
+                }
+#endif
 
                 definition.MapType(node);
                 foreach (var member in definition.Members)
@@ -840,7 +908,7 @@ namespace LSLib.Granny.GR2
         {
             Debug.Assert(reference.IsValid);
             Debug.Assert(reference.Offset <= Header.fileSize);
-            Stream.Position = reference.Offset;
+            Stream.Position = (long)reference.Offset;
         }
 
         internal void Seek(UInt32 section, UInt32 offset)

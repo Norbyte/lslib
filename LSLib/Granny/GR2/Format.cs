@@ -139,9 +139,19 @@ namespace LSLib.Granny.GR2
         private static byte[] LittleEndian32Magic = new byte[] { 0x29, 0xDE, 0x6C, 0xC0, 0xBA, 0xA4, 0x53, 0x2B, 0x25, 0xF5, 0xB7, 0xA5, 0xF6, 0x66, 0xE2, 0xEE };
 
         /// <summary>
+        /// Magic value used for little-endian 32-bit Granny files
+        /// </summary>
+        private static byte[] LittleEndian32Magic2 = new byte[] { 0x29, 0x75, 0x31, 0x82, 0xBA, 0x02, 0x11, 0x77, 0x25, 0x3A, 0x60, 0x2F, 0xF6, 0x6A, 0x8C, 0x2E };
+
+        /// <summary>
         /// Magic value used for big-endian 32-bit Granny files
         /// </summary>
         private static byte[] BigEndian32Magic = new byte[] { 0x0E, 0x11, 0x95, 0xB5, 0x6A, 0xA5, 0xB5, 0x4B, 0xEB, 0x28, 0x28, 0x50, 0x25, 0x78, 0xB3, 0x04 };
+
+        /// <summary>
+        /// Magic value used for big-endian 32-bit Granny files
+        /// </summary>
+        private static byte[] BigEndian32Magic2 = new byte[] { 0x0E, 0x74, 0xA2, 0x0A, 0x6A, 0xEB, 0xEB, 0x64, 0xEB, 0x4E, 0x1E, 0xAB, 0x25, 0x91, 0xDB, 0x8F };
 
         /// <summary>
         /// Magic value used for little-endian 64-bit Granny files
@@ -149,9 +159,19 @@ namespace LSLib.Granny.GR2
         private static byte[] LittleEndian64Magic = new byte[] { 0xE5, 0x9B, 0x49, 0x5E, 0x6F, 0x63, 0x1F, 0x14, 0x1E, 0x13, 0xEB, 0xA9, 0x90, 0xBE, 0xED, 0xC4 };
 
         /// <summary>
+        /// Magic value used for little-endian 64-bit Granny files
+        /// </summary>
+        private static byte[] LittleEndian64Magic2 = new byte[] { 0xE5, 0x2F, 0x4A, 0xE1, 0x6F, 0xC2, 0x8A, 0xEE, 0x1E, 0xD2, 0xB4, 0x4C, 0x90, 0xD7, 0x55, 0xAF };
+
+        /// <summary>
         /// Magic value used for big-endian 64-bit Granny files
         /// </summary>
         private static byte[] BigEndian64Magic = new byte[] { 0x31, 0x95, 0xD4, 0xE3, 0x20, 0xDC, 0x4F, 0x62, 0xCC, 0x36, 0xD0, 0x3A, 0xB1, 0x82, 0xFF, 0x89 };
+
+        /// <summary>
+        /// Magic value used for big-endian 64-bit Granny files
+        /// </summary>
+        private static byte[] BigEndian64Magic2 = new byte[] { 0x31, 0xC2, 0x4E, 0x7C, 0x20, 0x40, 0xA3, 0x25, 0xCC, 0xE1, 0xC2, 0x7A, 0xB1, 0x32, 0x49, 0xF3 };
 
         /// <summary>
         /// Size of magic value structure, in bytes
@@ -168,6 +188,22 @@ namespace LSLib.Granny.GR2
             LittleEndian64,
             BigEndian64
         };
+
+        /// <summary>
+        /// Indicates the 32-bitness of the GR2 file.
+        /// </summary>
+        public bool Is32Bit
+        {
+            get { return format == Format.LittleEndian32 || format == Format.BigEndian32; }
+        }
+
+        /// <summary>
+        /// Indicates the 64-bitness of the GR2 file.
+        /// </summary>
+        public bool Is64Bit
+        {
+            get { return format == Format.LittleEndian64 || format == Format.BigEndian64; }
+        }
 
         /// <summary>
         /// Indicates the endianness of the GR2 file.
@@ -205,16 +241,16 @@ namespace LSLib.Granny.GR2
 
         public static Format FormatFromSignature(byte[] sig)
         {
-            if (sig.SequenceEqual(LittleEndian32Magic))
+            if (sig.SequenceEqual(LittleEndian32Magic) || sig.SequenceEqual(LittleEndian32Magic2))
                 return Format.LittleEndian32;
 
-            if (sig.SequenceEqual(BigEndian32Magic))
+            if (sig.SequenceEqual(BigEndian32Magic) || sig.SequenceEqual(BigEndian32Magic2))
                 return Format.BigEndian32;
 
-            if (sig.SequenceEqual(LittleEndian64Magic))
+            if (sig.SequenceEqual(LittleEndian64Magic) || sig.SequenceEqual(LittleEndian64Magic2))
                 return Format.LittleEndian64;
 
-            if (sig.SequenceEqual(BigEndian64Magic))
+            if (sig.SequenceEqual(BigEndian64Magic) || sig.SequenceEqual(BigEndian64Magic2))
                 return Format.BigEndian64;
 
             throw new ParsingException("Incorrect header signature (maybe not a Granny .GR2 file?)");
@@ -240,11 +276,73 @@ namespace LSLib.Granny.GR2
                     throw new ArgumentException();
             }
         }
+
+        public void SetFormat(Format format, bool alternateSignature)
+        {
+            this.format = format;
+
+            if (alternateSignature)
+            {
+                switch (format)
+                {
+                    case Format.LittleEndian32:
+                        this.signature = LittleEndian32Magic2;
+                        break;
+
+                    case Format.LittleEndian64:
+                        this.signature = LittleEndian64Magic2;
+                        break;
+
+                    case Format.BigEndian32:
+                        this.signature = BigEndian32Magic2;
+                        break;
+
+                    case Format.BigEndian64:
+                        this.signature = BigEndian64Magic2;
+                        break;
+                }
+            }
+            else
+            {
+                switch (format)
+                {
+                    case Format.LittleEndian32:
+                        this.signature = LittleEndian32Magic;
+                        break;
+
+                    case Format.LittleEndian64:
+                        this.signature = LittleEndian64Magic;
+                        break;
+
+                    case Format.BigEndian32:
+                        this.signature = BigEndian32Magic;
+                        break;
+
+                    case Format.BigEndian64:
+                        this.signature = BigEndian64Magic;
+                        break;
+                }
+            }
+        }
     }
 
     public class Header
     {
-        public const UInt32 Tag = 0x80000037;
+        /// <summary>
+        /// Default GR2 tag used for serialization (D:OS)
+        /// </summary>
+        public const UInt32 DefaultTag = 0x80000037;
+
+        /// <summary>
+        /// D:OS vanilla version tag
+        /// </summary>
+        public const UInt32 Tag_DOS = 0x80000037;
+
+        /// <summary>
+        /// D:OS EE version tag
+        /// </summary>
+        public const UInt32 Tag_DOSEE = 0x80000039;
+
         /// <summary>
         /// Granny file format we support (currently only version 7)
         /// </summary>
@@ -459,7 +557,7 @@ namespace LSLib.Granny.GR2
         /// <summary>
         /// Offset in bytes from the beginning of the section
         /// </summary>
-        public UInt32 Offset = 0;
+        public UInt64 Offset = 0;
 
         /// <summary>
         /// Returns if the reference points to a valid address within the file
@@ -636,6 +734,14 @@ namespace LSLib.Granny.GR2
         /// (Mainly used to provide a type definition for user-defined serializers)
         /// </summary>
         public Type Prototype;
+        /// <summary>
+        /// Minimum GR2 file version this member should be exported to
+        /// </summary>
+        public UInt32 MinVersion = 0;
+        /// <summary>
+        /// Maximum GR2 file version this member should be exported to
+        /// </summary>
+        public UInt32 MaxVersion = 0;
 
         public bool IsValid
         {
@@ -727,6 +833,12 @@ namespace LSLib.Granny.GR2
             }
         }
 
+        public bool ShouldSerialize(UInt32 version)
+        {
+            return ((MinVersion == 0 || MinVersion <= version) &&
+                (MaxVersion == 0 || MaxVersion >= version));
+        }
+
         private void LoadAttributes(FieldInfo info, GR2Writer writer)
         {
             var attrs = info.GetCustomAttributes(typeof(SerializationAttribute), true);
@@ -760,6 +872,8 @@ namespace LSLib.Granny.GR2
                 Prototype = serialization.Prototype;
                 SerializationKind = serialization.Kind;
                 ArraySize = serialization.ArraySize;
+                MinVersion = serialization.MinVersion;
+                MaxVersion = serialization.MaxVersion;
             }
         }
 
@@ -834,7 +948,7 @@ namespace LSLib.Granny.GR2
                     member.Type = MemberType.Reference; // or Inline?
             }
 
-            if (member.SerializationKind != SerializationKind.None && member.WriteDefinition == null)
+            if (member.SerializationKind != SerializationKind.None && member.WriteDefinition == null && writer != null)
             {
                 if (member.Type == MemberType.Inline || member.Type == MemberType.Reference)
                 {
@@ -1023,6 +1137,14 @@ namespace LSLib.Granny.GR2
         /// Member name in the serialized file
         /// </summary>
         public String Name;
+        /// <summary>
+        /// Minimum GR2 file version this member should be exported to
+        /// </summary>
+        public UInt32 MinVersion = 0;
+        /// <summary>
+        /// Maximum GR2 file version this member should be exported to
+        /// </summary>
+        public UInt32 MaxVersion = 0;
     }
 
     /// <summary>

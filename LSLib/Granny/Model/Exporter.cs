@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.Granny.GR2;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,12 +27,16 @@ namespace LSLib.Granny.Model
         public string OutputPath;
         public ExportFormat OutputFormat;
 
+        public bool Is64Bit = false;
+        public bool AlternateSignature = false;
+        public UInt32 VersionTag = Header.DefaultTag;
         public bool ExportNormals = true; // TODO: UNHANDLED
         public bool ExportTangents = true; // TODO: UNHANDLED
         public bool ExportUVs = true; // TODO: UNHANDLED
         public bool RecalculateNormals = false; // TODO: UNHANDLED
         public bool RecalculateTangents = false; // TODO: UNHANDLED
         public bool RecalculateIWT = false;
+        public bool BuildDummySkeleton = false;
         public bool CompactIndices = false;
         public bool DeduplicateVertices = true; // TODO: Add Collada conforming vert. handling as well
         public bool DeduplicateUVs = true; // TODO: UNHANDLED
@@ -84,6 +89,11 @@ namespace LSLib.Granny.Model
         {
             root.PreSave();
             var writer = new LSLib.Granny.GR2.GR2Writer();
+
+            writer.Format = Options.Is64Bit ? Magic.Format.LittleEndian64 : Magic.Format.LittleEndian32;
+            writer.AlternateMagic = Options.AlternateSignature;
+            writer.VersionTag = Options.VersionTag;
+
 
             if (Options.UseObsoleteVersionTag)
             {
