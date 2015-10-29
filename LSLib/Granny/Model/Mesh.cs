@@ -422,6 +422,7 @@ namespace LSLib.Granny.Model
             // m.BoneBindings; - TODO
 
             m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
+            Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", (isSkinned ? "skinned" : "rigid"), m.PrimaryTopology.Groups.Count, collada.TriangleCount));
 
             return m;
         }

@@ -384,7 +384,10 @@ namespace LSLib.Granny.Model
 
             // TODO: This should be done before deduplication!
             if (!HasNormals)
+            {
+                Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
                 computeNormals();
+            }
 
             ImportUVs();
             if (UVInputIndex != -1)
@@ -423,9 +426,13 @@ namespace LSLib.Granny.Model
 
                     ConsolidatedIndices.Add(consolidatedIndex);
                 }
+
+                Utils.Info(String.Format("Merged {0} vertices into {1} output vertices", Vertices.Count, ConsolidatedVertices.Count));
             }
             else
             {
+                Utils.Info(String.Format("Mesh has no UV map, vertex consolidation step skipped."));
+
                 ConsolidatedVertices = Vertices;
 
                 ConsolidatedIndices = new List<int>(TriangleCount * 3);
@@ -438,7 +445,10 @@ namespace LSLib.Granny.Model
             }
 
             if (!HasTangents)
+            {
+                Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
                 computeTangents();
+            }
         }
 
         public static Matrix4 FloatsToMatrix(float[] items)

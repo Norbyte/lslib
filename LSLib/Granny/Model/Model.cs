@@ -484,7 +484,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public void ImportAnimations(library_animations anims)
+        public void ImportAnimations(IEnumerable<animation> anims)
         {
             var animation = new Animation();
             animation.Name = "Default";
@@ -499,7 +499,7 @@ namespace LSLib.Granny.Model
             trackGroup.InitialPlacement = new Transform();
             trackGroup.AccumulationFlags = 2;
             trackGroup.LoopTranslation = new float[] { 0, 0, 0 };
-            foreach (var colladaTrack in anims.animation)
+            foreach (var colladaTrack in anims)
             {
                 ImportAnimation(colladaTrack, trackGroup);
             }
@@ -537,6 +537,29 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void FindRootBones(node parent, node node, List<node> rootBones)
+        {
+            if (node.type == NodeType.JOINT)
+            {
+                if (parent != null)
+                {
+                    Utils.Warn(String.Format("Joint {0} is not a top level node; parent transformations will be ignored!", node.name != null ? node.name : "(UNNAMED)"));
+                }
+
+                rootBones.Add(node);
+            }
+            else if (node.type == NodeType.NODE)
+            {
+                if (node.node1 != null)
+                {
+                    foreach (var child in node.node1)
+                    {
+                        FindRootBones(node, child, rootBones);
+                    }
+                }
+            }
+        }
+
         public void ImportFromCollada(string inputPath)
         {
             var collada = COLLADA.Load(inputPath);
@@ -554,6 +577,11 @@ namespace LSLib.Granny.Model
             TrackGroups = new List<TrackGroup>();
             Animations = new List<Animation>();
 
+            var collGeometries = new List<geometry>();
+            var collSkins = new List<skin>();
+            var collAnimations = new List<animation>();
+            var rootBones = new List<node>();
+
             // Import skinning controllers after skeleton and geometry loading has finished, as
             // we reference both of them during skin import
             foreach (var item in collada.Items)
@@ -567,16 +595,17 @@ namespace LSLib.Granny.Model
                         {
                             if (controller.Item is skin)
                             {
+                                collSkins.Add(controller.Item as skin);
                                 SkinnedMeshes.Add((controller.Item as skin).source1.Substring(1));
+                            }
+                            else
+                            {
+                                Utils.Warn(String.Format("Controller {0} is unsupported and will be ignored", controller.Item.GetType().Name));
                             }
                         }
                     }
                 }
-            }
-
-            foreach (var item in collada.Items)
-            {
-                if (item is library_visual_scenes)
+                else if (item is library_visual_scenes)
                 {
                     var scenes = item as library_visual_scenes;
                     if (scenes.visual_scene != null)
@@ -585,17 +614,12 @@ namespace LSLib.Granny.Model
                         {
                             foreach (var node in scene.node)
                             {
-                                if (node.type == NodeType.JOINT)
-                                {
-                                    var skeleton = Skeleton.FromCollada(node);
-                                    Skeletons.Add(skeleton);
-                                }
+                                FindRootBones(null, node, rootBones);
                             }
                         }
                     }
                 }
-
-                if (item is library_geometries)
+                else if (item is library_geometries)
                 {
                     var geometries = item as library_geometries;
                     if (geometries.geometry != null)
@@ -604,46 +628,50 @@ namespace LSLib.Granny.Model
                         {
                             if (geometry.Item is mesh)
                             {
-                                bool isSkinned = SkinnedMeshes.Contains(geometry.id);
-                                var mesh = ImportMesh(geometry.name, geometry.Item as mesh, isSkinned);
-                                ColladaGeometries.Add(geometry.id, mesh);
+                                collGeometries.Add(geometry);
                             }
-                        }
-                    }
-                }
-            }
-
-            // Import skinning controllers after skeleton and geometry loading has finished, as
-            // we reference both of them during skin import
-            foreach (var item in collada.Items)
-            {
-                if (item is library_controllers)
-                {
-                    var controllers = item as library_controllers;
-                    if (controllers.controller != null)
-                    {
-                        foreach (var controller in controllers.controller)
-                        {
-                            if (controller.Item is skin)
+                            else
                             {
-                                ImportSkin(controller.Item as skin);
+                                Utils.Warn(String.Format("Geometry type {0} is unsupported and will be ignored", geometry.Item.GetType().Name));
                             }
                         }
                     }
                 }
-            }
-
-            foreach (var item in collada.Items)
-            {
-                if (item is library_animations)
+                else if (item is library_animations)
                 {
                     var animations = item as library_animations;
                     if (animations.animation != null)
                     {
-                        ImportAnimations(animations);
+                        collAnimations.AddRange(animations.animation);
                     }
                 }
+                else
+                {
+                    Utils.Warn(String.Format("Library {0} is unsupported and will be ignored", item.GetType().Name));
+                }
             }
+
+            foreach (var bone in rootBones)
+            {
+                var skeleton = Skeleton.FromCollada(bone);
+                Skeletons.Add(skeleton);
+            }
+
+            foreach (var geometry in collGeometries)
+            {
+                bool isSkinned = SkinnedMeshes.Contains(geometry.id);
+                var mesh = ImportMesh(geometry.name, geometry.Item as mesh, isSkinned);
+                ColladaGeometries.Add(geometry.id, mesh);
+            }
+
+            // Import skinning controllers after skeleton and geometry loading has finished, as
+            // we reference both of them during skin import
+            foreach (var skin in collSkins)
+            {
+                ImportSkin(skin);
+            }
+
+            ImportAnimations(collAnimations);
 
             var rootModel = new Model();
             rootModel.Name = "Unnamed"; // TODO
