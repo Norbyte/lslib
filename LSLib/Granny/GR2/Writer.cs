@@ -682,9 +682,9 @@ namespace LSLib.Granny.GR2
 
                 foreach (var section in Sections)
                 {
-                    // Write alignment
-                    while (Stream.Position % section.Header.alignment > 0)
-                        Writer.Write((Byte)0);
+                    // Pad section size to a multiple of 4
+                    while (section.Stream.Position % 4 > 0)
+                        section.Writer.Write((Byte)0);
 
                     section.Stream.Flush();
                     section.Header.offsetInFile = (UInt32)Stream.Position;
