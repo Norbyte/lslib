@@ -345,6 +345,9 @@ namespace LSLib.Granny.GR2
 
         public MemberDefinition ReadMemberDefinition()
         {
+#if DEBUG_GR2_SERIALIZATION
+            var defnOffset = Stream.Position;
+#endif
             var defn = new MemberDefinition();
             int typeId = Reader.ReadInt32();
             if (typeId > (uint)MemberType.Max)
@@ -373,9 +376,9 @@ namespace LSLib.Granny.GR2
             if (defn.IsValid)
             {
                 if (defn.ArraySize != 0)
-                    description = String.Format("    {0}: {1}[{2}]", defn.Name, defn.Type.ToString(), defn.ArraySize);
+                    description = String.Format("    [{0:X8}] {1}: {2}[{3}]", defnOffset, defn.Name, defn.Type.ToString(), defn.ArraySize);
                 else
-                    description = String.Format("    {0}: {1}", defn.Name, defn.Type.ToString());
+                    description = String.Format("    [{0:X8}] {1}: {2}", defnOffset, defn.Name, defn.Type.ToString());
 
                 if (defn.Definition.IsValid)
                 {

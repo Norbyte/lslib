@@ -194,7 +194,9 @@ namespace LSLib.Granny.Model
         public ArtToolInfo ArtToolInfo;
         public ExporterInfo ExporterInfo;
         public string FromFileName;
+        [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Texture> Textures;
+        [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Material> Materials;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Skeleton> Skeletons;

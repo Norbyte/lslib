@@ -235,12 +235,12 @@ namespace LSLib.Granny.Model
 
     public class TriIndex
     {
-        public int Int32;
+        public Int32 Int32;
     }
 
     public class TriIndex16
     {
-        public int Int16;
+        public Int16 Int16;
     }
 
     public class TriAnnotationSet
@@ -321,6 +321,7 @@ namespace LSLib.Granny.Model
     
     public class MaterialReference
     {
+        public string Usage;
         public Material Map;
     }
 
@@ -366,7 +367,6 @@ namespace LSLib.Granny.Model
     public class Material
     {
         public string Name;
-        public string Usage;
         public List<MaterialReference> Maps;
         public Texture Texture;
         public object ExtendedData;
