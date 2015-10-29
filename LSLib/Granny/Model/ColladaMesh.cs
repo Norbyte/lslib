@@ -131,7 +131,7 @@ namespace LSLib.Granny.Model
 
                 // Calculate handedness
                 var w = (Vector3.Dot(Vector3.Cross(n, t), b) < 0.0F) ? -1.0F : 1.0F;
-                var binormal = Vector3.Cross(n, t) * w;
+                var binormal = (Vector3.Cross(n, t) * w).Normalized();
 
                 v.Tangent = tangent;
                 v.Binormal = binormal;
