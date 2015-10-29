@@ -129,20 +129,22 @@ namespace LSLib.Granny.GR2
             WriteMemberDefinition(end);
         }
 
-        internal void WriteStruct(object node)
+        internal void WriteStruct(object node, bool allowRecursion = true)
         {
-            WriteStruct(node.GetType(), node);
+            WriteStruct(node.GetType(), node, allowRecursion);
         }
 
-        internal void WriteStruct(Type type, object node)
+        internal void WriteStruct(Type type, object node, bool allowRecursion = true)
         {
-            WriteStruct(GR2.LookupStructDefinition(type), node);
+            WriteStruct(GR2.LookupStructDefinition(type), node, allowRecursion);
         }
 
-        internal void WriteStruct(StructDefinition definition, object node)
+        internal void WriteStruct(StructDefinition definition, object node, bool allowRecursion = true)
         {
             if (node == null) throw new ArgumentNullException();
+            Debug.Assert((Stream.Position % 4) == 0);
             GR2.ObjectOffsets[node] = new SectionReference(Type, (UInt32)Stream.Position);
+
             foreach (var member in definition.Members)
             {
                 var value = member.CachedField.GetValue(node);
@@ -157,6 +159,19 @@ namespace LSLib.Granny.GR2
             if (definition.Members.Count == 0)
             {
                 Writer.Write((Byte)0);
+            }
+
+            // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
+            while ((Stream.Position % 4) != 0)
+            {
+                Writer.Write((Byte)0);
+            }
+
+            if (allowRecursion)
+            {
+                // We need to write all child structs directly after the parent struct
+                // (at least this is how granny2.dll does it)
+                GR2.FlushPendingWrites();
             }
         }
 
@@ -198,9 +213,11 @@ namespace LSLib.Granny.GR2
                         {
                             for (int i = 0; i < list.Count; i++)
                             {
-                                WriteStruct(elementType, list[i]);
+                                WriteStruct(elementType, list[i], false);
                             }
                         }
+
+                        GR2.FlushPendingWrites();
 
                         break;
                     }
@@ -273,7 +290,7 @@ namespace LSLib.Granny.GR2
                     if (definition.SerializationKind == SerializationKind.UserMember)
                         definition.Serializer.Write(this.GR2, this, definition, node);
                     else
-                        WriteStruct(type, node);
+                        WriteStruct(type, node, false);
                     break;
 
                 case MemberType.Reference:
@@ -606,6 +623,30 @@ namespace LSLib.Granny.GR2
             Stream.Dispose();
         }
 
+        public void FlushPendingWrites()
+        {
+            var arrayWrites = ArrayWrites;
+            var structWrites = StructWrites;
+            ArrayWrites = new List<QueuedArraySerialization>();
+            StructWrites = new List<QueuedSerialization>();
+
+            foreach (var write in structWrites)
+            {
+                if (!ObjectOffsets.ContainsKey(write.obj))
+                {
+                    Sections[(int)write.section].WriteStruct(write.type, write.obj);
+                }
+            }
+
+            foreach (var write in arrayWrites)
+            {
+                if (!ObjectOffsets.ContainsKey(write.list))
+                {
+                    Sections[(int)write.section].WriteArray(write.member, write.elementType, write.list);
+                }
+            }
+        }
+
         public byte[] Write(object root)
         {
             using (this.Writer = new BinaryWriter(Stream))
@@ -630,26 +671,7 @@ namespace LSLib.Granny.GR2
 
                 while (ArrayWrites.Count > 0 || StructWrites.Count > 0)
                 {
-                    var arrayWrites = ArrayWrites;
-                    var structWrites = StructWrites;
-                    ArrayWrites = new List<QueuedArraySerialization>();
-                    StructWrites = new List<QueuedSerialization>();
-
-                    foreach (var write in arrayWrites)
-                    {
-                        if (!ObjectOffsets.ContainsKey(write.list))
-                        {
-                            Sections[(int)write.section].WriteArray(write.member, write.elementType, write.list);
-                        }
-                    }
-
-                    foreach (var write in structWrites)
-                    {
-                        if (!ObjectOffsets.ContainsKey(write.obj))
-                        {
-                            Sections[(int)write.section].WriteStruct(write.type, write.obj);
-                        }
-                    }
+                    FlushPendingWrites();
                 }
 
                 foreach (var defn in Types.Values)
