@@ -12,20 +12,58 @@ namespace LSLib.Granny.GR2
     public class WritableSection : Section
     {
         public SectionType Type;
-        public MemoryStream Stream;
+        public MemoryStream MainStream;
+        public MemoryStream DataStream;
+
+        public BinaryWriter MainWriter;
+        public BinaryWriter DataWriter;
+
         public BinaryWriter Writer;
+
         public Dictionary<UInt32, object> Fixups = new Dictionary<UInt32, object>();
         public Dictionary<UInt32, string> StringFixups = new Dictionary<UInt32, string>();
         public Dictionary<UInt32, StructDefinition> StructFixups = new Dictionary<UInt32, StructDefinition>();
+
+        // Fixups for the data area that we'll need to update after serialization is finished
+        public Dictionary<UInt32, object> DataFixups = new Dictionary<UInt32, object>();
+        public Dictionary<UInt32, string> DataStringFixups = new Dictionary<UInt32, string>();
+        public Dictionary<UInt32, StructDefinition> DataStructFixups = new Dictionary<UInt32, StructDefinition>();
         public GR2Writer GR2;
 
         public WritableSection(SectionType type, GR2Writer writer)
         {
             Type = type;
-            Stream = new MemoryStream();
-            Writer = new BinaryWriter(Stream);
+            MainStream = new MemoryStream();
+            MainWriter = new BinaryWriter(MainStream);
+
+            DataStream = new MemoryStream();
+            DataWriter = new BinaryWriter(DataStream);
+
+            Writer = MainWriter;
             Header = InitHeader();
             GR2 = writer;
+        }
+
+        public void Finalize()
+        {
+            var dataOffset = (UInt32)MainStream.Length;
+            
+            foreach (var dataFixup in DataFixups)
+            {
+                Fixups.Add(dataFixup.Key + dataOffset, dataFixup.Value);
+            }
+
+            foreach (var stringFixup in DataStringFixups)
+            {
+                StringFixups.Add(stringFixup.Key + dataOffset, stringFixup.Value);
+            }
+
+            foreach (var structFixup in DataStructFixups)
+            {
+                StructFixups.Add(structFixup.Key + dataOffset, structFixup.Value);
+            }
+
+            MainWriter.Write(DataStream.ToArray());
         }
 
         private SectionHeader InitHeader()
@@ -53,7 +91,14 @@ namespace LSLib.Granny.GR2
         {
             if (o != null)
             {
-                Fixups.Add((UInt32)Stream.Position, o);
+                if (Writer == MainWriter)
+                {
+                    Fixups.Add((UInt32)MainStream.Position, o);
+                }
+                else
+                {
+                    DataFixups.Add((UInt32)DataStream.Position, o);
+                }
             }
 
             Writer.Write((UInt32)0);
@@ -63,7 +108,15 @@ namespace LSLib.Granny.GR2
         {
             if (defn != null)
             {
-                StructFixups.Add((UInt32)Stream.Position, defn);
+                if (Writer == MainWriter)
+                {
+                    StructFixups.Add((UInt32)MainStream.Position, defn);
+                }
+                else
+                {
+                    DataStructFixups.Add((UInt32)DataStream.Position, defn);
+                }
+
                 if (!GR2.Types.ContainsKey(defn.Type))
                 {
                     GR2.Types.Add(defn.Type, defn);
@@ -77,8 +130,20 @@ namespace LSLib.Granny.GR2
         {
             if (s != null)
             {
-                GR2.Strings.Add(s);
-                StringFixups.Add((UInt32)Stream.Position, s);
+                if (Writer == MainWriter)
+                {
+                    StringFixups.Add((UInt32)MainStream.Position, s);
+                }
+                else
+                {
+                    DataStringFixups.Add((UInt32)DataStream.Position, s);
+                }
+
+                if (!GR2.Strings.Contains(s))
+                {
+                    GR2.Strings.Add(s);
+                    GR2.QueueStringWrite(SectionType.Main, s);
+                }
             }
 
             Writer.Write((UInt32)0);
@@ -89,7 +154,14 @@ namespace LSLib.Granny.GR2
             if (list != null && list.Count > 0)
             {
                 Writer.Write((UInt32)list.Count);
-                Fixups.Add((UInt32)Stream.Position, list);
+                if (Writer == MainWriter)
+                {
+                    Fixups.Add((UInt32)MainStream.Position, list);
+                }
+                else
+                {
+                    DataFixups.Add((UInt32)DataStream.Position, list);
+                }
             }
             else
             {
@@ -117,7 +189,8 @@ namespace LSLib.Granny.GR2
 
         public void WriteStructDefinition(StructDefinition defn)
         {
-            GR2.TypeOffsets[defn] = new SectionReference(Type, (UInt32)Stream.Position);
+            Debug.Assert(Writer == MainWriter);
+            GR2.TypeOffsets[defn] = new SectionReference(Type, (UInt32)MainStream.Position);
             foreach (var member in defn.Members)
             {
                 WriteMemberDefinition(member);
@@ -139,11 +212,39 @@ namespace LSLib.Granny.GR2
             WriteStruct(GR2.LookupStructDefinition(type), node, allowRecursion);
         }
 
+        internal void StoreObjectOffset(object o)
+        {
+            if (Writer == MainWriter)
+            {
+                GR2.ObjectOffsets[o] = new SectionReference(Type, (UInt32)MainStream.Position);
+            }
+            else
+            {
+                GR2.DataObjectOffsets[o] = new SectionReference(Type, (UInt32)DataStream.Position);
+            }
+        }
+
         internal void WriteStruct(StructDefinition definition, object node, bool allowRecursion = true)
         {
             if (node == null) throw new ArgumentNullException();
-            Debug.Assert((Stream.Position % 4) == 0);
-            GR2.ObjectOffsets[node] = new SectionReference(Type, (UInt32)Stream.Position);
+            if (Writer == MainWriter)
+            {
+                // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
+                while ((MainStream.Position % 4) != 0)
+                {
+                    Writer.Write((Byte)0);
+                }
+            }
+            else
+            {
+                // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
+                while ((DataStream.Position % 4) != 0)
+                {
+                    Writer.Write((Byte)0);
+                }
+            }
+
+            StoreObjectOffset(node);
 
             foreach (var member in definition.Members)
             {
@@ -161,13 +262,7 @@ namespace LSLib.Granny.GR2
                 Writer.Write((Byte)0);
             }
 
-            // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
-            while ((Stream.Position % 4) != 0)
-            {
-                Writer.Write((Byte)0);
-            }
-
-            if (allowRecursion)
+            if (Writer == MainWriter && allowRecursion)
             {
                 // We need to write all child structs directly after the parent struct
                 // (at least this is how granny2.dll does it)
@@ -184,7 +279,7 @@ namespace LSLib.Granny.GR2
                         // Serializing as a struct member is nooooot a very good idea here.
                         // Debug.Assert(kind != SerializationKind.UserMember);
 
-                        GR2.ObjectOffsets[list] = new SectionReference(Type, (UInt32)Stream.Position);
+                        StoreObjectOffset(list);
                         for (int i = 0; i < list.Count; i++)
                         {
                             WriteReference(list[i]);
@@ -197,7 +292,7 @@ namespace LSLib.Granny.GR2
                 case MemberType.ReferenceToArray:
                 case MemberType.ReferenceToVariantArray:
                     {
-                        GR2.ObjectOffsets[list] = new SectionReference(Type, (UInt32)Stream.Position);
+                        StoreObjectOffset(list);
                         if (arrayDefn.SerializationKind == SerializationKind.UserMember)
                         {
                             arrayDefn.Serializer.Write(this.GR2, this, arrayDefn, list);
@@ -529,16 +624,16 @@ namespace LSLib.Granny.GR2
 
         internal void WriteString(string s)
         {
-            GR2.StringOffsets[s] = new SectionReference(Type, (UInt32)Stream.Position);
+            GR2.DataStringOffsets[s] = new SectionReference(Type, (UInt32)DataStream.Position);
             var bytes = Encoding.UTF8.GetBytes(s);
-            Writer.Write(bytes);
-            Writer.Write((Byte)0);
+            DataWriter.Write(bytes);
+            DataWriter.Write((Byte)0);
         }
 
         internal void WriteSectionRelocations(WritableSection section)
         {
             section.Header.numRelocations = (UInt32)(section.StringFixups.Count + section.StructFixups.Count + section.Fixups.Count);
-            section.Header.relocationsOffset = (UInt32)Stream.Position;
+            section.Header.relocationsOffset = (UInt32)MainStream.Position;
 
             foreach (var fixup in section.StructFixups)
             {
@@ -598,6 +693,12 @@ namespace LSLib.Granny.GR2
             public System.Collections.IList list;
         }
 
+        struct QueuedStringSerialization
+        {
+            public SectionType section;
+            public String str;
+        }
+
         internal MemoryStream Stream;
         internal BinaryWriter Writer;
         internal Magic Magic;
@@ -605,12 +706,17 @@ namespace LSLib.Granny.GR2
         internal WritableSection CurrentSection;
         internal List<WritableSection> Sections = new List<WritableSection>();
         internal Dictionary<Type, StructDefinition> Types = new Dictionary<Type, StructDefinition>();
+
         private List<QueuedSerialization> StructWrites = new List<QueuedSerialization>();
         private List<QueuedArraySerialization> ArrayWrites = new List<QueuedArraySerialization>();
+        private List<QueuedStringSerialization> StringWrites = new List<QueuedStringSerialization>();
 
         internal Dictionary<StructDefinition, SectionReference> TypeOffsets = new Dictionary<StructDefinition, SectionReference>();
         internal Dictionary<object, SectionReference> ObjectOffsets = new Dictionary<object, SectionReference>();
         internal Dictionary<string, SectionReference> StringOffsets = new Dictionary<string, SectionReference>();
+
+        internal Dictionary<object, SectionReference> DataObjectOffsets = new Dictionary<object, SectionReference>();
+        internal Dictionary<string, SectionReference> DataStringOffsets = new Dictionary<string, SectionReference>();
         internal HashSet<string> Strings = new HashSet<string>();
 
         public GR2Writer()
@@ -627,8 +733,10 @@ namespace LSLib.Granny.GR2
         {
             var arrayWrites = ArrayWrites;
             var structWrites = StructWrites;
+            var stringWrites = StringWrites;
             ArrayWrites = new List<QueuedArraySerialization>();
             StructWrites = new List<QueuedSerialization>();
+            StringWrites = new List<QueuedStringSerialization>();
 
             foreach (var write in structWrites)
             {
@@ -644,6 +752,26 @@ namespace LSLib.Granny.GR2
                 {
                     Sections[(int)write.section].WriteArray(write.member, write.elementType, write.list);
                 }
+            }
+
+            foreach (var write in stringWrites)
+            {
+                Sections[(int)write.section].WriteString(write.str);
+            }
+        }
+
+        internal void FinalizeOffsets()
+        {
+            foreach (var offset in DataObjectOffsets)
+            {
+                offset.Value.Offset += (UInt32)Sections[(int)offset.Value.Section].MainStream.Length;
+                ObjectOffsets.Add(offset.Key, offset.Value);
+            }
+
+            foreach (var offset in DataStringOffsets)
+            {
+                offset.Value.Offset += (UInt32)Sections[(int)offset.Value.Section].MainStream.Length;
+                StringOffsets.Add(offset.Key, offset.Value);
             }
         }
 
@@ -669,7 +797,7 @@ namespace LSLib.Granny.GR2
                 CurrentSection = Sections[(int)SectionType.Main];
                 CurrentSection.WriteStruct(root);
 
-                while (ArrayWrites.Count > 0 || StructWrites.Count > 0)
+                while (ArrayWrites.Count > 0 || StructWrites.Count > 0 || StringWrites.Count > 0)
                 {
                     FlushPendingWrites();
                 }
@@ -679,15 +807,16 @@ namespace LSLib.Granny.GR2
                     Sections[(int)SectionType.Discardable].WriteStructDefinition(defn);
                 }
 
+                // We need to do this again to flush strings written by WriteMemberDefinition()
+                FlushPendingWrites();
+
+                FinalizeOffsets();
+
                 foreach (var section in Sections)
                 {
-                    section.Header.secondaryDataOffset = (UInt32)section.Stream.Length;
-                    section.Header.secondaryDataOffset2 = (UInt32)section.Stream.Length;
-                }
-
-                foreach (var s in Strings)
-                {
-                    Sections[(int)SectionType.Main].WriteString(s);
+                    section.Header.secondaryDataOffset = (UInt32)section.MainStream.Length;
+                    section.Header.secondaryDataOffset2 = (UInt32)section.MainStream.Length;
+                    section.Finalize();
                 }
 
                 var relocSection = Sections[(int)SectionType.Discardable];
@@ -705,14 +834,14 @@ namespace LSLib.Granny.GR2
                 foreach (var section in Sections)
                 {
                     // Pad section size to a multiple of 4
-                    while (section.Stream.Position % 4 > 0)
+                    while (section.MainStream.Position % 4 > 0)
                         section.Writer.Write((Byte)0);
 
-                    section.Stream.Flush();
+                    section.MainStream.Flush();
                     section.Header.offsetInFile = (UInt32)Stream.Position;
-                    section.Header.uncompressedSize = (UInt32)section.Stream.Length;
-                    section.Header.compressedSize = (UInt32)section.Stream.Length;
-                    Writer.Write(section.Stream.ToArray());
+                    section.Header.uncompressedSize = (UInt32)section.MainStream.Length;
+                    section.Header.compressedSize = (UInt32)section.MainStream.Length;
+                    Writer.Write(section.MainStream.ToArray());
                 }
 
                 foreach (var section in Sections)
@@ -775,7 +904,7 @@ namespace LSLib.Granny.GR2
             header.rootType = new SectionReference(); // Updated after serialization is finished
             header.rootNode = new SectionReference(); // Updated after serialization is finished
             header.numSections = (UInt32)SectionType.Max + 1;
-            header.tag = Header.Tag - 1; // Use an obsolete version tag to prevent Granny from memory mapping the structs
+            header.tag = Header.Tag; // Use an obsolete version tag to prevent Granny from memory mapping the structs
             header.extraTags = new UInt32[Header.ExtraTagCount];
             for (int i = 0; i < Header.ExtraTagCount; i++)
                 header.extraTags[i] = 0;
@@ -868,6 +997,14 @@ namespace LSLib.Granny.GR2
             serialization.member = member;
             serialization.list = list;
             ArrayWrites.Add(serialization);
+        }
+
+        internal void QueueStringWrite(SectionType section, String s)
+        {
+            QueuedStringSerialization serialization;
+            serialization.section = section;
+            serialization.str = s;
+            StringWrites.Add(serialization);
         }
 
         /*internal void Seek(SectionReference reference)
