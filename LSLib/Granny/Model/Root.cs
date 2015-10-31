@@ -169,22 +169,19 @@ namespace LSLib.Granny.Model
                         ArtToolInfo.FromArtToolName = contributor.authoring_tool;
                 }
 
-                if (collada.asset.up_axis != null)
+                switch (collada.asset.up_axis)
                 {
-                    switch (collada.asset.up_axis)
-                    {
-                        case UpAxisType.X_UP:
-                            throw new Exception("X-up not supported yet!");
+                    case UpAxisType.X_UP:
+                        throw new Exception("X-up not supported yet!");
 
-                        case UpAxisType.Y_UP:
-                            ArtToolInfo.SetYUp();
-                            break;
+                    case UpAxisType.Y_UP:
+                        ArtToolInfo.SetYUp();
+                        break;
 
-                        case UpAxisType.Z_UP:
-                            ZUp = true;
-                            ArtToolInfo.SetZUp();
-                            break;
-                    }
+                    case UpAxisType.Z_UP:
+                        ZUp = true;
+                        ArtToolInfo.SetZUp();
+                        break;
                 }
             }
         }

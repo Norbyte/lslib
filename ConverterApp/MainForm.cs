@@ -167,7 +167,7 @@ namespace ConverterApp
 
         private void UpdateExporterSettings(ExporterOptions settings)
         {
-            settings.InputPath = inputFileDlg.FileName;
+            settings.InputPath = inputPath.Text;
             if (settings.InputPath.Substring(settings.InputPath.Length - 4).ToLower() == ".gr2")
             {
                 settings.InputFormat = ExportFormat.GR2;
@@ -177,7 +177,7 @@ namespace ConverterApp
                 settings.InputFormat = ExportFormat.DAE;
             }
 
-            settings.OutputPath = outputFileDlg.FileName;
+            settings.OutputPath = outputPath.Text;
             if (settings.OutputPath.Substring(settings.OutputPath.Length - 4).ToLower() == ".gr2")
             {
                 settings.OutputFormat = ExportFormat.GR2;

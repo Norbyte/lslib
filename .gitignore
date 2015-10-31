@@ -33,6 +33,7 @@
 *.suo
 *.sdf
 *.psess
+*.opensdf
 
 /ipch
 /Debug
@@ -47,3 +48,4 @@
 /external/bullet-2.77
 /LSLibNative
 /TestApp
+/packages

@@ -1,9 +1,9 @@
-﻿using LZ4;
+﻿using zlib;
+using LZ4;
 using LSLib.Granny;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -37,6 +37,13 @@ namespace LSLib.LS
         None = 0,
         Zlib = 1,
         LZ4 = 2
+    };
+
+    public enum CompressionLevel
+    {
+        FastCompression,
+        DefaultCompression,
+        MaxCompression
     };
 
     public enum CompressionFlags
@@ -91,6 +98,16 @@ namespace LSLib.LS
                 throw new InvalidDataException(msg);
             }
 
+            var computedCrc = Crc32.Compute(compressed);
+            if (computedCrc != Crc)
+            {
+                var msg = String.Format(
+                    "CRC check failed on file '{0}', archive is possibly corrupted. Expected {1,8:X}, got {2,8:X}",
+                    Name, Crc, computedCrc
+                );
+                throw new InvalidDataException(msg);
+            }
+
             switch ((CompressionMethod)(this.Flags & 0x0F))
             {
                 case CompressionMethod.None:
@@ -99,21 +116,20 @@ namespace LSLib.LS
 
                 case CompressionMethod.Zlib:
                     {
-                        // Skip the first 2 Zlib header bytes
-                        var compressedStream = new MemoryStream(compressed, 2, compressed.Length - 2);
-                        var decompressedStream = new MemoryStream();
-                        var stream = new DeflateStream(compressedStream, CompressionMode.Decompress);
-                        byte[] buf = new byte[0x10000];
-                        int length = 0;
-                        while ((length = stream.Read(buf, 0, buf.Length)) > 0)
+                        using (var compressedStream = new MemoryStream(compressed))
+                        using (var decompressedStream = new MemoryStream())
+                        using (var stream = new ZInputStream(compressedStream))
                         {
-                            decompressedStream.Write(buf, 0, length);
+                            byte[] buf = new byte[0x10000];
+                            int length = 0;
+                            while ((length = stream.read(buf, 0, buf.Length)) > 0)
+                            {
+                                decompressedStream.Write(buf, 0, length);
+                            }
+
+                            uncompressed = decompressedStream.ToArray();
                         }
 
-                        stream.Dispose();
-                        compressedStream.Dispose();
-                        decompressedStream.Dispose();
-                        uncompressed = decompressedStream.ToArray();
                         break;
                     }
 
@@ -168,7 +184,7 @@ namespace LSLib.LS
         {
             var entry = new FileEntry13();
             entry.Name = new byte[256];
-            var encodedName = Encoding.UTF8.GetBytes(Name);
+            var encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
             Array.Copy(encodedName, entry.Name, encodedName.Length);
 
             entry.OffsetInFile = OffsetInFile;
@@ -315,7 +331,7 @@ namespace LSLib.LS
             var writer = new PackageWriter(package, packagePath);
             writer.writeProgress += WriteProgressUpdate;
             writer.Compression = compression;
-            writer.FastCompression = fastCompression;
+            writer.CompressionLevel = fastCompression ? LS.CompressionLevel.FastCompression : LS.CompressionLevel.DefaultCompression;
             writer.Write();
             writer.Dispose();
         }
@@ -326,7 +342,7 @@ namespace LSLib.LS
         public delegate void WriteProgressDelegate(FileInfo file, long numerator, long denominator);
         public WriteProgressDelegate writeProgress = delegate { };
         public CompressionMethod Compression = CompressionMethod.None;
-        public bool FastCompression = true;
+        public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
 
         private static long MaxPackageSize = 0x40000000;
 
@@ -358,50 +374,47 @@ namespace LSLib.LS
             writer.Write(writeBuffer);
         }
 
-        public UInt32 WriteFileNoCompression(BinaryReader reader, Stream outputStream)
+        public void WriteFileNoCompression(BinaryReader reader, Stream outputStream)
         {
-            var crc = new Crc32();
-            crc.Initialize();
-
             byte[] buf = new byte[0x10000];
             int length = 0;
             while ((length = reader.Read(buf, 0, buf.Length)) > 0)
             {
-                crc.TransformBlock(buf, 0, length, buf, 0);
                 outputStream.Write(buf, 0, length);
             }
-
-            byte[] dummy = new byte[] { };
-            crc.TransformFinalBlock(dummy, 0, 0);
-            return BitConverter.ToUInt32(crc.Hash, 0);
         }
 
-        public UInt32 WriteFileZlib(BinaryReader reader, Stream outputStream)
+        public void WriteFileZlib(BinaryReader reader, Stream outputStream)
         {
-            var crc = new Crc32();
-            crc.Initialize();
+            int level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
+            switch (CompressionLevel)
+            {
+                case LS.CompressionLevel.FastCompression:
+                    level = zlib.zlibConst.Z_BEST_SPEED;
+                    break;
 
-            byte[] zlibHeader = new byte[] { 0x78, 0x9C };
-            crc.TransformBlock(zlibHeader, 0, zlibHeader.Length, zlibHeader, 0);
-            outputStream.Write(zlibHeader, 0, zlibHeader.Length);
+                case LS.CompressionLevel.DefaultCompression:
+                    level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
+                    break;
 
-            var deflator = new DeflateStream(outputStream, FastCompression ? CompressionLevel.Fastest : CompressionLevel.Optimal, true);
+                case LS.CompressionLevel.MaxCompression:
+                    level = zlib.zlibConst.Z_BEST_COMPRESSION;
+                    break;
+            }
+
+            var compressor = new ZOutputStream(outputStream, level);
             byte[] buf = new byte[0x10000];
             int length = 0;
             while ((length = reader.Read(buf, 0, buf.Length)) > 0)
             {
-                crc.TransformBlock(buf, 0, length, buf, 0);
-                deflator.Write(buf, 0, length);
+                compressor.Write(buf, 0, length);
             }
 
-            deflator.Dispose();
-
-            byte[] dummy = new byte[] { };
-            crc.TransformFinalBlock(dummy, 0, 0);
-            return BitConverter.ToUInt32(crc.Hash, 0);
+            compressor.finish();
+            compressor.Dispose();
         }
 
-        public UInt32 WriteFileLZ4(BinaryReader reader, Stream outputStream)
+        public void WriteFileLZ4(BinaryReader reader, Stream outputStream)
         {
             const int bufferSize = 0x40000;
             var inputStream = new MemoryStream();
@@ -413,7 +426,7 @@ namespace LSLib.LS
             inputStream.Dispose();
 
             byte[] output = null;
-            if (FastCompression)
+            if (CompressionLevel == LS.CompressionLevel.FastCompression)
             {
                 output = LZ4Codec.Encode(input, 0, input.Length);
             }
@@ -423,22 +436,23 @@ namespace LSLib.LS
             }
 
             outputStream.Write(output, 0, output.Length);
-
-            return Crc32.Compute(input);
         }
 
-        public UInt32 WriteFileToStream(BinaryReader reader, Stream outputStream)
+        public void WriteFileToStream(BinaryReader reader, Stream outputStream)
         {
             switch (Compression)
             {
                 case CompressionMethod.None:
-                    return WriteFileNoCompression(reader, outputStream);
+                    WriteFileNoCompression(reader, outputStream);
+                    break;
 
                 case CompressionMethod.Zlib:
-                    return WriteFileZlib(reader, outputStream);
+                    WriteFileZlib(reader, outputStream);
+                    break;
 
                 case CompressionMethod.LZ4:
-                    return WriteFileLZ4(reader, outputStream);
+                    WriteFileLZ4(reader, outputStream);
+                    break;
 
                 default:
                     throw new ArgumentException("Invalid compression method specified");
@@ -468,21 +482,36 @@ namespace LSLib.LS
             if (Compression == CompressionMethod.None)
                 packaged.Flags = 0;
             else if (Compression == CompressionMethod.Zlib)
-                packaged.Flags = 0x21;
+                packaged.Flags = 0x1;
             else if (Compression == CompressionMethod.LZ4)
-                packaged.Flags = 0x42;
+                packaged.Flags = 0x2;
+
+            if (CompressionLevel == CompressionLevel.FastCompression)
+                packaged.Flags |= 0x10;
+            else if (CompressionLevel == CompressionLevel.DefaultCompression)
+                packaged.Flags |= 0x20;
+            else if (CompressionLevel == CompressionLevel.MaxCompression)
+                packaged.Flags |= 0x40;
 
             var reader = info.MakeReader();
-            var crc = WriteFileToStream(reader, stream);
+            var compressedStream = new MemoryStream();
+            WriteFileToStream(reader, compressedStream);
+            var compressedData = compressedStream.ToArray();
+            stream.Write(compressedData, 0, compressedData.Length);
             reader.Dispose();
 
             packaged.SizeOnDisk = (UInt32)(stream.Position - packaged.OffsetInFile);
-            packaged.Crc = crc;
+            packaged.Crc = Crc32.Compute(compressedData);
 
             if (stream.Position % 0x40 > 0)
             {
                 // Pad the file to a multiple of 64 bytes
                 byte[] pad = new byte[0x40 - (stream.Position % 0x40)];
+                for (int i = 0; i < pad.Length; i++)
+                {
+                    pad[i] = 0xAD;
+                }
+
                 stream.Write(pad, 0, pad.Length);
             }
 
