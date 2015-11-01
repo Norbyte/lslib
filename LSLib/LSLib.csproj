@@ -92,8 +92,10 @@
     <Compile Include="Granny\Model\VertexFormats\PWNGBT343332.cs" />
     <Compile Include="Granny\Model\VertexFormats\PWNT3432.cs" />
     <Compile Include="Granny\Utils.cs" />
+    <Compile Include="LS\BinUtils.cs" />
     <Compile Include="LS\LSBReader.cs" />
     <Compile Include="LS\LSBWriter.cs" />
+    <Compile Include="LS\LSFReader.cs" />
     <Compile Include="LS\LSXReader.cs" />
     <Compile Include="LS\LSXWriter.cs" />
     <Compile Include="LS\Matrix.cs" />

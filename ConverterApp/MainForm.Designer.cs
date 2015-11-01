@@ -33,7 +33,6 @@
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.gr2Tab = new System.Windows.Forms.TabPage();
-            this.packageTab = new System.Windows.Forms.TabPage();
             this.saveOutputBtn = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -49,6 +48,8 @@
             this.deduplicateVertices = new System.Windows.Forms.CheckBox();
             this.recalculateNormals = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.gr2Game = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.applyBasisTransforms = new System.Windows.Forms.CheckBox();
             this.conformantSkeletonBrowseBtn = new System.Windows.Forms.Button();
             this.conformantSkeletonPath = new System.Windows.Forms.TextBox();
@@ -64,29 +65,40 @@
             this.inputFileBrowseBtn = new System.Windows.Forms.Button();
             this.lblSrcPath = new System.Windows.Forms.Label();
             this.inputPath = new System.Windows.Forms.TextBox();
-            this.extractPackageBtn = new System.Windows.Forms.Button();
+            this.packageTab = new System.Windows.Forms.TabPage();
+            this.compressionMethod = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             this.exportPathBrowseBtn = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
-            this.extractionPath = new System.Windows.Forms.TextBox();
             this.packageBrowseBtn = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
-            this.packagePath = new System.Windows.Forms.TextBox();
-            this.packageFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.exportPathDlg = new System.Windows.Forms.FolderBrowserDialog();
-            this.packageProgress = new System.Windows.Forms.ProgressBar();
-            this.label5 = new System.Windows.Forms.Label();
             this.packageProgressLabel = new System.Windows.Forms.Label();
             this.createPackageBtn = new System.Windows.Forms.Button();
-            this.label6 = new System.Windows.Forms.Label();
-            this.compressionMethod = new System.Windows.Forms.ComboBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.gr2Game = new System.Windows.Forms.ComboBox();
+            this.packageProgress = new System.Windows.Forms.ProgressBar();
+            this.label5 = new System.Windows.Forms.Label();
+            this.packagePath = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.extractPackageBtn = new System.Windows.Forms.Button();
+            this.extractionPath = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.packageFileDlg = new System.Windows.Forms.OpenFileDialog();
+            this.exportPathDlg = new System.Windows.Forms.FolderBrowserDialog();
+            this.objectTab = new System.Windows.Forms.TabPage();
+            this.resourceOutputBrowseBtn = new System.Windows.Forms.Button();
+            this.resourceInputBrowseBtn = new System.Windows.Forms.Button();
+            this.resourceLoadBtn = new System.Windows.Forms.Button();
+            this.resourceInputPath = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.resourceSaveBtn = new System.Windows.Forms.Button();
+            this.resourceOutputPath = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.resourceInputFileDlg = new System.Windows.Forms.OpenFileDialog();
+            this.resourceOutputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
-            this.packageTab.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.packageTab.SuspendLayout();
+            this.objectTab.SuspendLayout();
             this.SuspendLayout();
             // 
             // inputFileDlg
@@ -112,6 +124,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.gr2Tab);
             this.tabControl.Controls.Add(this.packageTab);
+            this.tabControl.Controls.Add(this.objectTab);
             this.tabControl.Location = new System.Drawing.Point(12, 12);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
@@ -137,29 +150,6 @@
             this.gr2Tab.TabIndex = 0;
             this.gr2Tab.Text = "GR2 Tools";
             this.gr2Tab.UseVisualStyleBackColor = true;
-            // 
-            // packageTab
-            // 
-            this.packageTab.Controls.Add(this.compressionMethod);
-            this.packageTab.Controls.Add(this.label6);
-            this.packageTab.Controls.Add(this.exportPathBrowseBtn);
-            this.packageTab.Controls.Add(this.packageBrowseBtn);
-            this.packageTab.Controls.Add(this.packageProgressLabel);
-            this.packageTab.Controls.Add(this.createPackageBtn);
-            this.packageTab.Controls.Add(this.packageProgress);
-            this.packageTab.Controls.Add(this.label5);
-            this.packageTab.Controls.Add(this.packagePath);
-            this.packageTab.Controls.Add(this.label4);
-            this.packageTab.Controls.Add(this.extractPackageBtn);
-            this.packageTab.Controls.Add(this.extractionPath);
-            this.packageTab.Controls.Add(this.label3);
-            this.packageTab.Location = new System.Drawing.Point(4, 22);
-            this.packageTab.Name = "packageTab";
-            this.packageTab.Padding = new System.Windows.Forms.Padding(3);
-            this.packageTab.Size = new System.Drawing.Size(909, 603);
-            this.packageTab.TabIndex = 1;
-            this.packageTab.Text = "PAK / LSV Tools";
-            this.packageTab.UseVisualStyleBackColor = true;
             // 
             // saveOutputBtn
             // 
@@ -349,6 +339,30 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "GR2 Export Options";
             // 
+            // gr2Game
+            // 
+            this.gr2Game.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2Game.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.gr2Game.FormattingEnabled = true;
+            this.gr2Game.Items.AddRange(new object[] {
+            "Divinity: Original Sin (32-bit)",
+            "Divinity: Original Sin EE (64-bit)"});
+            this.gr2Game.Location = new System.Drawing.Point(78, 20);
+            this.gr2Game.Name = "gr2Game";
+            this.gr2Game.Size = new System.Drawing.Size(356, 21);
+            this.gr2Game.TabIndex = 28;
+            this.gr2Game.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(16, 22);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(55, 13);
+            this.label7.TabIndex = 27;
+            this.label7.Text = "Export for:";
+            // 
             // applyBasisTransforms
             // 
             this.applyBasisTransforms.AutoSize = true;
@@ -502,16 +516,52 @@
             this.inputPath.Size = new System.Drawing.Size(650, 20);
             this.inputPath.TabIndex = 25;
             // 
-            // extractPackageBtn
+            // packageTab
             // 
-            this.extractPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.extractPackageBtn.Location = new System.Drawing.Point(725, 62);
-            this.extractPackageBtn.Name = "extractPackageBtn";
-            this.extractPackageBtn.Size = new System.Drawing.Size(151, 23);
-            this.extractPackageBtn.TabIndex = 41;
-            this.extractPackageBtn.Text = "Extract Package";
-            this.extractPackageBtn.UseVisualStyleBackColor = true;
-            this.extractPackageBtn.Click += new System.EventHandler(this.extractPackageBtn_Click);
+            this.packageTab.Controls.Add(this.compressionMethod);
+            this.packageTab.Controls.Add(this.label6);
+            this.packageTab.Controls.Add(this.exportPathBrowseBtn);
+            this.packageTab.Controls.Add(this.packageBrowseBtn);
+            this.packageTab.Controls.Add(this.packageProgressLabel);
+            this.packageTab.Controls.Add(this.createPackageBtn);
+            this.packageTab.Controls.Add(this.packageProgress);
+            this.packageTab.Controls.Add(this.label5);
+            this.packageTab.Controls.Add(this.packagePath);
+            this.packageTab.Controls.Add(this.label4);
+            this.packageTab.Controls.Add(this.extractPackageBtn);
+            this.packageTab.Controls.Add(this.extractionPath);
+            this.packageTab.Controls.Add(this.label3);
+            this.packageTab.Location = new System.Drawing.Point(4, 22);
+            this.packageTab.Name = "packageTab";
+            this.packageTab.Padding = new System.Windows.Forms.Padding(3);
+            this.packageTab.Size = new System.Drawing.Size(909, 603);
+            this.packageTab.TabIndex = 1;
+            this.packageTab.Text = "PAK / LSV Tools";
+            this.packageTab.UseVisualStyleBackColor = true;
+            // 
+            // compressionMethod
+            // 
+            this.compressionMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.compressionMethod.FormattingEnabled = true;
+            this.compressionMethod.Items.AddRange(new object[] {
+            "No compression",
+            "Zlib Fast",
+            "Zlib Optimal",
+            "LZ4",
+            "LZ4 HC"});
+            this.compressionMethod.Location = new System.Drawing.Point(9, 114);
+            this.compressionMethod.Name = "compressionMethod";
+            this.compressionMethod.Size = new System.Drawing.Size(187, 21);
+            this.compressionMethod.TabIndex = 47;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(6, 97);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(70, 13);
+            this.label6.TabIndex = 46;
+            this.label6.Text = "Compression:";
             // 
             // exportPathBrowseBtn
             // 
@@ -524,24 +574,6 @@
             this.exportPathBrowseBtn.UseVisualStyleBackColor = true;
             this.exportPathBrowseBtn.Click += new System.EventHandler(this.exportPathBrowseBtn_Click);
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(6, 49);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(121, 13);
-            this.label3.TabIndex = 39;
-            this.label3.Text = "Extracion / source path:";
-            // 
-            // extractionPath
-            // 
-            this.extractionPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.extractionPath.Location = new System.Drawing.Point(9, 65);
-            this.extractionPath.Name = "extractionPath";
-            this.extractionPath.Size = new System.Drawing.Size(650, 20);
-            this.extractionPath.TabIndex = 38;
-            // 
             // packageBrowseBtn
             // 
             this.packageBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -552,47 +584,6 @@
             this.packageBrowseBtn.Text = "...";
             this.packageBrowseBtn.UseVisualStyleBackColor = true;
             this.packageBrowseBtn.Click += new System.EventHandler(this.packageBrowseBtn_Click);
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(6, 3);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(77, 13);
-            this.label4.TabIndex = 36;
-            this.label4.Text = "Package path:";
-            // 
-            // packagePath
-            // 
-            this.packagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.packagePath.Location = new System.Drawing.Point(9, 19);
-            this.packagePath.Name = "packagePath";
-            this.packagePath.Size = new System.Drawing.Size(650, 20);
-            this.packagePath.TabIndex = 35;
-            // 
-            // packageFileDlg
-            // 
-            this.packageFileDlg.CheckFileExists = false;
-            this.packageFileDlg.Filter = "LS package / savegame files|*.pak;*.lsv";
-            // 
-            // packageProgress
-            // 
-            this.packageProgress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.packageProgress.Location = new System.Drawing.Point(9, 160);
-            this.packageProgress.Name = "packageProgress";
-            this.packageProgress.Size = new System.Drawing.Size(883, 23);
-            this.packageProgress.TabIndex = 42;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(6, 144);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(51, 13);
-            this.label5.TabIndex = 43;
-            this.label5.Text = "Progress:";
             // 
             // packageProgressLabel
             // 
@@ -613,53 +604,184 @@
             this.createPackageBtn.UseVisualStyleBackColor = true;
             this.createPackageBtn.Click += new System.EventHandler(this.createPackageBtn_Click);
             // 
-            // label6
+            // packageProgress
             // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(6, 97);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(70, 13);
-            this.label6.TabIndex = 46;
-            this.label6.Text = "Compression:";
-            // 
-            // compressionMethod
-            // 
-            this.compressionMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.compressionMethod.FormattingEnabled = true;
-            this.compressionMethod.Items.AddRange(new object[] {
-            "No compression",
-            "Zlib Fast",
-            "Zlib Optimal",
-            "LZ4",
-            "LZ4 HC"});
-            this.compressionMethod.Location = new System.Drawing.Point(9, 114);
-            this.compressionMethod.Name = "compressionMethod";
-            this.compressionMethod.Size = new System.Drawing.Size(187, 21);
-            this.compressionMethod.TabIndex = 47;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(16, 22);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(55, 13);
-            this.label7.TabIndex = 27;
-            this.label7.Text = "Export for:";
-            // 
-            // gr2Game
-            // 
-            this.gr2Game.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.packageProgress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2Game.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.gr2Game.FormattingEnabled = true;
-            this.gr2Game.Items.AddRange(new object[] {
-            "Divinity: Original Sin (32-bit)",
-            "Divinity: Original Sin EE (64-bit)"});
-            this.gr2Game.Location = new System.Drawing.Point(78, 20);
-            this.gr2Game.Name = "gr2Game";
-            this.gr2Game.Size = new System.Drawing.Size(356, 21);
-            this.gr2Game.TabIndex = 28;
-            this.gr2Game.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            this.packageProgress.Location = new System.Drawing.Point(9, 160);
+            this.packageProgress.Name = "packageProgress";
+            this.packageProgress.Size = new System.Drawing.Size(883, 23);
+            this.packageProgress.TabIndex = 42;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(6, 144);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(51, 13);
+            this.label5.TabIndex = 43;
+            this.label5.Text = "Progress:";
+            // 
+            // packagePath
+            // 
+            this.packagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.packagePath.Location = new System.Drawing.Point(9, 19);
+            this.packagePath.Name = "packagePath";
+            this.packagePath.Size = new System.Drawing.Size(650, 20);
+            this.packagePath.TabIndex = 35;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(6, 3);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(77, 13);
+            this.label4.TabIndex = 36;
+            this.label4.Text = "Package path:";
+            // 
+            // extractPackageBtn
+            // 
+            this.extractPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.extractPackageBtn.Location = new System.Drawing.Point(725, 62);
+            this.extractPackageBtn.Name = "extractPackageBtn";
+            this.extractPackageBtn.Size = new System.Drawing.Size(151, 23);
+            this.extractPackageBtn.TabIndex = 41;
+            this.extractPackageBtn.Text = "Extract Package";
+            this.extractPackageBtn.UseVisualStyleBackColor = true;
+            this.extractPackageBtn.Click += new System.EventHandler(this.extractPackageBtn_Click);
+            // 
+            // extractionPath
+            // 
+            this.extractionPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.extractionPath.Location = new System.Drawing.Point(9, 65);
+            this.extractionPath.Name = "extractionPath";
+            this.extractionPath.Size = new System.Drawing.Size(650, 20);
+            this.extractionPath.TabIndex = 38;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 49);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(121, 13);
+            this.label3.TabIndex = 39;
+            this.label3.Text = "Extracion / source path:";
+            // 
+            // packageFileDlg
+            // 
+            this.packageFileDlg.CheckFileExists = false;
+            this.packageFileDlg.Filter = "LS package / savegame files|*.pak;*.lsv";
+            // 
+            // objectTab
+            // 
+            this.objectTab.Controls.Add(this.resourceOutputBrowseBtn);
+            this.objectTab.Controls.Add(this.resourceInputBrowseBtn);
+            this.objectTab.Controls.Add(this.resourceLoadBtn);
+            this.objectTab.Controls.Add(this.resourceInputPath);
+            this.objectTab.Controls.Add(this.label11);
+            this.objectTab.Controls.Add(this.resourceSaveBtn);
+            this.objectTab.Controls.Add(this.resourceOutputPath);
+            this.objectTab.Controls.Add(this.label12);
+            this.objectTab.Location = new System.Drawing.Point(4, 22);
+            this.objectTab.Name = "objectTab";
+            this.objectTab.Padding = new System.Windows.Forms.Padding(3);
+            this.objectTab.Size = new System.Drawing.Size(909, 603);
+            this.objectTab.TabIndex = 2;
+            this.objectTab.Text = "LSX / LSB / LSF Tools";
+            this.objectTab.UseVisualStyleBackColor = true;
+            // 
+            // resourceOutputBrowseBtn
+            // 
+            this.resourceOutputBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceOutputBrowseBtn.Location = new System.Drawing.Point(657, 63);
+            this.resourceOutputBrowseBtn.Name = "resourceOutputBrowseBtn";
+            this.resourceOutputBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.resourceOutputBrowseBtn.TabIndex = 53;
+            this.resourceOutputBrowseBtn.Text = "...";
+            this.resourceOutputBrowseBtn.UseVisualStyleBackColor = true;
+            this.resourceOutputBrowseBtn.Click += new System.EventHandler(this.objectOutputBrowseBtn_Click);
+            // 
+            // resourceInputBrowseBtn
+            // 
+            this.resourceInputBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceInputBrowseBtn.Location = new System.Drawing.Point(657, 17);
+            this.resourceInputBrowseBtn.Name = "resourceInputBrowseBtn";
+            this.resourceInputBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.resourceInputBrowseBtn.TabIndex = 50;
+            this.resourceInputBrowseBtn.Text = "...";
+            this.resourceInputBrowseBtn.UseVisualStyleBackColor = true;
+            this.resourceInputBrowseBtn.Click += new System.EventHandler(this.objectInputBrowseBtn_Click);
+            // 
+            // resourceLoadBtn
+            // 
+            this.resourceLoadBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceLoadBtn.Location = new System.Drawing.Point(725, 19);
+            this.resourceLoadBtn.Name = "resourceLoadBtn";
+            this.resourceLoadBtn.Size = new System.Drawing.Size(151, 23);
+            this.resourceLoadBtn.TabIndex = 58;
+            this.resourceLoadBtn.Text = "Load ...";
+            this.resourceLoadBtn.UseVisualStyleBackColor = true;
+            this.resourceLoadBtn.Click += new System.EventHandler(this.objectLoadBtn_Click);
+            // 
+            // resourceInputPath
+            // 
+            this.resourceInputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceInputPath.Location = new System.Drawing.Point(9, 19);
+            this.resourceInputPath.Name = "resourceInputPath";
+            this.resourceInputPath.Size = new System.Drawing.Size(650, 20);
+            this.resourceInputPath.TabIndex = 48;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(6, 3);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(74, 13);
+            this.label11.TabIndex = 49;
+            this.label11.Text = "Input file path:";
+            // 
+            // resourceSaveBtn
+            // 
+            this.resourceSaveBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceSaveBtn.Enabled = false;
+            this.resourceSaveBtn.Location = new System.Drawing.Point(725, 62);
+            this.resourceSaveBtn.Name = "resourceSaveBtn";
+            this.resourceSaveBtn.Size = new System.Drawing.Size(151, 23);
+            this.resourceSaveBtn.TabIndex = 54;
+            this.resourceSaveBtn.Text = "Save ...";
+            this.resourceSaveBtn.UseVisualStyleBackColor = true;
+            this.resourceSaveBtn.Click += new System.EventHandler(this.resourceSaveBtn_Click);
+            // 
+            // resourceOutputPath
+            // 
+            this.resourceOutputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceOutputPath.Location = new System.Drawing.Point(9, 65);
+            this.resourceOutputPath.Name = "resourceOutputPath";
+            this.resourceOutputPath.Size = new System.Drawing.Size(650, 20);
+            this.resourceOutputPath.TabIndex = 51;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(6, 49);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(82, 13);
+            this.label12.TabIndex = 52;
+            this.label12.Text = "Output file path:";
+            // 
+            // resourceInputFileDlg
+            // 
+            this.resourceInputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf";
+            this.resourceInputFileDlg.Title = "Select Input File";
+            // 
+            // resourceOutputFileDlg
+            // 
+            this.resourceOutputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf";
+            this.resourceOutputFileDlg.Title = "Select Output File";
             // 
             // resourceFormats
             // 
@@ -681,16 +803,18 @@
             this.ClientSize = new System.Drawing.Size(941, 653);
             this.Controls.Add(this.tabControl);
             this.Name = "MainForm";
-            this.Text = "GR2 Converter (v1.0.1)";
+            this.Text = "GR2 Converter (v1.1.0)";
             this.tabControl.ResumeLayout(false);
             this.gr2Tab.ResumeLayout(false);
             this.gr2Tab.PerformLayout();
-            this.packageTab.ResumeLayout(false);
-            this.packageTab.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.packageTab.ResumeLayout(false);
+            this.packageTab.PerformLayout();
+            this.objectTab.ResumeLayout(false);
+            this.objectTab.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -751,6 +875,17 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox gr2Game;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TabPage objectTab;
+        private System.Windows.Forms.Button resourceOutputBrowseBtn;
+        private System.Windows.Forms.Button resourceInputBrowseBtn;
+        private System.Windows.Forms.Button resourceLoadBtn;
+        private System.Windows.Forms.TextBox resourceInputPath;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Button resourceSaveBtn;
+        private System.Windows.Forms.TextBox resourceOutputPath;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.OpenFileDialog resourceInputFileDlg;
+        private System.Windows.Forms.SaveFileDialog resourceOutputFileDlg;
     }
 }
 

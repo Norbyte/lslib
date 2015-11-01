@@ -32,25 +32,11 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
-    public enum CompressionMethod
-    {
-        None = 0,
-        Zlib = 1,
-        LZ4 = 2
-    };
-
     public enum CompressionLevel
     {
         FastCompression,
         DefaultCompression,
         MaxCompression
-    };
-
-    public enum CompressionFlags
-    {
-        FastCompress = 0x10,
-        DefaultCompress = 0x20,
-        MaxCompressionLevel = 0x40
     };
 
     abstract public class FileInfo
@@ -88,7 +74,6 @@ namespace LSLib.LS
         public override BinaryReader MakeReader()
         {
             var compressed = new byte[SizeOnDisk];
-            var uncompressed = new byte[UncompressedSize];
 
             this.PackageStream.Seek(OffsetInFile, SeekOrigin.Begin);
             int readSize = this.PackageStream.Read(compressed, 0, (int)SizeOnDisk);
@@ -108,48 +93,7 @@ namespace LSLib.LS
                 throw new InvalidDataException(msg);
             }
 
-            switch ((CompressionMethod)(this.Flags & 0x0F))
-            {
-                case CompressionMethod.None:
-                    uncompressed = compressed;
-                    break;
-
-                case CompressionMethod.Zlib:
-                    {
-                        using (var compressedStream = new MemoryStream(compressed))
-                        using (var decompressedStream = new MemoryStream())
-                        using (var stream = new ZInputStream(compressedStream))
-                        {
-                            byte[] buf = new byte[0x10000];
-                            int length = 0;
-                            while ((length = stream.read(buf, 0, buf.Length)) > 0)
-                            {
-                                decompressedStream.Write(buf, 0, length);
-                            }
-
-                            uncompressed = decompressedStream.ToArray();
-                        }
-
-                        break;
-                    }
-
-                case CompressionMethod.LZ4:
-                    var uncompressedSize = LZ4Codec.Decode(compressed, 0, compressed.Length, uncompressed, 0, uncompressed.Length, true);
-                    if (uncompressedSize != UncompressedSize)
-                    {
-                        var msg = String.Format("LZ4 compressor disagrees about the size of a compressed file; expected {0}, got {1}", UncompressedSize, uncompressedSize);
-                        throw new InvalidDataException(msg);
-                    }
-                    break;
-
-                default:
-                {
-                    var msg = String.Format("No decompressor found for this format: {0}", Flags);
-                    throw new InvalidDataException(msg);
-                    break;
-                }
-            }
-
+            var uncompressed = BinUtils.Decompress(compressed, (int)Size(), (byte)Flags);
             var memStream = new MemoryStream(uncompressed);
             var reader = new BinaryReader(memStream);
             return reader;
@@ -364,16 +308,6 @@ namespace LSLib.LS
             }
         }
 
-        private void WriteStruct<T>(BinaryWriter writer, ref T inStruct)
-        {
-            int count = Marshal.SizeOf(typeof(T));
-            byte[] writeBuffer = new byte[count];
-            GCHandle handle = GCHandle.Alloc(writeBuffer, GCHandleType.Pinned);
-            Marshal.StructureToPtr(inStruct, handle.AddrOfPinnedObject(), true);
-            handle.Free();
-            writer.Write(writeBuffer);
-        }
-
         public void WriteFileNoCompression(BinaryReader reader, Stream outputStream)
         {
             byte[] buf = new byte[0x10000];
@@ -546,7 +480,7 @@ namespace LSLib.LS
                 foreach (var file in writtenFiles)
                 {
                     var entry = file.MakeEntry();
-                    WriteStruct<FileEntry13>(fileListWriter, ref entry);
+                    BinUtils.WriteStruct<FileEntry13>(fileListWriter, ref entry);
                 }
 
                 var fileListBuf = fileList.ToArray();
@@ -559,7 +493,7 @@ namespace LSLib.LS
                 header.NumParts = (UInt16)streams.Count;
                 header.SomePartVar = 0; // ???
                 header.ArchiveGuid = Guid.NewGuid();
-                WriteStruct<LSPKHeader13>(writer, ref header);
+                BinUtils.WriteStruct<LSPKHeader13>(writer, ref header);
 
                 writer.Write((UInt32)(8 + Marshal.SizeOf(typeof(LSPKHeader13))));
                 writer.Write(Package.Signature);
@@ -585,18 +519,6 @@ namespace LSLib.LS
             }
         }
 
-        private T ReadStruct<T>(BinaryReader reader)
-        {
-            T outStruct;
-            int count = Marshal.SizeOf(typeof(T));
-            byte[] readBuffer = new byte[count];
-            readBuffer = reader.ReadBytes(count);
-            GCHandle handle = GCHandle.Alloc(readBuffer, GCHandleType.Pinned);
-            outStruct = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
-            handle.Free();
-            return outStruct;
-        }
-
         public Package Read()
         {
             var package = new Package();
@@ -615,7 +537,7 @@ namespace LSLib.LS
                 mainStream.Seek(-headerSize, SeekOrigin.End);
 
                 mainStream.Seek(-headerSize, SeekOrigin.End);
-                var header = ReadStruct<LSPKHeader13>(reader);
+                var header = BinUtils.ReadStruct<LSPKHeader13>(reader);
 
                 if (header.Version != Package.CurrentVersion)
                 {
@@ -651,7 +573,7 @@ namespace LSLib.LS
 
                 for (int i = 0; i < numFiles; i++)
                 {
-                    var entry = ReadStruct<FileEntry13>(msr);
+                    var entry = BinUtils.ReadStruct<FileEntry13>(msr);
                     package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, streams[entry.ArchivePart]));
                 }
             }

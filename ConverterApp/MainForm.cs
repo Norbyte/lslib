@@ -15,7 +15,8 @@ namespace ConverterApp
 {
     public partial class MainForm : Form
     {
-        private LSLib.Granny.Model.Root Root;
+        private Root Root;
+        private Resource Resource;
 
         public MainForm()
         {
@@ -393,6 +394,125 @@ namespace ConverterApp
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void objectInputBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = resourceInputFileDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                resourceInputPath.Text = resourceInputFileDlg.FileName;
+            }
+        }
+
+        private void objectOutputBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = resourceOutputFileDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                resourceOutputPath.Text = resourceOutputFileDlg.FileName;
+            }
+        }
+
+        private Resource LoadResource(string path)
+        {
+            var extension = Path.GetExtension(path).ToLower();
+
+            using (var file = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                switch (extension)
+                {
+                    case ".lsx":
+                        {
+                            using (var reader = new LSXReader(file))
+                            {
+                                return reader.Read();
+                            }
+                        }
+
+                    case ".lsb":
+                        {
+                            using (var reader = new LSBReader(file))
+                            {
+                                return reader.Read();
+                            }
+                        }
+
+                    case ".lsf":
+                        {
+                            using (var reader = new LSFReader(file))
+                            {
+                                return reader.Read();
+                            }
+                        }
+
+                    default:
+                        MessageBox.Show("Unrecognized file extension: " + extension, "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return null;
+                }
+            }
+        }
+
+        private void objectLoadBtn_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Resource = LoadResource(resourceInputPath.Text);
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            resourceSaveBtn.Enabled = (Resource != null);
+        }
+
+        private void SaveResource(Resource resource, string path)
+        {
+            var extension = Path.GetExtension(path).ToLower();
+
+            using (var file = new FileStream(path, FileMode.Create, FileAccess.Write))
+            {
+                switch (extension)
+                {
+                    case ".lsx":
+                        {
+                            using (var writer = new LSXWriter(file))
+                            {
+                                writer.Write(resource);
+                            }
+                            break;
+                        }
+
+                    case ".lsb":
+                        {
+                            using (var writer = new LSBWriter(file))
+                            {
+                                writer.Write(resource);
+                            }
+                            break;
+                        }
+
+                    // TODO: Add support for .lsf saving!
+
+                    default:
+                        MessageBox.Show("Cannot save files using this file format: " + extension, "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                }
+            }
+        }
+
+        private void resourceSaveBtn_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SaveResource(Resource, resourceOutputPath.Text);
+                MessageBox.Show("Resource saved successfully.");
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
