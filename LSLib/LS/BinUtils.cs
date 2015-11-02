@@ -161,6 +161,97 @@ namespace LSLib.LS
             return attr;
         }
 
+        public static void WriteAttribute(BinaryWriter writer, NodeAttribute attr)
+        {
+            switch (attr.Type)
+            {
+                case NodeAttribute.DataType.DT_None:
+                    break;
+
+                case NodeAttribute.DataType.DT_Byte:
+                    writer.Write((Byte)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_Short:
+                    writer.Write((Int16)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_UShort:
+                    writer.Write((UInt16)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_Int:
+                    writer.Write((Int32)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_UInt:
+                    writer.Write((UInt32)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_Float:
+                    writer.Write((float)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_Double:
+                    writer.Write((Double)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_IVec2:
+                case NodeAttribute.DataType.DT_IVec3:
+                case NodeAttribute.DataType.DT_IVec4:
+                    foreach (var item in (int[])attr.Value)
+                    {
+                        writer.Write(item);
+                    }
+                    break;
+
+                case NodeAttribute.DataType.DT_Vec2:
+                case NodeAttribute.DataType.DT_Vec3:
+                case NodeAttribute.DataType.DT_Vec4:
+                    foreach (var item in (float[])attr.Value)
+                    {
+                        writer.Write(item);
+                    }
+                    break;
+
+                case NodeAttribute.DataType.DT_Mat2:
+                case NodeAttribute.DataType.DT_Mat3:
+                case NodeAttribute.DataType.DT_Mat3x4:
+                case NodeAttribute.DataType.DT_Mat4x3:
+                case NodeAttribute.DataType.DT_Mat4:
+                    {
+                        var mat = (Matrix)attr.Value;
+                        for (int col = 0; col < mat.cols; col++)
+                        {
+                            for (int row = 0; row < mat.rows; row++)
+                            {
+                                writer.Write((float)mat[row, col]);
+                            }
+                        }
+                        break;
+                    }
+
+                case NodeAttribute.DataType.DT_Bool:
+                    writer.Write((Byte)((Boolean)attr.Value ? 1 : 0));
+                    break;
+
+                case NodeAttribute.DataType.DT_ULongLong:
+                    writer.Write((UInt64)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_Long:
+                    writer.Write((Int64)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_Int8:
+                    writer.Write((SByte)attr.Value);
+                    break;
+
+                default:
+                    throw new InvalidFormatException(String.Format("WriteAttribute() not implemented for type {0}", attr.Type));
+            }
+        }
+
         public static CompressionLevel CompressionFlagsToLevel(byte flags)
         {
             switch (flags & 0xf0)

@@ -1,6 +1,7 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS;
+using LSLib.LS.LSF;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -493,7 +494,14 @@ namespace ConverterApp
                             break;
                         }
 
-                    // TODO: Add support for .lsf saving!
+                    case ".lsf":
+                        {
+                            using (var writer = new LSFWriter(file))
+                            {
+                                writer.Write(resource);
+                            }
+                            break;
+                        }
 
                     default:
                         MessageBox.Show("Cannot save files using this file format: " + extension, "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);

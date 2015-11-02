@@ -96,6 +96,7 @@
     <Compile Include="LS\LSBReader.cs" />
     <Compile Include="LS\LSBWriter.cs" />
     <Compile Include="LS\LSFReader.cs" />
+    <Compile Include="LS\LSFWriter.cs" />
     <Compile Include="LS\LSXReader.cs" />
     <Compile Include="LS\LSXWriter.cs" />
     <Compile Include="LS\Matrix.cs" />
