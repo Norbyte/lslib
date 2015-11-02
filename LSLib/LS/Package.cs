@@ -32,13 +32,6 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
-    public enum CompressionLevel
-    {
-        FastCompression,
-        DefaultCompression,
-        MaxCompression
-    };
-
     abstract public class FileInfo
     {
         public String Name;
@@ -308,91 +301,6 @@ namespace LSLib.LS
             }
         }
 
-        public void WriteFileNoCompression(BinaryReader reader, Stream outputStream)
-        {
-            byte[] buf = new byte[0x10000];
-            int length = 0;
-            while ((length = reader.Read(buf, 0, buf.Length)) > 0)
-            {
-                outputStream.Write(buf, 0, length);
-            }
-        }
-
-        public void WriteFileZlib(BinaryReader reader, Stream outputStream)
-        {
-            int level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
-            switch (CompressionLevel)
-            {
-                case LS.CompressionLevel.FastCompression:
-                    level = zlib.zlibConst.Z_BEST_SPEED;
-                    break;
-
-                case LS.CompressionLevel.DefaultCompression:
-                    level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
-                    break;
-
-                case LS.CompressionLevel.MaxCompression:
-                    level = zlib.zlibConst.Z_BEST_COMPRESSION;
-                    break;
-            }
-
-            var compressor = new ZOutputStream(outputStream, level);
-            byte[] buf = new byte[0x10000];
-            int length = 0;
-            while ((length = reader.Read(buf, 0, buf.Length)) > 0)
-            {
-                compressor.Write(buf, 0, length);
-            }
-
-            compressor.finish();
-            compressor.Dispose();
-        }
-
-        public void WriteFileLZ4(BinaryReader reader, Stream outputStream)
-        {
-            const int bufferSize = 0x40000;
-            var inputStream = new MemoryStream();
-            byte[] buffer = new byte[bufferSize];
-            int count;
-            while ((count = reader.Read(buffer, 0, buffer.Length)) != 0)
-                inputStream.Write(buffer, 0, count);
-            var input = inputStream.ToArray();
-            inputStream.Dispose();
-
-            byte[] output = null;
-            if (CompressionLevel == LS.CompressionLevel.FastCompression)
-            {
-                output = LZ4Codec.Encode(input, 0, input.Length);
-            }
-            else
-            {
-                output = LZ4Codec.EncodeHC(input, 0, input.Length);
-            }
-
-            outputStream.Write(output, 0, output.Length);
-        }
-
-        public void WriteFileToStream(BinaryReader reader, Stream outputStream)
-        {
-            switch (Compression)
-            {
-                case CompressionMethod.None:
-                    WriteFileNoCompression(reader, outputStream);
-                    break;
-
-                case CompressionMethod.Zlib:
-                    WriteFileZlib(reader, outputStream);
-                    break;
-
-                case CompressionMethod.LZ4:
-                    WriteFileLZ4(reader, outputStream);
-                    break;
-
-                default:
-                    throw new ArgumentException("Invalid compression method specified");
-            }
-        }
-
         public PackagedFileInfo WriteFile(FileInfo info)
         {
             // Assume that all files are written uncompressed (worst-case) when calculating package sizes
@@ -412,30 +320,16 @@ namespace LSLib.LS
             packaged.UncompressedSize = size;
             packaged.ArchivePart = (UInt32)(streams.Count - 1);
             packaged.OffsetInFile = (UInt32)stream.Position;
-
-            if (Compression == CompressionMethod.None)
-                packaged.Flags = 0;
-            else if (Compression == CompressionMethod.Zlib)
-                packaged.Flags = 0x1;
-            else if (Compression == CompressionMethod.LZ4)
-                packaged.Flags = 0x2;
-
-            if (CompressionLevel == CompressionLevel.FastCompression)
-                packaged.Flags |= 0x10;
-            else if (CompressionLevel == CompressionLevel.DefaultCompression)
-                packaged.Flags |= 0x20;
-            else if (CompressionLevel == CompressionLevel.MaxCompression)
-                packaged.Flags |= 0x40;
+            packaged.Flags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
 
             var reader = info.MakeReader();
-            var compressedStream = new MemoryStream();
-            WriteFileToStream(reader, compressedStream);
-            var compressedData = compressedStream.ToArray();
-            stream.Write(compressedData, 0, compressedData.Length);
+            var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+            var compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
+            stream.Write(compressed, 0, compressed.Length);
             reader.Dispose();
 
             packaged.SizeOnDisk = (UInt32)(stream.Position - packaged.OffsetInFile);
-            packaged.Crc = Crc32.Compute(compressedData);
+            packaged.Crc = Crc32.Compute(compressed);
 
             if (stream.Position % 0x40 > 0)
             {

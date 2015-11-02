@@ -24,6 +24,13 @@ namespace LSLib.LS
         MaxCompressionLevel = 0x40
     };
 
+    public enum CompressionLevel
+    {
+        FastCompression,
+        DefaultCompression,
+        MaxCompression
+    };
+
     static class BinUtils
     {
         public static T ReadStruct<T>(BinaryReader reader)
@@ -154,6 +161,44 @@ namespace LSLib.LS
             return attr;
         }
 
+        public static CompressionLevel CompressionFlagsToLevel(byte flags)
+        {
+            switch (flags & 0xf0)
+            {
+                case (int)CompressionFlags.FastCompress:
+                    return CompressionLevel.FastCompression;
+
+                case (int)CompressionFlags.DefaultCompress:
+                    return CompressionLevel.DefaultCompression;
+
+                case (int)CompressionFlags.MaxCompressionLevel:
+                    return CompressionLevel.MaxCompression;
+
+                default:
+                    throw new ArgumentException("Invalid compression flags");
+            }
+        }
+
+        public static byte MakeCompressionFlags(CompressionMethod method, CompressionLevel level)
+        {
+            byte flags = 0;
+            if (method == CompressionMethod.None)
+                flags = 0;
+            else if (method == CompressionMethod.Zlib)
+                flags = 0x1;
+            else if (method == CompressionMethod.LZ4)
+                flags = 0x2;
+
+            if (level == CompressionLevel.FastCompression)
+                flags |= 0x10;
+            else if (level == CompressionLevel.DefaultCompression)
+                flags |= 0x20;
+            else if (level == CompressionLevel.MaxCompression)
+                flags |= 0x40;
+
+            return flags;
+        }
+
         public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags)
         {
             switch ((CompressionMethod)(compressionFlags & 0x0F))
@@ -194,6 +239,69 @@ namespace LSLib.LS
                         var msg = String.Format("No decompressor found for this format: {0}", compressionFlags);
                         throw new InvalidDataException(msg);
                     }
+            }
+        }
+
+        public static byte[] Compress(byte[] uncompressed, byte compressionFlags)
+        {
+            return Compress(uncompressed, (CompressionMethod)(compressionFlags & 0x0F), CompressionFlagsToLevel(compressionFlags));
+        }
+
+        public static byte[] Compress(byte[] uncompressed, CompressionMethod method, CompressionLevel compressionLevel)
+        {
+            switch (method)
+            {
+                case CompressionMethod.None:
+                    return uncompressed;
+
+                case CompressionMethod.Zlib:
+                    return CompressZlib(uncompressed, compressionLevel);
+
+                case CompressionMethod.LZ4:
+                    return CompressLZ4(uncompressed, compressionLevel);
+                    break;
+
+                default:
+                    throw new ArgumentException("Invalid compression method specified");
+            }
+        }
+
+        public static byte[] CompressZlib(byte[] uncompressed, CompressionLevel compressionLevel)
+        {
+            int level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
+            switch (compressionLevel)
+            {
+                case CompressionLevel.FastCompression:
+                    level = zlib.zlibConst.Z_BEST_SPEED;
+                    break;
+
+                case CompressionLevel.DefaultCompression:
+                    level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
+                    break;
+
+                case CompressionLevel.MaxCompression:
+                    level = zlib.zlibConst.Z_BEST_COMPRESSION;
+                    break;
+            }
+
+            using (var outputStream = new MemoryStream())
+            using (var compressor = new ZOutputStream(outputStream, level))
+            {
+                compressor.Write(uncompressed, 0, uncompressed.Length);
+                compressor.finish();
+                return outputStream.ToArray();
+            }
+        }
+
+        public static byte[] CompressLZ4(byte[] uncompressed, CompressionLevel compressionLevel)
+        {
+            if (compressionLevel == CompressionLevel.FastCompression)
+            {
+                return LZ4Codec.Encode(uncompressed, 0, uncompressed.Length);
+            }
+            else
+            {
+                return LZ4Codec.EncodeHC(uncompressed, 0, uncompressed.Length);
             }
         }
     }
