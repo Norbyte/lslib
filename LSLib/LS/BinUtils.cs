@@ -48,6 +48,112 @@ namespace LSLib.LS
             writer.Write(writeBuffer);
         }
 
+        public static NodeAttribute ReadAttribute(NodeAttribute.DataType type, BinaryReader reader)
+        {
+            var attr = new NodeAttribute(type);
+            switch (type)
+            {
+                case NodeAttribute.DataType.DT_None:
+                    break;
+
+                case NodeAttribute.DataType.DT_Byte:
+                    attr.Value = reader.ReadByte();
+                    break;
+
+                case NodeAttribute.DataType.DT_Short:
+                    attr.Value = reader.ReadInt16();
+                    break;
+
+                case NodeAttribute.DataType.DT_UShort:
+                    attr.Value = reader.ReadUInt16();
+                    break;
+
+                case NodeAttribute.DataType.DT_Int:
+                    attr.Value = reader.ReadInt32();
+                    break;
+
+                case NodeAttribute.DataType.DT_UInt:
+                    attr.Value = reader.ReadUInt32();
+                    break;
+
+                case NodeAttribute.DataType.DT_Float:
+                    attr.Value = reader.ReadSingle();
+                    break;
+
+                case NodeAttribute.DataType.DT_Double:
+                    attr.Value = reader.ReadDouble();
+                    break;
+
+                case NodeAttribute.DataType.DT_IVec2:
+                case NodeAttribute.DataType.DT_IVec3:
+                case NodeAttribute.DataType.DT_IVec4:
+                    {
+                        int columns = attr.GetColumns();
+                        var vec = new int[columns];
+                        for (int i = 0; i < columns; i++)
+                            vec[i] = reader.ReadInt32();
+                        attr.Value = vec;
+                        break;
+                    }
+
+                case NodeAttribute.DataType.DT_Vec2:
+                case NodeAttribute.DataType.DT_Vec3:
+                case NodeAttribute.DataType.DT_Vec4:
+                    {
+                        int columns = attr.GetColumns();
+                        var vec = new float[columns];
+                        for (int i = 0; i < columns; i++)
+                            vec[i] = reader.ReadSingle();
+                        attr.Value = vec;
+                        break;
+                    }
+
+                case NodeAttribute.DataType.DT_Mat2:
+                case NodeAttribute.DataType.DT_Mat3:
+                case NodeAttribute.DataType.DT_Mat3x4:
+                case NodeAttribute.DataType.DT_Mat4x3:
+                case NodeAttribute.DataType.DT_Mat4:
+                    {
+                        int columns = attr.GetColumns();
+                        int rows = attr.GetRows();
+                        var mat = new Matrix(rows, columns);
+                        attr.Value = mat;
+
+                        for (int col = 0; col < columns; col++)
+                        {
+                            for (int row = 0; row < rows; row++)
+                            {
+                                mat[row, col] = reader.ReadSingle();
+                            }
+                        }
+                        break;
+                    }
+
+                case NodeAttribute.DataType.DT_Bool:
+                    attr.Value = reader.ReadByte() != 0;
+                    break;
+
+                case NodeAttribute.DataType.DT_ULongLong:
+                    attr.Value = reader.ReadUInt64();
+                    break;
+
+                case NodeAttribute.DataType.DT_Long:
+                    attr.Value = reader.ReadInt64();
+                    break;
+
+                case NodeAttribute.DataType.DT_Int8:
+                    attr.Value = reader.ReadSByte();
+                    break;
+
+                default:
+                    // Strings are serialized differently for each file format and should be
+                    // handled by the format-specific ReadAttribute()
+                    throw new InvalidFormatException(String.Format("ReadAttribute() not implemented for type {0}", type));
+            }
+
+            return attr;
+        }
+
         public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags)
         {
             switch ((CompressionMethod)(compressionFlags & 0x0F))
