@@ -177,8 +177,8 @@ namespace LSLib.LS.LSF
 
                 case NodeAttribute.DataType.DT_TranslatedString:
                     var str = (TranslatedString)attr.Value;
-                    WriteString(writer, str.Value);
-                    WriteString(writer, str.Handle);
+                    WriteStringWithLength(writer, str.Value);
+                    WriteStringWithLength(writer, str.Handle);
                     break;
 
                 case NodeAttribute.DataType.DT_ScratchBuffer:
@@ -226,6 +226,14 @@ namespace LSLib.LS.LSF
             byte[] utf = System.Text.Encoding.UTF8.GetBytes(s);
             writer.Write((UInt16)utf.Length);
             writer.Write(utf);
+        }
+
+        private void WriteStringWithLength(BinaryWriter writer, string s)
+        {
+            byte[] utf = System.Text.Encoding.UTF8.GetBytes(s);
+            writer.Write((Int32)(utf.Length + 1));
+            writer.Write(utf);
+            writer.Write((Byte)0);
         }
 
         private void WriteString(BinaryWriter writer, string s)

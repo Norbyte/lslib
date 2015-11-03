@@ -79,8 +79,6 @@
             this.extractPackageBtn = new System.Windows.Forms.Button();
             this.extractionPath = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.packageFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.exportPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.objectTab = new System.Windows.Forms.TabPage();
             this.resourceOutputBrowseBtn = new System.Windows.Forms.Button();
             this.resourceInputBrowseBtn = new System.Windows.Forms.Button();
@@ -90,6 +88,8 @@
             this.resourceSaveBtn = new System.Windows.Forms.Button();
             this.resourceOutputPath = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
+            this.packageFileDlg = new System.Windows.Forms.OpenFileDialog();
+            this.exportPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.resourceOutputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.resourceFormats = new ConverterApp.ExportItemSelection();
@@ -669,11 +669,6 @@
             this.label3.TabIndex = 39;
             this.label3.Text = "Extracion / source path:";
             // 
-            // packageFileDlg
-            // 
-            this.packageFileDlg.CheckFileExists = false;
-            this.packageFileDlg.Filter = "LS package / savegame files|*.pak;*.lsv";
-            // 
             // objectTab
             // 
             this.objectTab.Controls.Add(this.resourceOutputBrowseBtn);
@@ -773,6 +768,11 @@
             this.label12.TabIndex = 52;
             this.label12.Text = "Output file path:";
             // 
+            // packageFileDlg
+            // 
+            this.packageFileDlg.CheckFileExists = false;
+            this.packageFileDlg.Filter = "LS package / savegame files|*.pak;*.lsv";
+            // 
             // resourceInputFileDlg
             // 
             this.resourceInputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf";
@@ -803,7 +803,7 @@
             this.ClientSize = new System.Drawing.Size(941, 653);
             this.Controls.Add(this.tabControl);
             this.Name = "MainForm";
-            this.Text = "GR2 Converter (v1.1.0)";
+            this.Text = "GR2 Converter";
             this.tabControl.ResumeLayout(false);
             this.gr2Tab.ResumeLayout(false);
             this.gr2Tab.PerformLayout();

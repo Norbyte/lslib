@@ -575,8 +575,10 @@ namespace LSLib.LS.LSF
                 {
                     var attr = new NodeAttribute(type);
                     var str = new TranslatedString();
-                    str.Value = ReadString(reader);
-                    str.Handle = ReadString(reader);
+                    var valueLength = reader.ReadInt32();
+                    str.Value = ReadString(reader, valueLength);
+                    var handleLength = reader.ReadInt32();
+                    str.Handle = ReadString(reader, handleLength);
                     attr.Value = str;
                     return attr;
                 }

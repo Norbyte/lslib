@@ -22,6 +22,7 @@ namespace ConverterApp
         public MainForm()
         {
             InitializeComponent();
+            this.Text += String.Format(" (LSLib v{0})", Common.LibraryVersion());
             compressionMethod.SelectedIndex = 4;
             gr2Game.SelectedIndex = 0;
         }
