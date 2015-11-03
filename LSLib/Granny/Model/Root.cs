@@ -530,6 +530,11 @@ namespace LSLib.Granny.Model
 
         public void PostLoad()
         {
+            foreach (var triTopology in TriTopologies)
+            {
+                triTopology.PostLoad();
+            }
+
             foreach (var skeleton in Skeletons)
             {
                 var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);

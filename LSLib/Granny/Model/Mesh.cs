@@ -293,6 +293,22 @@ namespace LSLib.Granny.Model
         public List<Int32> TriangleToBoneIndices;
         public List<TriAnnotationSet> TriAnnotationSets;
 
+        public void PostLoad()
+        {
+            // Convert 16-bit vertex indices to 32-bit indices
+            // (for convenience, so we won't have to handle both Indices and Indices16 in all code paths)
+            if (Indices16 != null)
+            {
+                Indices = new List<Int32>(Indices16.Count);
+                foreach (var index in Indices16)
+                {
+                    Indices.Add(index);
+                }
+
+                Indices16 = null;
+            }
+        }
+
         public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, Dictionary<int, int> uvMaps)
         {
             int numTris = (from grp in Groups
