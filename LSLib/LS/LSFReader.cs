@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace LSLib.LS.LSF
 {
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct Header
     {
         /// <summary>
@@ -20,7 +22,7 @@ namespace LSLib.LS.LSF
         /// <summary>
         /// Latest version supported by this library
         /// </summary>
-        public static UInt32 CurrentVersion = 0x01;
+        public const UInt32 CurrentVersion = 0x01;
 
         /// <summary>
         /// LSOF file signature; should be the same as LSFHeader.Signature
@@ -82,6 +84,7 @@ namespace LSLib.LS.LSF
     /// <summary>
     /// Node (structure) entry in the LSF file
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct NodeEntry
     {
         /// <summary>
@@ -145,6 +148,7 @@ namespace LSLib.LS.LSF
     /// <summary>
     /// Attribute entry in the LSF file
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct AttributeEntry
     {
         /// <summary>

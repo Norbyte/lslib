@@ -57,6 +57,7 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.loadInputBtn = new System.Windows.Forms.Button();
             this.outputFileBrowserBtn = new System.Windows.Forms.Button();
@@ -92,7 +93,8 @@
             this.exportPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.resourceOutputFileDlg = new System.Windows.Forms.SaveFileDialog();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
+            this.packageVersion = new System.Windows.Forms.ComboBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -438,6 +440,19 @@
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
             // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -518,6 +533,8 @@
             // 
             // packageTab
             // 
+            this.packageTab.Controls.Add(this.packageVersion);
+            this.packageTab.Controls.Add(this.label8);
             this.packageTab.Controls.Add(this.compressionMethod);
             this.packageTab.Controls.Add(this.label6);
             this.packageTab.Controls.Add(this.exportPathBrowseBtn);
@@ -549,7 +566,7 @@
             "Zlib Optimal",
             "LZ4",
             "LZ4 HC"});
-            this.compressionMethod.Location = new System.Drawing.Point(9, 114);
+            this.compressionMethod.Location = new System.Drawing.Point(221, 114);
             this.compressionMethod.Name = "compressionMethod";
             this.compressionMethod.Size = new System.Drawing.Size(187, 21);
             this.compressionMethod.TabIndex = 47;
@@ -557,7 +574,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(6, 97);
+            this.label6.Location = new System.Drawing.Point(218, 97);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(70, 13);
             this.label6.TabIndex = 46;
@@ -783,18 +800,28 @@
             this.resourceOutputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf";
             this.resourceOutputFileDlg.Title = "Select Output File";
             // 
-            // resourceFormats
+            // packageVersion
             // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            this.packageVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.packageVersion.FormattingEnabled = true;
+            this.packageVersion.Items.AddRange(new object[] {
+            "V13 (Divinity Original Sin: EE)",
+            "V10 (Divinity Original Sin)",
+            "V9 (Divinity Original Sin Old)",
+            "V7 (Divinity Original Sin Old)"});
+            this.packageVersion.Location = new System.Drawing.Point(10, 114);
+            this.packageVersion.Name = "packageVersion";
+            this.packageVersion.Size = new System.Drawing.Size(187, 21);
+            this.packageVersion.TabIndex = 49;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(7, 97);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(45, 13);
+            this.label8.TabIndex = 48;
+            this.label8.Text = "Version:";
             // 
             // MainForm
             // 
@@ -886,6 +913,8 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.OpenFileDialog resourceInputFileDlg;
         private System.Windows.Forms.SaveFileDialog resourceOutputFileDlg;
+        private System.Windows.Forms.ComboBox packageVersion;
+        private System.Windows.Forms.Label label8;
     }
 }
 

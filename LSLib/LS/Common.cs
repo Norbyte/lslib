@@ -13,7 +13,7 @@ namespace LSLib.LS
         /// </summary>
         public static string LibraryVersion()
         {
-            return "1.2.1";
+            return "1.3.0";
         }
     }
 }

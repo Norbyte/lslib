@@ -23,6 +23,7 @@ namespace ConverterApp
         {
             InitializeComponent();
             this.Text += String.Format(" (LSLib v{0})", Common.LibraryVersion());
+            packageVersion.SelectedIndex = 0;
             compressionMethod.SelectedIndex = 4;
             gr2Game.SelectedIndex = 0;
         }
@@ -353,6 +354,26 @@ namespace ConverterApp
             createPackageBtn.Enabled = false;
             try
             {
+                uint version = Package.CurrentVersion;
+                switch (packageVersion.SelectedIndex)
+                {
+                    case 0:
+                        version = 13;
+                        break;
+
+                    case 1:
+                        version = 10;
+                        break;
+
+                    case 2:
+                        version = 9;
+                        break;
+
+                    case 3:
+                        version = 7;
+                        break;
+                }
+
                 CompressionMethod compression = CompressionMethod.None;
                 bool fastCompression = true;
                 switch (compressionMethod.SelectedIndex)
@@ -376,9 +397,15 @@ namespace ConverterApp
                         break;
                 }
 
+                // Fallback to Zlib, if the package version doesn't support LZ4
+                if (compression == CompressionMethod.LZ4 && version <= 9)
+                {
+                    compression = CompressionMethod.Zlib;
+                }
+
                 var packager = new Packager();
                 packager.progressUpdate += this.PackageProgressUpdate;
-                packager.CreatePackage(packagePath.Text, extractionPath.Text, compression, fastCompression);
+                packager.CreatePackage(packagePath.Text, extractionPath.Text, version, compression, fastCompression);
                 MessageBox.Show("Package created successfully.");
             }
             catch (Exception exc)
