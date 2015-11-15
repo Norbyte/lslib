@@ -233,7 +233,9 @@ namespace LSLib.LS
                     break;
 
                 case DataType.DT_Bool:
-                    value = Convert.ToBoolean(str);
+                    if (str == "0") value = false;
+                    else if (str == "1") value = true;
+                    else value = Convert.ToBoolean(str);
                     break;
 
                 case DataType.DT_String:
