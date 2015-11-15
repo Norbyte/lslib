@@ -11,6 +11,7 @@ namespace LSLib.LS
     {
         private Stream stream;
         private XmlWriter writer;
+        public bool PrettyPrint = false;
 
         public LSXWriter(Stream stream)
         {
@@ -26,6 +27,9 @@ namespace LSLib.LS
         {
             using (this.writer = XmlWriter.Create(stream))
             {
+                writer.Settings.Indent = PrettyPrint;
+                writer.Settings.IndentChars = "\t";
+
                 writer.WriteStartElement("save");
 
                 writer.WriteStartElement("header");
