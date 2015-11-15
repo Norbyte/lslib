@@ -106,6 +106,7 @@
     <Compile Include="LS\PackageWriter.cs" />
     <Compile Include="LS\PackageCommon.cs" />
     <Compile Include="LS\Resource.cs" />
+    <Compile Include="LS\ResourceUtils.cs" />
     <Compile Include="LS\Story.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="packages.config" />
