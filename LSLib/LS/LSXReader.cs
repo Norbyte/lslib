@@ -31,7 +31,7 @@ namespace LSLib.LS
             {
                 Resource rsrc = new Resource();
                 Region currentRegion = null;
-                Stack<Node> stack = new Stack<Node>();
+                List<Node> stack = new List<Node>();
 
                 while (reader.Read())
                 {
@@ -97,7 +97,7 @@ namespace LSLib.LS
                                     node.Parent.AppendChild(node);
 
                                 if (!reader.IsEmptyElement)
-                                    stack.Push(node);
+                                    stack.Add(node);
                                 break;
 
                             case "attribute":
@@ -117,7 +117,7 @@ namespace LSLib.LS
                                     Debug.Assert(((TranslatedString)attr.Value).Handle != null);
                                 }
 
-                                stack.Peek().Attributes.Add(attrName, attr);
+                                stack.Last().Attributes.Add(attrName, attr);
                                 break;
 
                             case "children":
@@ -148,7 +148,7 @@ namespace LSLib.LS
                                 break;
 
                             case "node":
-                                stack.Pop();
+                                stack.RemoveAt(stack.Count - 1);
                                 break;
 
                             default:
