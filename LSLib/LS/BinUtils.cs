@@ -350,7 +350,6 @@ namespace LSLib.LS
 
                 case CompressionMethod.LZ4:
                     return CompressLZ4(uncompressed, compressionLevel);
-                    break;
 
                 default:
                     throw new ArgumentException("Invalid compression method specified");

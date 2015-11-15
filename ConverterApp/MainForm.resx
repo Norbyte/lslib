@@ -138,4 +138,10 @@
   <metadata name="resourceOutputFileDlg.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>846, 17</value>
   </metadata>
+  <metadata name="storyPathDlg.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>1021, 17</value>
+  </metadata>
+  <metadata name="goalPathDlg.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>1161, 17</value>
+  </metadata>
 </root>

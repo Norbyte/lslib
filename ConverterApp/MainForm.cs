@@ -508,6 +508,7 @@ namespace ConverterApp
                         {
                             using (var writer = new LSXWriter(file))
                             {
+                                writer.PrettyPrint = true;
                                 writer.Write(resource);
                             }
                             break;
@@ -549,6 +550,47 @@ namespace ConverterApp
             {
                 MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void storyFileBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = storyPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                storyFilePath.Text = storyPathDlg.FileName;
+            }
+        }
+
+        private void goalPathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = goalPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                goalPath.Text = goalPathDlg.SelectedPath;
+            }
+        }
+
+        private void decompileStoryBtn_Click(object sender, EventArgs e)
+        {
+            using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
+            {
+                var reader = new StoryReader();
+                var story = reader.Read(file);
+
+                foreach (var goal in story.Goals)
+                {
+                    var filePath = goalPath.Text + "/" + goal.Value.Name + ".txt";
+                    using (var goalFile = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    {
+                        using (var writer = new StreamWriter(goalFile))
+                        {
+                            goal.Value.MakeScript(writer, story);
+                        }
+                    }
+                }
+            }
+
+            MessageBox.Show("Story unpacked successfully.");
         }
     }
 }
