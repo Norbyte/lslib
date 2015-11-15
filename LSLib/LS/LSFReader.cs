@@ -490,6 +490,10 @@ namespace LSLib.LS.LSF
                     }
 #endif
                 }
+                else
+                {
+                    this.Values = new MemoryStream();
+                }
 
                 Resource resource = new Resource();
                 ReadRegions(resource);

@@ -25,11 +25,12 @@ namespace LSLib.LS
 
         public void Write(Resource rsrc)
         {
-            using (this.writer = XmlWriter.Create(stream))
-            {
-                writer.Settings.Indent = PrettyPrint;
-                writer.Settings.IndentChars = "\t";
+            var settings = new XmlWriterSettings();
+            settings.Indent = PrettyPrint;
+            settings.IndentChars = "\t";
 
+            using (this.writer = XmlWriter.Create(stream, settings))
+            {
                 writer.WriteStartElement("save");
 
                 writer.WriteStartElement("header");
