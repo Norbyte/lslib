@@ -15,6 +15,8 @@ namespace LSLib.LS
     public class OsiReader : BinaryReader
     {
         public byte Scramble = 0x00;
+        public UInt32 MinorVersion;
+        public UInt32 MajorVersion;
 
         public OsiReader(Stream stream) : base(stream)
         {
@@ -84,8 +86,8 @@ namespace LSLib.LS
     public class OsirisHeader : OsirisSerializable
     {
         public string Version;
-        public byte MinorVersion;
         public byte MajorVersion;
+        public byte MinorVersion;
         public bool BigEndian;
         public byte Unused;
         public string StoryFileVersion;
@@ -95,13 +97,18 @@ namespace LSLib.LS
         {
             reader.ReadByte();
             Version = reader.ReadString();
-            MinorVersion = reader.ReadByte();
             MajorVersion = reader.ReadByte();
+            MinorVersion = reader.ReadByte();
             BigEndian = reader.ReadByte() == 1;
             Unused = reader.ReadByte();
 
-            var versionBuf = reader.ReadBytes(0x80);
-            DebugFlags = reader.ReadUInt32();
+            if (MajorVersion >= 1 && MinorVersion >= 2)
+                reader.ReadBytes(0x80); // Version string buffer
+
+            if (MajorVersion >= 1 && MinorVersion >= 3)
+                DebugFlags = reader.ReadUInt32();
+            else
+                DebugFlags = 0;
         }
     }
 
@@ -177,7 +184,7 @@ namespace LSLib.LS
                 var isOutParam = ((OutParamMask[i >> 3] << (i & 7)) & 0x80) == 0x80;
                 if (isOutParam) writer.Write("out ");
                 writer.Write(type.Name);
-                writer.Write(", ");
+                if (i < Parameters.Types.Count - 1) writer.Write(", ");
             }
             writer.Write(")");
         }
@@ -199,10 +206,10 @@ namespace LSLib.LS
 
         public void DebugDump(TextWriter writer, Story story)
         {
-            foreach (var type in Types)
+            for (var i = 0; i < Types.Count; i++)
             {
-                writer.Write(story.Types[type].Name);
-                writer.Write(", ");
+                writer.Write(story.Types[Types[i]].Name);
+                if (i < Types.Count - 1) writer.Write(", ");
             }
         }
     }
@@ -263,7 +270,8 @@ namespace LSLib.LS
         NotAnd = 5,
         RelOp = 6,
         Rule = 7,
-        InternalQuery = 8
+        InternalQuery = 8,
+        UserQuery = 9
     };
 
     public class ReteNodeEntryItem : OsirisSerializable
@@ -506,6 +514,14 @@ namespace LSLib.LS
         }
     }
 
+    public class ReteUserQueryNode : ReteQueryNode
+    {
+        public override string TypeName()
+        {
+            return "User Query";
+        }
+    }
+
     abstract public class ReteTreeNode : ReteNode
     {
         public ReteNodeEntryItem NextNode;
@@ -697,13 +713,23 @@ namespace LSLib.LS
         }
     }
 
+    public enum ReteRelOpType : byte
+    {
+        Less = 0,
+        LessOrEqual = 1,
+        Greater = 2,
+        GreaterOrEqual = 3,
+        Equal = 4,
+        NotEqual = 5
+    };
+
     public class ReteRelOpNode : ReteRelNode
     {
         public sbyte Value1Index;
         public sbyte Value2Index;
         public OsirisValue Value1;
         public OsirisValue Value2;
-        public byte RelOp;
+        public ReteRelOpType RelOp;
 
         public override void Read(OsiReader reader)
         {
@@ -717,7 +743,7 @@ namespace LSLib.LS
             Value2 = new OsirisValue();
             Value2.Read(reader);
 
-            RelOp = (byte)reader.ReadInt32();
+            RelOp = (ReteRelOpType)reader.ReadInt32();
         }
 
         public override string TypeName()
@@ -754,7 +780,17 @@ namespace LSLib.LS
                 adaptedTuple.Logical[Value1Index].MakeScript(writer, story, tuple);
             else
                 Value1.MakeScript(writer, story, tuple);
-            writer.Write(" {0} ", RelOp);
+
+            switch (RelOp)
+            {
+                case ReteRelOpType.Less: writer.Write(" < "); break;
+                case ReteRelOpType.LessOrEqual: writer.Write(" <= "); break;
+                case ReteRelOpType.Greater: writer.Write(" > "); break;
+                case ReteRelOpType.GreaterOrEqual: writer.Write(" >= "); break;
+                case ReteRelOpType.Equal: writer.Write(" == "); break;
+                case ReteRelOpType.NotEqual: writer.Write(" != "); break;
+            }
+
             if (Value2Index != -1)
                 adaptedTuple.Logical[Value2Index].MakeScript(writer, story, tuple);
             else
@@ -807,10 +843,10 @@ namespace LSLib.LS
                 writer.Write("{0}(", Name);
                 if (Parameters != null)
                 {
-                    foreach (var param in Parameters)
+                    for (var i = 0; i < Parameters.Count; i++)
                     {
-                        param.DebugDump(writer, story);
-                        writer.Write(", ");
+                        Parameters[i].DebugDump(writer, story);
+                        if (i < Parameters.Count - 1) writer.Write(", ");
                     }
                 }
 
@@ -858,12 +894,20 @@ namespace LSLib.LS
         }
     }
 
+    public enum ReteRuleType
+    {
+        Rule,
+        Proc,
+        Query
+    };
+
     public class ReteRuleNode : ReteRelNode
     {
         public List<ReteCall> Calls;
         public List<OsirisVariable> Variables;
         public UInt32 Line;
         public UInt32 DerivedGoalId;
+        public bool IsQuery;
 
         public override void Read(OsiReader reader)
         {
@@ -887,11 +931,19 @@ namespace LSLib.LS
             }
 
             Line = reader.ReadUInt32();
+
+            if (reader.MajorVersion >= 1 && reader.MinorVersion >= 6)
+                IsQuery = reader.ReadByte() == 1;
+            else
+                IsQuery = false;
         }
 
         public override string TypeName()
         {
-            return "Rule";
+            if (IsQuery)
+                return "Query Rule";
+            else
+                return "Rule";
         }
 
         public override void DebugDump(TextWriter writer, Story story)
@@ -915,7 +967,7 @@ namespace LSLib.LS
             }
         }
 
-        public bool IsProc(Story story)
+        public ReteNode GetRoot(Story story)
         {
             ReteNode parent = this;
             for (;;)
@@ -932,9 +984,23 @@ namespace LSLib.LS
                 }
                 else
                 {
-                    return parent is ReteProcNode;
+                    return parent;
                 }
             }
+        }
+
+        public ReteRuleType GetType(Story story)
+        {
+            var root = GetRoot(story);
+            if (root is ReteProcNode)
+            {
+                if (IsQuery)
+                    return ReteRuleType.Query;
+                else
+                    return ReteRuleType.Proc;
+            }
+            else
+                return ReteRuleType.Rule;
         }
 
         public OsirisTuple MakeInitialTuple()
@@ -951,14 +1017,11 @@ namespace LSLib.LS
 
         public override void MakeScript(TextWriter writer, Story story, OsirisTuple tuple)
         {
-            var isProc = IsProc(story);
-            if (isProc)
+            switch (GetType(story))
             {
-                writer.WriteLine("PROC");
-            }
-            else
-            {
-                writer.WriteLine("IF");
+                case ReteRuleType.Proc: writer.WriteLine("PROC"); break;
+                case ReteRuleType.Query: writer.WriteLine("QRY"); break;
+                case ReteRuleType.Rule: writer.WriteLine("IF"); break;
             }
 
             var initialTuple = MakeInitialTuple();
@@ -1190,11 +1253,12 @@ namespace LSLib.LS
         public void DebugDump(TextWriter writer, Story story)
         {
             writer.Write("(");
-            foreach (var column in Logical)
+            var keys = Logical.Keys.ToArray();
+            for (var i = 0; i < Logical.Count; i++)
             {
-                writer.Write("{0}: ", column.Key);
-                column.Value.DebugDump(writer, story);
-                writer.Write(", ");
+                writer.Write("{0}: ", keys[i]);
+                Logical[keys[i]].DebugDump(writer, story);
+                if (i < Logical.Count - 1) writer.Write(", ");
             }
             writer.Write(")");
         }
@@ -1337,10 +1401,10 @@ namespace LSLib.LS
         public void DebugDump(TextWriter writer, Story story)
         {
             writer.Write("(");
-            foreach (var column in Columns)
+            for (var i = 0; i < Columns.Count; i++)
             {
-                column.DebugDump(writer, story);
-                writer.Write(", ");
+                Columns[i].DebugDump(writer, story);
+                if (i < Columns.Count - 1) writer.Write(", ");
             }
             writer.Write(")");
         }
@@ -1351,12 +1415,14 @@ namespace LSLib.LS
         public OsirisParameterList Parameters;
         public List<OsirisFact> Facts;
         public ReteNode OwnerNode;
+        public long FactsPosition;
 
         public void Read(OsiReader reader)
         {
             Parameters = new OsirisParameterList();
             Parameters.Read(reader);
 
+            FactsPosition = reader.BaseStream.Position;
             Facts = reader.ReadList<OsirisFact>();
         }
 
@@ -1375,7 +1441,7 @@ namespace LSLib.LS
                 writer.Write("(Not owned)");
             }
 
-            writer.Write(": ");
+            writer.Write(" @ {0:X}: ", FactsPosition);
             Parameters.DebugDump(writer, story);
 
             writer.WriteLine("");
@@ -1421,8 +1487,17 @@ namespace LSLib.LS
             }
 
             Unknown = reader.ReadByte();
-            InitCalls = reader.ReadList<ReteCall>();
-            ExitCalls = reader.ReadList<ReteCall>();
+
+            if (reader.MajorVersion >= 1 && reader.MinorVersion >= 1)
+            {
+                InitCalls = reader.ReadList<ReteCall>();
+                ExitCalls = reader.ReadList<ReteCall>();
+            }
+            else
+            {
+                InitCalls = new List<ReteCall>();
+                ExitCalls = new List<ReteCall>();
+            }
         }
 
         public void DebugDump(TextWriter writer, Story story)
@@ -1491,7 +1566,6 @@ namespace LSLib.LS
             writer.WriteLine();
             writer.WriteLine("KBSECTION");
 
-            // TODO
             foreach (var node in story.Nodes)
             {
                 if (node.Value is ReteRuleNode)
@@ -1673,6 +1747,10 @@ namespace LSLib.LS
                         node = new ReteRuleNode();
                         break;
 
+                    case ReteNodeType.UserQuery:
+                        node = new ReteUserQueryNode();
+                        break;
+
                     default:
                         throw new NotImplementedException("No serializer found for this node type");
                 }
@@ -1735,9 +1813,27 @@ namespace LSLib.LS
                 var story = new Story();
                 var header = new OsirisHeader();
                 header.Read(reader);
+                reader.MinorVersion = header.MinorVersion;
+                reader.MajorVersion = header.MajorVersion;
 
-                reader.Scramble = 0xAD;
-                story.Types = ReadTypes(reader);
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion > 7))
+                {
+                    var msg = String.Format(
+                        "Osiris version v{0}.{1} unsupported; this tool supports versions up to v1.7.",
+                        reader.MajorVersion, reader.MinorVersion
+                    );
+                    throw new InvalidDataException(msg);
+                }
+
+                if (reader.MajorVersion >= 1 && reader.MinorVersion >= 4)
+                    reader.Scramble = 0xAD;
+
+
+                if (reader.MajorVersion >= 1 && reader.MinorVersion >= 5)
+                    story.Types = ReadTypes(reader);
+                else
+                    story.Types = new Dictionary<uint, OsirisType>();
+
                 story.Types[0] = new OsirisType();
                 story.Types[0].Index = 0;
                 story.Types[0].Name = "UNKNOWN";
@@ -1770,6 +1866,39 @@ namespace LSLib.LS
                         }
 
                         database.OwnerNode = node.Value;
+                    }
+
+                    if (node.Value is ReteRuleNode)
+                    {
+                        // Remove the __DEF__ postfix that is added to the end of Query nodes
+                        var rule = node.Value as ReteRuleNode;
+                        if (rule.IsQuery)
+                        {
+                            var ruleRoot = rule.GetRoot(story);
+                            if (ruleRoot.Name != null && 
+                                ruleRoot.Name.Length > 7 &&
+                                ruleRoot.Name.Substring(ruleRoot.Name.Length - 7) == "__DEF__")
+                            {
+                                ruleRoot.Name = ruleRoot.Name.Substring(0, ruleRoot.Name.Length - 7);
+                            }
+                        }
+                    }
+
+                    if (node.Value is ReteDataNode)
+                    {
+                        var data = node.Value as ReteDataNode;
+                        foreach (var reference in data.ReferencedBy)
+                        {
+                            if (reference.NodeRef.IsValid())
+                            {
+                                var ruleNode = story.Nodes[reference.NodeRef.NodeIndex];
+                                if (reference.GoalId > 0 &&
+                                    ruleNode is ReteRuleNode)
+                                {
+                                    (ruleNode as ReteRuleNode).DerivedGoalId = reference.GoalId;
+                                }
+                            }
+                        }
                     }
 
                     if (node.Value is ReteTreeNode)

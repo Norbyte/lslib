@@ -447,15 +447,34 @@ namespace ConverterApp
                 var reader = new StoryReader();
                 var story = reader.Read(file);
 
+                var debugPath = goalPath.Text + "/debug.log";
+                using (var debugFile = new FileStream(debugPath, FileMode.Create, FileAccess.Write))
+                using (var writer = new StreamWriter(debugFile))
+                {
+                    story.DebugDump(writer);
+                }
+
+                var unassignedPath = goalPath.Text + "/UNASSIGNED_RULES.txt";
+                using (var goalFile = new FileStream(unassignedPath, FileMode.Create, FileAccess.Write))
+                using (var writer = new StreamWriter(goalFile))
+                {
+                    var dummyGoal = new OsirisGoal();
+                    dummyGoal.ExitCalls = new List<ReteCall>();
+                    dummyGoal.InitCalls = new List<ReteCall>();
+                    dummyGoal.ParentGoals = new List<uint>();
+                    dummyGoal.SubGoals = new List<uint>();
+                    dummyGoal.Name = "UNASSIGNED_RULES";
+                    dummyGoal.Index = 0;
+                    dummyGoal.MakeScript(writer, story);
+                }
+
                 foreach (var goal in story.Goals)
                 {
                     var filePath = goalPath.Text + "/" + goal.Value.Name + ".txt";
                     using (var goalFile = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    using (var writer = new StreamWriter(goalFile))
                     {
-                        using (var writer = new StreamWriter(goalFile))
-                        {
-                            goal.Value.MakeScript(writer, story);
-                        }
+                         goal.Value.MakeScript(writer, story);
                     }
                 }
             }
