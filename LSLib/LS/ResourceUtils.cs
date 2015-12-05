@@ -34,7 +34,7 @@ namespace LSLib.LS
                     return ResourceFormat.LSB;
 
                 case ".lsf":
-                    return ResourceFormat.LSB;
+                    return ResourceFormat.LSF;
 
                 default:
                     throw new ArgumentException("Unrecognized file extension: " + extension);
