@@ -87,6 +87,16 @@ namespace LSLib.Granny.Model
             return v;
         }
 
+        protected BoneWeight ReadInfluences2(GR2Reader reader)
+        {
+            BoneWeight v;
+            v.A = reader.Reader.ReadByte();
+            v.B = reader.Reader.ReadByte();
+            v.C = 0;
+            v.D = 0;
+            return v;
+        }
+
         protected BoneWeight ReadInfluences(GR2Reader reader)
         {
             BoneWeight v;
@@ -116,6 +126,12 @@ namespace LSLib.Granny.Model
             section.Writer.Write(v.Y);
             section.Writer.Write(v.Z);
             section.Writer.Write(v.W);
+        }
+
+        protected void WriteInfluences2(WritableSection section, BoneWeight v)
+        {
+            section.Writer.Write(v.A);
+            section.Writer.Write(v.B);
         }
 
         protected void WriteInfluences(WritableSection section, BoneWeight v)
@@ -208,9 +224,27 @@ namespace LSLib.Granny.Model
             NameToTypeMap = new Dictionary<String, Type>();
             PrototypeMap = new Dictionary<Type, Type>();
 
+            Register(typeof(P3));
+            Register(typeof(PN33));
+            Register(typeof(PNG333));
+            Register(typeof(PNGB3333));
             Register(typeof(PNGBDT333342));
             Register(typeof(PNGBT33332));
+            Register(typeof(PNGT3332));
+            Register(typeof(PNT332));
+            Register(typeof(PNTG3323));
+            Register(typeof(PT32));
+            Register(typeof(PWN323));
+            Register(typeof(PWN343));
+            Register(typeof(PWNG3233));
+            Register(typeof(PWNG3433));
+            Register(typeof(PWNGB32333));
+            Register(typeof(PWNGB34333));
+            Register(typeof(PWNGBT323332));
             Register(typeof(PWNGBT343332));
+            Register(typeof(PWNGT32332));
+            Register(typeof(PWNGT34332));
+            Register(typeof(PWNT3232));
             Register(typeof(PWNT3432));
         }
 
