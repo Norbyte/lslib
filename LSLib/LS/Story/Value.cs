@@ -64,6 +64,35 @@ namespace LSLib.LS.Story
             }
         }
 
+        public virtual void Write(OsiWriter writer)
+        {
+            writer.Write((byte)48);
+            writer.Write(TypeId);
+            switch ((Type)TypeId)
+            {
+                case Type.Unknown:
+                    break;
+
+                case Type.Integer:
+                    writer.Write(IntValue);
+                    break;
+
+                case Type.Float:
+                    writer.Write(FloatValue);
+                    break;
+
+                case Type.String:
+                    writer.Write(StringValue != null);
+                    if (StringValue != null)
+                        writer.Write(StringValue);
+                    break;
+
+                default:
+                    writer.Write(StringValue);
+                    break;
+            }
+        }
+
         public virtual void DebugDump(TextWriter writer, Story story)
         {
             switch ((Type)TypeId)
@@ -130,6 +159,14 @@ namespace LSLib.LS.Story
             IsAType = reader.ReadByte() == 1;
         }
 
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            writer.Write(IsValid);
+            writer.Write(OutParam);
+            writer.Write(IsAType);
+        }
+
         public override void DebugDump(TextWriter writer, Story story)
         {
             if (IsValid) writer.Write("valid ");
@@ -160,6 +197,14 @@ namespace LSLib.LS.Story
             Index = reader.ReadSByte();
             Unused = reader.ReadByte() == 1;
             Adapted = reader.ReadByte() == 1;
+        }
+
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            writer.Write(Index);
+            writer.Write(Unused);
+            writer.Write(Adapted);
         }
 
         public override void DebugDump(TextWriter writer, Story story)
@@ -219,6 +264,16 @@ namespace LSLib.LS.Story
 
                 Physical.Add(value);
                 Logical.Add(index, value);
+            }
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write((byte)Logical.Count);
+            foreach (var logical in Logical)
+            {
+                writer.Write((byte)logical.Key);
+                logical.Value.Write(writer);
             }
         }
 

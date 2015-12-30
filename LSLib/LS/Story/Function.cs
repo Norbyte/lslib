@@ -27,6 +27,19 @@ namespace LSLib.LS.Story
             Parameters.Read(reader);
         }
 
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Name);
+
+            writer.Write((UInt32)OutParamMask.Count);
+            foreach (var b in OutParamMask)
+            {
+                writer.Write(b);
+            }
+
+            Parameters.Write(writer);
+        }
+
         public void DebugDump(TextWriter writer, Story story)
         {
             writer.Write(Name);
@@ -54,6 +67,15 @@ namespace LSLib.LS.Story
             while (count-- > 0)
             {
                 Types.Add(reader.ReadUInt32());
+            }
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write((byte)Types.Count);
+            foreach (var type in Types)
+            {
+                writer.Write(type);
             }
         }
 
@@ -98,6 +120,17 @@ namespace LSLib.LS.Story
             GUID = reader.ReadGuid();
             Name = new FunctionSignature();
             Name.Read(reader);
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Line);
+            writer.Write(Unknown1);
+            writer.Write(Unknown2);
+            NodeRef.Write(writer);
+            writer.Write((byte)Type);
+            writer.Write(GUID);
+            Name.Write(writer);
         }
 
         public void DebugDump(TextWriter writer, Story story)

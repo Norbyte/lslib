@@ -9,6 +9,19 @@ namespace LSLib.LS.Story
 {
     abstract public class Node : OsirisSerializable
     {
+        public enum Type : byte
+        {
+            Database = 1,
+            Proc = 2,
+            DivQuery = 3,
+            And = 4,
+            NotAnd = 5,
+            RelOp = 6,
+            Rule = 7,
+            InternalQuery = 8,
+            UserQuery = 9
+        };
+
         public DatabaseRef DatabaseRef;
         public string Name;
         public byte NameIndex;
@@ -22,6 +35,16 @@ namespace LSLib.LS.Story
                 NameIndex = reader.ReadByte();
             }
         }
+
+        public virtual void Write(OsiWriter writer)
+        {
+            DatabaseRef.Write(writer);
+            writer.Write(Name);
+            if (Name.Length > 0)
+                writer.Write(NameIndex);
+        }
+
+        abstract public Type NodeType();
 
         abstract public string TypeName();
 
@@ -42,6 +65,34 @@ namespace LSLib.LS.Story
             }
 
             writer.WriteLine();
+        }
+    }
+
+
+    abstract public class TreeNode : Node
+    {
+        public NodeEntryItem NextNode;
+
+        public override void Read(OsiReader reader)
+        {
+            base.Read(reader);
+            NextNode = new NodeEntryItem();
+            NextNode.Read(reader);
+        }
+
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            NextNode.Write(writer);
+        }
+
+        public override void DebugDump(TextWriter writer, Story story)
+        {
+            base.DebugDump(writer, story);
+
+            writer.Write("    Next: ");
+            NextNode.DebugDump(writer, story);
+            writer.WriteLine("");
         }
     }
 }

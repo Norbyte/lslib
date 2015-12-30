@@ -19,6 +19,11 @@ namespace LSLib.LS.Story
 
     public class DivQueryNode : QueryNode
     {
+        public override Type NodeType()
+        {
+            return Type.DivQuery;
+        }
+
         public override string TypeName()
         {
             return "Div Query";
@@ -27,6 +32,11 @@ namespace LSLib.LS.Story
 
     public class InternalQueryNode : QueryNode
     {
+        public override Type NodeType()
+        {
+            return Type.InternalQuery;
+        }
+
         public override string TypeName()
         {
             return "Internal Query";
@@ -35,6 +45,11 @@ namespace LSLib.LS.Story
 
     public class UserQueryNode : QueryNode
     {
+        public override Type NodeType()
+        {
+            return Type.UserQuery;
+        }
+
         public override string TypeName()
         {
             return "User Query";

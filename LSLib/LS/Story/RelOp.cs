@@ -9,7 +9,7 @@ namespace LSLib.LS.Story
 {
     public class RelOpNode : RelNode
     {
-        public enum Type : byte
+        public enum RelOpType : byte
         {
             Less = 0,
             LessOrEqual = 1,
@@ -23,7 +23,7 @@ namespace LSLib.LS.Story
         public sbyte Value2Index;
         public Value Value1;
         public Value Value2;
-        public Type RelOp;
+        public RelOpType RelOp;
 
         public override void Read(OsiReader reader)
         {
@@ -37,7 +37,23 @@ namespace LSLib.LS.Story
             Value2 = new Value();
             Value2.Read(reader);
 
-            RelOp = (Type)reader.ReadInt32();
+            RelOp = (RelOpType)reader.ReadInt32();
+        }
+
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            writer.Write(Value1Index);
+            writer.Write(Value2Index);
+
+            Value1.Write(writer);
+            Value2.Write(writer);
+            writer.Write((UInt32)RelOp);
+        }
+
+        public override Type NodeType()
+        {
+            return Type.RelOp;
         }
 
         public override string TypeName()
@@ -77,12 +93,12 @@ namespace LSLib.LS.Story
 
             switch (RelOp)
             {
-                case Type.Less: writer.Write(" < "); break;
-                case Type.LessOrEqual: writer.Write(" <= "); break;
-                case Type.Greater: writer.Write(" > "); break;
-                case Type.GreaterOrEqual: writer.Write(" >= "); break;
-                case Type.Equal: writer.Write(" == "); break;
-                case Type.NotEqual: writer.Write(" != "); break;
+                case RelOpType.Less: writer.Write(" < "); break;
+                case RelOpType.LessOrEqual: writer.Write(" <= "); break;
+                case RelOpType.Greater: writer.Write(" > "); break;
+                case RelOpType.GreaterOrEqual: writer.Write(" >= "); break;
+                case RelOpType.Equal: writer.Write(" == "); break;
+                case RelOpType.NotEqual: writer.Write(" != "); break;
             }
 
             if (Value2Index != -1)

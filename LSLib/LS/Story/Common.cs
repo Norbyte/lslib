@@ -10,6 +10,7 @@ namespace LSLib.LS.Story
     public interface OsirisSerializable
     {
         void Read(OsiReader reader);
+        void Write(OsiWriter writer);
     }
 
     public class OsiReader : BinaryReader
@@ -84,6 +85,45 @@ namespace LSLib.LS.Story
         }
     }
 
+    public class OsiWriter : BinaryWriter
+    {
+        public byte Scramble = 0x00;
+        public UInt32 MinorVersion;
+        public UInt32 MajorVersion;
+
+        public OsiWriter(Stream stream)
+            : base(stream)
+        {
+        }
+
+        public override void Write(String s)
+        {
+            var bytes = Encoding.UTF8.GetBytes(s).Select(b => (byte)(b ^ Scramble)).ToArray();
+            Write(bytes, 0, bytes.Length);
+            Write(Scramble);
+        }
+
+        public override void Write(bool b)
+        {
+            Write((byte)(b ? 1 : 0));
+        }
+
+        public void Write(Guid guid)
+        {
+            var bytes = guid.ToByteArray();
+            Write(bytes, 0, bytes.Length);
+        }
+
+        public void WriteList<T>(List<T> list) where T : OsirisSerializable
+        {
+            Write((UInt32)list.Count);
+            foreach (var item in list)
+            {
+                item.Write(this);
+            }
+        }
+    }
+
     public class OsirisHeader : OsirisSerializable
     {
         public string Version;
@@ -103,13 +143,35 @@ namespace LSLib.LS.Story
             BigEndian = reader.ReadByte() == 1;
             Unused = reader.ReadByte();
 
-            if (MajorVersion >= 1 && MinorVersion >= 2)
+            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 2))
                 reader.ReadBytes(0x80); // Version string buffer
 
-            if (MajorVersion >= 1 && MinorVersion >= 3)
+            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 3))
                 DebugFlags = reader.ReadUInt32();
             else
                 DebugFlags = 0;
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write((byte)0);
+            writer.Write(Version);
+            writer.Write(MajorVersion);
+            writer.Write(MinorVersion);
+            writer.Write(BigEndian);
+            writer.Write(Unused);
+
+            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 2))
+            {
+                var versionString = String.Format("{0}.{1}", MajorVersion, MinorVersion);
+                var versionBytes = Encoding.UTF8.GetBytes(versionString);
+                byte[] version = new byte[0x80];
+                versionBytes.CopyTo(version, 0);
+                writer.Write(version, 0, version.Length);
+            }
+
+            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 3))
+                writer.Write(DebugFlags);
         }
     }
 
@@ -122,6 +184,12 @@ namespace LSLib.LS.Story
         {
             Name = reader.ReadString();
             Index = reader.ReadByte();
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Name);
+            writer.Write(Index);
         }
 
         public void DebugDump(TextWriter writer)
@@ -149,24 +217,21 @@ namespace LSLib.LS.Story
             Key4 = reader.ReadUInt32();
         }
 
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Name);
+            writer.Write(Type);
+            writer.Write(Key1);
+            writer.Write(Key2);
+            writer.Write(Key3);
+            writer.Write(Key4);
+        }
+
         public void DebugDump(TextWriter writer)
         {
             writer.WriteLine("{0} {1} ({2}, {3}, {4}, {5})", Type, Name, Key1, Key2, Key3, Key4);
         }
     }
-
-    enum NodeType : byte
-    {
-        Database = 1,
-        Proc = 2,
-        DivQuery = 3,
-        And = 4,
-        NotAnd = 5,
-        RelOp = 6,
-        Rule = 7,
-        InternalQuery = 8,
-        UserQuery = 9
-    };
 
     public class NodeEntryItem : OsirisSerializable
     {
@@ -181,6 +246,13 @@ namespace LSLib.LS.Story
             GoalId = reader.ReadUInt32();
         }
 
+        public void Write(OsiWriter writer)
+        {
+            NodeRef.Write(writer);
+            writer.Write(EntryPoint);
+            writer.Write(GoalId);
+        }
+
         public void DebugDump(TextWriter writer, Story story)
         {
             if (NodeRef.IsValid())
@@ -193,28 +265,6 @@ namespace LSLib.LS.Story
             {
                 writer.Write("(none)");
             }
-        }
-    }
-
-
-    abstract public class TreeNode : Node
-    {
-        public NodeEntryItem NextNode;
-
-        public override void Read(OsiReader reader)
-        {
-            base.Read(reader);
-            NextNode = new NodeEntryItem();
-            NextNode.Read(reader);
-        }
-
-        public override void DebugDump(TextWriter writer, Story story)
-        {
-            base.DebugDump(writer, story);
-
-            writer.Write("    Next: ");
-            NextNode.DebugDump(writer, story);
-            writer.WriteLine("");
         }
     }
 }

@@ -50,6 +50,24 @@ namespace LSLib.LS.Story
             }
         }
 
+        public void Write(OsiWriter writer)
+        {
+            Constants.Write(writer);
+
+            writer.Write((byte)LogicalIndices.Count);
+            foreach (var index in LogicalIndices)
+            {
+                writer.Write(index);
+            }
+
+            writer.Write((byte)LogicalToPhysicalMap.Count);
+            foreach (var pair in LogicalToPhysicalMap)
+            {
+                writer.Write(pair.Key);
+                writer.Write(pair.Value);
+            }
+        }
+
         public Tuple Adapt(Tuple columns)
         {
             var result = new Tuple();

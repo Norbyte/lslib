@@ -16,6 +16,11 @@ namespace LSLib.LS.Story
             NodeIndex = reader.ReadUInt32();
         }
 
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(NodeIndex);
+        }
+
         public bool IsValid()
         {
             return NodeIndex != 0;
@@ -51,6 +56,11 @@ namespace LSLib.LS.Story
             AdapterIndex = reader.ReadUInt32();
         }
 
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(AdapterIndex);
+        }
+
         public bool IsValid()
         {
             return AdapterIndex != 0;
@@ -76,6 +86,11 @@ namespace LSLib.LS.Story
         public void Read(OsiReader reader)
         {
             DatabaseIndex = reader.ReadUInt32();
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(DatabaseIndex);
         }
 
         public bool IsValid()

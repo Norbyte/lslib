@@ -40,7 +40,7 @@ namespace LSLib.LS.Story
 
             Unknown = reader.ReadByte();
 
-            if (reader.MajorVersion >= 1 && reader.MinorVersion >= 1)
+            if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 1))
             {
                 InitCalls = reader.ReadList<Call>();
                 ExitCalls = reader.ReadList<Call>();
@@ -49,6 +49,29 @@ namespace LSLib.LS.Story
             {
                 InitCalls = new List<Call>();
                 ExitCalls = new List<Call>();
+            }
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Index);
+            writer.Write(Name);
+            writer.Write(SubGoalCombination);
+
+            writer.Write((UInt32)ParentGoals.Count);
+            foreach (var goalIndex in ParentGoals)
+                writer.Write(goalIndex);
+
+            writer.Write((UInt32)SubGoals.Count);
+            foreach (var goalIndex in SubGoals)
+                writer.Write(goalIndex);
+
+            writer.Write(Unknown);
+
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 1))
+            {
+                writer.WriteList<Call>(InitCalls);
+                writer.WriteList<Call>(ExitCalls);
             }
         }
 

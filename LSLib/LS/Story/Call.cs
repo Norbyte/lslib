@@ -43,6 +43,28 @@ namespace LSLib.LS.Story
             GoalIdOrDebugHook = reader.ReadInt32();
         }
 
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Name);
+            if (Name.Length > 0)
+            {
+                writer.Write(Parameters != null);
+                if (Parameters != null)
+                {
+                    writer.Write((byte)Parameters.Count);
+                    foreach (var param in Parameters)
+                    {
+                        writer.Write(param is Variable);
+                        param.Write(writer);
+                    }
+                }
+
+                writer.Write(Negate);
+            }
+
+            writer.Write(GoalIdOrDebugHook);
+        }
+
         public void DebugDump(TextWriter writer, Story story)
         {
             if (Name.Length > 0)

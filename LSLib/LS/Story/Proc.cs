@@ -9,6 +9,11 @@ namespace LSLib.LS.Story
 {
     public class ProcNode : DataNode
     {
+        public override Type NodeType()
+        {
+            return Type.Proc;
+        }
+
         public override string TypeName()
         {
             return "Proc";

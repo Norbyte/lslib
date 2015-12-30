@@ -23,6 +23,15 @@ namespace LSLib.LS.Story
             }
         }
 
+        public void Write(OsiWriter writer)
+        {
+            writer.Write((byte)Columns.Count);
+            foreach (var column in Columns)
+            {
+                column.Write(writer);
+            }
+        }
+
         public void DebugDump(TextWriter writer, Story story)
         {
             writer.Write("(");
@@ -49,6 +58,12 @@ namespace LSLib.LS.Story
 
             FactsPosition = reader.BaseStream.Position;
             Facts = reader.ReadList<Fact>();
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            Parameters.Write(writer);
+            writer.WriteList<Fact>(Facts);
         }
 
         public void DebugDump(TextWriter writer, Story story)

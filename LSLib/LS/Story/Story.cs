@@ -9,6 +9,8 @@ namespace LSLib.LS.Story
 {
     public class Story
     {
+        public byte MinorVersion;
+        public byte MajorVersion;
         public OsirisHeader Header;
         public Dictionary<uint, OsirisType> Types;
         public List<OsirisDivObject> DivObjects;
@@ -115,41 +117,41 @@ namespace LSLib.LS.Story
                 Node node = null;
                 var type = reader.ReadByte();
                 var nodeId = reader.ReadUInt32();
-                switch ((NodeType)type)
+                switch ((Node.Type)type)
                 {
-                    case NodeType.Database:
+                    case Node.Type.Database:
                         node = new DatabaseNode();
                         break;
 
-                    case NodeType.Proc:
+                    case Node.Type.Proc:
                         node = new ProcNode();
                         break;
 
-                    case NodeType.DivQuery:
+                    case Node.Type.DivQuery:
                         node = new DivQueryNode();
                         break;
 
-                    case NodeType.InternalQuery:
+                    case Node.Type.InternalQuery:
                         node = new InternalQueryNode();
                         break;
 
-                    case NodeType.And:
+                    case Node.Type.And:
                         node = new AndNode();
                         break;
 
-                    case NodeType.NotAnd:
+                    case Node.Type.NotAnd:
                         node = new NotAndNode();
                         break;
 
-                    case NodeType.RelOp:
+                    case Node.Type.RelOp:
                         node = new RelOpNode();
                         break;
 
-                    case NodeType.Rule:
+                    case Node.Type.Rule:
                         node = new RuleNode();
                         break;
 
-                    case NodeType.UserQuery:
+                    case Node.Type.UserQuery:
                         node = new UserQueryNode();
                         break;
 
@@ -217,6 +219,8 @@ namespace LSLib.LS.Story
                 header.Read(reader);
                 reader.MinorVersion = header.MinorVersion;
                 reader.MajorVersion = header.MajorVersion;
+                story.MinorVersion = header.MinorVersion;
+                story.MajorVersion = header.MajorVersion;
 
                 if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion > 7))
                 {
@@ -227,11 +231,10 @@ namespace LSLib.LS.Story
                     throw new InvalidDataException(msg);
                 }
 
-                if (reader.MajorVersion >= 1 && reader.MinorVersion >= 4)
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 4))
                     reader.Scramble = 0xAD;
 
-
-                if (reader.MajorVersion >= 1 && reader.MinorVersion >= 5)
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 5))
                     story.Types = ReadTypes(reader);
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
@@ -358,6 +361,108 @@ namespace LSLib.LS.Story
                 }
 
                 return story;
+            }
+        }
+    }
+
+    public class StoryWriter
+    {
+        private OsiWriter Writer;
+
+        public StoryWriter()
+        {
+
+        }
+
+        private void WriteTypes(Dictionary<uint, OsirisType> types)
+        {
+            Writer.Write((UInt32)types.Count);
+            foreach (var type in types)
+            {
+                type.Value.Write(Writer);
+            }
+        }
+
+        private void WriteNodes(Dictionary<uint, Node> nodes)
+        {
+            Writer.Write((UInt32)nodes.Count);
+            foreach (var node in nodes)
+            {
+                Writer.Write((byte)node.Value.NodeType());
+                Writer.Write(node.Key);
+                node.Value.Write(Writer);
+            }
+        }
+
+        private void WriteAdapters(Dictionary<uint, Adapter> adapters)
+        {
+            Writer.Write((UInt32)adapters.Count);
+            foreach (var adapter in adapters)
+            {
+                Writer.Write(adapter.Key);
+                adapter.Value.Write(Writer);
+            }
+        }
+
+        private void WriteDatabases(Dictionary<uint, Database> databases)
+        {
+            Writer.Write((UInt32)databases.Count);
+            foreach (var database in databases)
+            {
+                Writer.Write(database.Key);
+                database.Value.Write(Writer);
+            }
+        }
+
+        private void WriteGoals(Dictionary<uint, Goal> goals)
+        {
+            Writer.Write((UInt32)goals.Count);
+            foreach (var goal in goals)
+            {
+                goal.Value.Write(Writer);
+            }
+        }
+
+        public void Write(Stream stream, Story story)
+        {
+            using (Writer = new OsiWriter(stream))
+            {
+                Writer.MajorVersion = story.MajorVersion;
+                Writer.MinorVersion = story.MinorVersion;
+
+                var header = new OsirisHeader();
+                header.Version = "Osiris save file dd. 02/10/15 12:44:13. Version 1.5.";
+                header.MajorVersion = story.MajorVersion;
+                header.MinorVersion = story.MinorVersion;
+                header.BigEndian = false;
+                header.Unused = 0;
+                // Debug flags used in D:OS EE
+                header.DebugFlags = 0x000CA010;
+                header.Write(Writer);
+
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion > 7))
+                {
+                    var msg = String.Format(
+                        "Osiris version v{0}.{1} unsupported; this tool supports versions up to v1.7.",
+                        Writer.MajorVersion, Writer.MinorVersion
+                    );
+                    throw new InvalidDataException(msg);
+                }
+
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 4))
+                    Writer.Scramble = 0xAD;
+
+
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 5))
+                    WriteTypes(story.Types);
+
+                Writer.WriteList(story.DivObjects);
+                Writer.WriteList(story.Functions);
+                WriteNodes(story.Nodes);
+                WriteAdapters(story.Adapters);
+                WriteDatabases(story.Databases);
+                WriteGoals(story.Goals);
+                Writer.WriteList(story.GlobalActions);
             }
         }
     }

@@ -27,6 +27,17 @@ namespace LSLib.LS.Story
             RelDatabaseFlag = reader.ReadByte();
         }
 
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            ParentRef.Write(writer);
+            AdapterRef.Write(writer);
+
+            RelDatabaseRef.Write(writer);
+            RelDatabase.Write(writer);
+            writer.Write(RelDatabaseFlag);
+        }
+
         public override void DebugDump(TextWriter writer, Story story)
         {
             base.DebugDump(writer, story);

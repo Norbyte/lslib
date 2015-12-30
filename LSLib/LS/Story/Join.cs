@@ -39,6 +39,23 @@ namespace LSLib.LS.Story
             Database2Flag = reader.ReadByte();
         }
 
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            LeftParentRef.Write(writer);
+            RightParentRef.Write(writer);
+            Adapter1Ref.Write(writer);
+            Adapter2Ref.Write(writer);
+
+            Database1Ref.Write(writer);
+            Database1.Write(writer);
+            writer.Write(Database1Flag);
+
+            Database2Ref.Write(writer);
+            Database2.Write(writer);
+            writer.Write(Database2Flag);
+        }
+
         public override void DebugDump(TextWriter writer, Story story)
         {
             base.DebugDump(writer, story);
@@ -95,6 +112,11 @@ namespace LSLib.LS.Story
 
     public class AndNode : JoinNode
     {
+        public override Type NodeType()
+        {
+            return Type.And;
+        }
+
         public override string TypeName()
         {
             return "And";
@@ -112,6 +134,11 @@ namespace LSLib.LS.Story
 
     public class NotAndNode : JoinNode
     {
+        public override Type NodeType()
+        {
+            return Type.NotAnd;
+        }
+
         public override string TypeName()
         {
             return "Not And";

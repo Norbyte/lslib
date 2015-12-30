@@ -9,7 +9,7 @@ namespace LSLib.LS.Story
 {
     public class RuleNode : RelNode
     {
-        public enum Type
+        public enum RuleType
         {
             Rule,
             Proc,
@@ -45,10 +45,32 @@ namespace LSLib.LS.Story
 
             Line = reader.ReadUInt32();
 
-            if (reader.MajorVersion >= 1 && reader.MinorVersion >= 6)
+            if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 6))
                 IsQuery = reader.ReadByte() == 1;
             else
                 IsQuery = false;
+        }
+
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            writer.WriteList<Call>(Calls);
+
+            writer.Write((byte)Variables.Count);
+            foreach (var variable in Variables)
+            {
+                writer.Write((byte)1);
+                variable.Write(writer);
+            }
+
+            writer.Write(Line);
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 6))
+                writer.Write(IsQuery);
+        }
+
+        public override Type NodeType()
+        {
+            return Type.Rule;
         }
 
         public override string TypeName()
@@ -102,18 +124,18 @@ namespace LSLib.LS.Story
             }
         }
 
-        public Type GetType(Story story)
+        public RuleType GetRuleType(Story story)
         {
             var root = GetRoot(story);
             if (root is ProcNode)
             {
                 if (IsQuery)
-                    return Type.Query;
+                    return RuleType.Query;
                 else
-                    return Type.Proc;
+                    return RuleType.Proc;
             }
             else
-                return Type.Rule;
+                return RuleType.Rule;
         }
 
         public Tuple MakeInitialTuple()
@@ -130,11 +152,11 @@ namespace LSLib.LS.Story
 
         public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
         {
-            switch (GetType(story))
+            switch (GetRuleType(story))
             {
-                case Type.Proc: writer.WriteLine("PROC"); break;
-                case Type.Query: writer.WriteLine("QRY"); break;
-                case Type.Rule: writer.WriteLine("IF"); break;
+                case RuleType.Proc: writer.WriteLine("PROC"); break;
+                case RuleType.Query: writer.WriteLine("QRY"); break;
+                case RuleType.Rule: writer.WriteLine("IF"); break;
             }
 
             var initialTuple = MakeInitialTuple();

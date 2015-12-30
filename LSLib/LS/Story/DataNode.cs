@@ -17,6 +17,12 @@ namespace LSLib.LS.Story
             ReferencedBy = reader.ReadList<NodeEntryItem>();
         }
 
+        public override void Write(OsiWriter writer)
+        {
+            base.Write(writer);
+            writer.WriteList<NodeEntryItem>(ReferencedBy);
+        }
+
         public override void DebugDump(TextWriter writer, Story story)
         {
             base.DebugDump(writer, story);
