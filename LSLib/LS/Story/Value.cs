@@ -154,9 +154,9 @@ namespace LSLib.LS.Story
         public override void Read(OsiReader reader)
         {
             base.Read(reader);
-            IsValid = reader.ReadByte() == 1;
-            OutParam = reader.ReadByte() == 1;
-            IsAType = reader.ReadByte() == 1;
+            IsValid = reader.ReadBoolean();
+            OutParam = reader.ReadBoolean();
+            IsAType = reader.ReadBoolean();
         }
 
         public override void Write(OsiWriter writer)
@@ -195,8 +195,8 @@ namespace LSLib.LS.Story
         {
             base.Read(reader);
             Index = reader.ReadSByte();
-            Unused = reader.ReadByte() == 1;
-            Adapted = reader.ReadByte() == 1;
+            Unused = reader.ReadBoolean();
+            Adapted = reader.ReadBoolean();
         }
 
         public override void Write(OsiWriter writer)

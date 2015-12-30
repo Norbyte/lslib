@@ -37,7 +37,7 @@ namespace LSLib.LS.Story
                     }
                 }
 
-                Negate = reader.ReadByte() == 1;
+                Negate = reader.ReadBoolean();
             }
 
             GoalIdOrDebugHook = reader.ReadInt32();

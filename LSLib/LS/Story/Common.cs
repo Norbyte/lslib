@@ -43,6 +43,12 @@ namespace LSLib.LS.Story
             return Encoding.UTF8.GetString(bytes.ToArray());
         }
 
+        public override bool ReadBoolean()
+        {
+            var b = ReadByte();
+            return b == 1;
+        }
+
         public Guid ReadGuid()
         {
             var guid = ReadBytes(16);
@@ -140,7 +146,7 @@ namespace LSLib.LS.Story
             Version = reader.ReadString();
             MajorVersion = reader.ReadByte();
             MinorVersion = reader.ReadByte();
-            BigEndian = reader.ReadByte() == 1;
+            BigEndian = reader.ReadBoolean();
             Unused = reader.ReadByte();
 
             if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 2))

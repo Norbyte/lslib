@@ -46,7 +46,7 @@ namespace LSLib.LS.Story
             Line = reader.ReadUInt32();
 
             if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 6))
-                IsQuery = reader.ReadByte() == 1;
+                IsQuery = reader.ReadBoolean();
             else
                 IsQuery = false;
         }
