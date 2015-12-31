@@ -57,6 +57,7 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.loadInputBtn = new System.Windows.Forms.Button();
             this.outputFileBrowserBtn = new System.Windows.Forms.Button();
@@ -107,13 +108,17 @@
             this.label12 = new System.Windows.Forms.Label();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.databaseGrid = new System.Windows.Forms.DataGridView();
+            this.databaseSelectorCb = new System.Windows.Forms.ComboBox();
+            this.label18 = new System.Windows.Forms.Label();
+            this.loadStoryBtn = new System.Windows.Forms.Button();
             this.decompileStoryBtn = new System.Windows.Forms.Button();
-            this.goalPathBrowseBtn = new System.Windows.Forms.Button();
-            this.goalPath = new System.Windows.Forms.TextBox();
-            this.label10 = new System.Windows.Forms.Label();
-            this.storyFileBrowseBtn = new System.Windows.Forms.Button();
             this.storyFilePath = new System.Windows.Forms.TextBox();
+            this.goalPathBrowseBtn = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
+            this.goalPath = new System.Windows.Forms.TextBox();
+            this.storyFileBrowseBtn = new System.Windows.Forms.Button();
+            this.label10 = new System.Windows.Forms.Label();
             this.packageFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.exportPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputFileDlg = new System.Windows.Forms.OpenFileDialog();
@@ -122,7 +127,6 @@
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceOutputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -133,6 +137,7 @@
             this.groupBox4.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).BeginInit();
             this.SuspendLayout();
             // 
             // inputFileDlg
@@ -471,6 +476,19 @@
             this.forceLegacyVersion.TabIndex = 17;
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
+            // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // label1
             // 
@@ -994,6 +1012,14 @@
             // tabPage1
             // 
             this.tabPage1.Controls.Add(this.groupBox3);
+            this.tabPage1.Controls.Add(this.loadStoryBtn);
+            this.tabPage1.Controls.Add(this.decompileStoryBtn);
+            this.tabPage1.Controls.Add(this.storyFilePath);
+            this.tabPage1.Controls.Add(this.goalPathBrowseBtn);
+            this.tabPage1.Controls.Add(this.label9);
+            this.tabPage1.Controls.Add(this.goalPath);
+            this.tabPage1.Controls.Add(this.storyFileBrowseBtn);
+            this.tabPage1.Controls.Add(this.label10);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
@@ -1004,36 +1030,77 @@
             // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox3.Controls.Add(this.decompileStoryBtn);
-            this.groupBox3.Controls.Add(this.goalPathBrowseBtn);
-            this.groupBox3.Controls.Add(this.goalPath);
-            this.groupBox3.Controls.Add(this.label10);
-            this.groupBox3.Controls.Add(this.storyFileBrowseBtn);
-            this.groupBox3.Controls.Add(this.storyFilePath);
-            this.groupBox3.Controls.Add(this.label9);
-            this.groupBox3.Location = new System.Drawing.Point(6, 6);
+            this.groupBox3.Controls.Add(this.databaseGrid);
+            this.groupBox3.Controls.Add(this.databaseSelectorCb);
+            this.groupBox3.Controls.Add(this.label18);
+            this.groupBox3.Location = new System.Drawing.Point(7, 98);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(897, 150);
-            this.groupBox3.TabIndex = 0;
+            this.groupBox3.Size = new System.Drawing.Size(896, 499);
+            this.groupBox3.TabIndex = 58;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Unpack story";
+            this.groupBox3.Text = "Database Editor";
+            // 
+            // databaseGrid
+            // 
+            this.databaseGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
+            this.databaseGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.databaseGrid.Location = new System.Drawing.Point(10, 47);
+            this.databaseGrid.Name = "databaseGrid";
+            this.databaseGrid.Size = new System.Drawing.Size(880, 446);
+            this.databaseGrid.TabIndex = 2;
+            // 
+            // databaseSelectorCb
+            // 
+            this.databaseSelectorCb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.databaseSelectorCb.FormattingEnabled = true;
+            this.databaseSelectorCb.Location = new System.Drawing.Point(69, 20);
+            this.databaseSelectorCb.Name = "databaseSelectorCb";
+            this.databaseSelectorCb.Size = new System.Drawing.Size(471, 21);
+            this.databaseSelectorCb.TabIndex = 1;
+            this.databaseSelectorCb.SelectedIndexChanged += new System.EventHandler(this.databaseSelectorCb_SelectedIndexChanged);
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(7, 24);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(56, 13);
+            this.label18.TabIndex = 0;
+            this.label18.Text = "Database:";
+            // 
+            // loadStoryBtn
+            // 
+            this.loadStoryBtn.Location = new System.Drawing.Point(756, 21);
+            this.loadStoryBtn.Name = "loadStoryBtn";
+            this.loadStoryBtn.Size = new System.Drawing.Size(121, 23);
+            this.loadStoryBtn.TabIndex = 57;
+            this.loadStoryBtn.Text = "Load";
+            this.loadStoryBtn.UseVisualStyleBackColor = true;
+            this.loadStoryBtn.Click += new System.EventHandler(this.loadStoryBtn_Click);
             // 
             // decompileStoryBtn
             // 
-            this.decompileStoryBtn.Location = new System.Drawing.Point(10, 112);
+            this.decompileStoryBtn.Location = new System.Drawing.Point(756, 68);
             this.decompileStoryBtn.Name = "decompileStoryBtn";
             this.decompileStoryBtn.Size = new System.Drawing.Size(121, 23);
             this.decompileStoryBtn.TabIndex = 56;
-            this.decompileStoryBtn.Text = "Unpack";
+            this.decompileStoryBtn.Text = "Extract";
             this.decompileStoryBtn.UseVisualStyleBackColor = true;
             this.decompileStoryBtn.Click += new System.EventHandler(this.decompileStoryBtn_Click);
+            // 
+            // storyFilePath
+            // 
+            this.storyFilePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.storyFilePath.Location = new System.Drawing.Point(6, 23);
+            this.storyFilePath.Name = "storyFilePath";
+            this.storyFilePath.Size = new System.Drawing.Size(706, 20);
+            this.storyFilePath.TabIndex = 51;
             // 
             // goalPathBrowseBtn
             // 
             this.goalPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.goalPathBrowseBtn.Location = new System.Drawing.Point(850, 83);
+            this.goalPathBrowseBtn.Location = new System.Drawing.Point(711, 69);
             this.goalPathBrowseBtn.Name = "goalPathBrowseBtn";
             this.goalPathBrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.goalPathBrowseBtn.TabIndex = 55;
@@ -1041,28 +1108,28 @@
             this.goalPathBrowseBtn.UseVisualStyleBackColor = true;
             this.goalPathBrowseBtn.Click += new System.EventHandler(this.goalPathBrowseBtn_Click);
             // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(3, 7);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(74, 13);
+            this.label9.TabIndex = 0;
+            this.label9.Text = "Story file path:";
+            // 
             // goalPath
             // 
             this.goalPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.goalPath.Location = new System.Drawing.Point(10, 84);
+            this.goalPath.Location = new System.Drawing.Point(6, 71);
             this.goalPath.Name = "goalPath";
-            this.goalPath.Size = new System.Drawing.Size(843, 20);
+            this.goalPath.Size = new System.Drawing.Size(706, 20);
             this.goalPath.TabIndex = 54;
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(7, 68);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(89, 13);
-            this.label10.TabIndex = 53;
-            this.label10.Text = "Goal output path:";
             // 
             // storyFileBrowseBtn
             // 
             this.storyFileBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.storyFileBrowseBtn.Location = new System.Drawing.Point(850, 35);
+            this.storyFileBrowseBtn.Location = new System.Drawing.Point(711, 21);
             this.storyFileBrowseBtn.Name = "storyFileBrowseBtn";
             this.storyFileBrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.storyFileBrowseBtn.TabIndex = 52;
@@ -1070,23 +1137,14 @@
             this.storyFileBrowseBtn.UseVisualStyleBackColor = true;
             this.storyFileBrowseBtn.Click += new System.EventHandler(this.storyFileBrowseBtn_Click);
             // 
-            // storyFilePath
+            // label10
             // 
-            this.storyFilePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.storyFilePath.Location = new System.Drawing.Point(10, 36);
-            this.storyFilePath.Name = "storyFilePath";
-            this.storyFilePath.Size = new System.Drawing.Size(843, 20);
-            this.storyFilePath.TabIndex = 51;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(7, 20);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(74, 13);
-            this.label9.TabIndex = 0;
-            this.label9.Text = "Story file path:";
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(3, 55);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(89, 13);
+            this.label10.TabIndex = 53;
+            this.label10.Text = "Goal output path:";
             // 
             // packageFileDlg
             // 
@@ -1107,19 +1165,6 @@
             // 
             this.storyPathDlg.CheckFileExists = false;
             this.storyPathDlg.Filter = "LS story files|*.osi";
-            // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // MainForm
             // 
@@ -1144,8 +1189,10 @@
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
             this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -1212,14 +1259,6 @@
         private System.Windows.Forms.ComboBox packageVersion;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.GroupBox groupBox3;
-        private System.Windows.Forms.Button decompileStoryBtn;
-        private System.Windows.Forms.Button goalPathBrowseBtn;
-        private System.Windows.Forms.TextBox goalPath;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Button storyFileBrowseBtn;
-        private System.Windows.Forms.TextBox storyFilePath;
-        private System.Windows.Forms.Label label9;
         private System.Windows.Forms.OpenFileDialog storyPathDlg;
         private System.Windows.Forms.FolderBrowserDialog goalPathDlg;
         private System.Windows.Forms.GroupBox groupBox4;
@@ -1247,6 +1286,18 @@
         private System.Windows.Forms.ProgressBar resourceConversionProgress;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label resourceProgressLabel;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.DataGridView databaseGrid;
+        private System.Windows.Forms.ComboBox databaseSelectorCb;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.Button loadStoryBtn;
+        private System.Windows.Forms.Button decompileStoryBtn;
+        private System.Windows.Forms.TextBox storyFilePath;
+        private System.Windows.Forms.Button goalPathBrowseBtn;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.TextBox goalPath;
+        private System.Windows.Forms.Button storyFileBrowseBtn;
+        private System.Windows.Forms.Label label10;
     }
 }
 

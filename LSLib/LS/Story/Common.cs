@@ -57,16 +57,20 @@ namespace LSLib.LS.Story
 
         public List<T> ReadList<T>() where T : OsirisSerializable, new()
         {
-            var count = ReadUInt32();
             var items = new List<T>();
+            ReadList<T>(items);
+            return items;
+        }
+
+        public void ReadList<T>(List<T> items) where T : OsirisSerializable, new()
+        {
+            var count = ReadUInt32();
             while (count-- > 0)
             {
                 var item = new T();
                 item.Read(this);
                 items.Add(item);
             }
-
-            return items;
         }
 
         public NodeRef ReadNodeRef()

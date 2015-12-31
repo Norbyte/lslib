@@ -19,6 +19,7 @@ namespace ConverterApp
     {
         private Root Root;
         private Resource Resource;
+        private Story Story;
 
         public MainForm()
         {
@@ -443,40 +444,40 @@ namespace ConverterApp
 
         private void decompileStoryBtn_Click(object sender, EventArgs e)
         {
-            using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
+            if (Story == null)
             {
-                var reader = new StoryReader();
-                var story = reader.Read(file);
+                MessageBox.Show("A story file must be loaded before exporting.", "Story export failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-                var debugPath = goalPath.Text + "/debug.log";
-                using (var debugFile = new FileStream(debugPath, FileMode.Create, FileAccess.Write))
-                using (var writer = new StreamWriter(debugFile))
-                {
-                    story.DebugDump(writer);
-                }
+            var debugPath = goalPath.Text + "/debug.log";
+            using (var debugFile = new FileStream(debugPath, FileMode.Create, FileAccess.Write))
+            using (var writer = new StreamWriter(debugFile))
+            {
+                Story.DebugDump(writer);
+            }
 
-                var unassignedPath = goalPath.Text + "/UNASSIGNED_RULES.txt";
-                using (var goalFile = new FileStream(unassignedPath, FileMode.Create, FileAccess.Write))
+            var unassignedPath = goalPath.Text + "/UNASSIGNED_RULES.txt";
+            using (var goalFile = new FileStream(unassignedPath, FileMode.Create, FileAccess.Write))
+            using (var writer = new StreamWriter(goalFile))
+            {
+                var dummyGoal = new Goal();
+                dummyGoal.ExitCalls = new List<Call>();
+                dummyGoal.InitCalls = new List<Call>();
+                dummyGoal.ParentGoals = new List<uint>();
+                dummyGoal.SubGoals = new List<uint>();
+                dummyGoal.Name = "UNASSIGNED_RULES";
+                dummyGoal.Index = 0;
+                dummyGoal.MakeScript(writer, Story);
+            }
+
+            foreach (var goal in Story.Goals)
+            {
+                var filePath = goalPath.Text + "/" + goal.Value.Name + ".txt";
+                using (var goalFile = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                 using (var writer = new StreamWriter(goalFile))
                 {
-                    var dummyGoal = new Goal();
-                    dummyGoal.ExitCalls = new List<Call>();
-                    dummyGoal.InitCalls = new List<Call>();
-                    dummyGoal.ParentGoals = new List<uint>();
-                    dummyGoal.SubGoals = new List<uint>();
-                    dummyGoal.Name = "UNASSIGNED_RULES";
-                    dummyGoal.Index = 0;
-                    dummyGoal.MakeScript(writer, story);
-                }
-
-                foreach (var goal in story.Goals)
-                {
-                    var filePath = goalPath.Text + "/" + goal.Value.Name + ".txt";
-                    using (var goalFile = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                    using (var writer = new StreamWriter(goalFile))
-                    {
-                         goal.Value.MakeScript(writer, story);
-                    }
+                    goal.Value.MakeScript(writer, Story);
                 }
             }
 
@@ -599,6 +600,51 @@ namespace ConverterApp
                 resourceProgressLabel.Text = "";
                 resourceConversionProgress.Value = 0;
                 resourceConvertBtn.Enabled = true;
+            }
+        }
+
+        private void loadStoryBtn_Click(object sender, EventArgs e)
+        {
+            using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
+            {
+                var reader = new StoryReader();
+                Story = reader.Read(file);
+
+                databaseSelectorCb.Items.Clear();
+                foreach (var database in Story.Databases)
+                {
+                    var name = "(Unnamed)";
+                    var owner = database.Value.OwnerNode;
+                    if (owner != null && owner.Name.Length > 0)
+                    {
+                        name = String.Format("{0}/{1}", owner.Name, owner.NameIndex);
+                    }
+                    else if (owner != null)
+                    {
+                        name = String.Format("<{0}>", owner.TypeName());
+                    }
+
+                    name += String.Format(" #{0} ({1} rows)", database.Key, database.Value.Facts.Count);
+
+                    databaseSelectorCb.Items.Add(name);
+                }
+            }
+        }
+
+        private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            databaseGrid.DataSource = null;
+            databaseGrid.Columns.Clear();
+
+            if (databaseSelectorCb.SelectedIndex != -1)
+            {
+                var database = Story.Databases[(uint)databaseSelectorCb.SelectedIndex + 1];
+                databaseGrid.DataSource = database.Facts;
+
+                for (var i = 0; i < database.Parameters.Types.Count; i++)
+                {
+                    databaseGrid.Columns[i].HeaderText = i.ToString() + " (" + Story.Types[database.Parameters.Types[i]].Name + ")";
+                }
             }
         }
     }

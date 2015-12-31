@@ -22,6 +22,18 @@ namespace LSLib.LS.Story
         public Single FloatValue;
         public String StringValue;
 
+        public override string ToString()
+        {
+            switch ((Type)TypeId)
+            {
+                case Type.Unknown: return "";
+                case Type.Integer: return IntValue.ToString();
+                case Type.Float: return FloatValue.ToString();
+                case Type.String: return StringValue;
+                default: return StringValue;
+            }
+        }
+
         public virtual void Read(OsiReader reader)
         {
             var wtf = reader.ReadByte();
