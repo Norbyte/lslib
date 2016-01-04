@@ -409,15 +409,12 @@ namespace LSLib.Granny.Model
                 var mat = ColladaHelpers.FloatsToMatrix(bindShapeFloats);
                 mat.Transpose();
 
-                // if (mat != Matrix4.Identity)
-                //     throw new Exception("Non-Identity bind shape matrices are not supported yet!");
-
                 BindShapeMatrix = mat;
 
-                // Deform geometries that were affected by our bind shape matrix (might not be correct!)
+                // Deform geometries that were affected by our bind shape matrix
                 foreach (var vertex in mesh.PrimaryVertexData.Vertices)
                 {
-                    vertex.Position = Vector3.Transform(vertex.Position, BindShapeMatrix);
+                    vertex.Transform(BindShapeMatrix);
                 }
             }
             else
