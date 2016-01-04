@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Collada141;
 using LSLib.Granny.GR2;
+using LSLib.LS;
 using OpenTK;
 
 namespace LSLib.Granny.Model
@@ -189,11 +190,11 @@ namespace LSLib.Granny.Model
         private void ImportExporterInfo(COLLADA collada)
         {
             ExporterInfo = new ExporterInfo();
-            ExporterInfo.ExporterName = "LSLib GR2 Exporter";
-            ExporterInfo.ExporterMajorRevision = 0;
-            ExporterInfo.ExporterMinorRevision = 1;
+            ExporterInfo.ExporterName = String.Format("LSLib GR2 Exporter v{0}", Common.LibraryVersion());
+            ExporterInfo.ExporterMajorRevision = Common.MajorVersion;
+            ExporterInfo.ExporterMinorRevision = Common.MinorVersion;
             ExporterInfo.ExporterBuildNumber = 0;
-            ExporterInfo.ExporterCustomization = 0;
+            ExporterInfo.ExporterCustomization = Common.PatchVersion;
         }
 
         private Mesh ImportMesh(string name, mesh mesh, bool isSkinned)
@@ -701,7 +702,7 @@ namespace LSLib.Granny.Model
             if (ArtToolInfo != null)
                 contributor.authoring_tool = ArtToolInfo.FromArtToolName;
             else
-                contributor.authoring_tool = "LSLib COLLADA Exporter";
+                contributor.authoring_tool = "LSLib COLLADA Exporter v" + Common.LibraryVersion();
             asset.contributor = new assetContributor[] { contributor };
             asset.created = DateTime.Now;
             asset.modified = DateTime.Now;
