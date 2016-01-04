@@ -530,18 +530,24 @@ namespace LSLib.Granny.Model
 
         public void PostLoad()
         {
-            foreach (var triTopology in TriTopologies)
+            if (TriTopologies != null)
             {
-                triTopology.PostLoad();
+                foreach (var triTopology in TriTopologies)
+                {
+                    triTopology.PostLoad();
+                }
             }
 
-            foreach (var skeleton in Skeletons)
+            if (Skeletons != null)
             {
-                var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);
-                if (!hasSkinnedMeshes || skeleton.Bones.Count == 1)
+                foreach (var skeleton in Skeletons)
                 {
-                    skeleton.IsDummy = true;
-                    Utils.Info(String.Format("Skeleton '{0}' marked as dummy", skeleton.Name));
+                    var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);
+                    if (!hasSkinnedMeshes || skeleton.Bones.Count == 1)
+                    {
+                        skeleton.IsDummy = true;
+                        Utils.Info(String.Format("Skeleton '{0}' marked as dummy", skeleton.Name));
+                    }
                 }
             }
         }
