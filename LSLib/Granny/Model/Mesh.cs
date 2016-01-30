@@ -439,10 +439,10 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public Type VertexFormat;
 
-        public static Mesh ImportFromCollada(mesh mesh, string vertexFormat)
+        public static Mesh ImportFromCollada(mesh mesh, string vertexFormat, bool rebuildNormals = false, bool rebuildTangents = false)
         {
             var collada = new ColladaMesh();
-            collada.ImportFromCollada(mesh, vertexFormat);
+            collada.ImportFromCollada(mesh, vertexFormat, rebuildNormals, rebuildTangents);
 
             var m = new Mesh();
             m.VertexFormat = VertexFormatRegistry.Resolve(vertexFormat);

@@ -371,7 +371,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public void ImportFromCollada(mesh mesh, string vertexFormat)
+        public void ImportFromCollada(mesh mesh, string vertexFormat, bool rebuildNormals = false, bool rebuildTangents = false)
         {
             Mesh = mesh;
             VertexType = VertexFormatRegistry.Resolve(vertexFormat);
@@ -381,9 +381,10 @@ namespace LSLib.Granny.Model
 
             // TODO: This should be done before deduplication!
             // TODO: Move this to somewhere else ... ?
-            if (!HasNormals)
+            if (!HasNormals || rebuildNormals)
             {
-                Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
+                if (!HasNormals)
+                    Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
                 computeNormals();
             }
 
@@ -442,9 +443,10 @@ namespace LSLib.Granny.Model
                     OriginalToConsolidatedVertexIndexMap.Add(i, new List<int> { i });
             }
 
-            if (!HasTangents)
+            if (!HasTangents || rebuildTangents)
             {
-                Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
+                if (!HasTangents)
+                    Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
                 computeTangents();
             }
         }

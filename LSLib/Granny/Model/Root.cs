@@ -144,7 +144,7 @@ namespace LSLib.Granny.Model
         bool ZUp = false;
 
         [Serialization(Kind = SerializationKind.None)]
-        public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
+        public ExporterOptions Options = new ExporterOptions();
 
         private void ImportArtToolInfo(COLLADA collada)
         {
@@ -202,7 +202,7 @@ namespace LSLib.Granny.Model
 
         private Mesh ImportMesh(string name, mesh mesh, string vertexFormat)
         {
-            var m = Mesh.ImportFromCollada(mesh, vertexFormat);
+            var m = Mesh.ImportFromCollada(mesh, vertexFormat, Options.RecalculateNormals, Options.RecalculateTangents);
             m.Name = name;
             VertexDatas.Add(m.PrimaryVertexData);
             TriTopologies.Add(m.PrimaryTopology);
@@ -664,7 +664,7 @@ namespace LSLib.Granny.Model
             foreach (var geometry in collGeometries)
             {
                 string vertexFormat;
-                if (!VertexFormats.TryGetValue(geometry.name, out vertexFormat))
+                if (!Options.VertexFormats.TryGetValue(geometry.name, out vertexFormat))
                 {
                     vertexFormat = SkinnedMeshes.Contains(geometry.id) ? "PWNGBT343332" : "PNGBT33332";
                 }

@@ -57,7 +57,6 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.loadInputBtn = new System.Windows.Forms.Button();
             this.outputFileBrowserBtn = new System.Windows.Forms.Button();
@@ -127,6 +126,7 @@
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceOutputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -303,7 +303,6 @@
             // recalculateTangents
             // 
             this.recalculateTangents.AutoSize = true;
-            this.recalculateTangents.Enabled = false;
             this.recalculateTangents.Location = new System.Drawing.Point(189, 41);
             this.recalculateTangents.Name = "recalculateTangents";
             this.recalculateTangents.Size = new System.Drawing.Size(177, 17);
@@ -348,7 +347,6 @@
             // recalculateNormals
             // 
             this.recalculateNormals.AutoSize = true;
-            this.recalculateNormals.Enabled = false;
             this.recalculateNormals.Location = new System.Drawing.Point(189, 18);
             this.recalculateNormals.Name = "recalculateNormals";
             this.recalculateNormals.Size = new System.Drawing.Size(122, 17);
@@ -477,19 +475,6 @@
             this.forceLegacyVersion.TabIndex = 17;
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
-            // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // label1
             // 
@@ -1166,6 +1151,19 @@
             // 
             this.storyPathDlg.CheckFileExists = false;
             this.storyPathDlg.Filter = "LS story files|*.osi";
+            // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // MainForm
             // 

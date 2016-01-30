@@ -67,7 +67,7 @@ namespace LSLib.Granny.Model
         private Root LoadDAE(string inPath)
         {
             var root = new LSLib.Granny.Model.Root();
-            root.VertexFormats = Options.VertexFormats;
+            root.Options = Options;
             root.ImportFromCollada(inPath);
             return root;
         }
