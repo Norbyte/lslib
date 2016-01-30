@@ -200,6 +200,47 @@ namespace LSLib.Granny.Model
             ExporterInfo.ExporterCustomization = Common.PatchVersion;
         }
 
+        private string FindVertexFormat(geometry geom)
+        {
+            string vertexFormat;
+            // Use the override vertex format, if one was specified
+            if (!Options.VertexFormats.TryGetValue(geom.name, out vertexFormat))
+            {
+                vertexFormat = "P";
+                string attributeCounts = "3";
+
+                bool isSkinned = SkinnedMeshes.Contains(geom.id);
+                if (isSkinned)
+                {
+                    vertexFormat += "W";
+                    attributeCounts += "4";
+                }
+
+                // Granny doesn't have any skinned vertex formats without normals
+                if (Options.ExportNormals || isSkinned)
+                {
+                    vertexFormat += "N";
+                    attributeCounts += "3";
+                }
+
+                if (Options.ExportTangents)
+                {
+                    vertexFormat += "GB";
+                    attributeCounts += "33";
+                }
+
+                if (Options.ExportUVs)
+                {
+                    vertexFormat += "T";
+                    attributeCounts += "2";
+                }
+
+                vertexFormat += attributeCounts;
+            }
+
+            return vertexFormat;
+        }
+
         private Mesh ImportMesh(string name, mesh mesh, string vertexFormat)
         {
             var m = Mesh.ImportFromCollada(mesh, vertexFormat, Options.RecalculateNormals, Options.RecalculateTangents);
@@ -663,13 +704,7 @@ namespace LSLib.Granny.Model
 
             foreach (var geometry in collGeometries)
             {
-                string vertexFormat;
-                if (!Options.VertexFormats.TryGetValue(geometry.name, out vertexFormat))
-                {
-                    vertexFormat = SkinnedMeshes.Contains(geometry.id) ? "PWNGBT343332" : "PNGBT33332";
-                }
-
-                var mesh = ImportMesh(geometry.name, geometry.Item as mesh, vertexFormat);
+                var mesh = ImportMesh(geometry.name, geometry.Item as mesh, FindVertexFormat(geometry));
                 ColladaGeometries.Add(geometry.id, mesh);
             }
 

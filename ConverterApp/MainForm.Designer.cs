@@ -266,7 +266,6 @@
             this.exportUVs.AutoSize = true;
             this.exportUVs.Checked = true;
             this.exportUVs.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.exportUVs.Enabled = false;
             this.exportUVs.Location = new System.Drawing.Point(9, 64);
             this.exportUVs.Name = "exportUVs";
             this.exportUVs.Size = new System.Drawing.Size(79, 17);
@@ -279,7 +278,6 @@
             this.exportTangents.AutoSize = true;
             this.exportTangents.Checked = true;
             this.exportTangents.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.exportTangents.Enabled = false;
             this.exportTangents.Location = new System.Drawing.Point(9, 41);
             this.exportTangents.Name = "exportTangents";
             this.exportTangents.Size = new System.Drawing.Size(144, 17);
@@ -292,7 +290,6 @@
             this.exportNormals.AutoSize = true;
             this.exportNormals.Checked = true;
             this.exportNormals.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.exportNormals.Enabled = false;
             this.exportNormals.Location = new System.Drawing.Point(9, 18);
             this.exportNormals.Name = "exportNormals";
             this.exportNormals.Size = new System.Drawing.Size(95, 17);

@@ -30,11 +30,11 @@ namespace LSLib.Granny.Model
         public bool Is64Bit = false;
         public bool AlternateSignature = false;
         public UInt32 VersionTag = Header.DefaultTag;
-        public bool ExportNormals = true; // TODO: UNHANDLED
-        public bool ExportTangents = true; // TODO: UNHANDLED
-        public bool ExportUVs = true; // TODO: UNHANDLED
-        public bool RecalculateNormals = false; // TODO: UNHANDLED
-        public bool RecalculateTangents = false; // TODO: UNHANDLED
+        public bool ExportNormals = true;
+        public bool ExportTangents = true;
+        public bool ExportUVs = true;
+        public bool RecalculateNormals = false;
+        public bool RecalculateTangents = false;
         public bool RecalculateIWT = false;
         public bool BuildDummySkeleton = false;
         public bool CompactIndices = false;
@@ -136,7 +136,6 @@ namespace LSLib.Granny.Model
 
         private void GenerateDummySkeleton(Root root)
         {
-            // TODO: Add an option to enable/disable dummy skeleton generation
             foreach (var model in root.Models)
             {
                 if (model.Skeleton == null)
