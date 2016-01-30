@@ -18,14 +18,10 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] Tangent;
     }
 
-    [VertexPrototype(Prototype = typeof(PNTG3323_Prototype))]
+    [VertexPrototype(Prototype = typeof(PNTG3323_Prototype)),
+    VertexDescription(Position = true, Normal = true, Tangent = true, TextureCoordinates = true)]
     public class PNTG3323 : Vertex
     {
-        public override bool HasBoneInfluences()
-        {
-            return false;
-        }
-
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

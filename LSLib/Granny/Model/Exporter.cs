@@ -43,6 +43,7 @@ namespace LSLib.Granny.Model
         public bool ApplyBasisTransforms = true;
         public bool UseObsoleteVersionTag = false;
         public string ConformSkeletonsPath;
+        public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
     }
 
 
@@ -66,6 +67,7 @@ namespace LSLib.Granny.Model
         private Root LoadDAE(string inPath)
         {
             var root = new LSLib.Granny.Model.Root();
+            root.VertexFormats = Options.VertexFormats;
             root.ImportFromCollada(inPath);
             return root;
         }

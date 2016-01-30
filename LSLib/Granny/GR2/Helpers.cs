@@ -6,15 +6,15 @@ using System.Text;
 
 namespace LSLib.Granny.GR2
 {
-    static class Helpers
+    public static class Helpers
     {
         private static Dictionary<Type, ObjectCtor> CachedConstructors = new Dictionary<Type, ObjectCtor>();
         private static Dictionary<Type, ArrayCtor> CachedArrayConstructors = new Dictionary<Type, ArrayCtor>();
 
-        private delegate object ObjectCtor();
-        private delegate object ArrayCtor(int size);
+        public delegate object ObjectCtor();
+        public delegate object ArrayCtor(int size);
 
-        public static object CreateInstance(Type type)
+        public static ObjectCtor GetConstructor(Type type)
         {
             ObjectCtor ctor;
             if (!CachedConstructors.TryGetValue(type, out ctor))
@@ -25,6 +25,12 @@ namespace LSLib.Granny.GR2
                 CachedConstructors.Add(type, ctor);
             }
 
+            return ctor;
+        }
+
+        public static object CreateInstance(Type type)
+        {
+            ObjectCtor ctor = GetConstructor(type);
             return ctor();
         }
 

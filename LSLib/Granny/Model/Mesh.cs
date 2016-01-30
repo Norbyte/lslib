@@ -436,22 +436,29 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
 
-        public static Mesh ImportFromCollada(mesh mesh, bool isSkinned)
+        [Serialization(Kind = SerializationKind.None)]
+        public Type VertexFormat;
+
+        public static Mesh ImportFromCollada(mesh mesh, string vertexFormat)
         {
             var collada = new ColladaMesh();
-            collada.ImportFromCollada(mesh, isSkinned);
+            collada.ImportFromCollada(mesh, vertexFormat);
 
             var m = new Mesh();
+            m.VertexFormat = VertexFormatRegistry.Resolve(vertexFormat);
             m.Name = "Unnamed";
 
             m.PrimaryVertexData = new VertexData();
             var components = new List<GrannyString>();
             components.Add(new GrannyString("Position"));
-            if (isSkinned)
+
+            var vertexDesc = Vertex.Description(m.VertexFormat);
+            if (vertexDesc.BoneWeights)
             {
                 components.Add(new GrannyString("BoneWeights"));
                 components.Add(new GrannyString("BoneIndices"));
             }
+
             components.Add(new GrannyString("Normal"));
             components.Add(new GrannyString("Tangent"));
             components.Add(new GrannyString("Binormal"));
@@ -474,7 +481,7 @@ namespace LSLib.Granny.Model
             // m.BoneBindings; - TODO
 
             m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
-            Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", (isSkinned ? "skinned" : "rigid"), m.PrimaryTopology.Groups.Count, collada.TriangleCount));
+            Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", (vertexDesc.BoneWeights ? "skinned" : "rigid"), m.PrimaryTopology.Groups.Count, collada.TriangleCount));
 
             return m;
         }

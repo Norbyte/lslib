@@ -392,6 +392,7 @@
             this.gr2Game.Name = "gr2Game";
             this.gr2Game.Size = new System.Drawing.Size(356, 21);
             this.gr2Game.TabIndex = 28;
+            this.gr2Game.SelectedIndexChanged += new System.EventHandler(this.gr2Game_SelectedIndexChanged);
             // 
             // label7
             // 

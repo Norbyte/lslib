@@ -12,14 +12,10 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] Position;
     }
 
-    [VertexPrototype(Prototype = typeof(P3_Prototype))]
+    [VertexPrototype(Prototype = typeof(P3_Prototype)), 
+    VertexDescription(Position = true)]
     public class P3 : Vertex
     {
-        public override bool HasBoneInfluences()
-        {
-            return false;
-        }
-
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

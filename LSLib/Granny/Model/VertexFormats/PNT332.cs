@@ -16,14 +16,10 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] TextureCoordinates0;
     }
 
-    [VertexPrototype(Prototype = typeof(PNT332_Prototype))]
+    [VertexPrototype(Prototype = typeof(PNT332_Prototype)),
+    VertexDescription(Position = true, Normal = true, TextureCoordinates = true)]
     public class PNT332 : Vertex
     {
-        public override bool HasBoneInfluences()
-        {
-            return false;
-        }
-
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

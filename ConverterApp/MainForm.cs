@@ -229,6 +229,18 @@ namespace ConverterApp
             {
                 settings.ConformSkeletonsPath = null;
             }
+
+            foreach (var item in resourceFormats.Items)
+            {
+                var setting = item as ListViewItem;
+                var name = setting.SubItems[0].Text;
+                var type = setting.SubItems[1].Text;
+                var value = setting.SubItems[2].Text;
+                if (type == "Mesh" && value != "Automatic")
+                {
+                    settings.VertexFormats.Add(name, value);
+                }
+            }
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -646,6 +658,11 @@ namespace ConverterApp
                     databaseGrid.Columns[i].HeaderText = i.ToString() + " (" + Story.Types[database.Parameters.Types[i]].Name + ")";
                 }
             }
+        }
+
+        private void gr2Game_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            use16bitIndex.Checked = (gr2Game.SelectedIndex == 1);
         }
     }
 }

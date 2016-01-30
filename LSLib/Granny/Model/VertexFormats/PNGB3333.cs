@@ -18,14 +18,10 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] Binormal;
     }
 
-    [VertexPrototype(Prototype = typeof(PNGB3333_Prototype))]
+    [VertexPrototype(Prototype = typeof(PNGB3333_Prototype)), 
+    VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true)]
     public class PNGB3333 : Vertex
     {
-        public override bool HasBoneInfluences()
-        {
-            return false;
-        }
-
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

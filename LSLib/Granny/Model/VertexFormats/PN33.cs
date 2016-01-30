@@ -14,14 +14,10 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] Normal;
     }
 
-    [VertexPrototype(Prototype = typeof(PN33_Prototype))]
+    [VertexPrototype(Prototype = typeof(PN33_Prototype)), 
+    VertexDescription(Position = true, Normal = true)]
     public class PN33 : Vertex
     {
-        public override bool HasBoneInfluences()
-        {
-            return false;
-        }
-
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

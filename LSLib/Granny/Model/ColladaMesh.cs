@@ -20,7 +20,7 @@ namespace LSLib.Granny.Model
 
         private int VertexInputIndex = -1;
         private int UVInputIndex = -1;
-        private bool IsSkinned;
+        private Type VertexType;
         private bool HasNormals = false;
         private bool HasTangents = false;
 
@@ -291,14 +291,10 @@ namespace LSLib.Granny.Model
                 throw new ParsingException("Required triangle input semantic missing: VERTEX");
 
             Vertices = new List<Vertex>(positions.Count);
+            var vertexCtor = GR2.Helpers.GetConstructor(VertexType);
             for (var vert = 0; vert < positions.Count; vert++)
             {
-                Vertex vertex;
-                if (IsSkinned)
-                    vertex = new PWNGBT343332();
-                else
-                    vertex = new PNGBT33332();
-
+                Vertex vertex = vertexCtor() as Vertex;
                 vertex.Position = positions[vert];
 
                 if (tangents != null)
@@ -375,10 +371,10 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public void ImportFromCollada(mesh mesh, bool isSkinned)
+        public void ImportFromCollada(mesh mesh, string vertexFormat)
         {
             Mesh = mesh;
-            IsSkinned = isSkinned;
+            VertexType = VertexFormatRegistry.Resolve(vertexFormat);
             ImportSources();
             ImportFaces();
             ImportVertices();

@@ -20,14 +20,10 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] TextureCoordinates0;
     }
 
-    [VertexPrototype(Prototype = typeof(PWNT3232_Prototype))]
+    [VertexPrototype(Prototype = typeof(PWNT3232_Prototype)),
+    VertexDescription(Position = true, BoneWeights = true, BoneIndices = true, Normal = true, TextureCoordinates = true)]
     public class PWNT3232 : Vertex
     {
-        public override bool HasBoneInfluences()
-        {
-            return true;
-        }
-
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

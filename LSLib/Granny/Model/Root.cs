@@ -143,6 +143,9 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         bool ZUp = false;
 
+        [Serialization(Kind = SerializationKind.None)]
+        public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
+
         private void ImportArtToolInfo(COLLADA collada)
         {
             ArtToolInfo = new ArtToolInfo();
@@ -197,9 +200,9 @@ namespace LSLib.Granny.Model
             ExporterInfo.ExporterCustomization = Common.PatchVersion;
         }
 
-        private Mesh ImportMesh(string name, mesh mesh, bool isSkinned)
+        private Mesh ImportMesh(string name, mesh mesh, string vertexFormat)
         {
-            var m = Mesh.ImportFromCollada(mesh, isSkinned);
+            var m = Mesh.ImportFromCollada(mesh, vertexFormat);
             m.Name = name;
             VertexDatas.Add(m.PrimaryVertexData);
             TriTopologies.Add(m.PrimaryTopology);
@@ -215,6 +218,12 @@ namespace LSLib.Granny.Model
             Mesh mesh = null;
             if (!ColladaGeometries.TryGetValue(skin.source1.Substring(1), out mesh))
                 throw new ParsingException("Skin references nonexistent mesh: " + skin.source1);
+
+            if (!Vertex.Description(mesh.VertexFormat).BoneWeights)
+            {
+                var msg = String.Format("Tried to apply skin to mesh ({0}) with non-skinned vertices ({1})", mesh.Name, mesh.VertexFormat.Name);
+                throw new ParsingException(msg);
+            }
 
             var sources = new Dictionary<String, Source>();
             foreach (var source in skin.source)
@@ -654,8 +663,13 @@ namespace LSLib.Granny.Model
 
             foreach (var geometry in collGeometries)
             {
-                bool isSkinned = SkinnedMeshes.Contains(geometry.id);
-                var mesh = ImportMesh(geometry.name, geometry.Item as mesh, isSkinned);
+                string vertexFormat;
+                if (!VertexFormats.TryGetValue(geometry.name, out vertexFormat))
+                {
+                    vertexFormat = SkinnedMeshes.Contains(geometry.id) ? "PWNGBT343332" : "PNGBT33332";
+                }
+
+                var mesh = ImportMesh(geometry.name, geometry.Item as mesh, vertexFormat);
                 ColladaGeometries.Add(geometry.id, mesh);
             }
 

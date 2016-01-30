@@ -49,6 +49,22 @@ namespace LSLib.Granny.Model
         public Type Prototype;
     }
 
+    /// <summary>
+    /// Describes the properties (Position, Normal, Tangent, ...) this vertex format has
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class VertexDescriptionAttribute : System.Attribute
+    {
+        public bool Position = true;
+        public bool BoneWeights = false;
+        public bool BoneIndices = false;
+        public bool Normal = false;
+        public bool Tangent = false;
+        public bool Binormal = false;
+        public bool DiffuseColor = false;
+        public bool TextureCoordinates = false;
+    }
+
     public abstract class Vertex
     {
         public Vector3 Position;
@@ -193,12 +209,22 @@ namespace LSLib.Granny.Model
             throw new ArgumentException("Class doesn't have a vertex prototype");
         }
 
+        public static VertexDescriptionAttribute Description(Type type)
+        {
+            var attrs = type.GetCustomAttributes(typeof(VertexDescriptionAttribute), true);
+            if (attrs.Length > 0)
+            {
+                return attrs[0] as VertexDescriptionAttribute;
+            }
+
+            throw new ArgumentException("Class doesn't have a vertex format descriptor");
+        }
+
         public Type Prototype()
         {
             return Prototype(GetType());
         }
 
-        public abstract bool HasBoneInfluences();
         public abstract void Serialize(WritableSection section);
         public abstract void Unserialize(GR2Reader reader);
     }
@@ -319,7 +345,7 @@ namespace LSLib.Granny.Model
             if (vertices == null || vertices.Count == 0)
                 return SectionType.RigidVertex;
 
-            if ((vertices[0] as Vertex).HasBoneInfluences())
+            if (Vertex.Description(vertices[0].GetType()).BoneWeights)
                 return SectionType.DeformableVertex;
             else
                 return SectionType.RigidVertex;
