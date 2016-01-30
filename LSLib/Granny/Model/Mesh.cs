@@ -486,7 +486,7 @@ namespace LSLib.Granny.Model
             return m;
         }
 
-        public mesh ExportToCollada()
+        public mesh ExportToCollada(ExporterOptions options)
         {
             // TODO: model transform/inverse transform?
 
@@ -517,39 +517,46 @@ namespace LSLib.Granny.Model
 
                     case "Normal":
                         {
-                            source = PrimaryVertexData.MakeColladaNormals(Name);
-                            input.semantic = "NORMAL";
+                            if (options.ExportNormals)
+                            {
+                                source = PrimaryVertexData.MakeColladaNormals(Name);
+                                input.semantic = "NORMAL";
+                            }
                             break;
                         }
 
                     case "Tangent":
-                    case "Binormal":
-                        // We don't export these as apps will recalculate these ourselves if needed.
-                        break;
-
-                    /*case "Tangent":
                         {
-                            source = PrimaryVertexData.MakeColladaTangents(Name);
-                            input.semantic = "TANGENT";
+                            if (options.ExportTangents)
+                            {
+                                source = PrimaryVertexData.MakeColladaTangents(Name);
+                                input.semantic = "TANGENT";
+                            }
                             break;
                         }
 
                     case "Binormal":
                         {
-                            source = PrimaryVertexData.MakeColladaBinormals(Name);
-                            input.semantic = "BINORMAL";
+                            if (options.ExportTangents)
+                            {
+                                source = PrimaryVertexData.MakeColladaBinormals(Name);
+                                input.semantic = "BINORMAL";
+                            }
                             break;
-                        }*/
+                        }
 
                     case "MaxChannel_1":
                         {
-                            source = PrimaryVertexData.MakeColladaUVs(Name);
+                            if (options.ExportUVs)
+                            {
+                                source = PrimaryVertexData.MakeColladaUVs(Name);
 
-                            var texInputOff = new InputLocalOffset();
-                            texInputOff.semantic = "TEXCOORD";
-                            texInputOff.source = "#" + source.id;
-                            texInputOff.offset = inputOffset++;
-                            inputOffsets.Add(texInputOff);
+                                var texInputOff = new InputLocalOffset();
+                                texInputOff.semantic = "TEXCOORD";
+                                texInputOff.source = "#" + source.id;
+                                texInputOff.offset = inputOffset++;
+                                inputOffsets.Add(texInputOff);
+                            }
                             break;
                         }
 

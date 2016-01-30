@@ -783,7 +783,7 @@ namespace LSLib.Granny.Model
                 {
                     foreach (var meshBinding in model.MeshBindings)
                     {
-                        var mesh = meshBinding.Mesh.ExportToCollada();
+                        var mesh = meshBinding.Mesh.ExportToCollada(Options);
                         var geom = new geometry();
                         geom.id = meshBinding.Mesh.Name + "-geom";
                         geom.name = meshBinding.Mesh.Name;
