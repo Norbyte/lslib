@@ -586,6 +586,11 @@ namespace LSLib.Granny.Model
                 }
             }
 
+            if (Meshes != null)
+            {
+                Meshes.ForEach(m => m.PostLoad());
+            }
+
             if (Skeletons != null)
             {
                 foreach (var skeleton in Skeletons)

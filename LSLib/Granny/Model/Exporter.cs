@@ -42,7 +42,10 @@ namespace LSLib.Granny.Model
         public bool DeduplicateUVs = true; // TODO: UNHANDLED
         public bool ApplyBasisTransforms = true;
         public bool UseObsoleteVersionTag = false;
-        public string ConformSkeletonsPath;
+        public string ConformGR2Path;
+        public bool ConformSkeletons = true;
+        public bool ConformMeshBoneBindings = true;
+        public bool ConformModels = true;
         public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
     }
 
@@ -235,8 +238,14 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private void ConformSkeletons(List<Skeleton> skeletons)
+        private void ConformSkeletons(IEnumerable<Skeleton> skeletons)
         {
+            // We don't have any skeletons in this mesh, nothing to conform.
+            if (Root.Skeletons == null || Root.Skeletons.Count == 0)
+            {
+                return;
+            }
+
             foreach (var skeleton in Root.Skeletons)
             {
                 Skeleton conformingSkel = null;
@@ -259,21 +268,180 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private void ConformSkeletons(string inPath)
+        private void ConformMeshBoneBindings(Mesh mesh, Mesh conformToMesh)
         {
-            // We don't have any skeletons in this mesh, nothing to conform.
-            if (Root.Skeletons == null || Root.Skeletons.Count == 0)
+            foreach (var conformBone in conformToMesh.BoneBindings)
             {
-                return;
+                BoneBinding inputBone = null;
+                foreach (var bone in mesh.BoneBindings)
+                {
+                    if (bone.BoneName == conformBone.BoneName)
+                    {
+                        inputBone = bone;
+                        break;
+                    }
+                }
+
+                if (inputBone == null)
+                {
+                    // Create a new "dummy" binding if it does not exist in the new mesh
+                    inputBone = new BoneBinding();
+                    inputBone.BoneName = conformBone.BoneName;
+                    mesh.BoneBindings.Add(inputBone);
+                }
+
+                // The bones match, copy relevant parameters from the conforming binding to the input.
+                inputBone.OBBMin = conformBone.OBBMin;
+                inputBone.OBBMax = conformBone.OBBMax;
+            }
+        }
+
+        private void ConformMeshBoneBindings(IEnumerable<Mesh> meshes)
+        {
+            foreach (var mesh in Root.Meshes)
+            {
+                Mesh conformingMesh = null;
+                foreach (var mesh2 in meshes)
+                {
+                    if (mesh.Name == mesh2.Name)
+                    {
+                        conformingMesh = mesh2;
+                        break;
+                    }
+                }
+
+                if (conformingMesh == null)
+                {
+                    string msg = String.Format("No matching mesh found in source file for mesh '{0}'.", mesh.Name);
+                    throw new ExportException(msg);
+                }
+
+                ConformMeshBoneBindings(mesh, conformingMesh);
+            }
+        }
+
+        private Model MakeDummyModel(Model original)
+        {
+            var newModel = new Model();
+            newModel.InitialPlacement = original.InitialPlacement;
+            newModel.Name = original.Name;
+            
+            if (original.Skeleton != null)
+            {
+                var skeleton = Root.Skeletons.Where(skel => skel.Name == original.Skeleton.Name).FirstOrDefault();
+                if (skeleton == null)
+                {
+                    string msg = String.Format("Model '{0}' references skeleton '{0}' that does not exist in the source file.", original.Name, original.Skeleton.Name);
+                    throw new ExportException(msg);
+                }
+
+                newModel.Skeleton = skeleton;
             }
 
-            var skelRoot = LoadGR2(inPath);
-            if (skelRoot.Skeletons == null || skelRoot.Skeletons.Count == 0)
+            newModel.MeshBindings = new List<MeshBinding>();
+            foreach (var meshBinding in original.MeshBindings)
             {
-                throw new ExportException("Source file contains no skeletons.");
+                // Try to bind the original mesh, if it exists in the source file.
+                // If it doesn't, generate a dummy mesh with 0 vertices
+                var mesh = Root.Meshes.Where(m => m.Name == meshBinding.Mesh.Name).FirstOrDefault();
+                if (mesh == null)
+                {
+                    var vertexData = new VertexData();
+                    vertexData.VertexComponentNames = meshBinding.Mesh.PrimaryVertexData.VertexComponentNames
+                        .Select(name => new GrannyString(name.String)).ToList();
+                    vertexData.Vertices = new List<Vertex>();
+                    var dummyVertex = Helpers.CreateInstance(meshBinding.Mesh.VertexFormat) as Vertex;
+                    vertexData.Vertices.Add(dummyVertex);
+                    Root.VertexDatas.Add(vertexData);
+
+                    var topology = new TriTopology();
+                    topology.Groups = new List<TriTopologyGroup>();
+                    var group = new TriTopologyGroup();
+                    group.MaterialIndex = 0;
+                    group.TriCount = 0;
+                    group.TriFirst = 0;
+                    topology.Groups.Add(group);
+
+                    topology.Indices = new List<int>();
+                    Root.TriTopologies.Add(topology);
+
+                    mesh = new Mesh();
+                    mesh.Name = meshBinding.Mesh.Name;
+                    mesh.VertexFormat = meshBinding.Mesh.VertexFormat;
+                    mesh.PrimaryTopology = topology;
+                    mesh.PrimaryVertexData = vertexData;
+                    if (meshBinding.Mesh.BoneBindings != null)
+                    {
+                        mesh.BoneBindings = new List<BoneBinding>();
+                        ConformMeshBoneBindings(mesh, meshBinding.Mesh);
+                    }
+                    Root.Meshes.Add(mesh);
+                }
+
+                var binding = new MeshBinding();
+                binding.Mesh = mesh;
+                newModel.MeshBindings.Add(binding);
             }
 
-            ConformSkeletons(skelRoot.Skeletons);
+            Root.Models.Add(newModel);
+            return newModel;
+        }
+
+        private void ConformModels(IEnumerable<Model> models)
+        {
+            // Rebuild the model list to match the order used in the original GR2
+            // If a model is missing, generate a dummy model & mesh.
+            var originalModels = Root.Models;
+            Root.Models = new List<Model>();
+
+            foreach (var model in models)
+            {
+                Model newModel = null;
+                foreach (var model2 in Root.Models)
+                {
+                    if (model.Name == model2.Name)
+                    {
+                        newModel = model2;
+                        break;
+                    }
+                }
+
+                if (newModel == null)
+                {
+                    newModel = MakeDummyModel(model);
+                }
+
+                Root.Models.Add(newModel);
+            }
+
+            // If the new GR2 contains models that are not in the original GR2, 
+            // append them to the end of the model list
+            Root.Models.AddRange(originalModels.Where(m => !Root.Models.Contains(m)));
+        }
+
+        private void Conform(string inPath)
+        {
+            var conformRoot = LoadGR2(inPath);
+
+            if (Options.ConformSkeletons)
+            {
+                if (conformRoot.Skeletons == null || conformRoot.Skeletons.Count == 0)
+                {
+                    throw new ExportException("Source file contains no skeletons.");
+                }
+
+                ConformSkeletons(conformRoot.Skeletons);
+            }
+
+            if (Options.ConformModels)
+            {
+                ConformModels(conformRoot.Models);
+            }
+
+            if (Options.ConformMeshBoneBindings)
+            {
+                ConformMeshBoneBindings(conformRoot.Meshes);
+            }
         }
 
         public void Export()
@@ -309,11 +477,11 @@ namespace LSLib.Granny.Model
 
             // TODO: DeduplicateUVs
 
-            if (Options.ConformSkeletonsPath != null)
+            if (Options.ConformGR2Path != null)
             {
                 try
                 {
-                    ConformSkeletons(Options.ConformSkeletonsPath);
+                    Conform(Options.ConformGR2Path);
                 }
                 catch (ExportException e)
                 {

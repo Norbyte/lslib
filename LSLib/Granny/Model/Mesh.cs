@@ -486,6 +486,14 @@ namespace LSLib.Granny.Model
             return m;
         }
 
+        public void PostLoad()
+        {
+            if (PrimaryVertexData.Vertices.Count > 0)
+            {
+                VertexFormat = PrimaryVertexData.Vertices[0].GetType();
+            }
+        }
+
         public mesh ExportToCollada(ExporterOptions options)
         {
             // TODO: model transform/inverse transform?

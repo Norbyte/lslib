@@ -51,12 +51,13 @@
             this.gr2Game = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.applyBasisTransforms = new System.Windows.Forms.CheckBox();
-            this.conformantSkeletonBrowseBtn = new System.Windows.Forms.Button();
-            this.conformantSkeletonPath = new System.Windows.Forms.TextBox();
-            this.conformToSkeleton = new System.Windows.Forms.CheckBox();
+            this.conformantGR2BrowseBtn = new System.Windows.Forms.Button();
+            this.conformantGR2Path = new System.Windows.Forms.TextBox();
+            this.conformToOriginal = new System.Windows.Forms.CheckBox();
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.loadInputBtn = new System.Windows.Forms.Button();
             this.outputFileBrowserBtn = new System.Windows.Forms.Button();
@@ -126,7 +127,6 @@
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceOutputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -359,9 +359,9 @@
             this.groupBox1.Controls.Add(this.gr2Game);
             this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.applyBasisTransforms);
-            this.groupBox1.Controls.Add(this.conformantSkeletonBrowseBtn);
-            this.groupBox1.Controls.Add(this.conformantSkeletonPath);
-            this.groupBox1.Controls.Add(this.conformToSkeleton);
+            this.groupBox1.Controls.Add(this.conformantGR2BrowseBtn);
+            this.groupBox1.Controls.Add(this.conformantGR2Path);
+            this.groupBox1.Controls.Add(this.conformToOriginal);
             this.groupBox1.Controls.Add(this.buildDummySkeleton);
             this.groupBox1.Controls.Add(this.use16bitIndex);
             this.groupBox1.Controls.Add(this.forceLegacyVersion);
@@ -405,41 +405,41 @@
             this.applyBasisTransforms.CheckState = System.Windows.Forms.CheckState.Checked;
             this.applyBasisTransforms.Location = new System.Drawing.Point(249, 50);
             this.applyBasisTransforms.Name = "applyBasisTransforms";
-            this.applyBasisTransforms.Size = new System.Drawing.Size(185, 17);
+            this.applyBasisTransforms.Size = new System.Drawing.Size(100, 17);
             this.applyBasisTransforms.TabIndex = 26;
-            this.applyBasisTransforms.Text = "Apply basis transformation to Y-up";
+            this.applyBasisTransforms.Text = "Convert to Y-up";
             this.applyBasisTransforms.UseVisualStyleBackColor = true;
             // 
-            // conformantSkeletonBrowseBtn
+            // conformantGR2BrowseBtn
             // 
-            this.conformantSkeletonBrowseBtn.Enabled = false;
-            this.conformantSkeletonBrowseBtn.Location = new System.Drawing.Point(423, 137);
-            this.conformantSkeletonBrowseBtn.Name = "conformantSkeletonBrowseBtn";
-            this.conformantSkeletonBrowseBtn.Size = new System.Drawing.Size(41, 23);
-            this.conformantSkeletonBrowseBtn.TabIndex = 25;
-            this.conformantSkeletonBrowseBtn.Text = "...";
-            this.conformantSkeletonBrowseBtn.UseVisualStyleBackColor = true;
-            this.conformantSkeletonBrowseBtn.Click += new System.EventHandler(this.conformantSkeletonBrowseBtn_Click);
+            this.conformantGR2BrowseBtn.Enabled = false;
+            this.conformantGR2BrowseBtn.Location = new System.Drawing.Point(423, 137);
+            this.conformantGR2BrowseBtn.Name = "conformantGR2BrowseBtn";
+            this.conformantGR2BrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.conformantGR2BrowseBtn.TabIndex = 25;
+            this.conformantGR2BrowseBtn.Text = "...";
+            this.conformantGR2BrowseBtn.UseVisualStyleBackColor = true;
+            this.conformantGR2BrowseBtn.Click += new System.EventHandler(this.conformantSkeletonBrowseBtn_Click);
             // 
-            // conformantSkeletonPath
+            // conformantGR2Path
             // 
-            this.conformantSkeletonPath.Enabled = false;
-            this.conformantSkeletonPath.Location = new System.Drawing.Point(19, 139);
-            this.conformantSkeletonPath.Name = "conformantSkeletonPath";
-            this.conformantSkeletonPath.Size = new System.Drawing.Size(405, 20);
-            this.conformantSkeletonPath.TabIndex = 24;
+            this.conformantGR2Path.Enabled = false;
+            this.conformantGR2Path.Location = new System.Drawing.Point(19, 139);
+            this.conformantGR2Path.Name = "conformantGR2Path";
+            this.conformantGR2Path.Size = new System.Drawing.Size(405, 20);
+            this.conformantGR2Path.TabIndex = 24;
             // 
-            // conformToSkeleton
+            // conformToOriginal
             // 
-            this.conformToSkeleton.AutoSize = true;
-            this.conformToSkeleton.Enabled = false;
-            this.conformToSkeleton.Location = new System.Drawing.Point(19, 119);
-            this.conformToSkeleton.Name = "conformToSkeleton";
-            this.conformToSkeleton.Size = new System.Drawing.Size(123, 17);
-            this.conformToSkeleton.TabIndex = 23;
-            this.conformToSkeleton.Text = "Conform to skeleton:";
-            this.conformToSkeleton.UseVisualStyleBackColor = true;
-            this.conformToSkeleton.CheckedChanged += new System.EventHandler(this.conformToSkeleton_CheckedChanged);
+            this.conformToOriginal.AutoSize = true;
+            this.conformToOriginal.Enabled = false;
+            this.conformToOriginal.Location = new System.Drawing.Point(19, 119);
+            this.conformToOriginal.Name = "conformToOriginal";
+            this.conformToOriginal.Size = new System.Drawing.Size(141, 17);
+            this.conformToOriginal.TabIndex = 23;
+            this.conformToOriginal.Text = "Conform to original GR2:";
+            this.conformToOriginal.UseVisualStyleBackColor = true;
+            this.conformToOriginal.CheckedChanged += new System.EventHandler(this.conformToSkeleton_CheckedChanged);
             // 
             // buildDummySkeleton
             // 
@@ -472,6 +472,19 @@
             this.forceLegacyVersion.TabIndex = 17;
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
+            // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // label1
             // 
@@ -1149,19 +1162,6 @@
             this.storyPathDlg.CheckFileExists = false;
             this.storyPathDlg.Filter = "LS story files|*.osi";
             // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 290);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1216,9 +1216,9 @@
         private System.Windows.Forms.CheckBox recalculateNormals;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.CheckBox applyBasisTransforms;
-        private System.Windows.Forms.Button conformantSkeletonBrowseBtn;
-        private System.Windows.Forms.TextBox conformantSkeletonPath;
-        private System.Windows.Forms.CheckBox conformToSkeleton;
+        private System.Windows.Forms.Button conformantGR2BrowseBtn;
+        private System.Windows.Forms.TextBox conformantGR2Path;
+        private System.Windows.Forms.CheckBox conformToOriginal;
         private System.Windows.Forms.CheckBox buildDummySkeleton;
         private System.Windows.Forms.CheckBox use16bitIndex;
         private System.Windows.Forms.CheckBox forceLegacyVersion;

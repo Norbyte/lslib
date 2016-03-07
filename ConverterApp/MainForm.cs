@@ -138,10 +138,10 @@ namespace ConverterApp
         private void UpdateInputState()
         {
             var skinned = (Root.Skeletons != null && Root.Skeletons.Count > 0);
-            conformToSkeleton.Enabled = skinned;
+            conformToOriginal.Enabled = skinned;
             if (!skinned)
             {
-                conformToSkeleton.Checked = false;
+                conformToOriginal.Checked = false;
             }
 
             buildDummySkeleton.Enabled = !skinned;
@@ -221,13 +221,13 @@ namespace ConverterApp
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
 
-            if (conformToSkeleton.Checked && conformantSkeletonPath.Text.Length > 0)
+            if (conformToOriginal.Checked && conformantGR2Path.Text.Length > 0)
             {
-                settings.ConformSkeletonsPath = conformantSkeletonPath.Text;
+                settings.ConformGR2Path = conformantGR2Path.Text;
             }
             else
             {
-                settings.ConformSkeletonsPath = null;
+                settings.ConformGR2Path = null;
             }
 
             foreach (var item in resourceFormats.Items)
@@ -280,8 +280,8 @@ namespace ConverterApp
 
         private void conformToSkeleton_CheckedChanged(object sender, EventArgs e)
         {
-            conformantSkeletonPath.Enabled = conformToSkeleton.Checked;
-            conformantSkeletonBrowseBtn.Enabled = conformToSkeleton.Checked;
+            conformantGR2Path.Enabled = conformToOriginal.Checked;
+            conformantGR2BrowseBtn.Enabled = conformToOriginal.Checked;
         }
 
         private void outputFileBrowserBtn_Click(object sender, EventArgs e)
@@ -298,7 +298,7 @@ namespace ConverterApp
             var result = conformSkeletonFileDlg.ShowDialog(this);
             if (result == DialogResult.OK)
             {
-                conformantSkeletonPath.Text = conformSkeletonFileDlg.FileName;
+                conformantGR2Path.Text = conformSkeletonFileDlg.FileName;
             }
         }
 
