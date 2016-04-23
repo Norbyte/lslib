@@ -290,7 +290,7 @@ namespace LSLib.LS
             return flags;
         }
 
-        public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags)
+        public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags, bool knownDecompressedSize = true)
         {
             switch ((CompressionMethod)(compressionFlags & 0x0F))
             {
@@ -315,15 +315,20 @@ namespace LSLib.LS
                     }
 
                 case CompressionMethod.LZ4:
-                    var decompressed = new byte[decompressedSize];
-                    var uncompressedSize = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
-                    if (uncompressedSize != decompressedSize)
+                    if (knownDecompressedSize)
                     {
-                        var msg = String.Format("LZ4 compressor disagrees about the size of a compressed file; expected {0}, got {1}", decompressedSize, uncompressedSize);
-                        throw new InvalidDataException(msg);
+                        var decompressed = new byte[decompressedSize];
+                        LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
+                        return decompressed;
                     }
-
-                    return decompressed;
+                    else
+                    {
+                        // Nasty hack to work around incorrect decompressed size for now :(
+                        var decompressed = new byte[4 * decompressedSize];
+                        var uncompressedSize = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressed.Length, false);
+                        Array.Resize(ref decompressed, uncompressedSize);
+                        return decompressed;
+                    }
 
                 default:
                     {

@@ -20,9 +20,24 @@ namespace LSLib.LS.LSF
         public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x4F, 0x46 };
 
         /// <summary>
+        /// LSOF compressed chunk signature
+        /// </summary>
+        public static byte[] ChunkSignature = new byte[] { 0x04, 0x22, 0x4D, 0x18, 0x40, 0x40, 0xC0 };
+
+        /// <summary>
+        /// Initial version of the LSF format
+        /// </summary>
+        public const UInt32 VerInitial = 0x01;
+
+        /// <summary>
+        /// LSF version that added chunked compression for substreams
+        /// </summary>
+        public const UInt32 VerChunkedCompress = 0x02;
+
+        /// <summary>
         /// Latest version supported by this library
         /// </summary>
-        public const UInt32 CurrentVersion = 0x01;
+        public const UInt32 CurrentVersion = 0x02;
 
         /// <summary>
         /// LSOF file signature; should be the same as LSFHeader.Signature
@@ -79,6 +94,32 @@ namespace LSLib.LS.LSF
         public Byte Unknown2;
         public UInt16 Unknown3;
         public UInt32 Unknown4;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct ChunkHeader
+    {
+        /// <summary>
+        /// LSOF compressed chunk signature
+        /// </summary>
+        public static byte[] Signature = new byte[] { 0x04, 0x22, 0x4D, 0x18 };
+
+        /// <summary>
+        /// LSOF chunk signature; should be the same as ChunkHeader.Signature
+        /// </summary>
+        public UInt32 Magic;
+        /// <summary>
+        /// Unknown flags
+        /// </summary>
+        public Byte Flags1;
+        /// <summary>
+        /// Unknown flags
+        /// </summary>
+        public Byte Flags2;
+        /// <summary>
+        /// Unknown flags
+        /// </summary>
+        public Byte Flags3;
     }
 
     /// <summary>
@@ -426,6 +467,47 @@ namespace LSLib.LS.LSF
             }
         }
 
+        private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
+        {
+            if (header.Version >= Header.VerChunkedCompress)
+            {
+                return ChunkedDecompress(reader, compressedSize, uncompressedSize, header);
+            }
+            else
+            {
+                byte[] compressed = reader.ReadBytes((int)compressedSize);
+                return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags);
+            }
+        }
+
+        private byte[] ChunkedDecompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
+        {
+            var chunkHeader = BinUtils.ReadStruct<ChunkHeader>(reader);
+            if (chunkHeader.Magic != BitConverter.ToUInt32(ChunkHeader.Signature, 0))
+            {
+                throw new InvalidDataException("Incorrect compressed chunk signature");
+            }
+
+            var compressed = new byte[compressedSize];
+            int compressedOffset = 0;
+            while (true)
+            {
+                var chunkLength = reader.ReadInt32();
+                if (chunkLength == 0)
+                {
+                    break;
+                }
+
+                var chunk = reader.ReadBytes(chunkLength);
+                chunk.CopyTo(compressed, compressedOffset);
+                compressedOffset += chunkLength;
+            }
+
+            Array.Resize(ref compressed, compressedOffset);
+
+            return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags, false);
+        }
+
         public Resource Read()
         {
             using (var reader = new BinaryReader(Stream))
@@ -440,7 +522,7 @@ namespace LSLib.LS.LSF
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.Version != Header.CurrentVersion)
+                if (hdr.Version < Header.VerInitial || hdr.Version > Header.CurrentVersion)
                 {
                     var msg = String.Format("LSF version {0} is not supported", hdr.Version);
                     throw new InvalidDataException(msg);
@@ -458,8 +540,7 @@ namespace LSLib.LS.LSF
 
                 if (hdr.NodesSizeOnDisk > 0)
                 {
-                    byte[] compressed = reader.ReadBytes((int)hdr.NodesSizeOnDisk);
-                    var uncompressed = BinUtils.Decompress(compressed, (int)hdr.NodesUncompressedSize, hdr.CompressionFlags);
+                    var uncompressed = Decompress(reader, hdr.NodesSizeOnDisk, hdr.NodesUncompressedSize, hdr);
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
                         ReadNodes(nodesStream);
@@ -468,8 +549,8 @@ namespace LSLib.LS.LSF
 
                 if (hdr.AttributesSizeOnDisk > 0)
                 {
-                    byte[] compressed = reader.ReadBytes((int)hdr.AttributesSizeOnDisk);
-                    var uncompressed = BinUtils.Decompress(compressed, (int)hdr.AttributesUncompressedSize, hdr.CompressionFlags);
+                    var uncompressed = Decompress(reader, hdr.AttributesSizeOnDisk, hdr.AttributesUncompressedSize, hdr);
+                    using (var f = new FileStream("C:\\dbg.bin", FileMode.OpenOrCreate)) f.Write(uncompressed, 0, uncompressed.Length);
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
                         ReadAttributes(attributesStream);
@@ -478,8 +559,7 @@ namespace LSLib.LS.LSF
 
                 if (hdr.ValuesSizeOnDisk > 0)
                 {
-                    byte[] compressed = reader.ReadBytes((int)hdr.ValuesSizeOnDisk);
-                    var uncompressed = BinUtils.Decompress(compressed, (int)hdr.ValuesUncompressedSize, hdr.CompressionFlags);
+                    var uncompressed = Decompress(reader, hdr.ValuesSizeOnDisk, hdr.ValuesUncompressedSize, hdr);
                     var valueStream = new MemoryStream(uncompressed);
                     this.Values = valueStream;
 
