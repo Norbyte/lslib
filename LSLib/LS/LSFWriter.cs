@@ -80,7 +80,7 @@ namespace LSLib.LS.LSF
 
                 var header = new Header();
                 header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
-                header.Version = Header.CurrentVersion;
+                header.Version = Header.VerInitial;
                 header.Unknown = 0x20000000;
                 header.StringsUncompressedSize = (UInt32)stringBuffer.Length;
                 header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
