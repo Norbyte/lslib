@@ -26,6 +26,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTK", "OpenTK\OpenTK.csproj", "{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterApp", "ConverterApp\ConverterApp.csproj", "{FAD67294-6223-47E0-8838-E4E7FBC53ED2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1} = {D8B26B12-E45C-47EA-88F7-56628EB2CCD1}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

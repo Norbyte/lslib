@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,6 +32,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LZ4, Version=1.0.9.93, Culture=neutral, PublicKeyToken=62e1b5ec1eec9bdd, processorArchitecture=MSIL">
@@ -152,6 +155,10 @@
     <None Include="Stats\StatsDataLoader.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj">
+      <Project>{d8b26b12-e45c-47ea-88f7-56628eb2ccd1}</Project>
+      <Name>LSLibNative</Name>
+    </ProjectReference>
     <ProjectReference Include="..\OpenTK\OpenTK.csproj">
       <Project>{abb9db44-14f2-46e0-a4b8-b46c300ca982}</Project>
       <Name>OpenTK</Name>

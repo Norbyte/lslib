@@ -252,6 +252,24 @@ namespace LSLib.LS
             }
         }
 
+        public static CompressionMethod CompressionFlagsToMethod(byte flags)
+        {
+            switch (flags & 0x0f)
+            {
+                case (int)CompressionMethod.None:
+                    return CompressionMethod.None;
+
+                case (int)CompressionMethod.Zlib:
+                    return CompressionMethod.Zlib;
+
+                case (int)CompressionMethod.LZ4:
+                    return CompressionMethod.LZ4;
+
+                default:
+                    throw new ArgumentException("Invalid compression method");
+            }
+        }
+
         public static CompressionLevel CompressionFlagsToLevel(byte flags)
         {
             switch (flags & 0xf0)
@@ -290,7 +308,7 @@ namespace LSLib.LS
             return flags;
         }
 
-        public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags, bool knownDecompressedSize = true)
+        public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags, bool chunked = false)
         {
             switch ((CompressionMethod)(compressionFlags & 0x0F))
             {
@@ -315,18 +333,15 @@ namespace LSLib.LS
                     }
 
                 case CompressionMethod.LZ4:
-                    if (knownDecompressedSize)
+                    if (chunked)
                     {
-                        var decompressed = new byte[decompressedSize];
-                        LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
+                        var decompressed = Native.LZ4FrameCompressor.Decompress(compressed);
                         return decompressed;
                     }
                     else
                     {
-                        // Nasty hack to work around incorrect decompressed size for now :(
-                        var decompressed = new byte[4 * decompressedSize];
-                        var uncompressedSize = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressed.Length, false);
-                        Array.Resize(ref decompressed, uncompressedSize);
+                        var decompressed = new byte[decompressedSize];
+                        LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
                         return decompressed;
                     }
 
@@ -343,7 +358,7 @@ namespace LSLib.LS
             return Compress(uncompressed, (CompressionMethod)(compressionFlags & 0x0F), CompressionFlagsToLevel(compressionFlags));
         }
 
-        public static byte[] Compress(byte[] uncompressed, CompressionMethod method, CompressionLevel compressionLevel)
+        public static byte[] Compress(byte[] uncompressed, CompressionMethod method, CompressionLevel compressionLevel, bool chunked = false)
         {
             switch (method)
             {
@@ -354,7 +369,7 @@ namespace LSLib.LS
                     return CompressZlib(uncompressed, compressionLevel);
 
                 case CompressionMethod.LZ4:
-                    return CompressLZ4(uncompressed, compressionLevel);
+                    return CompressLZ4(uncompressed, compressionLevel, chunked);
 
                 default:
                     throw new ArgumentException("Invalid compression method specified");
@@ -388,9 +403,13 @@ namespace LSLib.LS
             }
         }
 
-        public static byte[] CompressLZ4(byte[] uncompressed, CompressionLevel compressionLevel)
+        public static byte[] CompressLZ4(byte[] uncompressed, CompressionLevel compressionLevel, bool chunked = false)
         {
-            if (compressionLevel == CompressionLevel.FastCompression)
+            if (chunked)
+            {
+                return Native.LZ4FrameCompressor.Compress(uncompressed);
+            }
+            else if (compressionLevel == CompressionLevel.FastCompression)
             {
                 return LZ4Codec.Encode(uncompressed, 0, uncompressed.Length);
             }

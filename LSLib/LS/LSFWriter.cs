@@ -73,15 +73,17 @@ namespace LSLib.LS.LSF
                 var attributeBuffer = AttributeStream.ToArray();
                 var valueBuffer = ValueStream.ToArray();
 
-                byte[] stringsCompressed = BinUtils.Compress(stringBuffer, compressionMethod, compressionLevel);
-                byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, compressionMethod, compressionLevel);
-                byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, compressionMethod, compressionLevel);
-                byte[] valuesCompressed = BinUtils.Compress(valueBuffer, compressionMethod, compressionLevel);
-
                 var header = new Header();
                 header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
-                header.Version = Header.VerInitial;
+                header.Version = Header.VerChunkedCompress;
                 header.Unknown = 0x20000000;
+
+                bool chunked = (header.Version >= Header.VerChunkedCompress);
+                byte[] stringsCompressed = BinUtils.Compress(stringBuffer, compressionMethod, compressionLevel);
+                byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, compressionMethod, compressionLevel, chunked);
+                byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, compressionMethod, compressionLevel, chunked);
+                byte[] valuesCompressed = BinUtils.Compress(valueBuffer, compressionMethod, compressionLevel, chunked);
+
                 header.StringsUncompressedSize = (UInt32)stringBuffer.Length;
                 header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
                 header.NodesUncompressedSize = (UInt32)nodeBuffer.Length;

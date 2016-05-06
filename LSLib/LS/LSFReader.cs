@@ -469,43 +469,9 @@ namespace LSLib.LS.LSF
 
         private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
         {
-            if (header.Version >= Header.VerChunkedCompress)
-            {
-                return ChunkedDecompress(reader, compressedSize, uncompressedSize, header);
-            }
-            else
-            {
-                byte[] compressed = reader.ReadBytes((int)compressedSize);
-                return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags);
-            }
-        }
-
-        private byte[] ChunkedDecompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
-        {
-            var chunkHeader = BinUtils.ReadStruct<ChunkHeader>(reader);
-            if (chunkHeader.Magic != BitConverter.ToUInt32(ChunkHeader.Signature, 0))
-            {
-                throw new InvalidDataException("Incorrect compressed chunk signature");
-            }
-
-            var compressed = new byte[compressedSize];
-            int compressedOffset = 0;
-            while (true)
-            {
-                var chunkLength = reader.ReadInt32();
-                if (chunkLength == 0)
-                {
-                    break;
-                }
-
-                var chunk = reader.ReadBytes(chunkLength);
-                chunk.CopyTo(compressed, compressedOffset);
-                compressedOffset += chunkLength;
-            }
-
-            Array.Resize(ref compressed, compressedOffset);
-
-            return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags, false);
+            bool chunked = (header.Version >= Header.VerChunkedCompress);
+            byte[] compressed = reader.ReadBytes((int)compressedSize);
+            return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags, chunked);
         }
 
         public Resource Read()
