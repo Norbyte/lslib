@@ -20,11 +20,6 @@ namespace LSLib.LS.LSF
         public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x4F, 0x46 };
 
         /// <summary>
-        /// LSOF compressed chunk signature
-        /// </summary>
-        public static byte[] ChunkSignature = new byte[] { 0x04, 0x22, 0x4D, 0x18, 0x40, 0x40, 0xC0 };
-
-        /// <summary>
         /// Initial version of the LSF format
         /// </summary>
         public const UInt32 VerInitial = 0x01;
@@ -94,32 +89,6 @@ namespace LSLib.LS.LSF
         public Byte Unknown2;
         public UInt16 Unknown3;
         public UInt32 Unknown4;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct ChunkHeader
-    {
-        /// <summary>
-        /// LSOF compressed chunk signature
-        /// </summary>
-        public static byte[] Signature = new byte[] { 0x04, 0x22, 0x4D, 0x18 };
-
-        /// <summary>
-        /// LSOF chunk signature; should be the same as ChunkHeader.Signature
-        /// </summary>
-        public UInt32 Magic;
-        /// <summary>
-        /// Unknown flags
-        /// </summary>
-        public Byte Flags1;
-        /// <summary>
-        /// Unknown flags
-        /// </summary>
-        public Byte Flags2;
-        /// <summary>
-        /// Unknown flags
-        /// </summary>
-        public Byte Flags3;
     }
 
     /// <summary>
