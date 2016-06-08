@@ -1,5 +1,6 @@
 ﻿using LSLib.Granny.GR2;
 using System;
+using System.Collections.Generic;
 
 #pragma warning disable 0649
 
@@ -28,6 +29,11 @@ namespace LSLib.Granny.Model.VertexFormat
     VertexDescription(Position = true, BoneWeights = true, BoneIndices = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = true)]
     public class PWNGBT323332 : Vertex
     {
+        public override List<String> ComponentNames()
+        {
+            return new List<String> { "Position", "BoneWeights", "BoneIndices", "Normal", "Tangent", "Binormal", "MaxChannel_1" };
+        }
+
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

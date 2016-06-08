@@ -1,5 +1,6 @@
 ﻿using LSLib.Granny.GR2;
 using System;
+using System.Collections.Generic;
 
 #pragma warning disable 0649
 
@@ -16,6 +17,11 @@ namespace LSLib.Granny.Model.VertexFormat
     VertexDescription(Position = true)]
     public class P3 : Vertex
     {
+        public override List<String> ComponentNames()
+        {
+            return new List<String> { "Position" };
+        }
+
         public override void Serialize(WritableSection section)
         {
             WriteVector3(section, Position);

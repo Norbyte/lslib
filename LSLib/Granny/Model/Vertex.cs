@@ -291,6 +291,8 @@ namespace LSLib.Granny.Model
             return Prototype(GetType());
         }
 
+
+        public abstract List<String> ComponentNames();
         public abstract void Serialize(WritableSection section);
         public abstract void Unserialize(GR2Reader reader);
     }

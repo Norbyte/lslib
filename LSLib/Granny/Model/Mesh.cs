@@ -115,6 +115,23 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public VertexDeduplicator Deduplicator;
 
+        public void PostLoad()
+        {
+            // Fix missing vertex component names
+            if (VertexComponentNames == null)
+            {
+                VertexComponentNames = new List<GrannyString>();
+                if (Vertices.Count > 0)
+                {
+                    var components = Vertices[0].ComponentNames();
+                    foreach (var name in components)
+                    {
+                        VertexComponentNames.Add(new GrannyString(name));
+                    }
+                }
+            }
+        }
+
         public void Deduplicate()
         {
             Deduplicator = new VertexDeduplicator();

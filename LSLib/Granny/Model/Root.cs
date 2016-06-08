@@ -578,6 +578,14 @@ namespace LSLib.Granny.Model
 
         public void PostLoad()
         {
+            if (VertexDatas != null)
+            {
+                foreach (var vertexData in VertexDatas)
+                {
+                    vertexData.PostLoad();
+                }
+            }
+
             if (TriTopologies != null)
             {
                 foreach (var triTopology in TriTopologies)
