@@ -23,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -84,6 +85,7 @@
     <Compile Include="Granny\Model\CurveData\DaK32fC32f.cs" />
     <Compile Include="Granny\Model\CurveData\DaK8uC8u.cs" />
     <Compile Include="Granny\Model\Exporter.cs" />
+    <Compile Include="Granny\Model\HalfHelpers.cs" />
     <Compile Include="Granny\Model\Metadata.cs" />
     <Compile Include="Granny\Model\Mesh.cs" />
     <Compile Include="Granny\Model\Model.cs" />
@@ -91,6 +93,7 @@
     <Compile Include="Granny\Model\Skeleton.cs" />
     <Compile Include="Granny\Model\Vertex.cs" />
     <Compile Include="Granny\Model\VertexFormats\P3.cs" />
+    <Compile Include="Granny\Model\VertexFormats\PHNGBT34444.cs" />
     <Compile Include="Granny\Model\VertexFormats\PN33.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNG333.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNGB3333.cs" />

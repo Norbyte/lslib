@@ -84,12 +84,39 @@ namespace LSLib.Granny.Model
             return v;
         }
 
+        protected Vector2 ReadHalfVector2(GR2Reader reader)
+        {
+            Vector2 v;
+            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            return v;
+        }
+
         protected Vector3 ReadVector3(GR2Reader reader)
         {
             Vector3 v;
             v.X = reader.Reader.ReadSingle();
             v.Y = reader.Reader.ReadSingle();
             v.Z = reader.Reader.ReadSingle();
+            return v;
+        }
+
+        protected Vector3 ReadHalfVector3(GR2Reader reader)
+        {
+            Vector3 v;
+            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Z = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            return v;
+        }
+
+        protected Vector3 ReadHalfVector4As3(GR2Reader reader)
+        {
+            Vector3 v;
+            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Z = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            reader.Reader.ReadUInt16();
             return v;
         }
 
@@ -100,6 +127,16 @@ namespace LSLib.Granny.Model
             v.Y = reader.Reader.ReadSingle();
             v.Z = reader.Reader.ReadSingle();
             v.W = reader.Reader.ReadSingle();
+            return v;
+        }
+
+        protected Vector4 ReadHalfVector4(GR2Reader reader)
+        {
+            Vector4 v;
+            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.Z = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
+            v.W = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
             return v;
         }
 
@@ -129,11 +166,32 @@ namespace LSLib.Granny.Model
             section.Writer.Write(v.Y);
         }
 
+        protected void WriteHalfVector2(WritableSection section, Vector2 v)
+        {
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
+        }
+
         protected void WriteVector3(WritableSection section, Vector3 v)
         {
             section.Writer.Write(v.X);
             section.Writer.Write(v.Y);
             section.Writer.Write(v.Z);
+        }
+
+        protected void WriteHalfVector3(WritableSection section, Vector3 v)
+        {
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Z));
+        }
+
+        protected void WriteHalfVector3As4(WritableSection section, Vector3 v)
+        {
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Z));
+            section.Writer.Write((ushort)0);
         }
 
         protected void WriteVector4(WritableSection section, Vector4 v)
@@ -142,6 +200,14 @@ namespace LSLib.Granny.Model
             section.Writer.Write(v.Y);
             section.Writer.Write(v.Z);
             section.Writer.Write(v.W);
+        }
+
+        protected void WriteHalfVector4(WritableSection section, Vector4 v)
+        {
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.Z));
+            section.Writer.Write(HalfHelpers.SingleToHalf(v.W));
         }
 
         protected void WriteInfluences2(WritableSection section, BoneWeight v)
@@ -272,6 +338,7 @@ namespace LSLib.Granny.Model
             Register(typeof(PWNGT34332));
             Register(typeof(PWNT3232));
             Register(typeof(PWNT3432));
+            Register(typeof(PHNGBT34444));
         }
 
         public static Type Resolve(String name)
