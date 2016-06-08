@@ -42,6 +42,9 @@
     <ClInclude Include="lz4\lz4.h">
       <Filter>Header Files\lz4</Filter>
     </ClInclude>
+    <ClInclude Include="granny2wrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files\lz4</Filter>
     </ClCompile>
     <ClCompile Include="lz4wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="granny2wrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

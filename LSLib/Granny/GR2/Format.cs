@@ -6,6 +6,7 @@ using System.Text;
 using OpenTK;
 using System.IO;
 using System.Reflection;
+using LSLib.Native;
 
 namespace LSLib.Granny.GR2
 {
@@ -443,8 +444,11 @@ namespace LSLib.Granny.GR2
         /// </summary>
         public UInt32 uncompressedSize;
         public UInt32 alignment;
-        public UInt32 secondaryDataOffset;
-        public UInt32 secondaryDataOffset2;
+        /// <summary>
+        /// Oodle1 compressor stops
+        /// </summary>
+        public UInt32 first16bit;
+        public UInt32 first8bit;
         /// <summary>
         /// Absolute position of the relocation data in the GR2 file
         /// </summary>

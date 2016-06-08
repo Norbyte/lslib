@@ -71,8 +71,8 @@ namespace LSLib.Granny.GR2
                 header.alignment = 32;
             else
                 header.alignment = 4;
-            header.secondaryDataOffset = 0; // Set after serialization is finished
-            header.secondaryDataOffset2 = 0; // Set after serialization is finished
+            header.first16bit = 0; // Set after serialization is finished
+            header.first8bit = 0; // Set after serialization is finished
             header.relocationsOffset = 0; // Set after serialization is finished
             header.numRelocations = 0; // Set after serialization is finished
             header.mixedMarshallingDataOffset = 0; // Set after serialization is finished
@@ -764,8 +764,8 @@ namespace LSLib.Granny.GR2
 
                 foreach (var section in Sections)
                 {
-                    section.Header.secondaryDataOffset = (UInt32)section.MainStream.Length;
-                    section.Header.secondaryDataOffset2 = (UInt32)section.MainStream.Length;
+                    section.Header.first16bit = (UInt32)section.MainStream.Length;
+                    section.Header.first8bit = (UInt32)section.MainStream.Length;
                     section.Finish();
                 }
 
@@ -887,8 +887,8 @@ namespace LSLib.Granny.GR2
             Writer.Write(header.compressedSize);
             Writer.Write(header.uncompressedSize);
             Writer.Write(header.alignment);
-            Writer.Write(header.secondaryDataOffset);
-            Writer.Write(header.secondaryDataOffset2);
+            Writer.Write(header.first16bit);
+            Writer.Write(header.first8bit);
             Writer.Write(header.relocationsOffset);
             Writer.Write(header.numRelocations);
             Writer.Write(header.mixedMarshallingDataOffset);

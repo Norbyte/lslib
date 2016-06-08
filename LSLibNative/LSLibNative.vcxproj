@@ -80,6 +80,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="granny2wrapper.h" />
     <ClInclude Include="lz4wrapper.h" />
     <ClInclude Include="lz4\lz4.h" />
     <ClInclude Include="lz4\lz4frame.h" />
@@ -90,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="granny2wrapper.cpp" />
     <ClCompile Include="lz4wrapper.cpp" />
     <ClCompile Include="lz4\lz4.c">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>

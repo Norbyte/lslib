@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using LSLib.Native;
 
 namespace LSLib.Granny.GR2
 {
@@ -19,6 +20,8 @@ namespace LSLib.Granny.GR2
 
     public class GR2Reader
     {
+        internal Stream InputStream;
+        internal BinaryReader InputReader;
         internal Stream Stream;
         internal BinaryReader Reader;
         internal Magic Magic;
@@ -32,20 +35,18 @@ namespace LSLib.Granny.GR2
 
         public GR2Reader(Stream stream)
         {
-            // Load the whole file, as we'll update its contents because of relocations and marshalling fixups
-            byte[] contents = new byte[stream.Length];
-            stream.Read(contents, 0, (int)stream.Length);
-            this.Stream = new MemoryStream(contents);
+            this.InputStream = stream;
         }
 
         public void Dispose()
         {
-            Stream.Dispose();
+            if (Stream != null)
+                Stream.Dispose();
         }
 
         public void Read(object root)
         {
-            using (this.Reader = new BinaryReader(Stream))
+            using (this.InputReader = new BinaryReader(InputStream))
             {
                 Magic = ReadMagic();
 
@@ -60,7 +61,10 @@ namespace LSLib.Granny.GR2
                     Sections.Add(section);
                 }
 
-                Debug.Assert(Stream.Position == Magic.headersSize);
+                Debug.Assert(InputStream.Position == Magic.headersSize);
+
+                UncompressStream();
+
                 foreach (var section in Sections)
                 {
                     ReadSectionRelocations(section);
@@ -86,13 +90,13 @@ namespace LSLib.Granny.GR2
         private Magic ReadMagic()
         {
             var magic = new Magic();
-            magic.signature = Reader.ReadBytes(16);
+            magic.signature = InputReader.ReadBytes(16);
             magic.format = Magic.FormatFromSignature(magic.signature);
 
-            magic.headersSize = Reader.ReadUInt32();
-            magic.headerFormat = Reader.ReadUInt32();
-            magic.reserved1 = Reader.ReadUInt32();
-            magic.reserved2 = Reader.ReadUInt32();
+            magic.headersSize = InputReader.ReadUInt32();
+            magic.headerFormat = InputReader.ReadUInt32();
+            magic.reserved1 = InputReader.ReadUInt32();
+            magic.reserved2 = InputReader.ReadUInt32();
 
             if (magic.headerFormat != 0)
                 throw new ParsingException("Compressed GR2 files are not supported");
@@ -112,21 +116,21 @@ namespace LSLib.Granny.GR2
         private Header ReadHeader()
         {
             var header = new Header();
-            header.version = Reader.ReadUInt32();
-            header.fileSize = Reader.ReadUInt32();
-            header.crc = Reader.ReadUInt32();
-            header.sectionsOffset = Reader.ReadUInt32();
-            header.numSections = Reader.ReadUInt32();
+            header.version = InputReader.ReadUInt32();
+            header.fileSize = InputReader.ReadUInt32();
+            header.crc = InputReader.ReadUInt32();
+            header.sectionsOffset = InputReader.ReadUInt32();
+            header.numSections = InputReader.ReadUInt32();
             header.rootType = ReadSectionReferenceUnchecked();
             header.rootNode = ReadSectionReferenceUnchecked();
-            header.tag = Reader.ReadUInt32();
+            header.tag = InputReader.ReadUInt32();
             header.extraTags = new UInt32[Header.ExtraTagCount];
             for (int i = 0; i < Header.ExtraTagCount; i++)
-                header.extraTags[i] = Reader.ReadUInt32();
-            header.stringTableCrc = Reader.ReadUInt32();
-            header.reserved1 = Reader.ReadUInt32();
-            header.reserved2 = Reader.ReadUInt32();
-            header.reserved3 = Reader.ReadUInt32();
+                header.extraTags[i] = InputReader.ReadUInt32();
+            header.stringTableCrc = InputReader.ReadUInt32();
+            header.reserved1 = InputReader.ReadUInt32();
+            header.reserved2 = InputReader.ReadUInt32();
+            header.reserved3 = InputReader.ReadUInt32();
 
             if (header.version != Header.Version)
                 throw new ParsingException(String.Format("Unsupported GR2 version; expected {0}, got {1}", Header.Version, header.version));
@@ -134,8 +138,8 @@ namespace LSLib.Granny.GR2
             // if (header.tag != Header.Tag)
             //    throw new ParsingException(String.Format("Incorrect header tag; expected {0:X8}, got {1:X8}", Header.Tag, header.tag));
 
-            Debug.Assert(header.fileSize <= Stream.Length);
-            Debug.Assert(header.CalculateCRC(Stream) == header.crc);
+            Debug.Assert(header.fileSize <= InputStream.Length);
+            Debug.Assert(header.CalculateCRC(InputStream) == header.crc);
             Debug.Assert(header.sectionsOffset == Header.HeaderSize);
             Debug.Assert(header.rootType.Section < header.numSections);
             // TODO: check rootTypeOffset after serialization
@@ -150,9 +154,9 @@ namespace LSLib.Granny.GR2
             System.Console.WriteLine(String.Format("Offset of sections: {0}, num sections: {1}", header.sectionsOffset, header.numSections));
             System.Console.WriteLine(String.Format("Root type section {0}, Root type offset {1:X8}", header.rootType.Section, header.rootType.Offset));
             System.Console.WriteLine(String.Format("Root node section {0} {1:X8}", header.rootNode.Section, header.rootNode.Offset));
-            System.Console.WriteLine(String.Format("Tag: {0:X16}, Strings CRC: {1:X16}", header.tag, header.stringTableCrc));
-            System.Console.WriteLine(String.Format("Extra tags: {0:X16} {1:X16} {2:X16} {3:X16}", header.extraTags[0], header.extraTags[1], header.extraTags[2], header.extraTags[3]));
-            System.Console.WriteLine(String.Format("Reserved: {0:X16} {1:X16} {2:X16}", new object[] { header.reserved1, header.reserved2, header.reserved3 }));
+            System.Console.WriteLine(String.Format("Tag: {0:X8}, Strings CRC: {1:X8}", header.tag, header.stringTableCrc));
+            System.Console.WriteLine(String.Format("Extra tags: {0:X8} {1:X8} {2:X8} {3:X8}", header.extraTags[0], header.extraTags[1], header.extraTags[2], header.extraTags[3]));
+            System.Console.WriteLine(String.Format("Reserved: {0:X8} {1:X8} {2:X8}", new object[] { header.reserved1, header.reserved2, header.reserved3 }));
 #endif
 
             return header;
@@ -161,25 +165,30 @@ namespace LSLib.Granny.GR2
         private SectionHeader ReadSectionHeader()
         {
             var header = new SectionHeader();
-            header.compression = Reader.ReadUInt32();
-            header.offsetInFile = Reader.ReadUInt32();
-            header.compressedSize = Reader.ReadUInt32();
-            header.uncompressedSize = Reader.ReadUInt32();
-            header.alignment = Reader.ReadUInt32();
-            header.secondaryDataOffset = Reader.ReadUInt32();
-            header.secondaryDataOffset2 = Reader.ReadUInt32();
-            header.relocationsOffset = Reader.ReadUInt32();
-            header.numRelocations = Reader.ReadUInt32();
-            header.mixedMarshallingDataOffset = Reader.ReadUInt32();
-            header.numMixedMarshallingData = Reader.ReadUInt32();
-
-            if (header.compression != 0)
-                throw new ParsingException("Compressed GR2 files are not supported");
+            header.compression = InputReader.ReadUInt32();
+            header.offsetInFile = InputReader.ReadUInt32();
+            header.compressedSize = InputReader.ReadUInt32();
+            header.uncompressedSize = InputReader.ReadUInt32();
+            header.alignment = InputReader.ReadUInt32();
+            header.first16bit = InputReader.ReadUInt32();
+            header.first8bit = InputReader.ReadUInt32();
+            header.relocationsOffset = InputReader.ReadUInt32();
+            header.numRelocations = InputReader.ReadUInt32();
+            header.mixedMarshallingDataOffset = InputReader.ReadUInt32();
+            header.numMixedMarshallingData = InputReader.ReadUInt32();
 
             Debug.Assert(header.offsetInFile <= Header.fileSize);
-            Debug.Assert(header.compressedSize == header.uncompressedSize);
 
-            Debug.Assert(header.offsetInFile + header.uncompressedSize <= Header.fileSize);
+            if (header.compression != 0)
+            {
+                Debug.Assert(header.offsetInFile + header.compressedSize <= Header.fileSize);
+            }
+            else
+            {
+                Debug.Assert(header.compressedSize == header.uncompressedSize);
+                Debug.Assert(header.offsetInFile + header.uncompressedSize <= Header.fileSize);
+            }
+
             // TODO: check alignment, secondaryDataOffset[2]
             Debug.Assert(header.relocationsOffset <= Header.fileSize);
             Debug.Assert(header.relocationsOffset + header.numRelocations * 12 <= Header.fileSize);
@@ -188,14 +197,60 @@ namespace LSLib.Granny.GR2
 
 #if DEBUG_GR2_SERIALIZATION
             System.Console.WriteLine(" ===== Section Header ===== ");
-            System.Console.WriteLine(String.Format("Compression: {0:X8}", header.compression));
+            System.Console.WriteLine(String.Format("Compression: {0}", header.compression));
             System.Console.WriteLine(String.Format("Offset {0:X8} Comp/UncompSize {1:X8}/{2:X8}", header.offsetInFile, header.compressedSize, header.uncompressedSize));
             System.Console.WriteLine(String.Format("Alignment {0}", header.alignment));
-            System.Console.WriteLine(String.Format("Secondary data offsets: {0:X8}/{1:X8}", header.secondaryDataOffset, header.secondaryDataOffset2));
+            System.Console.WriteLine(String.Format("First 16/8bit: {0:X8}/{1:X8}", header.first16bit, header.first8bit));
             System.Console.WriteLine(String.Format("Relocations: {0:X8} count {1}", header.relocationsOffset, header.numRelocations));
             System.Console.WriteLine(String.Format("Marshalling data: {0:X8} count {1}", header.mixedMarshallingDataOffset, header.numMixedMarshallingData));
 #endif
             return header;
+        }
+
+        private void UncompressStream()
+        {
+#if DEBUG_GR2_SERIALIZATION
+            System.Console.WriteLine(String.Format(" ===== Repacking sections ===== "));
+#endif
+
+            uint totalSize = 0;
+            foreach (var section in Sections)
+            {
+                totalSize += section.Header.uncompressedSize;
+            }
+
+            // Copy the whole file, as we'll update its contents because of relocations and marshalling fixups
+            byte[] uncompressedStream = new byte[totalSize];
+            this.Stream = new MemoryStream(uncompressedStream);
+            this.Reader = new BinaryReader(this.Stream);
+
+            for (int i = 0; i < Sections.Count; i++)
+            {
+                var section = Sections[i];
+                var hdr = section.Header;
+                byte[] sectionContents = new byte[hdr.compressedSize];
+                InputStream.Position = hdr.offsetInFile;
+                InputStream.Read(sectionContents, 0, (int)hdr.compressedSize);
+
+                var originalOffset = hdr.offsetInFile;
+                hdr.offsetInFile = (uint)Stream.Position;
+                if (section.Header.compression == 0)
+                {
+                    Stream.Write(sectionContents, 0, sectionContents.Length);
+                }
+                else if (section.Header.uncompressedSize > 0)
+                {
+                    var uncompressed = Granny2Compressor.Decompress(
+                        (int)hdr.compression,
+                        sectionContents, (int)hdr.uncompressedSize,
+                        (int)hdr.first16bit, (int)hdr.first8bit, (int)hdr.uncompressedSize);
+                    Stream.Write(uncompressed, 0, uncompressed.Length);
+                }
+
+#if DEBUG_GR2_SERIALIZATION
+                System.Console.WriteLine(String.Format("    {0}: {1:X8} ({2}) --> {3:X8} ({4})", i, originalOffset, hdr.compressedSize, hdr.offsetInFile, hdr.uncompressedSize));
+#endif
+            }
         }
 
         private void ReadSectionRelocations(Section section)
@@ -204,18 +259,16 @@ namespace LSLib.Granny.GR2
             System.Console.WriteLine(String.Format(" ===== Relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
 #endif
 
-            Stream.Seek(section.Header.relocationsOffset, SeekOrigin.Begin);
+            InputStream.Seek(section.Header.relocationsOffset, SeekOrigin.Begin);
             for (int i = 0; i < section.Header.numRelocations; i++)
             {
-                UInt32 offsetInSection = Reader.ReadUInt32();
+                UInt32 offsetInSection = InputReader.ReadUInt32();
                 Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
                 var reference = ReadSectionReference();
 
-                var oldPos = Stream.Position;
                 Stream.Position = section.Header.offsetInFile + offsetInSection;
                 var fixupAddress = Sections[(int)reference.Section].Header.offsetInFile + reference.Offset;
                 Stream.Write(BitConverter.GetBytes(fixupAddress), 0, 4);
-                Stream.Position = oldPos;
 
 #if DEBUG_GR2_SERIALIZATION
                 System.Console.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
@@ -269,20 +322,18 @@ namespace LSLib.Granny.GR2
             System.Console.WriteLine(String.Format(" ===== Mixed marshalling relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
 #endif
 
-            Stream.Seek(section.Header.mixedMarshallingDataOffset, SeekOrigin.Begin);
+            InputStream.Seek(section.Header.mixedMarshallingDataOffset, SeekOrigin.Begin);
             for (int i = 0; i < section.Header.numMixedMarshallingData; i++)
             {
-                UInt32 count = Reader.ReadUInt32();
-                UInt32 offsetInSection = Reader.ReadUInt32();
+                UInt32 count = InputReader.ReadUInt32();
+                UInt32 offsetInSection = InputReader.ReadUInt32();
                 Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
                 var type = ReadSectionReference();
                 var typeDefn = new StructReference();
                 typeDefn.Offset = Sections[(int)type.Section].Header.offsetInFile + type.Offset;
 
-                var oldOffset = Stream.Position;
                 Seek(section, offsetInSection);
                 MixedMarshal(count, typeDefn.Resolve(this));
-                Stream.Seek(oldOffset, SeekOrigin.Begin);
 
 #if DEBUG_GR2_SERIALIZATION
                 System.Console.WriteLine(String.Format("    {0:X8} [{1}] --> {2}:{3:X8}", offsetInSection, count, (SectionType)type.Section, type.Offset));
@@ -293,8 +344,8 @@ namespace LSLib.Granny.GR2
         public SectionReference ReadSectionReferenceUnchecked()
         {
             var reference = new SectionReference();
-            reference.Section = Reader.ReadUInt32();
-            reference.Offset = Reader.ReadUInt32();
+            reference.Section = InputReader.ReadUInt32();
+            reference.Offset = InputReader.ReadUInt32();
             return reference;
         }
 
@@ -355,7 +406,7 @@ namespace LSLib.Granny.GR2
                 reference.Offset = Reader.ReadUInt32();
             else
                 reference.Offset = Reader.ReadUInt64();
-            Debug.Assert(!reference.IsValid || reference.Offset + reference.Size * 4 <= Header.fileSize);
+            Debug.Assert(!reference.IsValid || reference.Offset + reference.Size * 4 <= (ulong)Stream.Length);
             return reference;
         }
 
@@ -907,7 +958,7 @@ namespace LSLib.Granny.GR2
         internal void Seek(RelocatableReference reference)
         {
             Debug.Assert(reference.IsValid);
-            Debug.Assert(reference.Offset <= Header.fileSize);
+            Debug.Assert(reference.Offset <= (ulong)Stream.Length);
             Stream.Position = (long)reference.Offset;
         }
 
