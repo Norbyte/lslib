@@ -6,7 +6,7 @@ namespace LSLib {
 	namespace Native {
 		array<byte> ^ LZ4FrameCompressor::Compress(array<byte> ^ input)
 		{
-			pin_ptr<byte> inputPin(&input[0]);
+			pin_ptr<byte> inputPin(&input[input->GetLowerBound(0)]);
 			byte * inputPtr = inputPin;
 
 			// Initialize LZ4 compression
@@ -89,7 +89,7 @@ namespace LSLib {
 			// Copy the output to a managed array
 			LZ4F_freeCompressionContext(cctx);
 			array<byte> ^ compressed = gcnew array<byte>(outputOffset);
-			pin_ptr<byte> compPtr(&compressed[0]);
+			pin_ptr<byte> compPtr(&compressed[compressed->GetLowerBound(0)]);
 			byte * comp = compPtr;
 			memcpy(comp, output.data(), outputOffset);
 			return compressed;
@@ -97,7 +97,7 @@ namespace LSLib {
 
 		array<byte> ^ LZ4FrameCompressor::Decompress(array<byte> ^ compressed)
 		{
-			pin_ptr<byte> inputPin(&compressed[0]);
+			pin_ptr<byte> inputPin(&compressed[compressed->GetLowerBound(0)]);
 			byte * input = inputPin;
 
 			// Initialize LZ4 decompression
@@ -144,7 +144,7 @@ namespace LSLib {
 			// Copy the output to a managed array
 			LZ4F_freeDecompressionContext(dctx);
 			array<byte> ^ decompressed = gcnew array<byte>(outputOffset);
-			pin_ptr<byte> decompPtr(&decompressed[0]);
+			pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
 			byte * decomp = decompPtr;
 			memcpy(decomp, output.data(), outputOffset);
 			return decompressed;

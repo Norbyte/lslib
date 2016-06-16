@@ -1,5 +1,6 @@
 #include "physics.h"
 
+#if defined(HAS_BULLET)
 #pragma managed(push, off)
 #include <string>
 #include <iostream>
@@ -18,14 +19,14 @@ namespace LSLib {
 
 		void PhysicsAssetExporter::exportBullet(ExporterOptions ^ options)
 		{
-			pin_ptr<float> inertia(&options->Inertia[0]);
+			pin_ptr<float> inertia(&options->Inertia[options->Inertia->GetLowerBound(0)]);
 			btCollisionShape * shape = nullptr;
 
 			MeshShapeOptions ^ meshOpts = dynamic_cast<MeshShapeOptions ^>(options);
 			if (meshOpts)
 			{
-				pin_ptr<float> vertices(&meshOpts->Vertices[0]);
-				pin_ptr<int> indices(&meshOpts->Indices[0]);
+				pin_ptr<float> vertices(&meshOpts->Vertices[meshOpts->Vertices->GetLowerBound(0)]);
+				pin_ptr<int> indices(&meshOpts->Indices[meshOpts->Indices->GetLowerBound(0)]);
 				vertices_ = new btTriangleIndexVertexArray(
 					meshOpts->Indices->Length / 3, indices, sizeof(int)* 3,
 					meshOpts->Vertices->Length, reinterpret_cast<btScalar *>(vertices), sizeof(float)* 3
@@ -72,7 +73,7 @@ namespace LSLib {
 				}
 				else if (boxOpts)
 				{
-					pin_ptr<float> extents(&boxOpts->Extents[0]);
+					pin_ptr<float> extents(&boxOpts->Extents[boxOpts->Extents->GetLowerBound(0)]);
 					shape = createBoxShape(extents);
 				}
 			}
@@ -82,7 +83,7 @@ namespace LSLib {
 
 			shape->setMargin(options->Shape->Margin);
 
-			pin_ptr<float> translation(&options->Translation[0]);
+			pin_ptr<float> translation(&options->Translation[options->Translation->GetLowerBound(0)]);
 			btRigidBody * rb = createRigidBody(options->Mass, shape, translation, options->AngularDamping, options->LinearDamping, options->Friction, options->Restitution, inertia);
 
 			int collisionFlags = 0;
@@ -165,3 +166,4 @@ namespace LSLib {
 
 	}
 }
+#endif

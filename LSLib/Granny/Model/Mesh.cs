@@ -591,6 +591,7 @@ namespace LSLib.Granny.Model
                         break;
 
                     case "DiffuseColor0":
+                    case "MaxChannel_2":
                         // TODO: This is not exported at the moment.
                         break;
 

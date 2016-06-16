@@ -5,15 +5,15 @@
 
 namespace LSLib {
 	namespace Native {
-		typedef bool(*GrannyDecompressDataProc)(int Format, bool FileIsByteReversed, int CompressedBytesSize, void *CompressedBytes, int Stop0, int Stop1, int Stop2, void *DecompressedBytes);
+		typedef bool(* __stdcall GrannyDecompressDataProc)(int Format, bool FileIsByteReversed, int CompressedBytesSize, void *CompressedBytes, int Stop0, int Stop1, int Stop2, void *DecompressedBytes);
 
 		array<byte> ^ Granny2Compressor::Decompress(Int32 format, array<byte> ^ compressed, Int32 decompressedSize, Int32 stop0, Int32 stop1, Int32 stop2)
 		{
-			pin_ptr<byte> inputPin(&compressed[0]);
+			pin_ptr<byte> inputPin(&compressed[compressed->GetLowerBound(0)]);
 			byte * input = inputPin;
 
 			array<byte> ^ decompressed = gcnew array<byte>(decompressedSize);
-			pin_ptr<byte> decompPtr(&decompressed[0]);
+			pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
 			byte * decomp = decompPtr;
 
 			// Load Granny2 library

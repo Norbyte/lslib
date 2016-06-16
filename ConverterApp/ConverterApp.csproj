@@ -135,8 +135,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(SolutionDir)\LSLib\bin\Debug\LSLib.dll $(TargetDir)\LSLib.dll
-copy $(SolutionDir)\Debug\LSLibNative.dll $(TargetDir)\LSLibNative.dll</PostBuildEvent>
+    <PostBuildEvent>copy $(SolutionDir)\LSLib\bin\$(ConfigurationName)\LSLib.dll $(TargetDir)\LSLib.dll
+copy $(SolutionDir)\$(ConfigurationName)\LSLibNative.dll $(TargetDir)\LSLibNative.dll</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -1,5 +1,6 @@
 #pragma once
 
+#if defined(HAS_BULLET)
 #include <msclr/marshal_cppstd.h>
 #pragma managed(push, off)
 #include <btBulletDynamicsCommon.h>
@@ -87,3 +88,4 @@ namespace LSLib {
 
 	}
 }
+#endif
