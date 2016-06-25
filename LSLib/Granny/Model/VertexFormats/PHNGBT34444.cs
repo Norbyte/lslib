@@ -24,7 +24,7 @@ namespace LSLib.Granny.Model.VertexFormat
     }
 
     [VertexPrototype(Prototype = typeof(PHNGBT34444_Prototype)),
-    VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = true)]
+    VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = 2)]
     public class PHNGBT34444 : Vertex
     {
         public override List<String> ComponentNames()
@@ -39,7 +39,7 @@ namespace LSLib.Granny.Model.VertexFormat
             WriteHalfVector3As4(section, Tangent);
             WriteHalfVector3As4(section, Binormal);
             WriteHalfVector2(section, TextureCoordinates0);
-            WriteHalfVector2(section, new OpenTK.Vector2(0, 0));
+            WriteHalfVector2(section, TextureCoordinates1);
         }
 
         public override void Unserialize(GR2Reader reader)
@@ -49,7 +49,7 @@ namespace LSLib.Granny.Model.VertexFormat
             Tangent = ReadHalfVector4As3(reader);
             Binormal = ReadHalfVector4As3(reader);
             TextureCoordinates0 = ReadHalfVector2(reader);
-            /* TextureCoordinates1 = */ ReadHalfVector2(reader);
+            TextureCoordinates1 = ReadHalfVector2(reader);
         }
     }
 }

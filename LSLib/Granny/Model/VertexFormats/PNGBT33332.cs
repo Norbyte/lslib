@@ -22,7 +22,7 @@ namespace LSLib.Granny.Model.VertexFormat
     }
 
     [VertexPrototype(Prototype = typeof(PNGBT33332_Prototype)),
-    VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = true)]
+    VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = 1)]
     public class PNGBT33332 : Vertex
     {
         public override List<String> ComponentNames()

@@ -11,9 +11,9 @@ namespace LSLib.Granny.Model
     public class VertexDeduplicator
     {
         public Dictionary<int, int> VertexDeduplicationMap = new Dictionary<int, int>();
-        public Dictionary<int, int> UVDeduplicationMap = new Dictionary<int, int>();
+        public List<Dictionary<int, int>> UVDeduplicationMaps = new List<Dictionary<int, int>>();
         public List<Vertex> DeduplicatedPositions = new List<Vertex>();
-        public List<Vector2> DeduplicatedUVs = new List<Vector2>();
+        public List<List<Vector2>> DeduplicatedUVs = new List<List<Vector2>>();
 
         private class VertexPositionComparer : IEqualityComparer<Vector3>
         {
@@ -56,10 +56,19 @@ namespace LSLib.Granny.Model
                 VertexDeduplicationMap.Add(i, i);
             }
 
-            for (var i = 0; i < vertices.Count; i++)
+            var numUvs = Vertex.Description(vertices[0].GetType()).TextureCoordinates;
+            for (var uv = 0; uv < numUvs; uv++)
             {
-                DeduplicatedUVs.Add(vertices[i].TextureCoordinates0);
-                UVDeduplicationMap.Add(i, i);
+                var uvMap = new Dictionary<int, int>();
+                var deduplicatedUvs = new List<Vector2>();
+                UVDeduplicationMaps.Add(uvMap);
+                DeduplicatedUVs.Add(deduplicatedUvs);
+
+                for (var i = 0; i < vertices.Count; i++)
+                {
+                    deduplicatedUvs.Add(vertices[i].GetTextureCoordinates(uv));
+                    uvMap.Add(i, i);
+                }
             }
         }
 
@@ -79,18 +88,27 @@ namespace LSLib.Granny.Model
                 VertexDeduplicationMap.Add(i, mappedIndex);
             }
 
-            var uvs = new Dictionary<Vector2, int>(new VertexUVComparer());
-            for (var i = 0; i < vertices.Count; i++)
+            var numUvs = Vertex.Description(vertices[0].GetType()).TextureCoordinates;
+            for (var uv = 0; uv < numUvs; uv++)
             {
-                int mappedIndex;
-                if (!uvs.TryGetValue(vertices[i].TextureCoordinates0, out mappedIndex))
-                {
-                    mappedIndex = uvs.Count;
-                    uvs.Add(vertices[i].TextureCoordinates0, mappedIndex);
-                    DeduplicatedUVs.Add(vertices[i].TextureCoordinates0);
-                }
+                var uvMap = new Dictionary<int, int>();
+                var deduplicatedUvs = new List<Vector2>();
+                UVDeduplicationMaps.Add(uvMap);
+                DeduplicatedUVs.Add(deduplicatedUvs);
 
-                UVDeduplicationMap.Add(i, mappedIndex);
+                var uvs = new Dictionary<Vector2, int>(new VertexUVComparer());
+                for (var i = 0; i < vertices.Count; i++)
+                {
+                    int mappedIndex;
+                    if (!uvs.TryGetValue(vertices[i].GetTextureCoordinates(uv), out mappedIndex))
+                    {
+                        mappedIndex = uvs.Count;
+                        uvs.Add(vertices[i].GetTextureCoordinates(uv), mappedIndex);
+                        deduplicatedUvs.Add(vertices[i].GetTextureCoordinates(uv));
+                    }
+
+                    uvMap.Add(i, mappedIndex);
+                }
             }
         }
     }
@@ -218,19 +236,19 @@ namespace LSLib.Granny.Model
             return ColladaUtils.MakeFloatSource(name, "binormals", new string[] { "X", "Y", "Z" }, binormals);
         }
 
-        public source MakeColladaUVs(string name)
+        public source MakeColladaUVs(string name, int uvIndex)
         {
             EnsureDeduplicationMap();
 
             int index = 0;
-            var uvs = new float[Deduplicator.DeduplicatedUVs.Count * 2];
-            foreach (var uv in Deduplicator.DeduplicatedUVs)
+            var uvs = new float[Deduplicator.DeduplicatedUVs[uvIndex].Count * 2];
+            foreach (var uv in Deduplicator.DeduplicatedUVs[uvIndex])
             {
                 uvs[index++] = uv[0];
                 uvs[index++] = uv[1];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "uvs", new string[] { "S", "T" }, uvs);
+            return ColladaUtils.MakeFloatSource(name, "uvs" + uvIndex.ToString(), new string[] { "S", "T" }, uvs);
         }
 
         public source MakeBoneWeights(string name)
@@ -326,7 +344,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, Dictionary<int, int> uvMaps)
+        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, List<Dictionary<int, int>> uvMaps)
         {
             int numTris = (from grp in Groups
                            select grp.TriCount).Sum();
@@ -350,7 +368,7 @@ namespace LSLib.Granny.Model
                             if (i == 0)
                                 indicesBuilder.Append(vertexMaps[indices[firstIdx + vertIndex]]);
                             else
-                                indicesBuilder.Append(uvMaps[indices[firstIdx + vertIndex]]);
+                                indicesBuilder.Append(uvMaps[i - 1][indices[firstIdx + vertIndex]]);
                             indicesBuilder.Append(" ");
                         }
                     }
@@ -571,10 +589,12 @@ namespace LSLib.Granny.Model
                         }
 
                     case "MaxChannel_1":
+                    case "MaxChannel_2":
                         {
                             if (options.ExportUVs)
                             {
-                                source = PrimaryVertexData.MakeColladaUVs(Name);
+                                int uvIndex = Int32.Parse(component.String.Substring(11)) - 1;
+                                source = PrimaryVertexData.MakeColladaUVs(Name, uvIndex);
 
                                 var texInputOff = new InputLocalOffset();
                                 texInputOff.semantic = "TEXCOORD";
@@ -591,7 +611,6 @@ namespace LSLib.Granny.Model
                         break;
 
                     case "DiffuseColor0":
-                    case "MaxChannel_2":
                         // TODO: This is not exported at the moment.
                         break;
 
@@ -612,7 +631,7 @@ namespace LSLib.Granny.Model
             var triangles = PrimaryTopology.MakeColladaTriangles(
                 inputOffsets.ToArray(), 
                 PrimaryVertexData.Deduplicator.VertexDeduplicationMap,
-                PrimaryVertexData.Deduplicator.UVDeduplicationMap
+                PrimaryVertexData.Deduplicator.UVDeduplicationMaps
             );
 
             var colladaMesh = new mesh();

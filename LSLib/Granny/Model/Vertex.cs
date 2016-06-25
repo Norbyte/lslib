@@ -62,7 +62,7 @@ namespace LSLib.Granny.Model
         public bool Tangent = false;
         public bool Binormal = false;
         public bool DiffuseColor = false;
-        public bool TextureCoordinates = false;
+        public int TextureCoordinates = 0;
     }
 
     public abstract class Vertex
@@ -75,6 +75,27 @@ namespace LSLib.Granny.Model
         public Vector3 Binormal;
         public Vector4 DiffuseColor0;
         public Vector2 TextureCoordinates0;
+        public Vector2 TextureCoordinates1;
+
+        public Vector2 GetTextureCoordinates(int index)
+        {
+            if (index == 0)
+                return TextureCoordinates0;
+            else if (index == 1)
+                return TextureCoordinates1;
+            else
+                throw new ArgumentException("At most 2 UV sets are supported.");
+        }
+
+        public void SetTextureCoordinates(int index, Vector2 uv)
+        {
+            if (index == 0)
+                TextureCoordinates0 = uv;
+            else if (index == 1)
+                TextureCoordinates1 = uv;
+            else
+                throw new ArgumentException("At most 2 UV sets are supported.");
+        }
 
         protected Vector2 ReadVector2(GR2Reader reader)
         {

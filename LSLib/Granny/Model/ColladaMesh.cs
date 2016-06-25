@@ -15,11 +15,11 @@ namespace LSLib.Granny.Model
         private Dictionary<String, Source> Sources;
         private InputLocalOffset[] Inputs;
         private List<Vertex> Vertices;
-        private List<Vector2> UVs;
+        private List<List<Vector2>> UVs;
         private List<int> Indices;
 
         private int VertexInputIndex = -1;
-        private int UVInputIndex = -1;
+        private List<int> UVInputIndices = new List<int>();
         private Type VertexType;
         private bool HasNormals = false;
         private bool HasTangents = false;
@@ -64,6 +64,17 @@ namespace LSLib.Granny.Model
 
         void computeTangents()
         {
+            // Check if the vertex format has at least one UV set
+            if (ConsolidatedVertices.Count() > 0)
+            {
+                var v = ConsolidatedVertices[0];
+                var descriptor = Vertex.Description(v.Prototype());
+                if (descriptor.TextureCoordinates == 0)
+                {
+                    throw new InvalidOperationException("At least one UV set is required to recompute tangents");
+                }
+            }
+
             foreach (var v in ConsolidatedVertices)
             {
                 v.Tangent = Vector3.Zero;
@@ -333,13 +344,13 @@ namespace LSLib.Granny.Model
 
         private void ImportUVs()
         {
-            UVInputIndex = -1;
-            UVs = new List<Vector2>();
+            UVInputIndices.Clear();
+            UVs = new List<List<Vector2>>();
             foreach (var input in Inputs)
             {
                 if (input.semantic == "TEXCOORD")
                 {
-                    UVInputIndex = (int)input.offset;
+                    UVInputIndices.Add((int)input.offset);
 
                     if (input.source[0] != '#')
                         throw new ParsingException("Only ID references are supported for UV input sources");
@@ -353,9 +364,11 @@ namespace LSLib.Granny.Model
                         !inputSource.FloatParams.TryGetValue("T", out t))
                         throw new ParsingException("UV input source " + input.source + " must have S, T float attributes");
 
+                    var uvs = new List<Vector2>();
+                    UVs.Add(uvs);
                     for (var i = 0; i < s.Count; i++)
                     {
-                        UVs.Add(new Vector2(s[i], t[i]));
+                        uvs.Add(new Vector2(s[i], t[i]));
                     }
                 }
             }
@@ -389,7 +402,7 @@ namespace LSLib.Granny.Model
             }
 
             ImportUVs();
-            if (UVInputIndex != -1)
+            if (UVInputIndices.Count() > 0)
             {
                 var outVertexIndices = new Dictionary<int[], int>(new VertexIndexComparer());
                 ConsolidatedIndices = new List<int>(TriangleCount * 3);
@@ -409,7 +422,10 @@ namespace LSLib.Granny.Model
                         var vertexIndex = index[VertexInputIndex];
                         consolidatedIndex = ConsolidatedVertices.Count;
                         Vertex vertex = Vertices[vertexIndex].Clone();
-                        vertex.TextureCoordinates0 = UVs[index[UVInputIndex]];
+                        for (int uv = 0; uv < UVInputIndices.Count(); uv++ )
+                        {
+                            vertex.SetTextureCoordinates(uv, UVs[uv][index[UVInputIndices[uv]]]);
+                        }
                         outVertexIndices.Add(index, consolidatedIndex);
                         ConsolidatedVertices.Add(vertex);
 

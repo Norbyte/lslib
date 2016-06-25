@@ -20,7 +20,7 @@ namespace LSLib.Granny.Model.VertexFormat
     }
 
     [VertexPrototype(Prototype = typeof(PNGT3332_Prototype)),
-    VertexDescription(Position = true, Normal = true, Tangent = true, TextureCoordinates = true)]
+    VertexDescription(Position = true, Normal = true, Tangent = true, TextureCoordinates = 1)]
     public class PNGT3332 : Vertex
     {
         public override List<String> ComponentNames()

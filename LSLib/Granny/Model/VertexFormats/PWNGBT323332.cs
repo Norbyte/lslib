@@ -26,7 +26,7 @@ namespace LSLib.Granny.Model.VertexFormat
     }
 
     [VertexPrototype(Prototype = typeof(PWNGBT323332_Prototype)),
-    VertexDescription(Position = true, BoneWeights = true, BoneIndices = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = true)]
+    VertexDescription(Position = true, BoneWeights = true, BoneIndices = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = 1)]
     public class PWNGBT323332 : Vertex
     {
         public override List<String> ComponentNames()
