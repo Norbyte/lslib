@@ -68,7 +68,7 @@ namespace LSLib.Granny.Model
             if (ConsolidatedVertices.Count() > 0)
             {
                 var v = ConsolidatedVertices[0];
-                var descriptor = Vertex.Description(v.Prototype());
+                var descriptor = Vertex.Description(v.GetType());
                 if (descriptor.TextureCoordinates == 0)
                 {
                     throw new InvalidOperationException("At least one UV set is required to recompute tangents");
