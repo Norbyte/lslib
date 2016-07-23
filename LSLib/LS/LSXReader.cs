@@ -10,6 +10,7 @@ namespace LSLib.LS
 {
     public class LSXReader : IDisposable
     {
+        public const string InitialVersion = "1";
         public const string CurrentVersion = "2";
 
         private Stream stream;
@@ -48,7 +49,7 @@ namespace LSLib.LS
                             case "header":
                                 // LSX metadata part 1
                                 string version = reader["version"];
-                                if (version != CurrentVersion)
+                                if (version != InitialVersion && version != CurrentVersion)
                                     throw new InvalidFormatException(String.Format("Unsupported LSX version; expected {0}, found {1}", CurrentVersion, version));
 
                                 rsrc.Metadata.timestamp = Convert.ToUInt64(reader["timestamp"]);

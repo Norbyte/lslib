@@ -76,7 +76,10 @@ namespace LSLib.LS.LSF
                 var header = new Header();
                 header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
                 header.Version = Header.VerChunkedCompress;
-                header.Unknown = 0x20000000;
+                header.EngineVersion = (resource.Metadata.majorVersion << 24) |
+                    (resource.Metadata.minorVersion << 16) |
+                    (resource.Metadata.revision << 8) |
+                    resource.Metadata.buildNumber;
 
                 bool chunked = (header.Version >= Header.VerChunkedCompress);
                 byte[] stringsCompressed = BinUtils.Compress(stringBuffer, compressionMethod, compressionLevel);

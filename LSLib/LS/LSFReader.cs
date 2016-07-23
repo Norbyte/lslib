@@ -45,7 +45,7 @@ namespace LSLib.LS.LSF
         /// <summary>
         /// Possibly version number? (major, minor, rev, build)
         /// </summary>
-        public UInt32 Unknown;
+        public UInt32 EngineVersion;
         /// <summary>
         /// Total uncompressed size of the string hash table
         /// </summary>
@@ -512,6 +512,12 @@ namespace LSLib.LS.LSF
 
                 Resource resource = new Resource();
                 ReadRegions(resource);
+
+                resource.Metadata.majorVersion = (hdr.EngineVersion & 0xff000000) >> 24;
+                resource.Metadata.minorVersion = (hdr.EngineVersion & 0xff0000) >> 16;
+                resource.Metadata.revision = (hdr.EngineVersion & 0xff00) >> 8;
+                resource.Metadata.buildNumber = (hdr.EngineVersion & 0xff);
+
                 return resource;
             }
         }
