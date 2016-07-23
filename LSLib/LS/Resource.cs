@@ -15,6 +15,8 @@ namespace LSLib.LS
 
     public struct LSMetadata
     {
+        public const uint CurrentMajorVersion = 33;
+
         public UInt64 timestamp;
         public UInt32 majorVersion;
         public UInt32 minorVersion;
@@ -39,6 +41,11 @@ namespace LSLib.LS
     {
         public LSMetadata Metadata;
         public Dictionary<string, Region> Regions = new Dictionary<string,Region>();
+
+        public Resource()
+        {
+            Metadata.majorVersion = LSMetadata.CurrentMajorVersion;
+        }
     }
 
     public class Region : Node
