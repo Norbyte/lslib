@@ -502,7 +502,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (Options.BuildDummySkeleton)
+            if (Options.BuildDummySkeleton && Root.Models != null)
             {
                 GenerateDummySkeleton(Root);
             }
