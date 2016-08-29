@@ -611,6 +611,7 @@ namespace LSLib.Granny.Model
                         break;
 
                     case "DiffuseColor0":
+                    case "map1": // Possibly bogus D:OS name for DiffuseColor0
                         // TODO: This is not exported at the moment.
                         break;
 
