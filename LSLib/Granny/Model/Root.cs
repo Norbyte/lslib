@@ -756,6 +756,83 @@ namespace LSLib.Granny.Model
             PostLoad();
         }
 
+        private void ExportMeshBinding(Model model, string skelRef, MeshBinding meshBinding, List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
+        {
+            var mesh = meshBinding.Mesh.ExportToCollada(Options);
+            var geom = new geometry();
+            geom.id = meshBinding.Mesh.Name + "-geom";
+            geom.name = meshBinding.Mesh.Name;
+            geom.Item = mesh;
+            geometries.Add(geom);
+
+            bool hasSkin = skelRef != null && meshBinding.Mesh.IsSkinned();
+            skin skin = null;
+            controller ctrl = null;
+            if (hasSkin)
+            {
+                var boneNames = new Dictionary<string, Bone>();
+                foreach (var bone in model.Skeleton.Bones)
+                {
+                    boneNames.Add(bone.Name, bone);
+                }
+
+                skin = meshBinding.Mesh.ExportSkin(model.Skeleton.Bones, boneNames, geom.id);
+                ctrl = new controller();
+                ctrl.id = meshBinding.Mesh.Name + "-skin";
+                ctrl.name = meshBinding.Mesh.Name + "_Skin";
+                ctrl.Item = skin;
+                controllers.Add(ctrl);
+            }
+
+            var geomNode = new node();
+            geomNode.id = geom.name + "-node";
+            geomNode.name = geom.name;
+            geomNode.type = NodeType.NODE;
+
+            if (hasSkin)
+            {
+                var controllerInstance = new instance_controller();
+                controllerInstance.url = "#" + ctrl.id;
+                controllerInstance.skeleton = new string[] { "#" + skelRef };
+                geomNode.instance_controller = new instance_controller[] { controllerInstance };
+            }
+            else
+            {
+                var geomInstance = new instance_geometry();
+                geomInstance.url = "#" + geom.id;
+                geomNode.instance_geometry = new instance_geometry[] { geomInstance };
+            }
+
+            geomNodes.Add(geomNode);
+        }
+
+        private void ExportModels(List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
+        {
+            if (Models == null)
+            {
+                return;
+            }
+
+            foreach (var model in Models)
+            {
+                string skelRef = null;
+                if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1)
+                {
+                    var skeleton = model.MakeSkeleton();
+                    geomNodes.Add(skeleton);
+                    skelRef = skeleton.id;
+                }
+
+                if (model.MeshBindings != null)
+                {
+                    foreach (var meshBinding in model.MeshBindings)
+                    {
+                        ExportMeshBinding(model, skelRef, meshBinding, geometries, controllers, geomNodes);
+                    }
+                }
+            }
+        }
+
         public void ExportToCollada(string outputPath)
         {
             var collada = new COLLADA();
@@ -781,70 +858,7 @@ namespace LSLib.Granny.Model
             var geometries = new List<geometry>();
             var controllers = new List<controller>();
             var geomNodes = new List<node>();
-
-            foreach (var model in Models)
-            {
-                string skelRef = null;
-                if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1)
-                {
-                    var skeleton = model.MakeSkeleton();
-                    geomNodes.Add(skeleton);
-                    skelRef = skeleton.id;
-                }
-
-                if (model.MeshBindings != null)
-                {
-                    foreach (var meshBinding in model.MeshBindings)
-                    {
-                        var mesh = meshBinding.Mesh.ExportToCollada(Options);
-                        var geom = new geometry();
-                        geom.id = meshBinding.Mesh.Name + "-geom";
-                        geom.name = meshBinding.Mesh.Name;
-                        geom.Item = mesh;
-                        geometries.Add(geom);
-
-                        bool hasSkin = skelRef != null && meshBinding.Mesh.IsSkinned();
-                        skin skin = null;
-                        controller ctrl = null;
-                        if (hasSkin)
-                        {
-                            var boneNames = new Dictionary<string, Bone>();
-                            foreach (var bone in model.Skeleton.Bones)
-                            {
-                                boneNames.Add(bone.Name, bone);
-                            }
-
-                            skin = meshBinding.Mesh.ExportSkin(model.Skeleton.Bones, boneNames, geom.id);
-                            ctrl = new controller();
-                            ctrl.id = meshBinding.Mesh.Name + "-skin";
-                            ctrl.name = meshBinding.Mesh.Name + "_Skin";
-                            ctrl.Item = skin;
-                            controllers.Add(ctrl);
-                        }
-
-                        var geomNode = new node();
-                        geomNode.id = geom.name + "-node";
-                        geomNode.name = geom.name;
-                        geomNode.type = NodeType.NODE;
-
-                        if (hasSkin)
-                        {
-                            var controllerInstance = new instance_controller();
-                            controllerInstance.url = "#" + ctrl.id;
-                            controllerInstance.skeleton = new string[] { "#" + skelRef };
-                            geomNode.instance_controller = new instance_controller[] { controllerInstance };
-                        }
-                        else
-                        {
-                            var geomInstance = new instance_geometry();
-                            geomInstance.url = "#" + geom.id;
-                            geomNode.instance_geometry = new instance_geometry[] { geomInstance };
-                        }
-
-                        geomNodes.Add(geomNode);
-                    }
-                }
-            }
+            ExportModels(geometries, controllers, geomNodes);
 
             var animations = new List<animation>();
             var animationClips = new List<animation_clip>();
