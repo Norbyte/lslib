@@ -48,3 +48,5 @@
 /external/bullet-2.77
 /TestApp
 /packages
+LSTools.VC.db
+*.opendb

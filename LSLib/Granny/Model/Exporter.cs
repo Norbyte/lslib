@@ -23,6 +23,7 @@ namespace LSLib.Granny.Model
     public class ExporterOptions
     {
         public string InputPath;
+        public Root Input;
         public ExportFormat InputFormat;
         public string OutputPath;
         public ExportFormat OutputFormat;
@@ -446,7 +447,19 @@ namespace LSLib.Granny.Model
 
         public void Export()
         {
-            Root = Load(Options.InputPath, Options.InputFormat);
+            if (Options.InputPath != null)
+            {
+                Root = Load(Options.InputPath, Options.InputFormat);
+            }
+            else
+            {
+                if (Options.Input == null)
+                {
+                    throw new ExportException("No input model specified. Either the InputPath or the Input option must be specified.");
+                }
+
+                Root = Options.Input;
+            }
 
             if (Options.OutputFormat == ExportFormat.GR2)
             {

@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LSLib</RootNamespace>
     <AssemblyName>LSLib</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -58,6 +58,7 @@
     <Compile Include="Granny\ColladaSchema.cs" />
     <Compile Include="Granny\CRC32.cs" />
     <Compile Include="Granny\GR2.cs" />
+    <Compile Include="Granny\GR2Utils.cs" />
     <Compile Include="Granny\GR2\Format.cs" />
     <Compile Include="Granny\GR2\Helpers.cs" />
     <Compile Include="Granny\GR2\Reader.cs" />
@@ -169,7 +170,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) "%25USERPROFILE%25\My Documents\Larian Studios\Divinity Original Sin\EditorPlugins\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
