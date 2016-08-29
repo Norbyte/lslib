@@ -29,7 +29,7 @@ namespace LSLib.Granny.Model.CurveData
             TypeToFormatMap = new Dictionary<Type, CurveFormat>();
             NameToTypeMap = new Dictionary<String, Type>();
 
-            // Register(typeof(DaKeyframes32f), CurveFormat.DaKeyframes32f);
+            Register(typeof(DaKeyframes32f), CurveFormat.DaKeyframes32f);
             Register(typeof(DaK32fC32f), CurveFormat.DaK32fC32f);
             Register(typeof(DaIdentity), CurveFormat.DaIdentity);
             Register(typeof(DaConstant32f), CurveFormat.DaConstant32f);
