@@ -357,6 +357,8 @@ namespace LSLib.Granny.Model
             Register(typeof(PWNGB34333));
             Register(typeof(PWNGBT323332));
             Register(typeof(PWNGBT343332));
+            Register(typeof(PWNGBDT3433342));
+            Register(typeof(PWNGBTT3433322));
             Register(typeof(PWNGT32332));
             Register(typeof(PWNGT34332));
             Register(typeof(PWNT3232));
@@ -387,7 +389,20 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            throw new Exception("The specified vertex format was not recognized.");
+            ThrowUnknownVertexFormatError(defn);
+            return null;
+        }
+
+        private static void ThrowUnknownVertexFormatError(StructDefinition defn)
+        {
+            string formatDesc = "";
+            foreach (var field in defn.Members)
+            {
+                string format = field.Name + ": " + field.Type.ToString() + "[" + field.ArraySize.ToString() + "]";
+                formatDesc += format + Environment.NewLine;
+            }
+
+            throw new Exception("The specified vertex format was not recognized. Format descriptor: " + Environment.NewLine + formatDesc);
         }
 
         public static Dictionary<String, Type> GetAllTypes()

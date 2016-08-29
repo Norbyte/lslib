@@ -590,6 +590,8 @@ namespace LSLib.Granny.Model
 
                     case "MaxChannel_1":
                     case "MaxChannel_2":
+                    case "UVChannel_1":
+                    case "UVChannel_2":
                         {
                             if (options.ExportUVs)
                             {
