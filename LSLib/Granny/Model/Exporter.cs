@@ -321,6 +321,41 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private Mesh GenerateDummyMesh(MeshBinding meshBinding)
+        {
+            var vertexData = new VertexData();
+            vertexData.VertexComponentNames = meshBinding.Mesh.PrimaryVertexData.VertexComponentNames
+                .Select(name => new GrannyString(name.String)).ToList();
+            vertexData.Vertices = new List<Vertex>();
+            var dummyVertex = Helpers.CreateInstance(meshBinding.Mesh.VertexFormat) as Vertex;
+            vertexData.Vertices.Add(dummyVertex);
+            Root.VertexDatas.Add(vertexData);
+
+            var topology = new TriTopology();
+            topology.Groups = new List<TriTopologyGroup>();
+            var group = new TriTopologyGroup();
+            group.MaterialIndex = 0;
+            group.TriCount = 0;
+            group.TriFirst = 0;
+            topology.Groups.Add(group);
+
+            topology.Indices = new List<int>();
+            Root.TriTopologies.Add(topology);
+
+            var mesh = new Mesh();
+            mesh.Name = meshBinding.Mesh.Name;
+            mesh.VertexFormat = meshBinding.Mesh.VertexFormat;
+            mesh.PrimaryTopology = topology;
+            mesh.PrimaryVertexData = vertexData;
+            if (meshBinding.Mesh.BoneBindings != null)
+            {
+                mesh.BoneBindings = new List<BoneBinding>();
+                ConformMeshBoneBindings(mesh, meshBinding.Mesh);
+            }
+
+            return mesh;
+        }
+
         private Model MakeDummyModel(Model original)
         {
             var newModel = new Model();
@@ -339,49 +374,24 @@ namespace LSLib.Granny.Model
                 newModel.Skeleton = skeleton;
             }
 
-            newModel.MeshBindings = new List<MeshBinding>();
-            foreach (var meshBinding in original.MeshBindings)
+            if (original.MeshBindings != null)
             {
-                // Try to bind the original mesh, if it exists in the source file.
-                // If it doesn't, generate a dummy mesh with 0 vertices
-                var mesh = Root.Meshes.Where(m => m.Name == meshBinding.Mesh.Name).FirstOrDefault();
-                if (mesh == null)
+                newModel.MeshBindings = new List<MeshBinding>();
+                foreach (var meshBinding in original.MeshBindings)
                 {
-                    var vertexData = new VertexData();
-                    vertexData.VertexComponentNames = meshBinding.Mesh.PrimaryVertexData.VertexComponentNames
-                        .Select(name => new GrannyString(name.String)).ToList();
-                    vertexData.Vertices = new List<Vertex>();
-                    var dummyVertex = Helpers.CreateInstance(meshBinding.Mesh.VertexFormat) as Vertex;
-                    vertexData.Vertices.Add(dummyVertex);
-                    Root.VertexDatas.Add(vertexData);
-
-                    var topology = new TriTopology();
-                    topology.Groups = new List<TriTopologyGroup>();
-                    var group = new TriTopologyGroup();
-                    group.MaterialIndex = 0;
-                    group.TriCount = 0;
-                    group.TriFirst = 0;
-                    topology.Groups.Add(group);
-
-                    topology.Indices = new List<int>();
-                    Root.TriTopologies.Add(topology);
-
-                    mesh = new Mesh();
-                    mesh.Name = meshBinding.Mesh.Name;
-                    mesh.VertexFormat = meshBinding.Mesh.VertexFormat;
-                    mesh.PrimaryTopology = topology;
-                    mesh.PrimaryVertexData = vertexData;
-                    if (meshBinding.Mesh.BoneBindings != null)
+                    // Try to bind the original mesh, if it exists in the source file.
+                    // If it doesn't, generate a dummy mesh with 0 vertices
+                    var mesh = Root.Meshes.Where(m => m.Name == meshBinding.Mesh.Name).FirstOrDefault();
+                    if (mesh == null)
                     {
-                        mesh.BoneBindings = new List<BoneBinding>();
-                        ConformMeshBoneBindings(mesh, meshBinding.Mesh);
+                        mesh = GenerateDummyMesh(meshBinding);
+                        Root.Meshes.Add(mesh);
                     }
-                    Root.Meshes.Add(mesh);
-                }
 
-                var binding = new MeshBinding();
-                binding.Mesh = mesh;
-                newModel.MeshBindings.Add(binding);
+                    var binding = new MeshBinding();
+                    binding.Mesh = mesh;
+                    newModel.MeshBindings.Add(binding);
+                }
             }
 
             Root.Models.Add(newModel);
