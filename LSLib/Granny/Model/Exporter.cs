@@ -443,12 +443,12 @@ namespace LSLib.Granny.Model
                 ConformSkeletons(conformRoot.Skeletons);
             }
 
-            if (Options.ConformModels)
+            if (Options.ConformModels && conformRoot.Models != null)
             {
                 ConformModels(conformRoot.Models);
             }
 
-            if (Options.ConformMeshBoneBindings)
+            if (Options.ConformMeshBoneBindings && conformRoot.Meshes != null)
             {
                 ConformMeshBoneBindings(conformRoot.Meshes);
             }
