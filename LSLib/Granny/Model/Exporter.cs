@@ -408,7 +408,7 @@ namespace LSLib.Granny.Model
             foreach (var model in models)
             {
                 Model newModel = null;
-                foreach (var model2 in Root.Models)
+                foreach (var model2 in originalModels)
                 {
                     if (model.Name == model2.Name)
                     {
@@ -420,9 +420,8 @@ namespace LSLib.Granny.Model
                 if (newModel == null)
                 {
                     newModel = MakeDummyModel(model);
+                    Root.Models.Add(newModel);
                 }
-
-                Root.Models.Add(newModel);
             }
 
             // If the new GR2 contains models that are not in the original GR2, 
