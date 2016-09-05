@@ -163,6 +163,20 @@ namespace LSLib.Granny.Model
             var rotations = Transforms.Select(m => m.ExtractRotation()).ToList();
             var scales = Transforms.Select(m => ScaleToScaleShear(m.ExtractScale())).ToList();
 
+            // Quaternion sign fixup
+            // Since GR2 interpolation operates on the raw XYZ values of the quaternion, two subsequent quaternions
+            // that express the same rotation (eg. [1, 0.5, 0.5, -0.5] and [1, -0.5, -0.5, 0.5]) will result in a 360 deg
+            // rotation during the animation. Shuffle XYZ signs around to make this less likely to happen
+            for (var i = 1; i < rotations.Count; i++)
+            {
+                var r0 = rotations[i - 1];
+                var r1 = rotations[i];
+                if (Math.Abs(r1.X - r0.X) + Math.Abs(r1.Y - r0.Y) + Math.Abs(r1.Z - r0.Z) > Math.Abs(r1.X + r0.X) + Math.Abs(r1.Y + r0.Y) + Math.Abs(r1.Z + r0.Z))
+                {
+                    rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, r1.W);
+                }
+            }
+
             var posCurve = new DaK32fC32f();
             posCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
             posCurve.SetKnots(Times);
