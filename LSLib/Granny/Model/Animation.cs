@@ -111,11 +111,11 @@ namespace LSLib.Granny.Model
             {
                 var transform = Matrix4.Identity;
 
-                if (keyframe.hasRotation)
-                    transform *= Matrix4.CreateFromQuaternion(keyframe.rotation);
-
                 if (keyframe.hasTranslation)
                     transform *= Matrix4.CreateTranslation(keyframe.translation);
+
+                if (keyframe.hasRotation)
+                    transform *= Matrix4.CreateFromQuaternion(keyframe.rotation);
 
                 if (keyframe.hasScaleShear)
                 {
