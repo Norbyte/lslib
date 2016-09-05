@@ -171,7 +171,14 @@ namespace LSLib.Granny.Model
             {
                 var r0 = rotations[i - 1];
                 var r1 = rotations[i];
-                if (Math.Abs(r1.X - r0.X) + Math.Abs(r1.Y - r0.Y) + Math.Abs(r1.Z - r0.Z) > Math.Abs(r1.X + r0.X) + Math.Abs(r1.Y + r0.Y) + Math.Abs(r1.Z + r0.Z))
+                float mx = Math.Max(Math.Abs(r1.X), Math.Abs(r0.X)),
+                    my = Math.Max(Math.Abs(r1.Y), Math.Abs(r0.Y)),
+                    mz = Math.Max(Math.Abs(r1.Z), Math.Abs(r0.Z));
+                bool dx = Math.Abs(r1.X - r0.X) > Math.Abs(r1.X + r0.X) && mx > 0.01,
+                    dy = Math.Abs(r1.Y - r0.Y) > Math.Abs(r1.Y + r0.Y) && my > 0.01,
+                    dz = Math.Abs(r1.Z - r0.Z) > Math.Abs(r1.Z + r0.Z) && mz > 0.01;
+                int d = (dx ? 1 : 0) + (dy ? 1 : 0) + (dz ? 1 : 0);
+                if (d >= 2 && (mx > 0.5 || my > 0.5 || mz > 0.5))
                 {
                     rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, r1.W);
                 }
