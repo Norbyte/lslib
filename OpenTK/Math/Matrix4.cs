@@ -445,7 +445,7 @@ namespace OpenTK
             Quaternion q = new Quaternion();
             double trace = 0.25 * (row0[0] + row1[1] + row2[2] + 1.0);
 
-            if (trace > 0)
+            if (trace > 1e-4)
             {
                 double sq = Math.Sqrt(trace);
 
@@ -461,7 +461,7 @@ namespace OpenTK
 
                 q.X = (float)(0.25 * sq);
                 sq = 1.0 / sq;
-                q.W = (float)((row2[1] - row1[2]) * sq);
+                q.W = (float)((row1[2] - row2[1]) * sq);
                 q.Y = (float)((row1[0] + row0[1]) * sq);
                 q.Z = (float)((row2[0] + row0[2]) * sq);
             }
@@ -481,7 +481,7 @@ namespace OpenTK
 
                 q.Z = (float)(0.25 * sq);
                 sq = 1.0 / sq;
-                q.W = (float)((row1[0] - row0[1]) * sq);
+                q.W = (float)((row0[1] - row1[0]) * sq);
                 q.X = (float)((row2[0] + row0[2]) * sq);
                 q.Y = (float)((row2[1] + row1[2]) * sq);
             }
