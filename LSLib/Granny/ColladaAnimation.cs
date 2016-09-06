@@ -153,6 +153,75 @@ namespace LSLib.Granny.Model
             return m;
         }
 
+        private void RemoveTrivialFrames(ref List<Single> times, ref List<Vector3> transforms)
+        {
+            var newTimes = new List<Single> { times[0] };
+            var newTransforms = new List<Vector3> { transforms[0] };
+
+            for (var i = 1; i < times.Count; i++)
+            {
+                var t0 = newTransforms.Last();
+                var t1 = transforms[i];
+                if ((t0 - t1).Length > 0.0001)
+                {
+                    newTimes.Add(times[i]);
+                    newTransforms.Add(t1);
+                }
+            }
+
+            times = newTimes;
+            transforms = newTransforms;
+        }
+
+        private void RemoveTrivialFrames(ref List<Single> times, ref List<Quaternion> transforms)
+        {
+            var newTimes = new List<Single> { times[0] };
+            var newTransforms = new List<Quaternion> { transforms[0] };
+
+            for (var i = 1; i < times.Count; i++)
+            {
+                var t0 = newTransforms.Last();
+                var t1 = transforms[i];
+                if ((t0 - t1).Length > 0.0001)
+                {
+                    newTimes.Add(times[i]);
+                    newTransforms.Add(t1);
+                }
+            }
+
+            times = newTimes;
+            transforms = newTransforms;
+        }
+
+        private void RemoveTrivialFrames(ref List<Single> times, ref List<Matrix3> transforms)
+        {
+            var newTimes = new List<Single> { times[0] };
+            var newTransforms = new List<Matrix3> { transforms[0] };
+
+            for (var i = 1; i < times.Count; i++)
+            {
+                var t0 = newTransforms.Last();
+                var t1 = transforms[i];
+                var diff = 0.0;
+                for (var x = 0; x < 3; x++)
+                {
+                    for (var y = 0; y < 3; y++)
+                    {
+                        diff += Math.Abs(t1[x, y] - t0[x, y]);
+                    }
+                }
+
+                if (diff > 0.0001)
+                {
+                    newTimes.Add(times[i]);
+                    newTransforms.Add(t1);
+                }
+            }
+
+            times = newTimes;
+            transforms = newTransforms;
+        }
+
         public TransformTrack MakeTrack()
         {
             var track = new TransformTrack();
@@ -178,23 +247,68 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            var posCurve = new DaK32fC32f();
-            posCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
-            posCurve.SetKnots(Times);
-            posCurve.SetPoints(positions);
-            track.PositionCurve = new AnimationCurve { CurveData = posCurve };
+            var posTimes = Times;
+            var minPositions = positions;
+            RemoveTrivialFrames(ref posTimes, ref minPositions);
+            if (minPositions.Count == 1)
+            {
+                var posCurve = new D3Constant32f();
+                posCurve.CurveDataHeader_D3Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D3Constant32f, Degree = 2 };
+                posCurve.Controls = new float[3] { positions[0].X, positions[0].Y, positions[0].Z };
+                track.PositionCurve = new AnimationCurve { CurveData = posCurve };
+            }
+            else
+            {
+                var posCurve = new DaK32fC32f();
+                posCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
+                posCurve.SetKnots(Times);
+                posCurve.SetPoints(positions);
+                track.PositionCurve = new AnimationCurve { CurveData = posCurve };
+            }
 
-            var rotCurve = new DaK32fC32f();
-            rotCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
-            rotCurve.SetKnots(Times);
-            rotCurve.SetQuaternions(rotations);
-            track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
+            var rotTimes = Times;
+            var minRotations = rotations;
+            RemoveTrivialFrames(ref rotTimes, ref minRotations);
+            if (minRotations.Count == 1)
+            {
+                var rotCurve = new D4Constant32f();
+                rotCurve.CurveDataHeader_D4Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D4Constant32f, Degree = 2 };
+                rotCurve.Controls = new float[4] { rotations[0].X, rotations[0].Y, rotations[0].Z, rotations[0].W };
+                track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
+            }
+            else
+            {
+                var rotCurve = new DaK32fC32f();
+                rotCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
+                rotCurve.SetKnots(Times);
+                rotCurve.SetQuaternions(rotations);
+                track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
+            }
 
-            var scaleCurve = new DaK32fC32f();
-            scaleCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
-            scaleCurve.SetKnots(Times);
-            scaleCurve.SetMatrices(scales);
-            track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+            var scaleTimes = Times;
+            var minScales = scales;
+            RemoveTrivialFrames(ref scaleTimes, ref minScales);
+            if (minScales.Count == 1)
+            {
+                var scaleCurve = new DaConstant32f();
+                scaleCurve.CurveDataHeader_DaConstant32f = new CurveDataHeader { Format = (int)CurveFormat.DaConstant32f, Degree = 2 };
+                var m = minScales[0];
+                scaleCurve.Controls = new List<float>
+                {
+                    m[0, 0], m[0, 1], m[0, 2],
+                    m[1, 0], m[1, 1], m[1, 2],
+                    m[2, 0], m[2, 1], m[2, 2]
+                };
+                track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+            }
+            else
+            {
+                var scaleCurve = new DaK32fC32f();
+                scaleCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
+                scaleCurve.SetKnots(Times);
+                scaleCurve.SetMatrices(scales);
+                track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+            }
 
             return track;
         }
