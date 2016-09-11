@@ -485,7 +485,6 @@ namespace LSLib.LS.LSF
                 if (hdr.AttributesSizeOnDisk > 0)
                 {
                     var uncompressed = Decompress(reader, hdr.AttributesSizeOnDisk, hdr.AttributesUncompressedSize, hdr);
-                    using (var f = new FileStream("C:\\dbg.bin", FileMode.OpenOrCreate)) f.Write(uncompressed, 0, uncompressed.Length);
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
                         ReadAttributes(attributesStream);
