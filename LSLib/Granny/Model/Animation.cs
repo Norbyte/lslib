@@ -40,6 +40,96 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public Animation ParentAnimation;
 
+
+        private void InterpolateFrames(List<Keyframe> keyframes)
+        {
+            for (int i = 1; i < keyframes.Count; i++)
+            {
+                Keyframe k0 = keyframes[i - 1],
+                    k1 = keyframes[i];
+
+                if (k0.hasTranslation && !k1.hasTranslation)
+                {
+                    Keyframe k2 = null;
+                    for (var j = i + 1; j < keyframes.Count; j++)
+                    {
+                        if (keyframes[j].hasTranslation)
+                        {
+                            k2 = keyframes[j];
+                            break;
+                        }
+                    }
+
+                    k1.hasTranslation = true;
+                    if (k2 != null)
+                    {
+                        float alpha = (k1.time - k0.time) / (k2.time - k0.time);
+                        k1.translation[0] = k0.translation[0] * alpha + k2.translation[0] * (1.0f - alpha);
+                        k1.translation[1] = k0.translation[1] * alpha + k2.translation[1] * (1.0f - alpha);
+                        k1.translation[2] = k0.translation[2] * alpha + k2.translation[2] * (1.0f - alpha);
+                    }
+                    else
+                    {
+                        k1.translation = k0.translation;
+                    }
+                }
+
+                if (k0.hasRotation && !k1.hasRotation)
+                {
+                    Keyframe k2 = null;
+                    for (var j = i + 1; j < keyframes.Count; j++)
+                    {
+                        if (keyframes[j].hasRotation)
+                        {
+                            k2 = keyframes[j];
+                            break;
+                        }
+                    }
+
+                    k1.hasRotation = true;
+                    if (k2 != null)
+                    {
+                        float alpha = (k1.time - k0.time) / (k2.time - k0.time);
+                        k1.rotation.X = k0.rotation.X * alpha + k2.rotation.X * (1.0f - alpha);
+                        k1.rotation.Y = k0.rotation.Y * alpha + k2.rotation.Y * (1.0f - alpha);
+                        k1.rotation.Z = k0.rotation.Z * alpha + k2.rotation.Z * (1.0f - alpha);
+                        k1.rotation.W = k0.rotation.W * alpha + k2.rotation.W * (1.0f - alpha);
+                    }
+                    else
+                    {
+                        k1.rotation = k0.rotation;
+                    }
+                }
+
+                if (k0.hasScaleShear && !k1.hasScaleShear)
+                {
+                    Keyframe k2 = null;
+                    for (var j = i + 1; j < keyframes.Count; j++)
+                    {
+                        if (keyframes[j].hasScaleShear)
+                        {
+                            k2 = keyframes[j];
+                            break;
+                        }
+                    }
+
+                    k1.hasScaleShear = true;
+                    if (k2 != null)
+                    {
+                        float alpha = (k1.time - k0.time) / (k2.time - k0.time);
+                        k1.scaleShear[0, 0] = k0.scaleShear[0, 0] * alpha + k2.scaleShear[0, 0] * (1.0f - alpha);
+                        k1.scaleShear[1, 1] = k0.scaleShear[1, 1] * alpha + k2.scaleShear[1, 1] * (1.0f - alpha);
+                        k1.scaleShear[2, 2] = k0.scaleShear[2, 2] * alpha + k2.scaleShear[2, 2] * (1.0f - alpha);
+                    }
+                    else
+                    {
+                        k1.scaleShear = k0.scaleShear;
+                    }
+                }
+            }
+        }
+
+
         private List<Keyframe> mergeKeyframes()
         {
             var keyframes = new SortedList<float, Keyframe>();
@@ -47,56 +137,8 @@ namespace LSLib.Granny.Model
             PositionCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Position);
             ScaleShearCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.ScaleShear);
 
-            float mergeThreshold = 0.00001f;
-            Keyframe lastFrame = null;
-            var outFrames = new List<Keyframe>(keyframes.Count);
-            foreach (var frame in keyframes.Values)
-            {
-                if (lastFrame == null || frame.time - lastFrame.time > mergeThreshold)
-                {
-                    if (lastFrame != null && !frame.hasTranslation)
-                    {
-                        frame.translation = lastFrame.translation;
-                        frame.hasTranslation = lastFrame.hasTranslation;
-                    }
-
-                    if (lastFrame != null && !frame.hasRotation)
-                    {
-                        frame.rotation = lastFrame.rotation;
-                        frame.hasRotation = lastFrame.hasRotation;
-                    }
-
-                    if (lastFrame != null && !frame.hasScaleShear)
-                    {
-                        frame.scaleShear = lastFrame.scaleShear;
-                        frame.hasScaleShear = lastFrame.hasScaleShear;
-                    }
-
-                    outFrames.Add(frame);
-                    lastFrame = frame;
-                }
-                else if (lastFrame != null && frame.time - lastFrame.time <= mergeThreshold)
-                {
-                    if (frame.hasTranslation)
-                    {
-                        lastFrame.translation = frame.translation;
-                        lastFrame.hasTranslation = frame.hasTranslation;
-                    }
-
-                    if (frame.hasRotation)
-                    {
-                        lastFrame.rotation = frame.rotation;
-                        lastFrame.hasRotation = frame.hasRotation;
-                    }
-
-                    if (frame.hasScaleShear)
-                    {
-                        lastFrame.scaleShear = frame.scaleShear;
-                        lastFrame.hasScaleShear = frame.hasScaleShear;
-                    }
-                }
-            }
-
+            var outFrames = keyframes.Values.ToList();
+            InterpolateFrames(outFrames);
             return outFrames;
         }
 

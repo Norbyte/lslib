@@ -496,6 +496,53 @@ namespace LSLib.Granny.Model.CurveData
         }
 
 
+        private static Int32 FindFrame<T>(IList<T> list, T value, IComparer<T> comparer = null)
+        {
+            if (list == null)
+                throw new ArgumentNullException("list");
+
+            comparer = comparer ?? Comparer<T>.Default;
+
+            Int32 lower = 0;
+            Int32 upper = list.Count - 1;
+
+            while (lower <= upper)
+            {
+                Int32 middle = lower + (upper - lower) / 2;
+                Int32 comparisonResult = comparer.Compare(value, list[middle]);
+                if (comparisonResult == 0)
+                    return middle;
+                else if (comparisonResult < 0)
+                    upper = middle - 1;
+                else
+                    lower = middle + 1;
+            }
+
+            return ~lower;
+        }
+
+
+        private Keyframe FindFrame(SortedList<float, Keyframe> keyframes, float time)
+        {
+            Int32 lower = FindFrame(keyframes.Keys, time);
+            if (lower >= 0)
+            {
+                return keyframes.Values[lower];
+            }
+
+            if (-lower <= keyframes.Count)
+            {
+                float frameTime = keyframes.Keys[-lower - 1];
+                if (Math.Abs(frameTime - time) < 0.001)
+                {
+                    return keyframes.Values[-lower - 1];
+                }
+            }
+
+            return null;
+        }
+
+
         public void ExportKeyframes(SortedList<float, Keyframe> keyframes, ExportType type)
         {
             var numKnots = NumKnots();
@@ -505,8 +552,8 @@ namespace LSLib.Granny.Model.CurveData
                 var positions = GetPoints();
                 for (var i = 0; i < numKnots; i++)
                 {
-                    Keyframe frame;
-                    if (!keyframes.TryGetValue(knots[i], out frame))
+                    Keyframe frame = FindFrame(keyframes, knots[i]);
+                    if (frame == null)
                     {
                         frame = new Keyframe();
                         frame.time = knots[i];
@@ -522,8 +569,8 @@ namespace LSLib.Granny.Model.CurveData
                 var quats = GetQuaternions();
                 for (var i = 0; i < numKnots; i++)
                 {
-                    Keyframe frame;
-                    if (!keyframes.TryGetValue(knots[i], out frame))
+                    Keyframe frame = FindFrame(keyframes, knots[i]);
+                    if (frame == null)
                     {
                         frame = new Keyframe();
                         frame.time = knots[i];
@@ -539,8 +586,8 @@ namespace LSLib.Granny.Model.CurveData
                 var mats = GetMatrices();
                 for (var i = 0; i < numKnots; i++)
                 {
-                    Keyframe frame;
-                    if (!keyframes.TryGetValue(knots[i], out frame))
+                    Keyframe frame = FindFrame(keyframes, knots[i]);
+                    if (frame == null)
                     {
                         frame = new Keyframe();
                         frame.time = knots[i];
