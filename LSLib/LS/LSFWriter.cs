@@ -12,6 +12,7 @@ namespace LSLib.LS.LSF
 
         private Stream Stream;
         private BinaryWriter Writer;
+        private UInt32 Version;
 
         private MemoryStream NodeStream;
         private BinaryWriter NodeWriter;
@@ -27,9 +28,10 @@ namespace LSLib.LS.LSF
 
         private List<List<string>> StringHashMap;
 
-        public LSFWriter(Stream stream)
+        public LSFWriter(Stream stream, UInt32 version)
         {
             this.Stream = stream;
+            this.Version = version;
         }
 
         public void Dispose()
@@ -112,13 +114,65 @@ namespace LSLib.LS.LSF
         {
             foreach (var region in resource.Regions)
             {
-                WriteNode(region.Value);
+                if (Version >= Header.VerExtendedNodes)
+                {
+                    WriteNodeV3(region.Value);
+                }
+                else
+                {
+                    WriteNodeV2(region.Value);
+                }
             }
         }
 
-        private void WriteNode(Node node)
+        private void WriteNodeAttributes(Node node)
         {
-            var nodeInfo = new NodeEntry();
+            UInt32 lastOffset = (UInt32)ValueStream.Position;
+            foreach (KeyValuePair<string, NodeAttribute> entry in node.Attributes)
+            {
+                WriteAttributeValue(ValueWriter, entry.Value);
+
+                var attributeInfo = new AttributeEntry();
+                var length = (UInt32)ValueStream.Position - lastOffset;
+                attributeInfo.TypeAndLength = (UInt32)entry.Value.Type | (length << 6);
+                attributeInfo.NameHashTableIndex = AddStaticString(entry.Key);
+                attributeInfo.NodeIndex = NextNodeIndex;
+                BinUtils.WriteStruct<AttributeEntry>(AttributeWriter, ref attributeInfo);
+
+                if (Version >= Header.VerExtendedNodes)
+                {
+                    var extendedInfo = new AttributeEntryV3();
+                    extendedInfo.Offset = (UInt32)ValueStream.Position;
+                    BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref extendedInfo);
+                }
+
+                NextAttributeIndex++;
+
+                lastOffset = (UInt32)ValueStream.Position;
+            }
+        }
+
+        private void WriteNodeChildren(Node node)
+        {
+            foreach (var children in node.Children)
+            {
+                foreach (var child in children.Value)
+                {
+                    if (Version >= Header.VerExtendedNodes)
+                    {
+                        WriteNodeV3(child);
+                    }
+                    else
+                    {
+                        WriteNodeV2(child);
+                    }
+                }
+            }
+        }
+
+        private void WriteNodeV2(Node node)
+        {
+            var nodeInfo = new NodeEntryV2();
             if (node.Parent == null)
             {
                 nodeInfo.ParentIndex = -1;
@@ -133,41 +187,55 @@ namespace LSLib.LS.LSF
             if (node.Attributes.Count > 0)
             {
                 nodeInfo.FirstAttributeIndex = NextAttributeIndex;
-                UInt32 lastOffset = (UInt32)ValueStream.Position;
-                foreach (KeyValuePair<string, NodeAttribute> entry in node.Attributes)
-                {
-                    WriteAttribute(ValueWriter, entry.Value);
-
-                    var attributeInfo = new AttributeEntry();
-                    var length = (UInt32)ValueStream.Position - lastOffset;
-                    attributeInfo.TypeAndLength = (UInt32)entry.Value.Type | (length << 6);
-                    attributeInfo.NameHashTableIndex = AddStaticString(entry.Key);
-                    attributeInfo.NodeIndex = NextNodeIndex;
-                    BinUtils.WriteStruct<AttributeEntry>(AttributeWriter, ref attributeInfo);
-                    NextAttributeIndex++;
-
-                    lastOffset = (UInt32)ValueStream.Position;
-                }
+                WriteNodeAttributes(node);
             }
             else
             {
                 nodeInfo.FirstAttributeIndex = -1;
             }
 
-            BinUtils.WriteStruct<NodeEntry>(NodeWriter, ref nodeInfo);
+            BinUtils.WriteStruct<NodeEntryV2>(NodeWriter, ref nodeInfo);
             NodeIndices[node] = NextNodeIndex;
             NextNodeIndex++;
 
-            foreach (var children in node.Children)
-            {
-                foreach (var child in children.Value)
-                {
-                    WriteNode(child);
-                }
-            }
+            WriteNodeChildren(node);
         }
 
-        private void WriteAttribute(BinaryWriter writer, NodeAttribute attr)
+        private void WriteNodeV3(Node node)
+        {
+            var nodeInfo = new NodeEntryV3();
+            if (node.Parent == null)
+            {
+                nodeInfo.ParentIndex = -1;
+            }
+            else
+            {
+                nodeInfo.ParentIndex = NodeIndices[node.Parent];
+            }
+
+            nodeInfo.NameHashTableIndex = AddStaticString(node.Name);
+
+            if (node.Attributes.Count > 0)
+            {
+                nodeInfo.FirstAttributeIndex = NextAttributeIndex;
+                WriteNodeAttributes(node);
+            }
+            else
+            {
+                nodeInfo.FirstAttributeIndex = -1;
+            }
+
+            // FIXME!
+            throw new Exception("Writing LSFv3 is not supported yet");
+            nodeInfo.NextSiblingIndex = -1;
+            BinUtils.WriteStruct<NodeEntryV3>(NodeWriter, ref nodeInfo);
+            NodeIndices[node] = NextNodeIndex;
+            NextNodeIndex++;
+
+            WriteNodeChildren(node);
+        }
+
+        private void WriteAttributeValue(BinaryWriter writer, NodeAttribute attr)
         {
             switch (attr.Type)
             {

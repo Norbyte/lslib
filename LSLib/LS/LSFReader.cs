@@ -30,9 +30,14 @@ namespace LSLib.LS.LSF
         public const UInt32 VerChunkedCompress = 0x02;
 
         /// <summary>
+        /// LSF version that extended the node descriptors
+        /// </summary>
+        public const UInt32 VerExtendedNodes = 0x03;
+
+        /// <summary>
         /// Latest version supported by this library
         /// </summary>
-        public const UInt32 CurrentVersion = 0x02;
+        public const UInt32 CurrentVersion = 0x03;
 
         /// <summary>
         /// LSOF file signature; should be the same as LSFHeader.Signature
@@ -88,14 +93,26 @@ namespace LSLib.LS.LSF
         /// </summary>
         public Byte Unknown2;
         public UInt16 Unknown3;
+        /// <summary>
+        /// Unknown value, 0 for V2, 1 for V3
+        /// </summary>
         public UInt32 Unknown4;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct HeaderV3
+    {
+        /// <summary>
+        /// Unknown value, always 2
+        /// </summary>
+        public UInt16 Unknown5;
     }
 
     /// <summary>
     /// Node (structure) entry in the LSF file
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct NodeEntry
+    internal struct NodeEntryV2
     {
         /// <summary>
         /// Name of this node
@@ -112,6 +129,50 @@ namespace LSLib.LS.LSF
         /// (-1: this node is a root region)
         /// </summary>
         public Int32 ParentIndex;
+
+        /// <summary>
+        /// Index into name hash table
+        /// </summary>
+        public int NameIndex
+        {
+            get { return (int)(NameHashTableIndex >> 16); }
+        }
+
+        /// <summary>
+        /// Offset in hash chain
+        /// </summary>
+        public int NameOffset
+        {
+            get { return (int)(NameHashTableIndex & 0xffff); }
+        }
+    };
+
+    /// <summary>
+    /// Node (structure) entry in the LSF file
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct NodeEntryV3
+    {
+        /// <summary>
+        /// Name of this node
+        /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
+        /// </summary>
+        public UInt32 NameHashTableIndex;
+        /// <summary>
+        /// Index of the parent node
+        /// (-1: this node is a root region)
+        /// </summary>
+        public Int32 ParentIndex;
+        /// <summary>
+        /// Index of the next sibling of this node
+        /// (-1: this is the last node)
+        /// </summary>
+        public Int32 NextSiblingIndex;
+        /// <summary>
+        /// Index of the first attribute of this node
+        /// (-1: node has no attributes)
+        /// </summary>
+        public Int32 FirstAttributeIndex;
 
         /// <summary>
         /// Index into name hash table
@@ -153,6 +214,10 @@ namespace LSLib.LS.LSF
         /// (-1: node has no attributes)
         /// </summary>
         public int FirstAttributeIndex;
+        /// <summary>
+        /// Unknown V3 attribute
+        /// </summary>
+        public Int32 Unknown;
     };
 
     /// <summary>
@@ -208,6 +273,18 @@ namespace LSLib.LS.LSF
         {
             get { return TypeAndLength >> 6; }
         }
+    };
+
+    /// <summary>
+    /// V3 attribute extension in the LSF file
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct AttributeEntryV3
+    {
+        /// <summary>
+        /// Absolute position of attribute value in the value stream
+        /// </summary>
+        public UInt32 Offset;
     };
 
     internal class AttributeInfo
@@ -321,7 +398,8 @@ namespace LSLib.LS.LSF
         /// Reads the structure headers for the LSOF resource
         /// </summary>
         /// <param name="s">Stream to read the node headers from</param>
-        private void ReadNodes(Stream s)
+        /// <param name="longNodes">Use the long (V3) on-disk node format</param>
+        private void ReadNodes(Stream s, bool longNodes)
         {
 #if DEBUG_LSF_SERIALIZATION
             Console.WriteLine(" ----- DUMP OF NODE TABLE -----");
@@ -333,18 +411,30 @@ namespace LSLib.LS.LSF
                 Int32 index = 0;
                 while (s.Position < s.Length)
                 {
-                    var item = BinUtils.ReadStruct<NodeEntry>(reader);
-
                     var resolved = new NodeInfo();
-                    resolved.ParentIndex = item.ParentIndex;
-                    resolved.NameIndex = item.NameIndex;
-                    resolved.NameOffset = item.NameOffset;
-                    resolved.FirstAttributeIndex = item.FirstAttributeIndex;
+
+                    if (longNodes)
+                    {
+                        var item = BinUtils.ReadStruct<NodeEntryV3>(reader);
+                        resolved.ParentIndex = item.ParentIndex;
+                        resolved.NameIndex = item.NameIndex;
+                        resolved.NameOffset = item.NameOffset;
+                        resolved.FirstAttributeIndex = item.FirstAttributeIndex;
+                    }
+                    else
+                    {
+                        var item = BinUtils.ReadStruct<NodeEntryV2>(reader);
+                        resolved.ParentIndex = item.ParentIndex;
+                        resolved.NameIndex = item.NameIndex;
+                        resolved.NameOffset = item.NameOffset;
+                        resolved.FirstAttributeIndex = item.FirstAttributeIndex;
+                    }
 
 #if DEBUG_LSF_SERIALIZATION
                     Console.WriteLine(String.Format(
-                        "{0}: {1} (parent {2}, firstAttribute {3})", 
-                        Nodes.Count, Names[resolved.NameIndex][resolved.NameOffset], resolved.ParentIndex, resolved.FirstAttributeIndex
+                        "{0}: {1} (parent {2}, firstAttribute {3}, unknown {4})", 
+                        Nodes.Count, Names[resolved.NameIndex][resolved.NameOffset], resolved.ParentIndex, 
+                        resolved.FirstAttributeIndex
                     ));
 #endif
 
@@ -358,13 +448,14 @@ namespace LSLib.LS.LSF
         /// Reads the attribute headers for the LSOF resource
         /// </summary>
         /// <param name="s">Stream to read the attribute headers from</param>
-        private void ReadAttributes(Stream s)
+        /// <param name="longAttributes">Use the long (V3) on-disk attribute format</param>
+        private void ReadAttributes(Stream s, bool longAttributes)
         {
             Attributes = new List<AttributeInfo>();
             using (var reader = new BinaryReader(s))
             {
 #if DEBUG_LSF_SERIALIZATION
-                var rawAttributes = new List<AttributeElement>();
+                var rawAttributes = new List<AttributeEntry>();
 #endif
 
                 var prevAttributeRefs = new List<Int32>();
@@ -381,6 +472,11 @@ namespace LSLib.LS.LSF
                     resolved.Length = attribute.Length;
                     resolved.DataOffset = dataOffset;
                     resolved.NextAttributeIndex = -1;
+
+                    if (longAttributes)
+                    {
+                        BinUtils.ReadStruct<AttributeEntryV3>(reader);
+                    }
 
                     var nodeIndex = attribute.NodeIndex + 1;
                     if (prevAttributeRefs.Count > nodeIndex)
@@ -463,37 +559,53 @@ namespace LSLib.LS.LSF
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.StringsSizeOnDisk > 0)
+                bool isCompressed = BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) != CompressionMethod.None;
+                if (hdr.StringsSizeOnDisk > 0 || hdr.StringsUncompressedSize > 0)
                 {
+                    uint onDiskSize = isCompressed ? hdr.StringsSizeOnDisk : hdr.StringsUncompressedSize;
                     byte[] compressed = reader.ReadBytes((int)hdr.StringsSizeOnDisk);
-                    var uncompressed = BinUtils.Decompress(compressed, (int)hdr.StringsUncompressedSize, hdr.CompressionFlags);
+                    byte[] uncompressed;
+                    if (isCompressed)
+                    {
+                        uncompressed = BinUtils.Decompress(compressed, (int)hdr.StringsUncompressedSize, hdr.CompressionFlags);
+                    }
+                    else
+                    {
+                        uncompressed = compressed;
+                    }
+
                     using (var namesStream = new MemoryStream(uncompressed))
                     {
                         ReadNames(namesStream);
                     }
                 }
 
-                if (hdr.NodesSizeOnDisk > 0)
+                if (hdr.NodesSizeOnDisk > 0 || hdr.NodesUncompressedSize > 0)
                 {
-                    var uncompressed = Decompress(reader, hdr.NodesSizeOnDisk, hdr.NodesUncompressedSize, hdr);
+                    uint onDiskSize = isCompressed ? hdr.NodesSizeOnDisk : hdr.NodesUncompressedSize;
+                    var uncompressed = Decompress(reader, onDiskSize, hdr.NodesUncompressedSize, hdr);
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
-                        ReadNodes(nodesStream);
+                        var longNodes = hdr.Version >= Header.VerExtendedNodes;
+                        ReadNodes(nodesStream, longNodes);
                     }
                 }
 
-                if (hdr.AttributesSizeOnDisk > 0)
+                if (hdr.AttributesSizeOnDisk > 0 || hdr.AttributesUncompressedSize > 0)
                 {
-                    var uncompressed = Decompress(reader, hdr.AttributesSizeOnDisk, hdr.AttributesUncompressedSize, hdr);
+                    uint onDiskSize = isCompressed ? hdr.AttributesSizeOnDisk : hdr.AttributesUncompressedSize;
+                    var uncompressed = Decompress(reader, onDiskSize, hdr.AttributesUncompressedSize, hdr);
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
-                        ReadAttributes(attributesStream);
+                        var longAttributes = hdr.Version >= Header.VerExtendedNodes;
+                        ReadAttributes(attributesStream, longAttributes);
                     }
                 }
 
-                if (hdr.ValuesSizeOnDisk > 0)
+                if (hdr.ValuesSizeOnDisk > 0 || hdr.ValuesUncompressedSize > 0)
                 {
-                    var uncompressed = Decompress(reader, hdr.ValuesSizeOnDisk, hdr.ValuesUncompressedSize, hdr);
+                    uint onDiskSize = isCompressed ? hdr.ValuesSizeOnDisk : hdr.ValuesUncompressedSize;
+                    var uncompressed = Decompress(reader, onDiskSize, hdr.ValuesUncompressedSize, hdr);
                     var valueStream = new MemoryStream(uncompressed);
                     this.Values = valueStream;
 

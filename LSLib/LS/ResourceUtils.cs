@@ -111,7 +111,8 @@ namespace LSLib.LS
 
                 case ResourceFormat.LSF:
                     {
-                        using (var writer = new LSFWriter(file))
+                        // Write in V2 format for D:OS EE compatibility
+                        using (var writer = new LSFWriter(file, Header.VerChunkedCompress))
                         {
                             writer.Write(resource);
                         }

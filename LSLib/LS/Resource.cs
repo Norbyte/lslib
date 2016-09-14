@@ -59,7 +59,7 @@ namespace LSLib.LS
         public Node Parent;
         public Dictionary<string, NodeAttribute> Attributes = new Dictionary<string, NodeAttribute>();
         public Dictionary<string, List<Node>> Children = new Dictionary<string, List<Node>>();
-
+        
         public int ChildCount
         {
             get
@@ -68,6 +68,20 @@ namespace LSLib.LS
                     (from c in Children
                     select c.Value.Count).Sum();
             }
+        }
+
+        public int TotalChildCount()
+        {
+            int count = 0;
+            foreach (var key in Children)
+            {
+                foreach (var child in key.Value)
+                {
+                    count += 1 + child.TotalChildCount();
+                }
+            }
+
+            return count;
         }
 
         public void AppendChild(Node child)
