@@ -33,7 +33,31 @@
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.gr2Tab = new System.Windows.Forms.TabPage();
+            this.gr2ModeTabControl = new System.Windows.Forms.TabControl();
+            this.gr2SingleFileTab = new System.Windows.Forms.TabPage();
+            this.lblOutputPath = new System.Windows.Forms.Label();
             this.saveOutputBtn = new System.Windows.Forms.Button();
+            this.inputPath = new System.Windows.Forms.TextBox();
+            this.lblSrcPath = new System.Windows.Forms.Label();
+            this.inputFileBrowseBtn = new System.Windows.Forms.Button();
+            this.loadInputBtn = new System.Windows.Forms.Button();
+            this.outputPath = new System.Windows.Forms.TextBox();
+            this.outputFileBrowserBtn = new System.Windows.Forms.Button();
+            this.gr2BatchTab = new System.Windows.Forms.TabPage();
+            this.gr2BatchProgressLabel = new System.Windows.Forms.Label();
+            this.gr2BatchInputBrowseBtn = new System.Windows.Forms.Button();
+            this.gr2BatchOutputBrowseBtn = new System.Windows.Forms.Button();
+            this.gr2BatchProgressBar = new System.Windows.Forms.ProgressBar();
+            this.label23 = new System.Windows.Forms.Label();
+            this.gr2BatchInputFormat = new System.Windows.Forms.ComboBox();
+            this.label22 = new System.Windows.Forms.Label();
+            this.gr2BatchOutputFormat = new System.Windows.Forms.ComboBox();
+            this.label21 = new System.Windows.Forms.Label();
+            this.label19 = new System.Windows.Forms.Label();
+            this.gr2BatchConvertBtn = new System.Windows.Forms.Button();
+            this.gr2BatchInputDir = new System.Windows.Forms.TextBox();
+            this.label20 = new System.Windows.Forms.Label();
+            this.gr2BatchOutputDir = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.label2 = new System.Windows.Forms.Label();
             this.exportableObjects = new System.Windows.Forms.ListView();
@@ -58,13 +82,6 @@
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.loadInputBtn = new System.Windows.Forms.Button();
-            this.outputFileBrowserBtn = new System.Windows.Forms.Button();
-            this.lblOutputPath = new System.Windows.Forms.Label();
-            this.outputPath = new System.Windows.Forms.TextBox();
-            this.inputFileBrowseBtn = new System.Windows.Forms.Button();
-            this.lblSrcPath = new System.Windows.Forms.Label();
-            this.inputPath = new System.Windows.Forms.TextBox();
             this.packageTab = new System.Windows.Forms.TabPage();
             this.packageVersion = new System.Windows.Forms.ComboBox();
             this.label8 = new System.Windows.Forms.Label();
@@ -126,28 +143,14 @@
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceInputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceOutputPathDlg = new System.Windows.Forms.FolderBrowserDialog();
-            this.gr2ModeTabControl = new System.Windows.Forms.TabControl();
-            this.gr2SingleFileTab = new System.Windows.Forms.TabPage();
-            this.gr2BatchTab = new System.Windows.Forms.TabPage();
-            this.label19 = new System.Windows.Forms.Label();
-            this.gr2BatchConvertBtn = new System.Windows.Forms.Button();
-            this.gr2BatchInputDir = new System.Windows.Forms.TextBox();
-            this.label20 = new System.Windows.Forms.Label();
-            this.gr2BatchInputBrowseBtn = new System.Windows.Forms.Button();
-            this.gr2BatchOutputDir = new System.Windows.Forms.TextBox();
-            this.gr2BatchOutputBrowseBtn = new System.Windows.Forms.Button();
-            this.label21 = new System.Windows.Forms.Label();
-            this.gr2BatchOutputFormat = new System.Windows.Forms.ComboBox();
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceFormats = new ConverterApp.ExportItemSelection();
-            this.gr2BatchInputFormat = new System.Windows.Forms.ComboBox();
-            this.label22 = new System.Windows.Forms.Label();
-            this.gr2BatchProgressBar = new System.Windows.Forms.ProgressBar();
-            this.label23 = new System.Windows.Forms.Label();
-            this.gr2BatchProgressLabel = new System.Windows.Forms.Label();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
+            this.gr2ModeTabControl.SuspendLayout();
+            this.gr2SingleFileTab.SuspendLayout();
+            this.gr2BatchTab.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.packageTab.SuspendLayout();
@@ -157,9 +160,6 @@
             this.tabPage1.SuspendLayout();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).BeginInit();
-            this.gr2ModeTabControl.SuspendLayout();
-            this.gr2SingleFileTab.SuspendLayout();
-            this.gr2BatchTab.SuspendLayout();
             this.SuspendLayout();
             // 
             // inputFileDlg
@@ -206,6 +206,43 @@
             this.gr2Tab.Text = "GR2 Tools";
             this.gr2Tab.UseVisualStyleBackColor = true;
             // 
+            // gr2ModeTabControl
+            // 
+            this.gr2ModeTabControl.Controls.Add(this.gr2SingleFileTab);
+            this.gr2ModeTabControl.Controls.Add(this.gr2BatchTab);
+            this.gr2ModeTabControl.Location = new System.Drawing.Point(9, 13);
+            this.gr2ModeTabControl.Name = "gr2ModeTabControl";
+            this.gr2ModeTabControl.SelectedIndex = 0;
+            this.gr2ModeTabControl.Size = new System.Drawing.Size(887, 159);
+            this.gr2ModeTabControl.TabIndex = 35;
+            // 
+            // gr2SingleFileTab
+            // 
+            this.gr2SingleFileTab.Controls.Add(this.lblOutputPath);
+            this.gr2SingleFileTab.Controls.Add(this.saveOutputBtn);
+            this.gr2SingleFileTab.Controls.Add(this.inputPath);
+            this.gr2SingleFileTab.Controls.Add(this.lblSrcPath);
+            this.gr2SingleFileTab.Controls.Add(this.inputFileBrowseBtn);
+            this.gr2SingleFileTab.Controls.Add(this.loadInputBtn);
+            this.gr2SingleFileTab.Controls.Add(this.outputPath);
+            this.gr2SingleFileTab.Controls.Add(this.outputFileBrowserBtn);
+            this.gr2SingleFileTab.Location = new System.Drawing.Point(4, 22);
+            this.gr2SingleFileTab.Name = "gr2SingleFileTab";
+            this.gr2SingleFileTab.Padding = new System.Windows.Forms.Padding(3);
+            this.gr2SingleFileTab.Size = new System.Drawing.Size(879, 133);
+            this.gr2SingleFileTab.TabIndex = 0;
+            this.gr2SingleFileTab.Text = "Single File";
+            this.gr2SingleFileTab.UseVisualStyleBackColor = true;
+            // 
+            // lblOutputPath
+            // 
+            this.lblOutputPath.AutoSize = true;
+            this.lblOutputPath.Location = new System.Drawing.Point(6, 46);
+            this.lblOutputPath.Name = "lblOutputPath";
+            this.lblOutputPath.Size = new System.Drawing.Size(82, 13);
+            this.lblOutputPath.TabIndex = 29;
+            this.lblOutputPath.Text = "Output file path:";
+            // 
             // saveOutputBtn
             // 
             this.saveOutputBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -217,6 +254,227 @@
             this.saveOutputBtn.Text = "Export";
             this.saveOutputBtn.UseVisualStyleBackColor = true;
             this.saveOutputBtn.Click += new System.EventHandler(this.saveOutputBtn_Click);
+            // 
+            // inputPath
+            // 
+            this.inputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.inputPath.Location = new System.Drawing.Point(9, 19);
+            this.inputPath.Name = "inputPath";
+            this.inputPath.Size = new System.Drawing.Size(659, 20);
+            this.inputPath.TabIndex = 25;
+            // 
+            // lblSrcPath
+            // 
+            this.lblSrcPath.AutoSize = true;
+            this.lblSrcPath.Location = new System.Drawing.Point(6, 3);
+            this.lblSrcPath.Name = "lblSrcPath";
+            this.lblSrcPath.Size = new System.Drawing.Size(74, 13);
+            this.lblSrcPath.TabIndex = 26;
+            this.lblSrcPath.Text = "Input file path:";
+            // 
+            // inputFileBrowseBtn
+            // 
+            this.inputFileBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.inputFileBrowseBtn.Location = new System.Drawing.Point(666, 17);
+            this.inputFileBrowseBtn.Name = "inputFileBrowseBtn";
+            this.inputFileBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.inputFileBrowseBtn.TabIndex = 27;
+            this.inputFileBrowseBtn.Text = "...";
+            this.inputFileBrowseBtn.UseVisualStyleBackColor = true;
+            this.inputFileBrowseBtn.Click += new System.EventHandler(this.inputFileBrowseBtn_Click);
+            // 
+            // loadInputBtn
+            // 
+            this.loadInputBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.loadInputBtn.Location = new System.Drawing.Point(721, 19);
+            this.loadInputBtn.Name = "loadInputBtn";
+            this.loadInputBtn.Size = new System.Drawing.Size(141, 23);
+            this.loadInputBtn.TabIndex = 31;
+            this.loadInputBtn.Text = "Import";
+            this.loadInputBtn.UseVisualStyleBackColor = true;
+            this.loadInputBtn.Click += new System.EventHandler(this.loadInputBtn_Click);
+            // 
+            // outputPath
+            // 
+            this.outputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.outputPath.Location = new System.Drawing.Point(9, 62);
+            this.outputPath.Name = "outputPath";
+            this.outputPath.Size = new System.Drawing.Size(659, 20);
+            this.outputPath.TabIndex = 28;
+            // 
+            // outputFileBrowserBtn
+            // 
+            this.outputFileBrowserBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.outputFileBrowserBtn.Location = new System.Drawing.Point(666, 60);
+            this.outputFileBrowserBtn.Name = "outputFileBrowserBtn";
+            this.outputFileBrowserBtn.Size = new System.Drawing.Size(41, 23);
+            this.outputFileBrowserBtn.TabIndex = 30;
+            this.outputFileBrowserBtn.Text = "...";
+            this.outputFileBrowserBtn.UseVisualStyleBackColor = true;
+            this.outputFileBrowserBtn.Click += new System.EventHandler(this.outputFileBrowserBtn_Click);
+            // 
+            // gr2BatchTab
+            // 
+            this.gr2BatchTab.Controls.Add(this.gr2BatchProgressLabel);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchInputBrowseBtn);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchOutputBrowseBtn);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchProgressBar);
+            this.gr2BatchTab.Controls.Add(this.label23);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchInputFormat);
+            this.gr2BatchTab.Controls.Add(this.label22);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchOutputFormat);
+            this.gr2BatchTab.Controls.Add(this.label21);
+            this.gr2BatchTab.Controls.Add(this.label19);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchConvertBtn);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchInputDir);
+            this.gr2BatchTab.Controls.Add(this.label20);
+            this.gr2BatchTab.Controls.Add(this.gr2BatchOutputDir);
+            this.gr2BatchTab.Location = new System.Drawing.Point(4, 22);
+            this.gr2BatchTab.Name = "gr2BatchTab";
+            this.gr2BatchTab.Padding = new System.Windows.Forms.Padding(3);
+            this.gr2BatchTab.Size = new System.Drawing.Size(879, 133);
+            this.gr2BatchTab.TabIndex = 1;
+            this.gr2BatchTab.Text = "Batch";
+            this.gr2BatchTab.UseVisualStyleBackColor = true;
+            // 
+            // gr2BatchProgressLabel
+            // 
+            this.gr2BatchProgressLabel.AutoSize = true;
+            this.gr2BatchProgressLabel.Location = new System.Drawing.Point(82, 88);
+            this.gr2BatchProgressLabel.Name = "gr2BatchProgressLabel";
+            this.gr2BatchProgressLabel.Size = new System.Drawing.Size(0, 13);
+            this.gr2BatchProgressLabel.TabIndex = 49;
+            // 
+            // gr2BatchInputBrowseBtn
+            // 
+            this.gr2BatchInputBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2BatchInputBrowseBtn.Location = new System.Drawing.Point(822, 17);
+            this.gr2BatchInputBrowseBtn.Name = "gr2BatchInputBrowseBtn";
+            this.gr2BatchInputBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.gr2BatchInputBrowseBtn.TabIndex = 37;
+            this.gr2BatchInputBrowseBtn.Text = "...";
+            this.gr2BatchInputBrowseBtn.UseVisualStyleBackColor = true;
+            this.gr2BatchInputBrowseBtn.Click += new System.EventHandler(this.gr2BatchInputBrowseBtn_Click);
+            // 
+            // gr2BatchOutputBrowseBtn
+            // 
+            this.gr2BatchOutputBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2BatchOutputBrowseBtn.Location = new System.Drawing.Point(822, 60);
+            this.gr2BatchOutputBrowseBtn.Name = "gr2BatchOutputBrowseBtn";
+            this.gr2BatchOutputBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.gr2BatchOutputBrowseBtn.TabIndex = 40;
+            this.gr2BatchOutputBrowseBtn.Text = "...";
+            this.gr2BatchOutputBrowseBtn.UseVisualStyleBackColor = true;
+            this.gr2BatchOutputBrowseBtn.Click += new System.EventHandler(this.gr2BatchOutputBrowseBtn_Click);
+            // 
+            // gr2BatchProgressBar
+            // 
+            this.gr2BatchProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2BatchProgressBar.Location = new System.Drawing.Point(9, 104);
+            this.gr2BatchProgressBar.Name = "gr2BatchProgressBar";
+            this.gr2BatchProgressBar.Size = new System.Drawing.Size(700, 23);
+            this.gr2BatchProgressBar.TabIndex = 47;
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(6, 88);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(51, 13);
+            this.label23.TabIndex = 48;
+            this.label23.Text = "Progress:";
+            // 
+            // gr2BatchInputFormat
+            // 
+            this.gr2BatchInputFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.gr2BatchInputFormat.FormattingEnabled = true;
+            this.gr2BatchInputFormat.Items.AddRange(new object[] {
+            "GR2",
+            "DAE"});
+            this.gr2BatchInputFormat.Location = new System.Drawing.Point(9, 19);
+            this.gr2BatchInputFormat.Name = "gr2BatchInputFormat";
+            this.gr2BatchInputFormat.Size = new System.Drawing.Size(67, 21);
+            this.gr2BatchInputFormat.TabIndex = 46;
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(6, 3);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(66, 13);
+            this.label22.TabIndex = 45;
+            this.label22.Text = "Input format:";
+            // 
+            // gr2BatchOutputFormat
+            // 
+            this.gr2BatchOutputFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.gr2BatchOutputFormat.FormattingEnabled = true;
+            this.gr2BatchOutputFormat.Items.AddRange(new object[] {
+            "GR2",
+            "DAE"});
+            this.gr2BatchOutputFormat.Location = new System.Drawing.Point(9, 62);
+            this.gr2BatchOutputFormat.Name = "gr2BatchOutputFormat";
+            this.gr2BatchOutputFormat.Size = new System.Drawing.Size(67, 21);
+            this.gr2BatchOutputFormat.TabIndex = 44;
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Location = new System.Drawing.Point(6, 46);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(74, 13);
+            this.label21.TabIndex = 43;
+            this.label21.Text = "Output format:";
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(79, 46);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(85, 13);
+            this.label19.TabIndex = 39;
+            this.label19.Text = "Output directory:";
+            // 
+            // gr2BatchConvertBtn
+            // 
+            this.gr2BatchConvertBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2BatchConvertBtn.Location = new System.Drawing.Point(723, 104);
+            this.gr2BatchConvertBtn.Name = "gr2BatchConvertBtn";
+            this.gr2BatchConvertBtn.Size = new System.Drawing.Size(141, 23);
+            this.gr2BatchConvertBtn.TabIndex = 42;
+            this.gr2BatchConvertBtn.Text = "Convert";
+            this.gr2BatchConvertBtn.UseVisualStyleBackColor = true;
+            this.gr2BatchConvertBtn.Click += new System.EventHandler(this.gr2BatchConvertBtn_Click);
+            // 
+            // gr2BatchInputDir
+            // 
+            this.gr2BatchInputDir.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2BatchInputDir.Location = new System.Drawing.Point(82, 19);
+            this.gr2BatchInputDir.Name = "gr2BatchInputDir";
+            this.gr2BatchInputDir.Size = new System.Drawing.Size(742, 20);
+            this.gr2BatchInputDir.TabIndex = 35;
+            // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Location = new System.Drawing.Point(79, 3);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(77, 13);
+            this.label20.TabIndex = 36;
+            this.label20.Text = "Input directory:";
+            // 
+            // gr2BatchOutputDir
+            // 
+            this.gr2BatchOutputDir.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2BatchOutputDir.Location = new System.Drawing.Point(82, 62);
+            this.gr2BatchOutputDir.Name = "gr2BatchOutputDir";
+            this.gr2BatchOutputDir.Size = new System.Drawing.Size(742, 20);
+            this.gr2BatchOutputDir.TabIndex = 38;
             // 
             // groupBox2
             // 
@@ -397,7 +655,7 @@
             this.gr2Game.FormattingEnabled = true;
             this.gr2Game.Items.AddRange(new object[] {
             "Divinity: Original Sin (32-bit)",
-            "Divinity: Original Sin EE (64-bit)"});
+            "Divinity: Original Sin EE, Original Sin 2 (64-bit)"});
             this.gr2Game.Location = new System.Drawing.Point(78, 20);
             this.gr2Game.Name = "gr2Game";
             this.gr2Game.Size = new System.Drawing.Size(356, 21);
@@ -497,75 +755,6 @@
             this.label1.TabIndex = 15;
             this.label1.Text = "Customize resource formats:";
             // 
-            // loadInputBtn
-            // 
-            this.loadInputBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.loadInputBtn.Location = new System.Drawing.Point(721, 19);
-            this.loadInputBtn.Name = "loadInputBtn";
-            this.loadInputBtn.Size = new System.Drawing.Size(141, 23);
-            this.loadInputBtn.TabIndex = 31;
-            this.loadInputBtn.Text = "Import";
-            this.loadInputBtn.UseVisualStyleBackColor = true;
-            this.loadInputBtn.Click += new System.EventHandler(this.loadInputBtn_Click);
-            // 
-            // outputFileBrowserBtn
-            // 
-            this.outputFileBrowserBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.outputFileBrowserBtn.Location = new System.Drawing.Point(666, 60);
-            this.outputFileBrowserBtn.Name = "outputFileBrowserBtn";
-            this.outputFileBrowserBtn.Size = new System.Drawing.Size(41, 23);
-            this.outputFileBrowserBtn.TabIndex = 30;
-            this.outputFileBrowserBtn.Text = "...";
-            this.outputFileBrowserBtn.UseVisualStyleBackColor = true;
-            this.outputFileBrowserBtn.Click += new System.EventHandler(this.outputFileBrowserBtn_Click);
-            // 
-            // lblOutputPath
-            // 
-            this.lblOutputPath.AutoSize = true;
-            this.lblOutputPath.Location = new System.Drawing.Point(6, 46);
-            this.lblOutputPath.Name = "lblOutputPath";
-            this.lblOutputPath.Size = new System.Drawing.Size(82, 13);
-            this.lblOutputPath.TabIndex = 29;
-            this.lblOutputPath.Text = "Output file path:";
-            // 
-            // outputPath
-            // 
-            this.outputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.outputPath.Location = new System.Drawing.Point(9, 62);
-            this.outputPath.Name = "outputPath";
-            this.outputPath.Size = new System.Drawing.Size(659, 20);
-            this.outputPath.TabIndex = 28;
-            // 
-            // inputFileBrowseBtn
-            // 
-            this.inputFileBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputFileBrowseBtn.Location = new System.Drawing.Point(666, 17);
-            this.inputFileBrowseBtn.Name = "inputFileBrowseBtn";
-            this.inputFileBrowseBtn.Size = new System.Drawing.Size(41, 23);
-            this.inputFileBrowseBtn.TabIndex = 27;
-            this.inputFileBrowseBtn.Text = "...";
-            this.inputFileBrowseBtn.UseVisualStyleBackColor = true;
-            this.inputFileBrowseBtn.Click += new System.EventHandler(this.inputFileBrowseBtn_Click);
-            // 
-            // lblSrcPath
-            // 
-            this.lblSrcPath.AutoSize = true;
-            this.lblSrcPath.Location = new System.Drawing.Point(6, 3);
-            this.lblSrcPath.Name = "lblSrcPath";
-            this.lblSrcPath.Size = new System.Drawing.Size(74, 13);
-            this.lblSrcPath.TabIndex = 26;
-            this.lblSrcPath.Text = "Input file path:";
-            // 
-            // inputPath
-            // 
-            this.inputPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.inputPath.Location = new System.Drawing.Point(9, 19);
-            this.inputPath.Name = "inputPath";
-            this.inputPath.Size = new System.Drawing.Size(659, 20);
-            this.inputPath.TabIndex = 25;
-            // 
             // packageTab
             // 
             this.packageTab.Controls.Add(this.packageVersion);
@@ -596,13 +785,13 @@
             this.packageVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.packageVersion.FormattingEnabled = true;
             this.packageVersion.Items.AddRange(new object[] {
-            "V13 (Divinity Original Sin: EE)",
+            "V13 (Divinity Original Sin: EE, Original Sin 2)",
             "V10 (Divinity Original Sin)",
             "V9 (Divinity Original Sin Old)",
             "V7 (Divinity Original Sin Old)"});
             this.packageVersion.Location = new System.Drawing.Point(10, 114);
             this.packageVersion.Name = "packageVersion";
-            this.packageVersion.Size = new System.Drawing.Size(187, 21);
+            this.packageVersion.Size = new System.Drawing.Size(237, 21);
             this.packageVersion.TabIndex = 49;
             // 
             // label8
@@ -624,7 +813,7 @@
             "Zlib Optimal",
             "LZ4",
             "LZ4 HC"});
-            this.compressionMethod.Location = new System.Drawing.Point(221, 114);
+            this.compressionMethod.Location = new System.Drawing.Point(266, 114);
             this.compressionMethod.Name = "compressionMethod";
             this.compressionMethod.Size = new System.Drawing.Size(187, 21);
             this.compressionMethod.TabIndex = 47;
@@ -632,7 +821,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(218, 97);
+            this.label6.Location = new System.Drawing.Point(263, 97);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(70, 13);
             this.label6.TabIndex = 46;
@@ -1164,148 +1353,6 @@
             this.storyPathDlg.CheckFileExists = false;
             this.storyPathDlg.Filter = "LS story files|*.osi";
             // 
-            // gr2ModeTabControl
-            // 
-            this.gr2ModeTabControl.Controls.Add(this.gr2SingleFileTab);
-            this.gr2ModeTabControl.Controls.Add(this.gr2BatchTab);
-            this.gr2ModeTabControl.Location = new System.Drawing.Point(9, 13);
-            this.gr2ModeTabControl.Name = "gr2ModeTabControl";
-            this.gr2ModeTabControl.SelectedIndex = 0;
-            this.gr2ModeTabControl.Size = new System.Drawing.Size(887, 159);
-            this.gr2ModeTabControl.TabIndex = 35;
-            // 
-            // gr2SingleFileTab
-            // 
-            this.gr2SingleFileTab.Controls.Add(this.lblOutputPath);
-            this.gr2SingleFileTab.Controls.Add(this.saveOutputBtn);
-            this.gr2SingleFileTab.Controls.Add(this.inputPath);
-            this.gr2SingleFileTab.Controls.Add(this.lblSrcPath);
-            this.gr2SingleFileTab.Controls.Add(this.inputFileBrowseBtn);
-            this.gr2SingleFileTab.Controls.Add(this.loadInputBtn);
-            this.gr2SingleFileTab.Controls.Add(this.outputPath);
-            this.gr2SingleFileTab.Controls.Add(this.outputFileBrowserBtn);
-            this.gr2SingleFileTab.Location = new System.Drawing.Point(4, 22);
-            this.gr2SingleFileTab.Name = "gr2SingleFileTab";
-            this.gr2SingleFileTab.Padding = new System.Windows.Forms.Padding(3);
-            this.gr2SingleFileTab.Size = new System.Drawing.Size(879, 133);
-            this.gr2SingleFileTab.TabIndex = 0;
-            this.gr2SingleFileTab.Text = "Single File";
-            this.gr2SingleFileTab.UseVisualStyleBackColor = true;
-            // 
-            // gr2BatchTab
-            // 
-            this.gr2BatchTab.Controls.Add(this.gr2BatchProgressLabel);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchInputBrowseBtn);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchOutputBrowseBtn);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchProgressBar);
-            this.gr2BatchTab.Controls.Add(this.label23);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchInputFormat);
-            this.gr2BatchTab.Controls.Add(this.label22);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchOutputFormat);
-            this.gr2BatchTab.Controls.Add(this.label21);
-            this.gr2BatchTab.Controls.Add(this.label19);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchConvertBtn);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchInputDir);
-            this.gr2BatchTab.Controls.Add(this.label20);
-            this.gr2BatchTab.Controls.Add(this.gr2BatchOutputDir);
-            this.gr2BatchTab.Location = new System.Drawing.Point(4, 22);
-            this.gr2BatchTab.Name = "gr2BatchTab";
-            this.gr2BatchTab.Padding = new System.Windows.Forms.Padding(3);
-            this.gr2BatchTab.Size = new System.Drawing.Size(879, 133);
-            this.gr2BatchTab.TabIndex = 1;
-            this.gr2BatchTab.Text = "Batch";
-            this.gr2BatchTab.UseVisualStyleBackColor = true;
-            // 
-            // label19
-            // 
-            this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(79, 46);
-            this.label19.Name = "label19";
-            this.label19.Size = new System.Drawing.Size(85, 13);
-            this.label19.TabIndex = 39;
-            this.label19.Text = "Output directory:";
-            // 
-            // gr2BatchConvertBtn
-            // 
-            this.gr2BatchConvertBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2BatchConvertBtn.Location = new System.Drawing.Point(723, 104);
-            this.gr2BatchConvertBtn.Name = "gr2BatchConvertBtn";
-            this.gr2BatchConvertBtn.Size = new System.Drawing.Size(141, 23);
-            this.gr2BatchConvertBtn.TabIndex = 42;
-            this.gr2BatchConvertBtn.Text = "Convert";
-            this.gr2BatchConvertBtn.UseVisualStyleBackColor = true;
-            this.gr2BatchConvertBtn.Click += new System.EventHandler(this.gr2BatchConvertBtn_Click);
-            // 
-            // gr2BatchInputDir
-            // 
-            this.gr2BatchInputDir.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2BatchInputDir.Location = new System.Drawing.Point(82, 19);
-            this.gr2BatchInputDir.Name = "gr2BatchInputDir";
-            this.gr2BatchInputDir.Size = new System.Drawing.Size(742, 20);
-            this.gr2BatchInputDir.TabIndex = 35;
-            // 
-            // label20
-            // 
-            this.label20.AutoSize = true;
-            this.label20.Location = new System.Drawing.Point(79, 3);
-            this.label20.Name = "label20";
-            this.label20.Size = new System.Drawing.Size(77, 13);
-            this.label20.TabIndex = 36;
-            this.label20.Text = "Input directory:";
-            // 
-            // gr2BatchInputBrowseBtn
-            // 
-            this.gr2BatchInputBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2BatchInputBrowseBtn.Location = new System.Drawing.Point(822, 17);
-            this.gr2BatchInputBrowseBtn.Name = "gr2BatchInputBrowseBtn";
-            this.gr2BatchInputBrowseBtn.Size = new System.Drawing.Size(41, 23);
-            this.gr2BatchInputBrowseBtn.TabIndex = 37;
-            this.gr2BatchInputBrowseBtn.Text = "...";
-            this.gr2BatchInputBrowseBtn.UseVisualStyleBackColor = true;
-            this.gr2BatchInputBrowseBtn.Click += new System.EventHandler(this.gr2BatchInputBrowseBtn_Click);
-            // 
-            // gr2BatchOutputDir
-            // 
-            this.gr2BatchOutputDir.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2BatchOutputDir.Location = new System.Drawing.Point(82, 62);
-            this.gr2BatchOutputDir.Name = "gr2BatchOutputDir";
-            this.gr2BatchOutputDir.Size = new System.Drawing.Size(742, 20);
-            this.gr2BatchOutputDir.TabIndex = 38;
-            // 
-            // gr2BatchOutputBrowseBtn
-            // 
-            this.gr2BatchOutputBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2BatchOutputBrowseBtn.Location = new System.Drawing.Point(822, 60);
-            this.gr2BatchOutputBrowseBtn.Name = "gr2BatchOutputBrowseBtn";
-            this.gr2BatchOutputBrowseBtn.Size = new System.Drawing.Size(41, 23);
-            this.gr2BatchOutputBrowseBtn.TabIndex = 40;
-            this.gr2BatchOutputBrowseBtn.Text = "...";
-            this.gr2BatchOutputBrowseBtn.UseVisualStyleBackColor = true;
-            this.gr2BatchOutputBrowseBtn.Click += new System.EventHandler(this.gr2BatchOutputBrowseBtn_Click);
-            // 
-            // label21
-            // 
-            this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(6, 46);
-            this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(74, 13);
-            this.label21.TabIndex = 43;
-            this.label21.Text = "Output format:";
-            // 
-            // gr2BatchOutputFormat
-            // 
-            this.gr2BatchOutputFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.gr2BatchOutputFormat.FormattingEnabled = true;
-            this.gr2BatchOutputFormat.Items.AddRange(new object[] {
-            "GR2",
-            "DAE"});
-            this.gr2BatchOutputFormat.Location = new System.Drawing.Point(9, 62);
-            this.gr2BatchOutputFormat.Name = "gr2BatchOutputFormat";
-            this.gr2BatchOutputFormat.Size = new System.Drawing.Size(67, 21);
-            this.gr2BatchOutputFormat.TabIndex = 44;
-            // 
             // resourceFormats
             // 
             this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -1319,53 +1366,6 @@
             this.resourceFormats.UseCompatibleStateImageBehavior = false;
             this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
-            // gr2BatchInputFormat
-            // 
-            this.gr2BatchInputFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.gr2BatchInputFormat.FormattingEnabled = true;
-            this.gr2BatchInputFormat.Items.AddRange(new object[] {
-            "GR2",
-            "DAE"});
-            this.gr2BatchInputFormat.Location = new System.Drawing.Point(9, 19);
-            this.gr2BatchInputFormat.Name = "gr2BatchInputFormat";
-            this.gr2BatchInputFormat.Size = new System.Drawing.Size(67, 21);
-            this.gr2BatchInputFormat.TabIndex = 46;
-            // 
-            // label22
-            // 
-            this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(6, 3);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(66, 13);
-            this.label22.TabIndex = 45;
-            this.label22.Text = "Input format:";
-            // 
-            // gr2BatchProgressBar
-            // 
-            this.gr2BatchProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2BatchProgressBar.Location = new System.Drawing.Point(9, 104);
-            this.gr2BatchProgressBar.Name = "gr2BatchProgressBar";
-            this.gr2BatchProgressBar.Size = new System.Drawing.Size(700, 23);
-            this.gr2BatchProgressBar.TabIndex = 47;
-            // 
-            // label23
-            // 
-            this.label23.AutoSize = true;
-            this.label23.Location = new System.Drawing.Point(6, 88);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(51, 13);
-            this.label23.TabIndex = 48;
-            this.label23.Text = "Progress:";
-            // 
-            // gr2BatchProgressLabel
-            // 
-            this.gr2BatchProgressLabel.AutoSize = true;
-            this.gr2BatchProgressLabel.Location = new System.Drawing.Point(82, 88);
-            this.gr2BatchProgressLabel.Name = "gr2BatchProgressLabel";
-            this.gr2BatchProgressLabel.Size = new System.Drawing.Size(0, 13);
-            this.gr2BatchProgressLabel.TabIndex = 49;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1376,6 +1376,11 @@
             this.Text = "GR2 Converter";
             this.tabControl.ResumeLayout(false);
             this.gr2Tab.ResumeLayout(false);
+            this.gr2ModeTabControl.ResumeLayout(false);
+            this.gr2SingleFileTab.ResumeLayout(false);
+            this.gr2SingleFileTab.PerformLayout();
+            this.gr2BatchTab.ResumeLayout(false);
+            this.gr2BatchTab.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
@@ -1392,11 +1397,6 @@
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).EndInit();
-            this.gr2ModeTabControl.ResumeLayout(false);
-            this.gr2SingleFileTab.ResumeLayout(false);
-            this.gr2SingleFileTab.PerformLayout();
-            this.gr2BatchTab.ResumeLayout(false);
-            this.gr2BatchTab.PerformLayout();
             this.ResumeLayout(false);
 
         }
