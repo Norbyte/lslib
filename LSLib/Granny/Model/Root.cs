@@ -496,7 +496,14 @@ namespace LSLib.Granny.Model
 
             if (trackGroup.TransformTracks.Count > 0)
             {
-                animation.Duration = trackGroup.TransformTracks.Max(t => t.OrientationCurve.CurveData.Duration());
+                animation.Duration = 
+                    Math.Max(
+                        trackGroup.TransformTracks.Max(t => t.OrientationCurve.CurveData.Duration()),
+                        Math.Max(
+                            trackGroup.TransformTracks.Max(t => t.PositionCurve.CurveData.Duration()),
+                            trackGroup.TransformTracks.Max(t => t.ScaleShearCurve.CurveData.Duration())
+                        )
+                    );
                 animation.TrackGroups = new List<TrackGroup> { trackGroup };
 
                 TrackGroups.Add(trackGroup);
