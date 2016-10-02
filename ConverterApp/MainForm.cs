@@ -16,6 +16,13 @@ using System.Windows.Forms;
 
 namespace ConverterApp
 {
+    enum DivGame
+    {
+        DOS = 0,
+        DOSEE = 1,
+        DOS2 = 2
+    };
+
     public partial class MainForm : Form
     {
         private Root Root;
@@ -28,11 +35,22 @@ namespace ConverterApp
             this.Text += String.Format(" (LSLib v{0})", Common.LibraryVersion());
             packageVersion.SelectedIndex = 0;
             compressionMethod.SelectedIndex = 4;
-            gr2Game.SelectedIndex = 0;
+            gr2Game.SelectedIndex = 1;
             gr2BatchInputFormat.SelectedIndex = 0;
             gr2BatchOutputFormat.SelectedIndex = 1;
             resourceInputFormatCb.SelectedIndex = 2;
             resourceOutputFormatCb.SelectedIndex = 0;
+        }
+
+        private DivGame GetGame()
+        {
+            switch (gr2Game.SelectedIndex)
+            {
+                case 0: return DivGame.DOS;
+                case 1: return DivGame.DOSEE;
+                case 2: return DivGame.DOS2;
+                default: throw new InvalidOperationException();
+            }
         }
 
         private void PackageProgressUpdate(string status, long numerator, long denominator)
@@ -192,7 +210,8 @@ namespace ConverterApp
 
         private void UpdateCommonExporterSettings(ExporterOptions settings)
         {
-            if (gr2Game.SelectedIndex == 0)
+            var game = GetGame();
+            if (game == DivGame.DOS)
             {
                 settings.Is64Bit = false;
                 settings.AlternateSignature = false;
@@ -478,7 +497,17 @@ namespace ConverterApp
             try
             {
                 Resource = ResourceUtils.LoadResource(resourceInputPath.Text);
-                ResourceUtils.SaveResource(Resource, resourceOutputPath.Text);
+                var format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
+                int outputVersion = -1;
+                if (GetGame() == DivGame.DOS2)
+                {
+                    outputVersion = (int)FileVersion.VerExtendedNodes;
+                }
+                else
+                {
+                    outputVersion = (int)FileVersion.VerChunkedCompress;
+                }
+                ResourceUtils.SaveResource(Resource, resourceOutputPath.Text, format, outputVersion);
                 MessageBox.Show("Resource saved successfully.");
             }
             catch (Exception exc)
@@ -557,6 +586,7 @@ namespace ConverterApp
             }
 
             ResourceFormat outputFormat = ResourceFormat.LSF;
+            int outputVersion = -1;
             switch (resourceOutputFormatCb.SelectedIndex)
             {
                 case 0:
@@ -569,6 +599,14 @@ namespace ConverterApp
 
                 case 2:
                     outputFormat = ResourceFormat.LSF;
+                    if (GetGame() == DivGame.DOS2)
+                    {
+                        outputVersion = (int)FileVersion.VerExtendedNodes;
+                    }
+                    else
+                    {
+                        outputVersion = (int)FileVersion.VerChunkedCompress;
+                    }
                     break;
             }
 
@@ -577,7 +615,7 @@ namespace ConverterApp
                 resourceConvertBtn.Enabled = false;
                 var utils = new ResourceUtils();
                 utils.progressUpdate += this.ResourceProgressUpdate;
-                utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat);
+                utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, outputVersion);
                 MessageBox.Show("Resources converted successfully.");
             }
             catch (Exception exc)
@@ -639,7 +677,8 @@ namespace ConverterApp
 
         private void gr2Game_SelectedIndexChanged(object sender, EventArgs e)
         {
-            use16bitIndex.Checked = (gr2Game.SelectedIndex == 1);
+            DivGame game = GetGame();
+            use16bitIndex.Checked = game == DivGame.DOSEE || game == DivGame.DOS2;
         }
 
         private void gr2BatchInputBrowseBtn_Click(object sender, EventArgs e)

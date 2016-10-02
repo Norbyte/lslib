@@ -85,7 +85,7 @@ namespace LSLib.LS
             SaveResource(resource, outputPath, ExtensionToResourceFormat(outputPath));
         }
 
-        public static void SaveResource(Resource resource, string outputPath, ResourceFormat format)
+        public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, int version = -1)
         {
             var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write);
             switch (format)
@@ -111,8 +111,18 @@ namespace LSLib.LS
 
                 case ResourceFormat.LSF:
                     {
-                        // Write in V2 format for D:OS EE compatibility
-                        using (var writer = new LSFWriter(file, Header.VerChunkedCompress))
+                        uint lsfVersion;
+                        if (version == -1)
+                        {
+                            // Write in V2 format for D:OS EE compatibility
+                            lsfVersion = FileVersion.VerChunkedCompress;
+                        }
+                        else
+                        {
+                            lsfVersion = (uint)version;
+                        }
+
+                        using (var writer = new LSFWriter(file, lsfVersion))
                         {
                             writer.Write(resource);
                         }
@@ -147,7 +157,7 @@ namespace LSLib.LS
             }
         }
 
-        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat)
+        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, int outputVersion = -1)
         {
             this.progressUpdate("Enumerating files ...", 0, 1);
             var paths = new List<string>();
@@ -167,7 +177,7 @@ namespace LSLib.LS
 
                 this.progressUpdate("Converting: " + inPath, i, paths.Count);
                 var resource = LoadResource(inPath, inputFormat);
-                SaveResource(resource, outPath, outputFormat);
+                SaveResource(resource, outPath, outputFormat, outputVersion);
             }
         }
     }

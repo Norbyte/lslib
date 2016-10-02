@@ -11,14 +11,8 @@ using System.Text;
 
 namespace LSLib.LS.LSF
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Header
+    public struct FileVersion
     {
-        /// <summary>
-        /// LSOF file signature
-        /// </summary>
-        public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x4F, 0x46 };
-
         /// <summary>
         /// Initial version of the LSF format
         /// </summary>
@@ -38,6 +32,15 @@ namespace LSLib.LS.LSF
         /// Latest version supported by this library
         /// </summary>
         public const UInt32 CurrentVersion = 0x03;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct Header
+    {
+        /// <summary>
+        /// LSOF file signature
+        /// </summary>
+        public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x4F, 0x46 };
 
         /// <summary>
         /// LSOF file signature; should be the same as LSFHeader.Signature
@@ -214,10 +217,6 @@ namespace LSLib.LS.LSF
         /// (-1: node has no attributes)
         /// </summary>
         public int FirstAttributeIndex;
-        /// <summary>
-        /// Unknown V3 attribute
-        /// </summary>
-        public Int32 Unknown;
     };
 
     /// <summary>
@@ -432,7 +431,7 @@ namespace LSLib.LS.LSF
 
 #if DEBUG_LSF_SERIALIZATION
                     Console.WriteLine(String.Format(
-                        "{0}: {1} (parent {2}, firstAttribute {3}, unknown {4})", 
+                        "{0}: {1} (parent {2}, firstAttribute {3})", 
                         Nodes.Count, Names[resolved.NameIndex][resolved.NameOffset], resolved.ParentIndex, 
                         resolved.FirstAttributeIndex
                     ));
@@ -534,7 +533,7 @@ namespace LSLib.LS.LSF
 
         private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
         {
-            bool chunked = (header.Version >= Header.VerChunkedCompress);
+            bool chunked = (header.Version >= FileVersion.VerChunkedCompress);
             byte[] compressed = reader.ReadBytes((int)compressedSize);
             return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags, chunked);
         }
@@ -553,7 +552,7 @@ namespace LSLib.LS.LSF
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.Version < Header.VerInitial || hdr.Version > Header.CurrentVersion)
+                if (hdr.Version < FileVersion.VerInitial || hdr.Version > FileVersion.CurrentVersion)
                 {
                     var msg = String.Format("LSF version {0} is not supported", hdr.Version);
                     throw new InvalidDataException(msg);
@@ -563,7 +562,7 @@ namespace LSLib.LS.LSF
                 if (hdr.StringsSizeOnDisk > 0 || hdr.StringsUncompressedSize > 0)
                 {
                     uint onDiskSize = isCompressed ? hdr.StringsSizeOnDisk : hdr.StringsUncompressedSize;
-                    byte[] compressed = reader.ReadBytes((int)hdr.StringsSizeOnDisk);
+                    byte[] compressed = reader.ReadBytes((int)onDiskSize);
                     byte[] uncompressed;
                     if (isCompressed)
                     {
@@ -584,9 +583,18 @@ namespace LSLib.LS.LSF
                 {
                     uint onDiskSize = isCompressed ? hdr.NodesSizeOnDisk : hdr.NodesUncompressedSize;
                     var uncompressed = Decompress(reader, onDiskSize, hdr.NodesUncompressedSize, hdr);
+
+#if DEBUG_LSF_SERIALIZATION
+                    using (var nodesFile = new FileStream("nodes.bin", FileMode.Create, FileAccess.Write))
+                    {
+                        nodesFile.Write(uncompressed, 0, uncompressed.Length);
+                    }
+#endif
+
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
-                        var longNodes = hdr.Version >= Header.VerExtendedNodes;
+                        var longNodes = hdr.Version >= FileVersion.VerExtendedNodes 
+                            && BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) == CompressionMethod.None;
                         ReadNodes(nodesStream, longNodes);
                     }
                 }
@@ -595,9 +603,18 @@ namespace LSLib.LS.LSF
                 {
                     uint onDiskSize = isCompressed ? hdr.AttributesSizeOnDisk : hdr.AttributesUncompressedSize;
                     var uncompressed = Decompress(reader, onDiskSize, hdr.AttributesUncompressedSize, hdr);
+
+#if DEBUG_LSF_SERIALIZATION
+                    using (var attributesFile = new FileStream("attributes.bin", FileMode.Create, FileAccess.Write))
+                    {
+                        attributesFile.Write(uncompressed, 0, uncompressed.Length);
+                    }
+#endif
+
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
-                        var longAttributes = hdr.Version >= Header.VerExtendedNodes;
+                        var longAttributes = hdr.Version >= FileVersion.VerExtendedNodes
+                            && BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) == CompressionMethod.None;
                         ReadAttributes(attributesStream, longAttributes);
                     }
                 }

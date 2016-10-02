@@ -72,8 +72,6 @@
             this.deduplicateVertices = new System.Windows.Forms.CheckBox();
             this.recalculateNormals = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.gr2Game = new System.Windows.Forms.ComboBox();
-            this.label7 = new System.Windows.Forms.Label();
             this.applyBasisTransforms = new System.Windows.Forms.CheckBox();
             this.conformantGR2BrowseBtn = new System.Windows.Forms.Button();
             this.conformantGR2Path = new System.Windows.Forms.TextBox();
@@ -146,6 +144,8 @@
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.resourceFormats = new ConverterApp.ExportItemSelection();
+            this.gr2Game = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.tabControl.SuspendLayout();
             this.gr2Tab.SuspendLayout();
             this.gr2ModeTabControl.SuspendLayout();
@@ -187,10 +187,10 @@
             this.tabControl.Controls.Add(this.packageTab);
             this.tabControl.Controls.Add(this.objectTab);
             this.tabControl.Controls.Add(this.tabPage1);
-            this.tabControl.Location = new System.Drawing.Point(12, 12);
+            this.tabControl.Location = new System.Drawing.Point(12, 42);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(917, 629);
+            this.tabControl.Size = new System.Drawing.Size(917, 620);
             this.tabControl.TabIndex = 0;
             // 
             // gr2Tab
@@ -201,7 +201,7 @@
             this.gr2Tab.Location = new System.Drawing.Point(4, 22);
             this.gr2Tab.Name = "gr2Tab";
             this.gr2Tab.Padding = new System.Windows.Forms.Padding(3);
-            this.gr2Tab.Size = new System.Drawing.Size(909, 603);
+            this.gr2Tab.Size = new System.Drawing.Size(909, 594);
             this.gr2Tab.TabIndex = 0;
             this.gr2Tab.Text = "GR2 Tools";
             this.gr2Tab.UseVisualStyleBackColor = true;
@@ -492,7 +492,7 @@
             this.groupBox2.Controls.Add(this.recalculateNormals);
             this.groupBox2.Location = new System.Drawing.Point(9, 178);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(395, 419);
+            this.groupBox2.Size = new System.Drawing.Size(395, 410);
             this.groupBox2.TabIndex = 33;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export Options";
@@ -500,7 +500,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(6, 151);
+            this.label2.Location = new System.Drawing.Point(6, 139);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(141, 13);
             this.label2.TabIndex = 22;
@@ -517,9 +517,9 @@
             this.exportableType});
             this.exportableObjects.Enabled = false;
             this.exportableObjects.FullRowSelect = true;
-            this.exportableObjects.Location = new System.Drawing.Point(9, 167);
+            this.exportableObjects.Location = new System.Drawing.Point(9, 160);
             this.exportableObjects.Name = "exportableObjects";
-            this.exportableObjects.Size = new System.Drawing.Size(373, 238);
+            this.exportableObjects.Size = new System.Drawing.Size(373, 233);
             this.exportableObjects.TabIndex = 21;
             this.exportableObjects.UseCompatibleStateImageBehavior = false;
             this.exportableObjects.View = System.Windows.Forms.View.Details;
@@ -629,8 +629,6 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.gr2Game);
-            this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.applyBasisTransforms);
             this.groupBox1.Controls.Add(this.conformantGR2BrowseBtn);
             this.groupBox1.Controls.Add(this.conformantGR2Path);
@@ -642,41 +640,17 @@
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Location = new System.Drawing.Point(420, 178);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(476, 419);
+            this.groupBox1.Size = new System.Drawing.Size(476, 410);
             this.groupBox1.TabIndex = 32;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "GR2 Export Options";
-            // 
-            // gr2Game
-            // 
-            this.gr2Game.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.gr2Game.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.gr2Game.FormattingEnabled = true;
-            this.gr2Game.Items.AddRange(new object[] {
-            "Divinity: Original Sin (32-bit)",
-            "Divinity: Original Sin EE, Original Sin 2 (64-bit)"});
-            this.gr2Game.Location = new System.Drawing.Point(78, 20);
-            this.gr2Game.Name = "gr2Game";
-            this.gr2Game.Size = new System.Drawing.Size(356, 21);
-            this.gr2Game.TabIndex = 28;
-            this.gr2Game.SelectedIndexChanged += new System.EventHandler(this.gr2Game_SelectedIndexChanged);
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(16, 22);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(55, 13);
-            this.label7.TabIndex = 27;
-            this.label7.Text = "Export for:";
             // 
             // applyBasisTransforms
             // 
             this.applyBasisTransforms.AutoSize = true;
             this.applyBasisTransforms.Checked = true;
             this.applyBasisTransforms.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.applyBasisTransforms.Location = new System.Drawing.Point(249, 50);
+            this.applyBasisTransforms.Location = new System.Drawing.Point(245, 22);
             this.applyBasisTransforms.Name = "applyBasisTransforms";
             this.applyBasisTransforms.Size = new System.Drawing.Size(100, 17);
             this.applyBasisTransforms.TabIndex = 26;
@@ -686,7 +660,7 @@
             // conformantGR2BrowseBtn
             // 
             this.conformantGR2BrowseBtn.Enabled = false;
-            this.conformantGR2BrowseBtn.Location = new System.Drawing.Point(423, 137);
+            this.conformantGR2BrowseBtn.Location = new System.Drawing.Point(419, 109);
             this.conformantGR2BrowseBtn.Name = "conformantGR2BrowseBtn";
             this.conformantGR2BrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.conformantGR2BrowseBtn.TabIndex = 25;
@@ -697,7 +671,7 @@
             // conformantGR2Path
             // 
             this.conformantGR2Path.Enabled = false;
-            this.conformantGR2Path.Location = new System.Drawing.Point(19, 139);
+            this.conformantGR2Path.Location = new System.Drawing.Point(15, 111);
             this.conformantGR2Path.Name = "conformantGR2Path";
             this.conformantGR2Path.Size = new System.Drawing.Size(405, 20);
             this.conformantGR2Path.TabIndex = 24;
@@ -706,7 +680,7 @@
             // 
             this.conformToOriginal.AutoSize = true;
             this.conformToOriginal.Enabled = false;
-            this.conformToOriginal.Location = new System.Drawing.Point(19, 119);
+            this.conformToOriginal.Location = new System.Drawing.Point(15, 91);
             this.conformToOriginal.Name = "conformToOriginal";
             this.conformToOriginal.Size = new System.Drawing.Size(141, 17);
             this.conformToOriginal.TabIndex = 23;
@@ -719,7 +693,7 @@
             this.buildDummySkeleton.AutoSize = true;
             this.buildDummySkeleton.Checked = true;
             this.buildDummySkeleton.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.buildDummySkeleton.Location = new System.Drawing.Point(19, 96);
+            this.buildDummySkeleton.Location = new System.Drawing.Point(15, 68);
             this.buildDummySkeleton.Name = "buildDummySkeleton";
             this.buildDummySkeleton.Size = new System.Drawing.Size(136, 17);
             this.buildDummySkeleton.TabIndex = 22;
@@ -729,7 +703,7 @@
             // use16bitIndex
             // 
             this.use16bitIndex.AutoSize = true;
-            this.use16bitIndex.Location = new System.Drawing.Point(19, 73);
+            this.use16bitIndex.Location = new System.Drawing.Point(15, 45);
             this.use16bitIndex.Name = "use16bitIndex";
             this.use16bitIndex.Size = new System.Drawing.Size(142, 17);
             this.use16bitIndex.TabIndex = 18;
@@ -739,7 +713,7 @@
             // forceLegacyVersion
             // 
             this.forceLegacyVersion.AutoSize = true;
-            this.forceLegacyVersion.Location = new System.Drawing.Point(19, 50);
+            this.forceLegacyVersion.Location = new System.Drawing.Point(15, 22);
             this.forceLegacyVersion.Name = "forceLegacyVersion";
             this.forceLegacyVersion.Size = new System.Drawing.Size(167, 17);
             this.forceLegacyVersion.TabIndex = 17;
@@ -749,7 +723,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 167);
+            this.label1.Location = new System.Drawing.Point(13, 139);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(139, 13);
             this.label1.TabIndex = 15;
@@ -775,7 +749,7 @@
             this.packageTab.Location = new System.Drawing.Point(4, 22);
             this.packageTab.Name = "packageTab";
             this.packageTab.Padding = new System.Windows.Forms.Padding(3);
-            this.packageTab.Size = new System.Drawing.Size(909, 603);
+            this.packageTab.Size = new System.Drawing.Size(909, 594);
             this.packageTab.TabIndex = 1;
             this.packageTab.Text = "PAK / LSV Tools";
             this.packageTab.UseVisualStyleBackColor = true;
@@ -789,7 +763,7 @@
             "V10 (Divinity Original Sin)",
             "V9 (Divinity Original Sin Old)",
             "V7 (Divinity Original Sin Old)"});
-            this.packageVersion.Location = new System.Drawing.Point(10, 114);
+            this.packageVersion.Location = new System.Drawing.Point(10, 117);
             this.packageVersion.Name = "packageVersion";
             this.packageVersion.Size = new System.Drawing.Size(237, 21);
             this.packageVersion.TabIndex = 49;
@@ -797,7 +771,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(7, 97);
+            this.label8.Location = new System.Drawing.Point(7, 100);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(45, 13);
             this.label8.TabIndex = 48;
@@ -813,7 +787,7 @@
             "Zlib Optimal",
             "LZ4",
             "LZ4 HC"});
-            this.compressionMethod.Location = new System.Drawing.Point(266, 114);
+            this.compressionMethod.Location = new System.Drawing.Point(266, 117);
             this.compressionMethod.Name = "compressionMethod";
             this.compressionMethod.Size = new System.Drawing.Size(187, 21);
             this.compressionMethod.TabIndex = 47;
@@ -821,7 +795,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(263, 97);
+            this.label6.Location = new System.Drawing.Point(263, 100);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(70, 13);
             this.label6.TabIndex = 46;
@@ -830,7 +804,7 @@
             // exportPathBrowseBtn
             // 
             this.exportPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.exportPathBrowseBtn.Location = new System.Drawing.Point(657, 63);
+            this.exportPathBrowseBtn.Location = new System.Drawing.Point(657, 66);
             this.exportPathBrowseBtn.Name = "exportPathBrowseBtn";
             this.exportPathBrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.exportPathBrowseBtn.TabIndex = 40;
@@ -841,7 +815,7 @@
             // packageBrowseBtn
             // 
             this.packageBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.packageBrowseBtn.Location = new System.Drawing.Point(657, 17);
+            this.packageBrowseBtn.Location = new System.Drawing.Point(657, 20);
             this.packageBrowseBtn.Name = "packageBrowseBtn";
             this.packageBrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.packageBrowseBtn.TabIndex = 37;
@@ -860,7 +834,7 @@
             // createPackageBtn
             // 
             this.createPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.createPackageBtn.Location = new System.Drawing.Point(725, 19);
+            this.createPackageBtn.Location = new System.Drawing.Point(725, 22);
             this.createPackageBtn.Name = "createPackageBtn";
             this.createPackageBtn.Size = new System.Drawing.Size(151, 23);
             this.createPackageBtn.TabIndex = 45;
@@ -872,7 +846,7 @@
             // 
             this.packageProgress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.packageProgress.Location = new System.Drawing.Point(9, 160);
+            this.packageProgress.Location = new System.Drawing.Point(9, 163);
             this.packageProgress.Name = "packageProgress";
             this.packageProgress.Size = new System.Drawing.Size(883, 23);
             this.packageProgress.TabIndex = 42;
@@ -880,7 +854,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(6, 144);
+            this.label5.Location = new System.Drawing.Point(6, 147);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(51, 13);
             this.label5.TabIndex = 43;
@@ -890,7 +864,7 @@
             // 
             this.packagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.packagePath.Location = new System.Drawing.Point(9, 19);
+            this.packagePath.Location = new System.Drawing.Point(9, 22);
             this.packagePath.Name = "packagePath";
             this.packagePath.Size = new System.Drawing.Size(650, 20);
             this.packagePath.TabIndex = 35;
@@ -898,7 +872,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(6, 3);
+            this.label4.Location = new System.Drawing.Point(6, 6);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(77, 13);
             this.label4.TabIndex = 36;
@@ -907,7 +881,7 @@
             // extractPackageBtn
             // 
             this.extractPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.extractPackageBtn.Location = new System.Drawing.Point(725, 62);
+            this.extractPackageBtn.Location = new System.Drawing.Point(725, 65);
             this.extractPackageBtn.Name = "extractPackageBtn";
             this.extractPackageBtn.Size = new System.Drawing.Size(151, 23);
             this.extractPackageBtn.TabIndex = 41;
@@ -919,7 +893,7 @@
             // 
             this.extractionPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.extractionPath.Location = new System.Drawing.Point(9, 65);
+            this.extractionPath.Location = new System.Drawing.Point(9, 68);
             this.extractionPath.Name = "extractionPath";
             this.extractionPath.Size = new System.Drawing.Size(650, 20);
             this.extractionPath.TabIndex = 38;
@@ -927,7 +901,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(6, 49);
+            this.label3.Location = new System.Drawing.Point(6, 52);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(121, 13);
             this.label3.TabIndex = 39;
@@ -940,7 +914,7 @@
             this.objectTab.Location = new System.Drawing.Point(4, 22);
             this.objectTab.Name = "objectTab";
             this.objectTab.Padding = new System.Windows.Forms.Padding(3);
-            this.objectTab.Size = new System.Drawing.Size(909, 603);
+            this.objectTab.Size = new System.Drawing.Size(909, 594);
             this.objectTab.TabIndex = 2;
             this.objectTab.Text = "LSX / LSB / LSF Tools";
             this.objectTab.UseVisualStyleBackColor = true;
@@ -1210,30 +1184,36 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(909, 603);
+            this.tabPage1.Size = new System.Drawing.Size(909, 594);
             this.tabPage1.TabIndex = 3;
             this.tabPage1.Text = "Story (OSI) tools";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // groupBox3
             // 
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.Controls.Add(this.databaseGrid);
             this.groupBox3.Controls.Add(this.databaseSelectorCb);
             this.groupBox3.Controls.Add(this.label18);
             this.groupBox3.Location = new System.Drawing.Point(7, 98);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(896, 499);
+            this.groupBox3.Size = new System.Drawing.Size(896, 484);
             this.groupBox3.TabIndex = 58;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Database Editor";
             // 
             // databaseGrid
             // 
+            this.databaseGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.databaseGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.databaseGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.databaseGrid.Location = new System.Drawing.Point(10, 47);
             this.databaseGrid.Name = "databaseGrid";
-            this.databaseGrid.Size = new System.Drawing.Size(880, 446);
+            this.databaseGrid.Size = new System.Drawing.Size(875, 426);
             this.databaseGrid.TabIndex = 2;
             // 
             // databaseSelectorCb
@@ -1257,7 +1237,7 @@
             // 
             // loadStoryBtn
             // 
-            this.loadStoryBtn.Location = new System.Drawing.Point(756, 21);
+            this.loadStoryBtn.Location = new System.Drawing.Point(759, 21);
             this.loadStoryBtn.Name = "loadStoryBtn";
             this.loadStoryBtn.Size = new System.Drawing.Size(121, 23);
             this.loadStoryBtn.TabIndex = 57;
@@ -1267,7 +1247,7 @@
             // 
             // decompileStoryBtn
             // 
-            this.decompileStoryBtn.Location = new System.Drawing.Point(756, 68);
+            this.decompileStoryBtn.Location = new System.Drawing.Point(759, 68);
             this.decompileStoryBtn.Name = "decompileStoryBtn";
             this.decompileStoryBtn.Size = new System.Drawing.Size(121, 23);
             this.decompileStoryBtn.TabIndex = 56;
@@ -1279,7 +1259,7 @@
             // 
             this.storyFilePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.storyFilePath.Location = new System.Drawing.Point(6, 23);
+            this.storyFilePath.Location = new System.Drawing.Point(9, 23);
             this.storyFilePath.Name = "storyFilePath";
             this.storyFilePath.Size = new System.Drawing.Size(706, 20);
             this.storyFilePath.TabIndex = 51;
@@ -1287,7 +1267,7 @@
             // goalPathBrowseBtn
             // 
             this.goalPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.goalPathBrowseBtn.Location = new System.Drawing.Point(711, 69);
+            this.goalPathBrowseBtn.Location = new System.Drawing.Point(714, 69);
             this.goalPathBrowseBtn.Name = "goalPathBrowseBtn";
             this.goalPathBrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.goalPathBrowseBtn.TabIndex = 55;
@@ -1298,7 +1278,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(3, 7);
+            this.label9.Location = new System.Drawing.Point(6, 7);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(74, 13);
             this.label9.TabIndex = 0;
@@ -1308,7 +1288,7 @@
             // 
             this.goalPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.goalPath.Location = new System.Drawing.Point(6, 71);
+            this.goalPath.Location = new System.Drawing.Point(9, 71);
             this.goalPath.Name = "goalPath";
             this.goalPath.Size = new System.Drawing.Size(706, 20);
             this.goalPath.TabIndex = 54;
@@ -1316,7 +1296,7 @@
             // storyFileBrowseBtn
             // 
             this.storyFileBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.storyFileBrowseBtn.Location = new System.Drawing.Point(711, 21);
+            this.storyFileBrowseBtn.Location = new System.Drawing.Point(714, 21);
             this.storyFileBrowseBtn.Name = "storyFileBrowseBtn";
             this.storyFileBrowseBtn.Size = new System.Drawing.Size(41, 23);
             this.storyFileBrowseBtn.TabIndex = 52;
@@ -1327,7 +1307,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(3, 55);
+            this.label10.Location = new System.Drawing.Point(6, 55);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(89, 13);
             this.label10.TabIndex = 53;
@@ -1359,18 +1339,44 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(19, 188);
+            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
             this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 217);
+            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
             this.resourceFormats.TabIndex = 16;
             this.resourceFormats.UseCompatibleStateImageBehavior = false;
             this.resourceFormats.View = System.Windows.Forms.View.Details;
+            // 
+            // gr2Game
+            // 
+            this.gr2Game.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.gr2Game.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.gr2Game.FormattingEnabled = true;
+            this.gr2Game.Items.AddRange(new object[] {
+            "Divinity: Original Sin (32-bit)",
+            "Divinity: Original Sin EE (64-bit)",
+            "Divinity: Original Sin 2 (64-bit)"});
+            this.gr2Game.Location = new System.Drawing.Point(74, 12);
+            this.gr2Game.Name = "gr2Game";
+            this.gr2Game.Size = new System.Drawing.Size(356, 21);
+            this.gr2Game.TabIndex = 30;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(12, 14);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(38, 13);
+            this.label7.TabIndex = 29;
+            this.label7.Text = "Game:";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(941, 653);
+            this.ClientSize = new System.Drawing.Size(941, 671);
+            this.Controls.Add(this.gr2Game);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.tabControl);
             this.Name = "MainForm";
             this.Text = "GR2 Converter";
@@ -1398,6 +1404,7 @@
             this.groupBox3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -1455,8 +1462,6 @@
         private System.Windows.Forms.Button createPackageBtn;
         private System.Windows.Forms.ComboBox compressionMethod;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.ComboBox gr2Game;
-        private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TabPage objectTab;
         private System.Windows.Forms.OpenFileDialog resourceInputFileDlg;
         private System.Windows.Forms.SaveFileDialog resourceOutputFileDlg;
@@ -1521,6 +1526,8 @@
         private System.Windows.Forms.ProgressBar gr2BatchProgressBar;
         private System.Windows.Forms.Label label23;
         private System.Windows.Forms.Label gr2BatchProgressLabel;
+        private System.Windows.Forms.ComboBox gr2Game;
+        private System.Windows.Forms.Label label7;
     }
 }
 

@@ -13,6 +13,8 @@ namespace LSLib.LS.LSF
         private Stream Stream;
         private BinaryWriter Writer;
         private UInt32 Version;
+        private CompressionMethod Compression;
+        private CompressionLevel CompressionLevel;
 
         private MemoryStream NodeStream;
         private BinaryWriter NodeWriter;
@@ -41,6 +43,9 @@ namespace LSLib.LS.LSF
 
         public void Write(Resource resource)
         {
+            Compression = CompressionMethod.LZ4;
+            CompressionLevel = CompressionLevel.MaxCompression;
+
             using (this.Writer = new BinaryWriter(Stream))
             using (this.NodeStream = new MemoryStream())
             using (this.NodeWriter = new BinaryWriter(NodeStream))
@@ -68,26 +73,23 @@ namespace LSLib.LS.LSF
                     stringBuffer = stringStream.ToArray();
                 }
 
-                var compressionMethod = CompressionMethod.LZ4;
-                var compressionLevel = CompressionLevel.MaxCompression;
-
                 var nodeBuffer = NodeStream.ToArray();
                 var attributeBuffer = AttributeStream.ToArray();
                 var valueBuffer = ValueStream.ToArray();
 
                 var header = new Header();
                 header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
-                header.Version = Header.VerChunkedCompress;
+                header.Version = Version;
                 header.EngineVersion = (resource.Metadata.majorVersion << 24) |
                     (resource.Metadata.minorVersion << 16) |
                     (resource.Metadata.revision << 8) |
                     resource.Metadata.buildNumber;
 
-                bool chunked = (header.Version >= Header.VerChunkedCompress);
-                byte[] stringsCompressed = BinUtils.Compress(stringBuffer, compressionMethod, compressionLevel);
-                byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, compressionMethod, compressionLevel, chunked);
-                byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, compressionMethod, compressionLevel, chunked);
-                byte[] valuesCompressed = BinUtils.Compress(valueBuffer, compressionMethod, compressionLevel, chunked);
+                bool chunked = (header.Version >= FileVersion.VerChunkedCompress);
+                byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
+                byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
+                byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
+                byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
                 header.StringsUncompressedSize = (UInt32)stringBuffer.Length;
                 header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
@@ -97,7 +99,7 @@ namespace LSLib.LS.LSF
                 header.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
                 header.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
                 header.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
-                header.CompressionFlags = BinUtils.MakeCompressionFlags(compressionMethod, compressionLevel);
+                header.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
                 header.Unknown2 = 0;
                 header.Unknown3 = 0;
                 header.Unknown4 = 0;
@@ -114,7 +116,8 @@ namespace LSLib.LS.LSF
         {
             foreach (var region in resource.Regions)
             {
-                if (Version >= Header.VerExtendedNodes)
+                if (Version >= FileVersion.VerExtendedNodes
+                    && Compression == CompressionMethod.None)
                 {
                     WriteNodeV3(region.Value);
                 }
@@ -139,7 +142,8 @@ namespace LSLib.LS.LSF
                 attributeInfo.NodeIndex = NextNodeIndex;
                 BinUtils.WriteStruct<AttributeEntry>(AttributeWriter, ref attributeInfo);
 
-                if (Version >= Header.VerExtendedNodes)
+                if (Version >= FileVersion.VerExtendedNodes
+                    && Compression == CompressionMethod.None)
                 {
                     var extendedInfo = new AttributeEntryV3();
                     extendedInfo.Offset = (UInt32)ValueStream.Position;
@@ -158,7 +162,8 @@ namespace LSLib.LS.LSF
             {
                 foreach (var child in children.Value)
                 {
-                    if (Version >= Header.VerExtendedNodes)
+                    if (Version >= FileVersion.VerExtendedNodes
+                        && Compression == CompressionMethod.None)
                     {
                         WriteNodeV3(child);
                     }
@@ -226,7 +231,7 @@ namespace LSLib.LS.LSF
             }
 
             // FIXME!
-            throw new Exception("Writing LSFv3 is not supported yet");
+            throw new Exception("Writing uncompressed LSFv3 is not supported yet");
             nodeInfo.NextSiblingIndex = -1;
             BinUtils.WriteStruct<NodeEntryV3>(NodeWriter, ref nodeInfo);
             NodeIndices[node] = NextNodeIndex;
