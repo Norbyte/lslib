@@ -29,6 +29,7 @@ namespace LSLib.LS.LSF
         private BinaryWriter ValueWriter;
 
         private List<List<string>> StringHashMap;
+        private bool ExtendedNodes = false;
 
         public LSFWriter(Stream stream, UInt32 version)
         {
@@ -102,7 +103,7 @@ namespace LSLib.LS.LSF
                 header.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
                 header.Unknown2 = 0;
                 header.Unknown3 = 0;
-                header.Unknown4 = 0;
+                header.Extended = ExtendedNodes ? 1u : 0u;
                 BinUtils.WriteStruct<Header>(Writer, ref header);
 
                 Writer.Write(stringsCompressed, 0, stringsCompressed.Length);
@@ -117,7 +118,7 @@ namespace LSLib.LS.LSF
             foreach (var region in resource.Regions)
             {
                 if (Version >= FileVersion.VerExtendedNodes
-                    && Compression == CompressionMethod.None)
+                    && ExtendedNodes)
                 {
                     WriteNodeV3(region.Value);
                 }
@@ -143,7 +144,7 @@ namespace LSLib.LS.LSF
                 BinUtils.WriteStruct<AttributeEntry>(AttributeWriter, ref attributeInfo);
 
                 if (Version >= FileVersion.VerExtendedNodes
-                    && Compression == CompressionMethod.None)
+                    && ExtendedNodes)
                 {
                     var extendedInfo = new AttributeEntryV3();
                     extendedInfo.Offset = (UInt32)ValueStream.Position;
@@ -163,7 +164,7 @@ namespace LSLib.LS.LSF
                 foreach (var child in children.Value)
                 {
                     if (Version >= FileVersion.VerExtendedNodes
-                        && Compression == CompressionMethod.None)
+                        && ExtendedNodes)
                     {
                         WriteNodeV3(child);
                     }

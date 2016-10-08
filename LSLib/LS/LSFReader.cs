@@ -47,7 +47,7 @@ namespace LSLib.LS.LSF
         /// </summary>
         public UInt32 Magic;
         /// <summary>
-        /// Version of the LSOF file; DO:S EE is version 1, no other versions were seen so far
+        /// Version of the LSOF file; D:OS EE is version 1/2, D:OS 2 is version 3
         /// </summary>
         public UInt32 Version;
         /// <summary>
@@ -97,18 +97,9 @@ namespace LSLib.LS.LSF
         public Byte Unknown2;
         public UInt16 Unknown3;
         /// <summary>
-        /// Unknown value, 0 for V2, 1 for V3
+        /// Extended node/attribute format indicator, 0 for V2, 0/1 for V3
         /// </summary>
-        public UInt32 Unknown4;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct HeaderV3
-    {
-        /// <summary>
-        /// Unknown value, always 2
-        /// </summary>
-        public UInt16 Unknown5;
+        public UInt32 Extended;
     }
 
     /// <summary>
@@ -594,7 +585,7 @@ namespace LSLib.LS.LSF
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
                         var longNodes = hdr.Version >= FileVersion.VerExtendedNodes 
-                            && BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) == CompressionMethod.None;
+                            && hdr.Extended == 1;
                         ReadNodes(nodesStream, longNodes);
                     }
                 }
@@ -614,7 +605,7 @@ namespace LSLib.LS.LSF
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
                         var longAttributes = hdr.Version >= FileVersion.VerExtendedNodes
-                            && BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) == CompressionMethod.None;
+                            && hdr.Extended == 1;
                         ReadAttributes(attributesStream, longAttributes);
                     }
                 }

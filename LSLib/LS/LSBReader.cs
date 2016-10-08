@@ -163,10 +163,22 @@ namespace LSLib.LS
         {
             int length = reader.ReadInt32() - (nullTerminated ? 1 : 0);
             byte[] bytes = reader.ReadBytes(length);
-            string str = System.Text.Encoding.UTF8.GetString(bytes);
+
+            // Remove stray null bytes at the end of the string
+            // Some LSB files seem to save translated string keys incurrectly, and append two NULL bytes
+            // (or one null byte and another stray byte) to the end of the value.
+            bool hasBogusNullBytes = false;
+            while (length > 0 && bytes[length - 1] == 0)
+            {
+                length--;
+                hasBogusNullBytes = true;
+            }
+
+            string str = System.Text.Encoding.UTF8.GetString(bytes, 0, length);
+
             if (nullTerminated)
             {
-                if (reader.ReadByte() != 0)
+                if (reader.ReadByte() != 0 && !hasBogusNullBytes)
                     throw new InvalidFormatException("Illegal null terminated string");
             }
 
