@@ -129,28 +129,49 @@ namespace LSLib.LS.LSF
             }
         }
 
-        private void WriteNodeAttributes(Node node)
+        private void WriteNodeAttributesV2(Node node)
         {
             UInt32 lastOffset = (UInt32)ValueStream.Position;
             foreach (KeyValuePair<string, NodeAttribute> entry in node.Attributes)
             {
                 WriteAttributeValue(ValueWriter, entry.Value);
 
-                var attributeInfo = new AttributeEntry();
+                var attributeInfo = new AttributeEntryV2();
                 var length = (UInt32)ValueStream.Position - lastOffset;
                 attributeInfo.TypeAndLength = (UInt32)entry.Value.Type | (length << 6);
                 attributeInfo.NameHashTableIndex = AddStaticString(entry.Key);
                 attributeInfo.NodeIndex = NextNodeIndex;
-                BinUtils.WriteStruct<AttributeEntry>(AttributeWriter, ref attributeInfo);
+                BinUtils.WriteStruct<AttributeEntryV2>(AttributeWriter, ref attributeInfo);
+                NextAttributeIndex++;
 
-                if (Version >= FileVersion.VerExtendedNodes
-                    && ExtendedNodes)
+                lastOffset = (UInt32)ValueStream.Position;
+            }
+        }
+
+        private void WriteNodeAttributesV3(Node node)
+        {
+            UInt32 lastOffset = (UInt32)ValueStream.Position;
+            int numWritten = 0;
+            foreach (KeyValuePair<string, NodeAttribute> entry in node.Attributes)
+            {
+                WriteAttributeValue(ValueWriter, entry.Value);
+                numWritten++;
+
+                var attributeInfo = new AttributeEntryV3();
+                var length = (UInt32)ValueStream.Position - lastOffset;
+                attributeInfo.TypeAndLength = (UInt32)entry.Value.Type | (length << 6);
+                attributeInfo.NameHashTableIndex = AddStaticString(entry.Key);
+                if (numWritten == node.Attributes.Count)
                 {
-                    var extendedInfo = new AttributeEntryV3();
-                    extendedInfo.Offset = (UInt32)ValueStream.Position;
-                    BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref extendedInfo);
+                    attributeInfo.NextAttributeIndex = -1;
                 }
-
+                else
+                {
+                    attributeInfo.NextAttributeIndex = NextAttributeIndex + 1;
+                }
+                attributeInfo.Offset = (UInt32)ValueStream.Position;
+                BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref attributeInfo);
+                
                 NextAttributeIndex++;
 
                 lastOffset = (UInt32)ValueStream.Position;
@@ -193,7 +214,7 @@ namespace LSLib.LS.LSF
             if (node.Attributes.Count > 0)
             {
                 nodeInfo.FirstAttributeIndex = NextAttributeIndex;
-                WriteNodeAttributes(node);
+                WriteNodeAttributesV2(node);
             }
             else
             {
@@ -224,7 +245,7 @@ namespace LSLib.LS.LSF
             if (node.Attributes.Count > 0)
             {
                 nodeInfo.FirstAttributeIndex = NextAttributeIndex;
-                WriteNodeAttributes(node);
+                WriteNodeAttributesV3(node);
             }
             else
             {

@@ -209,23 +209,25 @@ namespace LSLib.LS.LSF
         /// </summary>
         public int FirstAttributeIndex;
     };
-
+    
     /// <summary>
-    /// Attribute entry in the LSF file
+    /// V2 attribute extension in the LSF file
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AttributeEntry
+    internal struct AttributeEntryV2
     {
         /// <summary>
         /// Name of this attribute
         /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
         /// </summary>
         public UInt32 NameHashTableIndex;
+
         /// <summary>
         /// 6-bit LSB: Type of this attribute (see NodeAttribute.DataType)
         /// 26-bit MSB: Length of this attribute
         /// </summary>
         public UInt32 TypeAndLength;
+
         /// <summary>
         /// Index of the node that this attribute belongs to
         /// Note: These indexes are assigned seemingly arbitrarily, and are not neccessarily indices into the node list
@@ -272,9 +274,59 @@ namespace LSLib.LS.LSF
     internal struct AttributeEntryV3
     {
         /// <summary>
+        /// Name of this attribute
+        /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
+        /// </summary>
+        public UInt32 NameHashTableIndex;
+
+        /// <summary>
+        /// 6-bit LSB: Type of this attribute (see NodeAttribute.DataType)
+        /// 26-bit MSB: Length of this attribute
+        /// </summary>
+        public UInt32 TypeAndLength;
+
+        /// <summary>
+        /// Index of the node that this attribute belongs to
+        /// Note: These indexes are assigned seemingly arbitrarily, and are not neccessarily indices into the node list
+        /// </summary>
+        public Int32 NextAttributeIndex;
+
+        /// <summary>
         /// Absolute position of attribute value in the value stream
         /// </summary>
         public UInt32 Offset;
+
+        /// <summary>
+        /// Index into name hash table
+        /// </summary>
+        public int NameIndex
+        {
+            get { return (int)(NameHashTableIndex >> 16); }
+        }
+
+        /// <summary>
+        /// Offset in hash chain
+        /// </summary>
+        public int NameOffset
+        {
+            get { return (int)(NameHashTableIndex & 0xffff); }
+        }
+
+        /// <summary>
+        /// Type of this attribute (see NodeAttribute.DataType)
+        /// </summary>
+        public uint TypeId
+        {
+            get { return TypeAndLength & 0x3f; }
+        }
+
+        /// <summary>
+        /// Length of this attribute
+        /// </summary>
+        public uint Length
+        {
+            get { return TypeAndLength >> 6; }
+        }
     };
 
     internal class AttributeInfo
@@ -435,17 +487,16 @@ namespace LSLib.LS.LSF
         }
 
         /// <summary>
-        /// Reads the attribute headers for the LSOF resource
+        /// Reads the V2 attribute headers for the LSOF resource
         /// </summary>
         /// <param name="s">Stream to read the attribute headers from</param>
-        /// <param name="longAttributes">Use the long (V3) on-disk attribute format</param>
-        private void ReadAttributes(Stream s, bool longAttributes)
+        private void ReadAttributesV2(Stream s)
         {
             Attributes = new List<AttributeInfo>();
             using (var reader = new BinaryReader(s))
             {
 #if DEBUG_LSF_SERIALIZATION
-                var rawAttributes = new List<AttributeEntry>();
+                var rawAttributes = new List<AttributeEntryV2>();
 #endif
 
                 var prevAttributeRefs = new List<Int32>();
@@ -453,7 +504,7 @@ namespace LSLib.LS.LSF
                 Int32 index = 0;
                 while (s.Position < s.Length)
                 {
-                    var attribute = BinUtils.ReadStruct<AttributeEntry>(reader);
+                    var attribute = BinUtils.ReadStruct<AttributeEntryV2>(reader);
 
                     var resolved = new AttributeInfo();
                     resolved.NameIndex = attribute.NameIndex;
@@ -462,11 +513,6 @@ namespace LSLib.LS.LSF
                     resolved.Length = attribute.Length;
                     resolved.DataOffset = dataOffset;
                     resolved.NextAttributeIndex = -1;
-
-                    if (longAttributes)
-                    {
-                        BinUtils.ReadStruct<AttributeEntryV3>(reader);
-                    }
 
                     var nodeIndex = attribute.NodeIndex + 1;
                     if (prevAttributeRefs.Count > nodeIndex)
@@ -505,7 +551,7 @@ namespace LSLib.LS.LSF
                 }
 
 
-                Console.WriteLine(" ----- DUMP OF ATTRIBUTE TABLE -----");
+                Console.WriteLine(" ----- DUMP OF V2 ATTRIBUTE TABLE -----");
                 for (int i = 0; i < Attributes.Count; i++)
                 {
                     var resolved = Attributes[i];
@@ -515,6 +561,47 @@ namespace LSLib.LS.LSF
                         "{0}: {1} (offset {2:X}, typeId {3}, nextAttribute {4}, node {5})",
                         i, Names[resolved.NameIndex][resolved.NameOffset], resolved.DataOffset,
                         resolved.TypeId, resolved.NextAttributeIndex, attribute.NodeIndex
+                    );
+                    Console.WriteLine(debug);
+                }
+#endif
+            }
+        }
+
+        /// <summary>
+        /// Reads the V3 attribute headers for the LSOF resource
+        /// </summary>
+        /// <param name="s">Stream to read the attribute headers from</param>
+        private void ReadAttributesV3(Stream s)
+        {
+            Attributes = new List<AttributeInfo>();
+            using (var reader = new BinaryReader(s))
+            {
+                while (s.Position < s.Length)
+                {
+                    var attribute = BinUtils.ReadStruct<AttributeEntryV3>(reader);
+
+                    var resolved = new AttributeInfo();
+                    resolved.NameIndex = attribute.NameIndex;
+                    resolved.NameOffset = attribute.NameOffset;
+                    resolved.TypeId = attribute.TypeId;
+                    resolved.Length = attribute.Length;
+                    resolved.DataOffset = attribute.Offset;
+                    resolved.NextAttributeIndex = attribute.NextAttributeIndex;
+
+                    Attributes.Add(resolved);
+                }
+
+#if DEBUG_LSF_SERIALIZATION
+                Console.WriteLine(" ----- DUMP OF V3 ATTRIBUTE TABLE -----");
+                for (int i = 0; i < Attributes.Count; i++)
+                {
+                    var resolved = Attributes[i];
+
+                    var debug = String.Format(
+                        "{0}: {1} (offset {2:X}, typeId {3}, nextAttribute {4})",
+                        i, Names[resolved.NameIndex][resolved.NameOffset], resolved.DataOffset,
+                        resolved.TypeId, resolved.NextAttributeIndex
                     );
                     Console.WriteLine(debug);
                 }
@@ -606,7 +693,14 @@ namespace LSLib.LS.LSF
                     {
                         var longAttributes = hdr.Version >= FileVersion.VerExtendedNodes
                             && hdr.Extended == 1;
-                        ReadAttributes(attributesStream, longAttributes);
+                        if (longAttributes)
+                        {
+                            ReadAttributesV3(attributesStream);
+                        }
+                        else
+                        {
+                            ReadAttributesV2(attributesStream);
+                        }
                     }
                 }
 
