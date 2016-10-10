@@ -592,10 +592,11 @@ namespace LSLib.Granny.Model
                     case "MaxChannel_2":
                     case "UVChannel_1":
                     case "UVChannel_2":
+                    case "map1":
                         {
                             if (options.ExportUVs)
                             {
-                                int uvIndex = Int32.Parse(component.String.Substring(11)) - 1;
+                                int uvIndex = Int32.Parse(component.String.Substring(component.String.Length - 1)) - 1;
                                 source = PrimaryVertexData.MakeColladaUVs(Name, uvIndex);
 
                                 var texInputOff = new InputLocalOffset();
@@ -613,7 +614,6 @@ namespace LSLib.Granny.Model
                         break;
 
                     case "DiffuseColor0":
-                    case "map1": // Possibly bogus D:OS name for DiffuseColor0
                         // TODO: This is not exported at the moment.
                         break;
 
