@@ -30,6 +30,8 @@ namespace LSLib.LS
             using (var streamWriter = new StreamWriter(stream))
             using (this.writer = new JsonTextWriter(streamWriter))
             {
+                writer.IndentChar = '\t';
+                writer.Indentation = 1;
                 serializer.Serialize(writer, rsrc);
             }
         }
