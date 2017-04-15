@@ -237,7 +237,7 @@ namespace LSLib.LS.Story
                 if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion > 11))
                 {
                     var msg = String.Format(
-                        "Osiris version v{0}.{1} unsupported; this tool supports versions up to v1.11.",
+                        "Osiris version v{0}.{1} unsupported; this tool supports loading up to version 1.11.",
                         reader.MajorVersion, reader.MinorVersion
                     );
                     throw new InvalidDataException(msg);
@@ -311,102 +311,7 @@ namespace LSLib.LS.Story
 
                 foreach (var node in story.Nodes)
                 {
-                    if (node.Value.DatabaseRef.IsValid())
-                    {
-                        var database = story.Databases[node.Value.DatabaseRef.DatabaseIndex];
-                        if (database.OwnerNode != null)
-                        {
-                            throw new InvalidDataException("A database cannot be assigned to multiple database nodes!");
-                        }
-
-                        database.OwnerNode = node.Value;
-                    }
-
-                    if (node.Value is RuleNode)
-                    {
-                        // Remove the __DEF__ postfix that is added to the end of Query nodes
-                        var rule = node.Value as RuleNode;
-                        if (rule.IsQuery)
-                        {
-                            var ruleRoot = rule.GetRoot(story);
-                            if (ruleRoot.Name != null && 
-                                ruleRoot.Name.Length > 7 &&
-                                ruleRoot.Name.Substring(ruleRoot.Name.Length - 7) == "__DEF__")
-                            {
-                                ruleRoot.Name = ruleRoot.Name.Substring(0, ruleRoot.Name.Length - 7);
-                            }
-                        }
-                    }
-
-                    if (node.Value is DataNode)
-                    {
-                        var data = node.Value as DataNode;
-                        foreach (var reference in data.ReferencedBy)
-                        {
-                            if (reference.NodeRef.IsValid())
-                            {
-                                var ruleNode = story.Nodes[reference.NodeRef.NodeIndex];
-                                if (reference.GoalId > 0 &&
-                                    ruleNode is RuleNode)
-                                {
-                                    (ruleNode as RuleNode).DerivedGoalId = reference.GoalId;
-                                }
-                            }
-                        }
-                    }
-
-                    if (node.Value is TreeNode)
-                    {
-                        var tree = node.Value as TreeNode;
-                        if (tree.NextNode.NodeRef.IsValid())
-                        {
-                            var nextNode = story.Nodes[tree.NextNode.NodeRef.NodeIndex];
-                            if (nextNode is RuleNode)
-                            {
-                                (nextNode as RuleNode).DerivedGoalId = tree.NextNode.GoalId;
-                            }
-                        }
-                    }
-                    
-                    if (node.Value is RelNode)
-                    {
-                        var rel = node.Value as RelNode;
-                        if (rel.AdapterRef.IsValid())
-                        {
-                            var adapter = story.Adapters[rel.AdapterRef.AdapterIndex];
-                            if (adapter.OwnerNode != null)
-                            {
-                                throw new InvalidDataException("An adapter cannot be assigned to multiple join/rel nodes!");
-                            }
-
-                            adapter.OwnerNode = node.Value;
-                        }
-                    }
-                    else if (node.Value is JoinNode)
-                    {
-                        var join = node.Value as JoinNode;
-                        if (join.Adapter1Ref.IsValid())
-                        {
-                            var adapter = story.Adapters[join.Adapter1Ref.AdapterIndex];
-                            if (adapter.OwnerNode != null)
-                            {
-                                throw new InvalidDataException("An adapter cannot be assigned to multiple join/rel nodes!");
-                            }
-
-                            adapter.OwnerNode = node.Value;
-                        }
-
-                        if (join.Adapter2Ref.IsValid())
-                        {
-                            var adapter = story.Adapters[join.Adapter2Ref.AdapterIndex];
-                            if (adapter.OwnerNode != null)
-                            {
-                                throw new InvalidDataException("An adapter cannot be assigned to multiple join/rel nodes!");
-                            }
-
-                            adapter.OwnerNode = node.Value;
-                        }
-                    }
+                    node.Value.PostLoad(story);
                 }
 
                 return story;

@@ -56,6 +56,33 @@ namespace LSLib.LS.Story
             writer.Write(Database2Flag);
         }
 
+        public override void PostLoad(Story story)
+        {
+            base.PostLoad(story);
+
+            if (Adapter1Ref.IsValid())
+            {
+                var adapter = story.Adapters[Adapter1Ref.AdapterIndex];
+                if (adapter.OwnerNode != null)
+                {
+                    throw new InvalidDataException("An adapter cannot be assigned to multiple join/rel nodes!");
+                }
+
+                adapter.OwnerNode = this;
+            }
+
+            if (Adapter2Ref.IsValid())
+            {
+                var adapter = story.Adapters[Adapter2Ref.AdapterIndex];
+                if (adapter.OwnerNode != null)
+                {
+                    throw new InvalidDataException("An adapter cannot be assigned to multiple join/rel nodes!");
+                }
+
+                adapter.OwnerNode = this;
+            }
+        }
+
         public override void DebugDump(TextWriter writer, Story story)
         {
             base.DebugDump(writer, story);

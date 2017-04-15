@@ -23,6 +23,24 @@ namespace LSLib.LS.Story
             writer.WriteList<NodeEntryItem>(ReferencedBy);
         }
 
+        public override void PostLoad(Story story)
+        {
+            base.PostLoad(story);
+
+            foreach (var reference in ReferencedBy)
+            {
+                if (reference.NodeRef.IsValid())
+                {
+                    var ruleNode = story.Nodes[reference.NodeRef.NodeIndex];
+                    if (reference.GoalId > 0 &&
+                        ruleNode is RuleNode)
+                    {
+                        (ruleNode as RuleNode).DerivedGoalId = reference.GoalId;
+                    }
+                }
+            }
+        }
+
         public override void DebugDump(TextWriter writer, Story story)
         {
             base.DebugDump(writer, story);

@@ -432,66 +432,6 @@ namespace ConverterApp
             }
         }
 
-        private void storyFileBrowseBtn_Click(object sender, EventArgs e)
-        {
-            var result = storyPathDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
-            {
-                storyFilePath.Text = storyPathDlg.FileName;
-            }
-        }
-
-        private void goalPathBrowseBtn_Click(object sender, EventArgs e)
-        {
-            var result = goalPathDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
-            {
-                goalPath.Text = goalPathDlg.SelectedPath;
-            }
-        }
-
-        private void decompileStoryBtn_Click(object sender, EventArgs e)
-        {
-            if (Story == null)
-            {
-                MessageBox.Show("A story file must be loaded before exporting.", "Story export failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var debugPath = goalPath.Text + "/debug.log";
-            using (var debugFile = new FileStream(debugPath, FileMode.Create, FileAccess.Write))
-            using (var writer = new StreamWriter(debugFile))
-            {
-                Story.DebugDump(writer);
-            }
-
-            var unassignedPath = goalPath.Text + "/UNASSIGNED_RULES.txt";
-            using (var goalFile = new FileStream(unassignedPath, FileMode.Create, FileAccess.Write))
-            using (var writer = new StreamWriter(goalFile))
-            {
-                var dummyGoal = new Goal();
-                dummyGoal.ExitCalls = new List<Call>();
-                dummyGoal.InitCalls = new List<Call>();
-                dummyGoal.ParentGoals = new List<uint>();
-                dummyGoal.SubGoals = new List<uint>();
-                dummyGoal.Name = "UNASSIGNED_RULES";
-                dummyGoal.Index = 0;
-                dummyGoal.MakeScript(writer, Story);
-            }
-
-            foreach (var goal in Story.Goals)
-            {
-                var filePath = goalPath.Text + "/" + goal.Value.Name + ".txt";
-                using (var goalFile = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                using (var writer = new StreamWriter(goalFile))
-                {
-                    goal.Value.MakeScript(writer, Story);
-                }
-            }
-
-            MessageBox.Show("Story unpacked successfully.");
-        }
-
         private void resourceConvertBtn_Click(object sender, EventArgs e)
         {
             try
@@ -630,6 +570,24 @@ namespace ConverterApp
             }
         }
 
+        private void storyFileBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = storyPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                storyFilePath.Text = storyPathDlg.FileName;
+            }
+        }
+
+        private void goalPathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            var result = goalPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                goalPath.Text = goalPathDlg.SelectedPath;
+            }
+        }
+
         private void loadStoryBtn_Click(object sender, EventArgs e)
         {
             using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
@@ -656,6 +614,54 @@ namespace ConverterApp
                     databaseSelectorCb.Items.Add(name);
                 }
             }
+
+            if (databaseSelectorCb.Items.Count > 0)
+            {
+                databaseSelectorCb.SelectedIndex = 0;
+            }
+
+            MessageBox.Show("Story file loaded successfully.");
+
+        private void decompileStoryBtn_Click(object sender, EventArgs e)
+        {
+            if (Story == null)
+            {
+                MessageBox.Show("A story file must be loaded before exporting.", "Story export failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var debugPath = goalPath.Text + "/debug.log";
+            using (var debugFile = new FileStream(debugPath, FileMode.Create, FileAccess.Write))
+            using (var writer = new StreamWriter(debugFile))
+            {
+                Story.DebugDump(writer);
+            }
+
+            var unassignedPath = goalPath.Text + "/UNASSIGNED_RULES.txt";
+            using (var goalFile = new FileStream(unassignedPath, FileMode.Create, FileAccess.Write))
+            using (var writer = new StreamWriter(goalFile))
+            {
+                var dummyGoal = new Goal();
+                dummyGoal.ExitCalls = new List<Call>();
+                dummyGoal.InitCalls = new List<Call>();
+                dummyGoal.ParentGoals = new List<uint>();
+                dummyGoal.SubGoals = new List<uint>();
+                dummyGoal.Name = "UNASSIGNED_RULES";
+                dummyGoal.Index = 0;
+                dummyGoal.MakeScript(writer, Story);
+            }
+
+            foreach (var goal in Story.Goals)
+            {
+                var filePath = goalPath.Text + "/" + goal.Value.Name + ".txt";
+                using (var goalFile = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                using (var writer = new StreamWriter(goalFile))
+                {
+                    goal.Value.MakeScript(writer, Story);
+                }
+            }
+
+            MessageBox.Show("Story unpacked successfully.");
         }
 
         private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)

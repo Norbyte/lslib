@@ -35,7 +35,7 @@ namespace LSLib.LS.Story
                 NumParams = reader.ReadByte();
             }
         }
-
+        
         public virtual void Write(OsiWriter writer)
         {
             DatabaseRef.Write(writer);
@@ -50,6 +50,19 @@ namespace LSLib.LS.Story
 
         abstract public void MakeScript(TextWriter writer, Story story, Tuple tuple);
 
+        public virtual void PostLoad(Story story)
+        {
+            if (DatabaseRef.IsValid())
+            {
+                var database = story.Databases[DatabaseRef.DatabaseIndex];
+                if (database.OwnerNode != null)
+                {
+                    throw new InvalidDataException("A database cannot be assigned to multiple database nodes!");
+                }
+
+                database.OwnerNode = this;
+            }
+        }
         public virtual void DebugDump(TextWriter writer, Story story)
         {
             if (Name.Length > 0)
@@ -84,6 +97,20 @@ namespace LSLib.LS.Story
         {
             base.Write(writer);
             NextNode.Write(writer);
+        }
+
+        public override void PostLoad(Story story)
+        {
+            base.PostLoad(story);
+
+            if (NextNode.NodeRef.IsValid())
+            {
+                var nextNode = story.Nodes[NextNode.NodeRef.NodeIndex];
+                if (nextNode is RuleNode)
+                {
+                    (nextNode as RuleNode).DerivedGoalId = NextNode.GoalId;
+                }
+            }
         }
 
         public override void DebugDump(TextWriter writer, Story story)

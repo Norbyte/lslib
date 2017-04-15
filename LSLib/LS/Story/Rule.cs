@@ -168,5 +168,26 @@ namespace LSLib.LS.Story
                 writer.WriteLine();
             }
         }
+
+        private void RemoveQueryPostfix(Story story)
+        {
+            // Remove the __DEF__ postfix that is added to the end of Query nodes
+            if (IsQuery)
+            {
+                var ruleRoot = GetRoot(story);
+                if (ruleRoot.Name != null &&
+                    ruleRoot.Name.Length > 7 &&
+                    ruleRoot.Name.Substring(ruleRoot.Name.Length - 7) == "__DEF__")
+                {
+                    ruleRoot.Name = ruleRoot.Name.Substring(0, ruleRoot.Name.Length - 7);
+                }
+            }
+        }
+
+        public override void PostLoad(Story story)
+        {
+            base.PostLoad(story);
+            RemoveQueryPostfix(story);
+        }
     }
 }
