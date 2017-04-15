@@ -6,9 +6,6 @@ namespace LSLib {
 	namespace Native {
 		array<byte> ^ LZ4FrameCompressor::Compress(array<byte> ^ input)
 		{
-			pin_ptr<byte> inputPin(&input[input->GetLowerBound(0)]);
-			byte * inputPtr = inputPin;
-
 			// Initialize LZ4 compression
 			LZ4F_compressionContext_t cctx;
 			auto error = LZ4F_createCompressionContext(&cctx, LZ4F_VERSION);
@@ -42,31 +39,37 @@ namespace LSLib {
 
 			outputOffset += headerSize;
 
-			// Process input in 0x10000 byte chunks
-			while (inputOffset < input->Length)
+			if (input->Length)
 			{
-				size_t chunkSize = input->Length - inputOffset;
-				if (chunkSize > 0x10000) chunkSize = 0x10000;
+				pin_ptr<byte> inputPin(&input[input->GetLowerBound(0)]);
+				byte * inputPtr = inputPin;
 
-				// Keep the required number of bytes free in the output array
-				size_t requiredSize = LZ4F_compressBound(chunkSize, &preferences);
-				size_t outputFree = output.size() - outputOffset;
-				if (outputFree < requiredSize)
+				// Process input in 0x10000 byte chunks
+				while (inputOffset < input->Length)
 				{
-					output.resize(output.size() + (requiredSize - outputFree));
-					outputFree = output.size() - outputOffset;
-				}
+					size_t chunkSize = input->Length - inputOffset;
+					if (chunkSize > 0x10000) chunkSize = 0x10000;
 
-				// Process the next input chunk
-				auto bytesWritten = LZ4F_compressUpdate(cctx, output.data() + outputOffset, outputFree, inputPtr + inputOffset, chunkSize, &options);
-				if (LZ4F_isError(bytesWritten))
-				{
-					auto errmsg = std::string("LZ4 compression failed: ") + LZ4F_getErrorName(bytesWritten);
-					throw gcnew System::IO::InvalidDataException(msclr::interop::marshal_as<System::String ^>(errmsg));
-				}
+					// Keep the required number of bytes free in the output array
+					size_t requiredSize = LZ4F_compressBound(chunkSize, &preferences);
+					size_t outputFree = output.size() - outputOffset;
+					if (outputFree < requiredSize)
+					{
+						output.resize(output.size() + (requiredSize - outputFree));
+						outputFree = output.size() - outputOffset;
+					}
 
-				inputOffset += chunkSize;
-				outputOffset += bytesWritten;
+					// Process the next input chunk
+					auto bytesWritten = LZ4F_compressUpdate(cctx, output.data() + outputOffset, outputFree, inputPtr + inputOffset, chunkSize, &options);
+					if (LZ4F_isError(bytesWritten))
+					{
+						auto errmsg = std::string("LZ4 compression failed: ") + LZ4F_getErrorName(bytesWritten);
+						throw gcnew System::IO::InvalidDataException(msclr::interop::marshal_as<System::String ^>(errmsg));
+					}
+
+					inputOffset += chunkSize;
+					outputOffset += bytesWritten;
+				}
 			}
 
 			// LZ4F_compressEnd needs at most 8 free bytes.
@@ -134,7 +137,7 @@ namespace LSLib {
 				inputOffset += inputAvailable;
 				outputOffset += outputFree;
 
-				if (outputFree == 0)
+				if (inputAvailable == 0)
 				{
 					// No bytes were processed but the whole input stream was passed to LZ4F_decompress; possible corruption?
 					throw gcnew System::IO::InvalidDataException("LZ4 error: Not all input data was processed (input might be truncated or corrupted?)");
@@ -144,9 +147,13 @@ namespace LSLib {
 			// Copy the output to a managed array
 			LZ4F_freeDecompressionContext(dctx);
 			array<byte> ^ decompressed = gcnew array<byte>(outputOffset);
-			pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
-			byte * decomp = decompPtr;
-			memcpy(decomp, output.data(), outputOffset);
+			if (outputOffset > 0)
+			{
+				pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
+				byte * decomp = decompPtr;
+				memcpy(decomp, output.data(), outputOffset);
+			}
+
 			return decompressed;
 		}
 	}
