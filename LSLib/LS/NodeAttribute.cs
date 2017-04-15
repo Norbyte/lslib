@@ -51,8 +51,9 @@ namespace LSLib.LS
             DT_TranslatedString = 28,
             DT_WString = 29,
             DT_LSWString = 30,
+            DT_UUID = 31,
             // Last supported datatype, always keep this one at the end
-            DT_Max = DT_LSWString
+            DT_Max = DT_UUID
         };
 
         private DataType type;
@@ -298,6 +299,10 @@ namespace LSLib.LS
 
                 case DataType.DT_Int8:
                     value = Convert.ToSByte(str);
+                    break;
+
+                case DataType.DT_UUID:
+                    value = new Guid(str);
                     break;
 
                 default:

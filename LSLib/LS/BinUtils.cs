@@ -152,6 +152,10 @@ namespace LSLib.LS
                     attr.Value = reader.ReadSByte();
                     break;
 
+                case NodeAttribute.DataType.DT_UUID:
+                    attr.Value = new Guid(reader.ReadBytes(16));
+                    break;
+
                 default:
                     // Strings are serialized differently for each file format and should be
                     // handled by the format-specific ReadAttribute()
@@ -245,6 +249,10 @@ namespace LSLib.LS
 
                 case NodeAttribute.DataType.DT_Int8:
                     writer.Write((SByte)attr.Value);
+                    break;
+
+                case NodeAttribute.DataType.DT_UUID:
+                    writer.Write(((Guid)attr.Value).ToByteArray());
                     break;
 
                 default:

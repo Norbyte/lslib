@@ -112,6 +112,10 @@ namespace LSLib.LS
                                 attribute.Value = translatedString;
                                 break;
 
+                            case NodeAttribute.DataType.DT_UUID:
+                                attribute.Value = new Guid(reader.Value.ToString());
+                                break;
+
                             // TODO: haven't seen any vectors/matrices in D:OS JSON files so far
                             case NodeAttribute.DataType.DT_None:
                             case NodeAttribute.DataType.DT_IVec2:
@@ -420,6 +424,10 @@ namespace LSLib.LS
                         writer.WriteValue(attribute.Value.ToString());
                         writer.WritePropertyName("handle");
                         writer.WriteValue(((TranslatedString)attribute.Value.Value).Handle);
+                        break;
+
+                    case NodeAttribute.DataType.DT_UUID:
+                        writer.WriteValue(((Guid)attribute.Value.Value).ToString());
                         break;
 
                     // TODO: haven't seen any vectors/matrices in D:OS JSON files so far
