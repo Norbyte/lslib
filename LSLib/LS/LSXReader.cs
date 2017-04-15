@@ -51,8 +51,8 @@ namespace LSLib.LS
                                 string version = reader["version"];
                                 if (version != InitialVersion && version != CurrentVersion)
                                     throw new InvalidFormatException(String.Format("Unsupported LSX version; expected {0}, found {1}", CurrentVersion, version));
-
-                                rsrc.Metadata.timestamp = Convert.ToUInt64(reader["timestamp"]);
+                                
+                                rsrc.Metadata.timestamp = Convert.ToUInt64(reader["time"]);
                                 break;
 
                             case "version":
