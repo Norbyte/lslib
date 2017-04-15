@@ -12,7 +12,8 @@ namespace LSLib.LS
     {
         LSX,
         LSB,
-        LSF
+        LSF,
+        LSJ
     };
 
 
@@ -35,6 +36,9 @@ namespace LSLib.LS
 
                 case ".lsf":
                     return ResourceFormat.LSF;
+
+                case ".lsj":
+                    return ResourceFormat.LSJ;
 
                 default:
                     throw new ArgumentException("Unrecognized file extension: " + extension);
@@ -70,6 +74,14 @@ namespace LSLib.LS
                 case ResourceFormat.LSF:
                     {
                         using (var reader = new LSFReader(file))
+                        {
+                            return reader.Read();
+                        }
+                    }
+
+                case ResourceFormat.LSJ:
+                    {
+                        using (var reader = new LSJReader(file))
                         {
                             return reader.Read();
                         }
@@ -124,6 +136,16 @@ namespace LSLib.LS
 
                         using (var writer = new LSFWriter(file, lsfVersion))
                         {
+                            writer.Write(resource);
+                        }
+                        break;
+                    }
+
+                case ResourceFormat.LSJ:
+                    {
+                        using (var writer = new LSJWriter(file))
+                        {
+                            writer.PrettyPrint = true;
                             writer.Write(resource);
                         }
                         break;

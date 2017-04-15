@@ -930,7 +930,7 @@
             this.objectTab.Padding = new System.Windows.Forms.Padding(3);
             this.objectTab.Size = new System.Drawing.Size(909, 594);
             this.objectTab.TabIndex = 2;
-            this.objectTab.Text = "LSX / LSB / LSF Tools";
+            this.objectTab.Text = "LSX / LSB / LSF / LSJ Tools";
             this.objectTab.UseVisualStyleBackColor = true;
             // 
             // groupBox5
@@ -991,7 +991,8 @@
             this.resourceOutputFormatCb.Items.AddRange(new object[] {
             "LSX (XML) file",
             "LSB (binary) file",
-            "LSF (binary) file"});
+            "LSF (binary) file",
+            "LSJ (JSON) file"});
             this.resourceOutputFormatCb.Location = new System.Drawing.Point(180, 128);
             this.resourceOutputFormatCb.Name = "resourceOutputFormatCb";
             this.resourceOutputFormatCb.Size = new System.Drawing.Size(151, 21);
@@ -1013,7 +1014,8 @@
             this.resourceInputFormatCb.Items.AddRange(new object[] {
             "LSX (XML) file",
             "LSB (binary) file",
-            "LSF (binary) file"});
+            "LSF (binary) file",
+            "LSJ (JSON) file"});
             this.resourceInputFormatCb.Location = new System.Drawing.Point(11, 128);
             this.resourceInputFormatCb.Name = "resourceInputFormatCb";
             this.resourceInputFormatCb.Size = new System.Drawing.Size(151, 21);
@@ -1113,7 +1115,7 @@
             this.groupBox4.Size = new System.Drawing.Size(895, 152);
             this.groupBox4.TabIndex = 59;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Convert LSX / LSB / LSF files";
+            this.groupBox4.Text = "Convert LSX / LSB / LSF files / LSJ";
             // 
             // resourceConvertBtn
             // 
@@ -1348,12 +1350,12 @@
             // 
             // resourceInputFileDlg
             // 
-            this.resourceInputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf";
+            this.resourceInputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf;*.lsj";
             this.resourceInputFileDlg.Title = "Select Input File";
             // 
             // resourceOutputFileDlg
             // 
-            this.resourceOutputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf";
+            this.resourceOutputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf;*.lsj";
             this.resourceOutputFileDlg.Title = "Select Output File";
             // 
             // storyPathDlg

@@ -1,0 +1,37 @@
+﻿using System;
+using System.IO;
+using Newtonsoft.Json;
+
+namespace LSLib.LS
+{
+    public class LSJWriter : IDisposable
+    {
+        private Stream stream;
+        private JsonTextWriter writer;
+        public bool PrettyPrint = false;
+
+        public LSJWriter(Stream stream)
+        {
+            this.stream = stream;
+        }
+
+        public void Dispose()
+        {
+            stream.Dispose();
+        }
+
+        public void Write(Resource rsrc)
+        {
+            var settings = new JsonSerializerSettings();
+            settings.Formatting = Newtonsoft.Json.Formatting.Indented;
+            settings.Converters.Add(new LSJResourceConverter());
+            var serializer = JsonSerializer.Create(settings);
+
+            using (var streamWriter = new StreamWriter(stream))
+            using (this.writer = new JsonTextWriter(streamWriter))
+            {
+                serializer.Serialize(writer, rsrc);
+            }
+        }
+    }
+}

@@ -41,6 +41,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\lz4net.1.0.9.93\lib\net4-client\LZ4.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -126,6 +130,9 @@
     <Compile Include="LS\LSBWriter.cs" />
     <Compile Include="LS\LSFReader.cs" />
     <Compile Include="LS\LSFWriter.cs" />
+    <Compile Include="LS\LSJReader.cs" />
+    <Compile Include="LS\LSJResourceConverter.cs" />
+    <Compile Include="LS\LSJWriter.cs" />
     <Compile Include="LS\LSXReader.cs" />
     <Compile Include="LS\LSXWriter.cs" />
     <Compile Include="LS\Matrix.cs" />

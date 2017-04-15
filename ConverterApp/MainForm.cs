@@ -523,6 +523,10 @@ namespace ConverterApp
                 case 2:
                     inputFormat = ResourceFormat.LSF;
                     break;
+
+                case 3:
+                    inputFormat = ResourceFormat.LSJ;
+                    break;
             }
 
             ResourceFormat outputFormat = ResourceFormat.LSF;
@@ -547,6 +551,10 @@ namespace ConverterApp
                     {
                         outputVersion = (int)FileVersion.VerChunkedCompress;
                     }
+                    break;
+
+                case 3:
+                    outputFormat = ResourceFormat.LSJ;
                     break;
             }
 
