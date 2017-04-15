@@ -94,6 +94,18 @@ namespace LSLib.LS.Story
 
         }
 
+        private List<string> ReadStrings(OsiReader reader)
+        {
+            var stringTable = new List<string>();
+            var count = reader.ReadUInt32();
+            while (count-- > 0)
+            {
+                stringTable.Add(reader.ReadString());
+            }
+
+            return stringTable;
+        }
+
         private Dictionary<uint, OsirisType> ReadTypes(OsiReader reader)
         {
             var types = new Dictionary<uint, OsirisType>();
@@ -222,10 +234,10 @@ namespace LSLib.LS.Story
                 story.MinorVersion = header.MinorVersion;
                 story.MajorVersion = header.MajorVersion;
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion > 7))
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion > 11))
                 {
                     var msg = String.Format(
-                        "Osiris version v{0}.{1} unsupported; this tool supports versions up to v1.7.",
+                        "Osiris version v{0}.{1} unsupported; this tool supports versions up to v1.11.",
                         reader.MajorVersion, reader.MinorVersion
                     );
                     throw new InvalidDataException(msg);
@@ -235,22 +247,59 @@ namespace LSLib.LS.Story
                     reader.Scramble = 0xAD;
 
                 if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 5))
+                {
                     story.Types = ReadTypes(reader);
+                    foreach (var type in story.Types)
+                    {
+                        if (type.Value.Alias != 0)
+                        {
+                            reader.TypeAliases.Add(type.Key, type.Value.Alias);
+                        }
+                    }
+                }
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
 
+                List<string> stringTable;
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
+                    stringTable = ReadStrings(reader);
+                else
+                    stringTable = new List<string>();
+                
                 story.Types[0] = new OsirisType();
                 story.Types[0].Index = 0;
                 story.Types[0].Name = "UNKNOWN";
-                story.Types[1] = new OsirisType();
-                story.Types[1].Index = 1;
-                story.Types[1].Name = "INTEGER";
-                story.Types[2] = new OsirisType();
-                story.Types[2].Index = 2;
-                story.Types[2].Name = "FLOAT";
-                story.Types[3] = new OsirisType();
-                story.Types[3].Index = 3;
-                story.Types[3].Name = "STRING";
+
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
+                {
+                    story.Types[1] = new OsirisType();
+                    story.Types[1].Index = 1;
+                    story.Types[1].Name = "INTEGER";
+                    story.Types[2] = new OsirisType();
+                    story.Types[2].Index = 2;
+                    story.Types[2].Name = "INTEGER64";
+                    story.Types[3] = new OsirisType();
+                    story.Types[3].Index = 3;
+                    story.Types[3].Name = "REAL";
+                    story.Types[4] = new OsirisType();
+                    story.Types[4].Index = 4;
+                    story.Types[4].Name = "STRING";
+                    story.Types[5] = new OsirisType();
+                    story.Types[5].Index = 5;
+                    story.Types[5].Name = "GUIDSTRING";
+                }
+                else
+                {
+                    story.Types[1] = new OsirisType();
+                    story.Types[1].Index = 1;
+                    story.Types[1].Name = "INTEGER";
+                    story.Types[2] = new OsirisType();
+                    story.Types[2].Index = 2;
+                    story.Types[2].Name = "FLOAT";
+                    story.Types[3] = new OsirisType();
+                    story.Types[3].Index = 3;
+                    story.Types[3].Name = "STRING";
+                }
 
                 story.DivObjects = reader.ReadList<OsirisDivObject>();
                 story.Functions = reader.ReadList<Function>();

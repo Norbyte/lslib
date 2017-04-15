@@ -9,7 +9,19 @@ namespace LSLib.LS.Story
 {
     public class Value : OsirisSerializable
     {
+        // Original Sin 2 (v1.11) Type ID-s
         public enum Type : uint
+        {
+            Unknown = 0,
+            Integer = 1,
+            Integer64 = 2,
+            Float = 3,
+            String = 4,
+            GuidString = 5
+        }
+
+        // Original Sin 1 (v1.0 - v1.7) Type ID-s
+        public enum Type_OS1 : uint
         {
             Unknown = 0,
             Integer = 1,
@@ -19,6 +31,7 @@ namespace LSLib.LS.Story
 
         public UInt32 TypeId;
         public Int32 IntValue;
+        public Int64 Int64Value;
         public Single FloatValue;
         public String StringValue;
 
@@ -28,14 +41,17 @@ namespace LSLib.LS.Story
             {
                 case Type.Unknown: return "";
                 case Type.Integer: return IntValue.ToString();
+                case Type.Integer64: return Int64Value.ToString();
                 case Type.Float: return FloatValue.ToString();
                 case Type.String: return StringValue;
+                case Type.GuidString: return StringValue;
                 default: return StringValue;
             }
         }
 
         public virtual void Read(OsiReader reader)
         {
+            // possibly isReference?
             var wtf = reader.ReadByte();
             if (wtf == 49)
             {
@@ -45,7 +61,38 @@ namespace LSLib.LS.Story
             else if (wtf == 48)
             {
                 TypeId = reader.ReadUInt32();
-                switch ((Type)TypeId)
+                uint writtenTypeId = TypeId;
+
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion < 11))
+                {
+                    // Convert D:OS 1 type ID to D:OS 2 type ID
+                    switch ((Type_OS1)TypeId)
+                    {
+                        case Type_OS1.Unknown:
+                            writtenTypeId = (uint)Type.Unknown;
+                            break;
+
+                        case Type_OS1.Integer:
+                            writtenTypeId = (uint)Type.Integer;
+                            break;
+
+                        case Type_OS1.Float:
+                            writtenTypeId = (uint)Type.Float;
+                            break;
+
+                        case Type_OS1.String:
+                            writtenTypeId = (uint)Type.String;
+                            break;
+                    }
+                }
+
+                uint alias;
+                if (reader.TypeAliases.TryGetValue(writtenTypeId, out alias))
+                {
+                    writtenTypeId = alias;
+                }
+
+                switch ((Type)writtenTypeId)
                 {
                     case Type.Unknown:
                         break;
@@ -54,10 +101,15 @@ namespace LSLib.LS.Story
                         IntValue = reader.ReadInt32();
                         break;
 
+                    case Type.Integer64:
+                        Int64Value = reader.ReadInt64();
+                        break;
+
                     case Type.Float:
                         FloatValue = reader.ReadSingle();
                         break;
 
+                    case Type.GuidString:
                     case Type.String:
                         if (reader.ReadByte() > 0)
                         {
@@ -79,7 +131,43 @@ namespace LSLib.LS.Story
         public virtual void Write(OsiWriter writer)
         {
             writer.Write((byte)48);
-            writer.Write(TypeId);
+
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 11))
+            {
+                uint os1TypeId;
+                // Convert D:OS 1 type ID to D:OS 2 type ID
+                switch ((Type)TypeId)
+                {
+                    case Type.Unknown:
+                        os1TypeId = (uint)Type_OS1.Unknown;
+                        break;
+
+                    case Type.Integer:
+                    case Type.Integer64:
+                        os1TypeId = (uint)Type_OS1.Integer;
+                        break;
+
+                    case Type.Float:
+                        os1TypeId = (uint)Type_OS1.Float;
+                        break;
+
+                    case Type.String:
+                    case Type.GuidString:
+                        os1TypeId = (uint)Type_OS1.String;
+                        break;
+
+                    default:
+                        os1TypeId = TypeId;
+                        break;
+                }
+
+                writer.Write(os1TypeId);
+            }
+            else
+            {
+                writer.Write(TypeId);
+            }
+
             switch ((Type)TypeId)
             {
                 case Type.Unknown:
@@ -89,11 +177,24 @@ namespace LSLib.LS.Story
                     writer.Write(IntValue);
                     break;
 
+                case Type.Integer64:
+                    if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 11))
+                    {
+                        writer.Write(Int64Value);
+                    }
+                    else
+                    {
+                        writer.Write((int)Int64Value);
+                    }
+                        
+                    break;
+
                 case Type.Float:
                     writer.Write(FloatValue);
                     break;
 
                 case Type.String:
+                case Type.GuidString:
                     writer.Write(StringValue != null);
                     if (StringValue != null)
                         writer.Write(StringValue);
@@ -117,11 +218,16 @@ namespace LSLib.LS.Story
                     writer.Write(IntValue);
                     break;
 
+                case Type.Integer64:
+                    writer.Write(Int64Value);
+                    break;
+
                 case Type.Float:
                     writer.Write(FloatValue);
                     break;
 
                 case Type.String:
+                case Type.GuidString:
                     writer.Write("'{0}'", StringValue);
                     break;
 
@@ -142,14 +248,19 @@ namespace LSLib.LS.Story
                     writer.Write(IntValue);
                     break;
 
+                case Type.Integer64:
+                    writer.Write(IntValue);
+                    break;
+
                 case Type.Float:
                     writer.Write(FloatValue);
                     break;
 
                 case Type.String:
+                case Type.GuidString:
                     writer.Write("\"{0}\"", StringValue);
                     break;
-
+                    
                 default:
                     writer.Write(StringValue);
                     break;

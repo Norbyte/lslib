@@ -86,8 +86,10 @@ namespace LSLib.LS.Story
                 {
                     case Value.Type.Unknown: throw new InvalidOperationException("Cannot retrieve type of an unknown attribute");
                     case Value.Type.Integer: return typeof(Int32);
+                    case Value.Type.Integer64: return typeof(Int64);
                     case Value.Type.Float: return typeof(Single);
                     case Value.Type.String: return typeof(String);
+                    case Value.Type.GuidString: return typeof(String);
                     default: return typeof(String);
                 }
             }
@@ -113,6 +115,14 @@ namespace LSLib.LS.Story
                         if (value is String) column.IntValue = Int32.Parse((String)value);
                         else if (value is Int32) column.IntValue = (Int32)value;
                         else throw new ArgumentException("Invalid Int32 value");
+                        break;
+                    }
+
+                case Value.Type.Integer64:
+                    {
+                        if (value is String) column.Int64Value = Int64.Parse((String)value);
+                        else if (value is Int64) column.Int64Value = (Int64)value;
+                        else throw new ArgumentException("Invalid Int64 value");
                         break;
                     }
 
@@ -198,7 +208,7 @@ namespace LSLib.LS.Story
         {
             if (OwnerNode != null && OwnerNode.Name.Length > 0)
             {
-                writer.Write("{0}/{1}", OwnerNode.Name, OwnerNode.NameIndex);
+                writer.Write("{0}({1})", OwnerNode.Name, OwnerNode.NumParams);
             }
             else if (OwnerNode != null)
             {

@@ -140,7 +140,7 @@ namespace LSLib.LS.Story
             if (NodeRef.IsValid())
             {
                 var node = story.Nodes[NodeRef.NodeIndex];
-                writer.Write(" @ {0}/{1}", node.Name, node.NameIndex);
+                writer.Write(" @ {0}({1})", node.Name, node.NumParams);
             }
 
             writer.WriteLine(" [{0}, {1}]", Unknown1, Unknown2);

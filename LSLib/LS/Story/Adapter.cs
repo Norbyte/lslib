@@ -110,7 +110,7 @@ namespace LSLib.LS.Story
             writer.Write("Adapter - ");
             if (OwnerNode != null && OwnerNode.Name.Length > 0)
             {
-                writer.WriteLine("Node {0}/{1}", OwnerNode.Name, OwnerNode.NameIndex);
+                writer.WriteLine("Node {0}({1})", OwnerNode.Name, OwnerNode.NumParams);
             }
             else if (OwnerNode != null)
             {

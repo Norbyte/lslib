@@ -37,7 +37,7 @@ namespace LSLib.LS.Story
                 var node = story.Nodes[NodeIndex];
                 if (node.Name.Length > 0)
                 {
-                    writer.Write("#{0} <{1}/{2} {3}>", NodeIndex, node.Name, node.NameIndex, node.TypeName());
+                    writer.Write("#{0} <{1}({2}) {3}>", NodeIndex, node.Name, node.NumParams, node.TypeName());
                 }
                 else
                 {

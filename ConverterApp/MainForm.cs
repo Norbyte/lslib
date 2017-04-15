@@ -644,7 +644,7 @@ namespace ConverterApp
                     var owner = database.Value.OwnerNode;
                     if (owner != null && owner.Name.Length > 0)
                     {
-                        name = String.Format("{0}/{1}", owner.Name, owner.NameIndex);
+                        name = String.Format("{0}({1})", owner.Name, owner.NumParams);
                     }
                     else if (owner != null)
                     {

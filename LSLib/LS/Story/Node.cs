@@ -24,7 +24,7 @@ namespace LSLib.LS.Story
 
         public DatabaseRef DatabaseRef;
         public string Name;
-        public byte NameIndex;
+        public byte NumParams;
 
         public virtual void Read(OsiReader reader)
         {
@@ -32,7 +32,7 @@ namespace LSLib.LS.Story
             Name = reader.ReadString();
             if (Name.Length > 0)
             {
-                NameIndex = reader.ReadByte();
+                NumParams = reader.ReadByte();
             }
         }
 
@@ -41,7 +41,7 @@ namespace LSLib.LS.Story
             DatabaseRef.Write(writer);
             writer.Write(Name);
             if (Name.Length > 0)
-                writer.Write(NameIndex);
+                writer.Write(NumParams);
         }
 
         abstract public Type NodeType();
@@ -54,7 +54,7 @@ namespace LSLib.LS.Story
         {
             if (Name.Length > 0)
             {
-                writer.Write("{0}/{1}: ", Name, NameIndex);
+                writer.Write("{0}({1}): ", Name, NumParams);
             }
 
             writer.Write("<{0}>", TypeName());

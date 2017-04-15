@@ -18,6 +18,7 @@ namespace LSLib.LS.Story
         public byte Scramble = 0x00;
         public UInt32 MinorVersion;
         public UInt32 MajorVersion;
+        public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
 
         public OsiReader(Stream stream)
             : base(stream)
@@ -188,23 +189,45 @@ namespace LSLib.LS.Story
     public class OsirisType : OsirisSerializable
     {
         public byte Index;
+        public byte Alias;
         public string Name;
 
         public void Read(OsiReader reader)
         {
             Name = reader.ReadString();
             Index = reader.ReadByte();
+
+            if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 9))
+            {
+                Alias = reader.ReadByte();
+            }
+            else
+            {
+                Alias = 0;
+            }
         }
 
         public void Write(OsiWriter writer)
         {
             writer.Write(Name);
             writer.Write(Index);
+
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 9))
+            {
+                writer.Write(Alias);
+            }
         }
 
         public void DebugDump(TextWriter writer)
         {
-            writer.WriteLine("{0}: {1}", Index, Name);
+            if (Alias == 0)
+            {
+                writer.WriteLine("{0}: {1}", Index, Name);
+            }
+            else
+            {
+                writer.WriteLine("{0}: {1} (Alias: {2})", Index, Name, Alias);
+            }
         }
     }
 
