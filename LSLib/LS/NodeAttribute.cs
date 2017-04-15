@@ -21,36 +21,36 @@ namespace LSLib.LS
         public enum DataType
         {
             DT_None = 0,
-            DT_Byte,
-            DT_Short,
-            DT_UShort,
-            DT_Int,
-            DT_UInt,
-            DT_Float,
-            DT_Double,
-            DT_IVec2,
-            DT_IVec3,
-            DT_IVec4,
-            DT_Vec2,
-            DT_Vec3,
-            DT_Vec4,
-            DT_Mat2,
-            DT_Mat3,
-            DT_Mat3x4,
-            DT_Mat4x3,
-            DT_Mat4,
-            DT_Bool,
-            DT_String,
-            DT_Path,
-            DT_FixedString,
-            DT_LSString,
-            DT_ULongLong,
-            DT_ScratchBuffer,
-            DT_Long,
-            DT_Int8,
-            DT_TranslatedString,
-            DT_WString,
-            DT_LSWString,
+            DT_Byte = 1,
+            DT_Short = 2,
+            DT_UShort = 3,
+            DT_Int = 4,
+            DT_UInt = 5,
+            DT_Float = 6,
+            DT_Double = 7,
+            DT_IVec2 = 8,
+            DT_IVec3 = 9,
+            DT_IVec4 = 10,
+            DT_Vec2 = 11,
+            DT_Vec3 = 12,
+            DT_Vec4 = 13,
+            DT_Mat2 = 14,
+            DT_Mat3 = 15,
+            DT_Mat3x4 = 16,
+            DT_Mat4x3 = 17,
+            DT_Mat4 = 18,
+            DT_Bool = 19,
+            DT_String = 20,
+            DT_Path = 21,
+            DT_FixedString = 22,
+            DT_LSString = 23,
+            DT_ULongLong = 24,
+            DT_ScratchBuffer = 25,
+            DT_Long = 26,
+            DT_Int8 = 27,
+            DT_TranslatedString = 28,
+            DT_WString = 29,
+            DT_LSWString = 30,
             // Last supported datatype, always keep this one at the end
             DT_Max = DT_LSWString
         };
@@ -151,8 +151,36 @@ namespace LSLib.LS
             }
         }
 
+        public bool IsNumeric()
+        {
+            return this.type == DataType.DT_Byte
+                || this.type == DataType.DT_Short
+                || this.type == DataType.DT_Short
+                || this.type == DataType.DT_Int
+                || this.type == DataType.DT_UInt
+                || this.type == DataType.DT_Float
+                || this.type == DataType.DT_Double
+                || this.type == DataType.DT_ULongLong
+                || this.type == DataType.DT_Long
+                || this.type == DataType.DT_Int8;
+        }
+
         public void FromString(string str)
         {
+            if (IsNumeric())
+            {
+                // Workaround: Some XML files use empty strings, instead of "0" for zero values.
+                if (str == "")
+                {
+                    str = "0";
+                }
+                // Handle hexadecimal integers in XML files
+                else if (str.Length > 2 && str.Substring(0, 2) == "0x")
+                {
+                    str = Convert.ToUInt64(str.Substring(2), 16).ToString();
+                }
+            }
+
             switch (this.type)
             {
                 case DataType.DT_None:
