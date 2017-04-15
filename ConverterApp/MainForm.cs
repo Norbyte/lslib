@@ -621,6 +621,29 @@ namespace ConverterApp
             }
 
             MessageBox.Show("Story file loaded successfully.");
+        }
+
+        private void saveStoryBtn_Click(object sender, EventArgs e)
+        {
+            if (Story == null)
+            {
+                MessageBox.Show("No story file loaded.", "Story save failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Story export is an experimental feature and may corrupt your story files.\r\nAre you sure you want to continue?", "Save story", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            using ( var file = new FileStream(storyFilePath.Text, FileMode.Create, FileAccess.Write))
+            {
+                var writer = new StoryWriter();
+                writer.Write(file, Story);
+            }
+
+            MessageBox.Show("Story file save successful.");
+        }
 
         private void decompileStoryBtn_Click(object sender, EventArgs e)
         {

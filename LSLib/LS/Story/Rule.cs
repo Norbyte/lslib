@@ -189,5 +189,28 @@ namespace LSLib.LS.Story
             base.PostLoad(story);
             RemoveQueryPostfix(story);
         }
+
+        public override void PreSave(Story story)
+        {
+            base.PreSave(story);
+
+            // Re-add the __DEF__ postfix that is added to the end of Query nodes
+            if (IsQuery)
+            {
+                var ruleRoot = GetRoot(story);
+                if (ruleRoot.Name != null &&
+                    (ruleRoot.Name.Length < 7 ||
+                    ruleRoot.Name.Substring(ruleRoot.Name.Length - 7) != "__DEF__"))
+                {
+                    ruleRoot.Name += "__DEF__";
+                }
+            }
+        }
+
+        public override void PostSave(Story story)
+        {
+            base.PostSave(story);
+            RemoveQueryPostfix(story);
+        }
     }
 }

@@ -20,6 +20,7 @@ namespace LSLib.LS.Story
         public Dictionary<uint, Database> Databases;
         public Dictionary<uint, Goal> Goals;
         public List<Call> GlobalActions;
+        public List<string> ExternalStringTable;
 
         public void DebugDump(TextWriter writer)
         {
@@ -260,45 +261,25 @@ namespace LSLib.LS.Story
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
 
-                List<string> stringTable;
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
-                    stringTable = ReadStrings(reader);
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 10))
+                    story.ExternalStringTable = ReadStrings(reader);
                 else
-                    stringTable = new List<string>();
-                
-                story.Types[0] = new OsirisType();
-                story.Types[0].Index = 0;
-                story.Types[0].Name = "UNKNOWN";
+                    story.ExternalStringTable = new List<string>();
+
+                story.Types[0] = OsirisType.MakeBuiltin(0, "UNKNOWN");
+                story.Types[1] = OsirisType.MakeBuiltin(1, "INTEGER");
 
                 if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
                 {
-                    story.Types[1] = new OsirisType();
-                    story.Types[1].Index = 1;
-                    story.Types[1].Name = "INTEGER";
-                    story.Types[2] = new OsirisType();
-                    story.Types[2].Index = 2;
-                    story.Types[2].Name = "INTEGER64";
-                    story.Types[3] = new OsirisType();
-                    story.Types[3].Index = 3;
-                    story.Types[3].Name = "REAL";
-                    story.Types[4] = new OsirisType();
-                    story.Types[4].Index = 4;
-                    story.Types[4].Name = "STRING";
-                    story.Types[5] = new OsirisType();
-                    story.Types[5].Index = 5;
-                    story.Types[5].Name = "GUIDSTRING";
+                    story.Types[2] = OsirisType.MakeBuiltin(2, "INTEGER64");
+                    story.Types[3] = OsirisType.MakeBuiltin(3, "REAL");
+                    story.Types[4] = OsirisType.MakeBuiltin(4, "STRING");
+                    story.Types[5] = OsirisType.MakeBuiltin(5, "GUIDSTRING");
                 }
                 else
                 {
-                    story.Types[1] = new OsirisType();
-                    story.Types[1].Index = 1;
-                    story.Types[1].Name = "INTEGER";
-                    story.Types[2] = new OsirisType();
-                    story.Types[2].Index = 2;
-                    story.Types[2].Name = "FLOAT";
-                    story.Types[3] = new OsirisType();
-                    story.Types[3].Index = 3;
-                    story.Types[3].Name = "STRING";
+                    story.Types[2] = OsirisType.MakeBuiltin(2, "FLOAT");
+                    story.Types[3] = OsirisType.MakeBuiltin(3, "STRING");
                 }
 
                 story.DivObjects = reader.ReadList<OsirisDivObject>();
@@ -328,12 +309,26 @@ namespace LSLib.LS.Story
 
         }
 
-        private void WriteTypes(Dictionary<uint, OsirisType> types)
+        private void WriteStrings(List<string> stringTable)
+        {
+            Writer.Write((UInt32)stringTable.Count);
+            foreach (var s in stringTable)
+            {
+                Writer.Write(s);
+            }
+        }
+
+        private void WriteTypes(IList<OsirisType> types)
         {
             Writer.Write((UInt32)types.Count);
             foreach (var type in types)
             {
-                type.Value.Write(Writer);
+                type.Write(Writer);
+                if (type.Alias != 0
+                    && (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 9)))
+                {
+                    Writer.TypeAliases.Add(type.Index, type.Alias);
+                }
             }
         }
 
@@ -381,23 +376,35 @@ namespace LSLib.LS.Story
         {
             using (Writer = new OsiWriter(stream))
             {
+                foreach (var node in story.Nodes)
+                {
+                    node.Value.PreSave(story);
+                }
+
                 Writer.MajorVersion = story.MajorVersion;
                 Writer.MinorVersion = story.MinorVersion;
 
                 var header = new OsirisHeader();
-                header.Version = "Osiris save file dd. 02/10/15 12:44:13. Version 1.5.";
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 11))
+                {
+                    header.Version = "Osiris save file dd. 03/30/17 07:28:20. Version 1.8.";
+                }
+                else
+                {
+                    header.Version = "Osiris save file dd. 02/10/15 12:44:13. Version 1.5.";
+                }
                 header.MajorVersion = story.MajorVersion;
                 header.MinorVersion = story.MinorVersion;
                 header.BigEndian = false;
                 header.Unused = 0;
-                // Debug flags used in D:OS EE
-                header.DebugFlags = 0x000CA010;
+                // Debug flags used in D:OS EE and D:OS 2
+                header.DebugFlags = 0x000C10A0;
                 header.Write(Writer);
 
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion > 7))
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion > 11))
                 {
                     var msg = String.Format(
-                        "Osiris version v{0}.{1} unsupported; this tool supports versions up to v1.7.",
+                        "Osiris version v{0}.{1} unsupported; this tool supports saving up to version 1.11.",
                         Writer.MajorVersion, Writer.MinorVersion
                     );
                     throw new InvalidDataException(msg);
@@ -406,9 +413,16 @@ namespace LSLib.LS.Story
                 if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 4))
                     Writer.Scramble = 0xAD;
 
-
                 if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 5))
-                    WriteTypes(story.Types);
+                {
+                    // Don't export builtin types, only externally declared ones
+                    var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
+                    WriteTypes(types);
+                }
+
+                // TODO: regenerate string table?
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 10))
+                    WriteStrings(story.ExternalStringTable);
 
                 Writer.WriteList(story.DivObjects);
                 Writer.WriteList(story.Functions);
@@ -417,6 +431,11 @@ namespace LSLib.LS.Story
                 WriteDatabases(story.Databases);
                 WriteGoals(story.Goals);
                 Writer.WriteList(story.GlobalActions);
+
+                foreach (var node in story.Nodes)
+                {
+                    node.Value.PostSave(story);
+                }
             }
         }
     }

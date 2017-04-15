@@ -132,7 +132,7 @@ namespace LSLib.LS.Story
         {
             writer.Write((byte)48);
 
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 11))
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion < 11))
             {
                 uint os1TypeId;
                 // Convert D:OS 1 type ID to D:OS 2 type ID
@@ -168,7 +168,14 @@ namespace LSLib.LS.Story
                 writer.Write(TypeId);
             }
 
-            switch ((Type)TypeId)
+            uint writtenTypeId = TypeId;
+            uint alias;
+            if (writer.TypeAliases.TryGetValue(TypeId, out alias))
+            {
+                writtenTypeId = alias;
+            }
+
+            switch ((Type)writtenTypeId)
             {
                 case Type.Unknown:
                     break;

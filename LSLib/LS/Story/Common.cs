@@ -101,6 +101,7 @@ namespace LSLib.LS.Story
         public byte Scramble = 0x00;
         public UInt32 MinorVersion;
         public UInt32 MajorVersion;
+        public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
 
         public OsiWriter(Stream stream)
             : base(stream)
@@ -191,11 +192,23 @@ namespace LSLib.LS.Story
         public byte Index;
         public byte Alias;
         public string Name;
+        public bool IsBuiltin;
+
+        public static OsirisType MakeBuiltin(byte index, string name)
+        {
+            var type = new OsirisType();
+            type.Index = index;
+            type.Alias = 0;
+            type.Name = name;
+            type.IsBuiltin = true;
+            return type;
+        }
 
         public void Read(OsiReader reader)
         {
             Name = reader.ReadString();
             Index = reader.ReadByte();
+            IsBuiltin = false;
 
             if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 9))
             {

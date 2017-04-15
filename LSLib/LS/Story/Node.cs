@@ -63,6 +63,15 @@ namespace LSLib.LS.Story
                 database.OwnerNode = this;
             }
         }
+
+        public virtual void PreSave(Story story)
+        {
+        }
+
+        public virtual void PostSave(Story story)
+        {
+        }
+
         public virtual void DebugDump(TextWriter writer, Story story)
         {
             if (Name.Length > 0)
