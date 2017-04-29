@@ -45,8 +45,10 @@
 */Debug
 */Release
 */x64
-/external/bullet-2.77
+/external/*
 /TestApp
 /packages
 LSTools.VC.db
 *.opendb
+LSLib/LS/Story/Osiris.lex.cs
+LSLib/LS/Story/Osiris.yy.cs
