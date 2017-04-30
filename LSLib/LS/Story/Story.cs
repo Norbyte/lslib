@@ -260,8 +260,8 @@ namespace LSLib.LS.Story
                 }
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
-
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 10))
+                
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
                     story.ExternalStringTable = ReadStrings(reader);
                 else
                     story.ExternalStringTable = new List<string>();
@@ -269,7 +269,7 @@ namespace LSLib.LS.Story
                 story.Types[0] = OsirisType.MakeBuiltin(0, "UNKNOWN");
                 story.Types[1] = OsirisType.MakeBuiltin(1, "INTEGER");
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 10))
                 {
                     story.Types[2] = OsirisType.MakeBuiltin(2, "INTEGER64");
                     story.Types[3] = OsirisType.MakeBuiltin(3, "REAL");
@@ -421,7 +421,7 @@ namespace LSLib.LS.Story
                 }
 
                 // TODO: regenerate string table?
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 10))
+                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 11))
                     WriteStrings(story.ExternalStringTable);
 
                 Writer.WriteList(story.DivObjects);

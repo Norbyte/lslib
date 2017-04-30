@@ -53,17 +53,17 @@ namespace LSLib.LS.Story
         {
             // possibly isReference?
             var wtf = reader.ReadByte();
-            if (wtf == 49)
+            if (wtf == '1')
             {
                 TypeId = reader.ReadUInt32();
                 IntValue = reader.ReadInt32();
             }
-            else if (wtf == 48)
+            else if (wtf == '0')
             {
                 TypeId = reader.ReadUInt32();
                 uint writtenTypeId = TypeId;
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion < 11))
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion < 10))
                 {
                     // Convert D:OS 1 type ID to D:OS 2 type ID
                     switch ((Type_OS1)TypeId)
@@ -130,9 +130,10 @@ namespace LSLib.LS.Story
 
         public virtual void Write(OsiWriter writer)
         {
-            writer.Write((byte)48);
+            // TODO: Is the == 0x31 case ever used when reading?
+            writer.Write((byte)'0');
 
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion < 11))
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion < 10))
             {
                 uint os1TypeId;
                 // Convert D:OS 1 type ID to D:OS 2 type ID
@@ -185,7 +186,7 @@ namespace LSLib.LS.Story
                     break;
 
                 case Type.Integer64:
-                    if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 11))
+                    if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 10))
                     {
                         writer.Write(Int64Value);
                     }
