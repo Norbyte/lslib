@@ -5,13 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class Story
     {
         public byte MinorVersion;
         public byte MajorVersion;
-        public OsirisHeader Header;
+        public SaveFileHeader Header;
         public Dictionary<uint, OsirisType> Types;
         public List<OsirisDivObject> DivObjects;
         public List<Function> Functions;
@@ -185,10 +185,9 @@ namespace LSLib.LS.Story
             var count = reader.ReadUInt32();
             while (count-- > 0)
             {
-                var adapterId = reader.ReadUInt32();
                 var adapter = new Adapter();
                 adapter.Read(reader);
-                adapters.Add(adapterId, adapter);
+                adapters.Add(adapter.Index, adapter);
             }
 
             return adapters;
@@ -200,22 +199,21 @@ namespace LSLib.LS.Story
             var count = reader.ReadUInt32();
             while (count-- > 0)
             {
-                var databaseId = reader.ReadUInt32();
                 var database = new Database();
                 database.Read(reader);
-                databases.Add(databaseId, database);
+                databases.Add(database.Index, database);
             }
 
             return databases;
         }
 
-        private Dictionary<uint, Goal> ReadGoals(OsiReader reader)
+        private Dictionary<uint, Goal> ReadGoals(OsiReader reader, Story story)
         {
             var goals = new Dictionary<uint, Goal>();
             var count = reader.ReadUInt32();
             while (count-- > 0)
             {
-                var goal = new Goal();
+                var goal = new Goal(story);
                 goal.Read(reader);
                 goals.Add(goal.Index, goal);
             }
@@ -225,10 +223,10 @@ namespace LSLib.LS.Story
 
         public Story Read(Stream stream)
         {
-            using (var reader = new OsiReader(stream))
+            var story = new Story();
+            using (var reader = new OsiReader(stream, story))
             {
-                var story = new Story();
-                var header = new OsirisHeader();
+                var header = new SaveFileHeader();
                 header.Read(reader);
                 reader.MinorVersion = header.MinorVersion;
                 reader.MajorVersion = header.MajorVersion;
@@ -287,7 +285,7 @@ namespace LSLib.LS.Story
                 story.Nodes = ReadNodes(reader);
                 story.Adapters = ReadAdapters(reader);
                 story.Databases = ReadDatabases(reader);
-                story.Goals = ReadGoals(reader);
+                story.Goals = ReadGoals(reader, story);
                 story.GlobalActions = reader.ReadList<Call>();
 
                 foreach (var node in story.Nodes)
@@ -384,7 +382,7 @@ namespace LSLib.LS.Story
                 Writer.MajorVersion = story.MajorVersion;
                 Writer.MinorVersion = story.MinorVersion;
 
-                var header = new OsirisHeader();
+                var header = new SaveFileHeader();
                 if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 11))
                 {
                     header.Version = "Osiris save file dd. 03/30/17 07:28:20. Version 1.8.";
@@ -419,7 +417,7 @@ namespace LSLib.LS.Story
                     var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
                     WriteTypes(types);
                 }
-
+                
                 // TODO: regenerate string table?
                 if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 11))
                     WriteStrings(story.ExternalStringTable);

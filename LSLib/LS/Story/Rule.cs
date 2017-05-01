@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class RuleNode : RelNode
     {
@@ -19,7 +19,7 @@ namespace LSLib.LS.Story
         public List<Call> Calls;
         public List<Variable> Variables;
         public UInt32 Line;
-        public UInt32 DerivedGoalId;
+        public GoalReference DerivedGoalRef;
         public bool IsQuery;
 
         public override void Read(OsiReader reader)
@@ -110,12 +110,12 @@ namespace LSLib.LS.Story
                 if (parent is RelNode)
                 {
                     var rel = parent as RelNode;
-                    parent = story.Nodes[rel.ParentRef.NodeIndex];
+                    parent = rel.ParentRef.Resolve();
                 }
                 else if (parent is JoinNode)
                 {
                     var join = parent as JoinNode;
-                    parent = story.Nodes[join.LeftParentRef.NodeIndex];
+                    parent = join.LeftParentRef.Resolve();
                 }
                 else
                 {
@@ -160,7 +160,7 @@ namespace LSLib.LS.Story
             }
 
             var initialTuple = MakeInitialTuple();
-            story.Nodes[ParentRef.NodeIndex].MakeScript(writer, story, initialTuple);
+            ParentRef.Resolve().MakeScript(writer, story, initialTuple);
             writer.WriteLine("THEN");
             foreach (var call in Calls)
             {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public interface OsirisSerializable
     {
@@ -19,10 +19,13 @@ namespace LSLib.LS.Story
         public UInt32 MinorVersion;
         public UInt32 MajorVersion;
         public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
+        // TODO: Make RO!
+        public Story Story;
 
-        public OsiReader(Stream stream)
+        public OsiReader(Stream stream, Story story)
             : base(stream)
         {
+            Story = story;
         }
 
         public override string ReadString()
@@ -74,25 +77,55 @@ namespace LSLib.LS.Story
             }
         }
 
-        public NodeRef ReadNodeRef()
+        public List<T> ReadRefList<T, RefT>() where T : OsiReference<RefT>, new()
         {
-            var nodeRef = new NodeRef();
+            var items = new List<T>();
+            ReadRefList<T, RefT>(items);
+            return items;
+        }
+
+        public void ReadRefList<T, RefT>(List<T> items) where T : OsiReference<RefT>, new()
+        {
+            var count = ReadUInt32();
+            while (count-- > 0)
+            {
+                var item = new T();
+                item.BindStory(Story);
+                item.Read(this);
+                items.Add(item);
+            }
+        }
+
+        public NodeReference ReadNodeRef()
+        {
+            var nodeRef = new NodeReference();
+            nodeRef.BindStory(Story);
             nodeRef.Read(this);
             return nodeRef;
         }
 
-        public AdapterRef ReadAdapterRef()
+        public AdapterReference ReadAdapterRef()
         {
-            var adapterRef = new AdapterRef();
+            var adapterRef = new AdapterReference();
+            adapterRef.BindStory(Story);
             adapterRef.Read(this);
             return adapterRef;
         }
 
-        public DatabaseRef ReadDatabaseRef()
+        public DatabaseReference ReadDatabaseRef()
         {
-            var databaseRef = new DatabaseRef();
+            var databaseRef = new DatabaseReference();
+            databaseRef.BindStory(Story);
             databaseRef.Read(this);
             return databaseRef;
+        }
+
+        public GoalReference ReadGoalRef()
+        {
+            var goalRef = new GoalReference();
+            goalRef.BindStory(Story);
+            goalRef.Read(this);
+            return goalRef;
         }
     }
 
@@ -136,7 +169,7 @@ namespace LSLib.LS.Story
         }
     }
 
-    public class OsirisHeader : OsirisSerializable
+    public class SaveFileHeader : OsirisSerializable
     {
         public string Version;
         public byte MajorVersion;
@@ -281,31 +314,31 @@ namespace LSLib.LS.Story
 
     public class NodeEntryItem : OsirisSerializable
     {
-        public NodeRef NodeRef;
+        public NodeReference NodeRef;
         public UInt32 EntryPoint;
-        public UInt32 GoalId;
+        public GoalReference GoalRef;
 
         public void Read(OsiReader reader)
         {
             NodeRef = reader.ReadNodeRef();
             EntryPoint = reader.ReadUInt32();
-            GoalId = reader.ReadUInt32();
+            GoalRef = reader.ReadGoalRef();
         }
 
         public void Write(OsiWriter writer)
         {
             NodeRef.Write(writer);
             writer.Write(EntryPoint);
-            writer.Write(GoalId);
+            GoalRef.Write(writer);
         }
 
         public void DebugDump(TextWriter writer, Story story)
         {
-            if (NodeRef.IsValid())
+            if (NodeRef.IsValid)
             {
                 writer.Write("(");
                 NodeRef.DebugDump(writer, story);
-                writer.Write(", Entry Point {0}, Goal {1})", EntryPoint, story.Goals[GoalId].Name);
+                writer.Write(", Entry Point {0}, Goal {1})", EntryPoint, GoalRef.Resolve().Name);
             }
             else
             {

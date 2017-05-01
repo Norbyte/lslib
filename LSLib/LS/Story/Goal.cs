@@ -5,18 +5,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class Goal : OsirisSerializable
     {
         public UInt32 Index;
         public string Name;
         public byte SubGoalCombination;
-        public List<UInt32> ParentGoals;
-        public List<UInt32> SubGoals;
+        public List<GoalReference> ParentGoals;
+        public List<GoalReference> SubGoals;
         public byte Unknown; // 0x02 = Child goal
         public List<Call> InitCalls;
         public List<Call> ExitCalls;
+        public Story Story;
+
+        public Goal(Story story)
+        {
+            Story = story;
+        }
 
         public void Read(OsiReader reader)
         {
@@ -24,19 +30,8 @@ namespace LSLib.LS.Story
             Name = reader.ReadString();
             SubGoalCombination = reader.ReadByte();
 
-            ParentGoals = new List<uint>();
-            var numItems = reader.ReadUInt32();
-            while (numItems-- > 0)
-            {
-                ParentGoals.Add(reader.ReadUInt32());
-            }
-
-            SubGoals = new List<uint>();
-            numItems = reader.ReadUInt32();
-            while (numItems-- > 0)
-            {
-                SubGoals.Add(reader.ReadUInt32());
-            }
+            ParentGoals = reader.ReadRefList<GoalReference, Goal>();
+            SubGoals = reader.ReadRefList<GoalReference, Goal>();
 
             Unknown = reader.ReadByte();
 
@@ -58,13 +53,8 @@ namespace LSLib.LS.Story
             writer.Write(Name);
             writer.Write(SubGoalCombination);
 
-            writer.Write((UInt32)ParentGoals.Count);
-            foreach (var goalIndex in ParentGoals)
-                writer.Write(goalIndex);
-
-            writer.Write((UInt32)SubGoals.Count);
-            foreach (var goalIndex in SubGoals)
-                writer.Write(goalIndex);
+            writer.WriteList<GoalReference>(ParentGoals);
+            writer.WriteList<GoalReference>(SubGoals);
 
             writer.Write(Unknown);
 
@@ -82,10 +72,10 @@ namespace LSLib.LS.Story
             if (ParentGoals.Count > 0)
             {
                 writer.Write("    Parent goals: ");
-                foreach (var goalId in ParentGoals)
+                foreach (var goalRef in ParentGoals)
                 {
-                    var goal = story.Goals[goalId];
-                    writer.Write("#{0} {1}, ", goalId, goal.Name);
+                    var goal = goalRef.Resolve();
+                    writer.Write("#{0} {1}, ", goal.Index, goal.Name);
                 }
                 writer.WriteLine();
             }
@@ -93,10 +83,10 @@ namespace LSLib.LS.Story
             if (SubGoals.Count > 0)
             {
                 writer.Write("    Subgoals: ");
-                foreach (var goalId in SubGoals)
+                foreach (var goalRef in SubGoals)
                 {
-                    var goal = story.Goals[goalId];
-                    writer.Write("#{0} {1}, ", goalId, goal.Name);
+                    var goal = goalRef.Resolve();
+                    writer.Write("#{0} {1}, ", goal.Index, goal.Name);
                 }
                 writer.WriteLine();
             }
@@ -146,7 +136,7 @@ namespace LSLib.LS.Story
                 if (node.Value is RuleNode)
                 {
                     var rule = node.Value as RuleNode;
-                    if (rule.DerivedGoalId == Index)
+                    if (rule.DerivedGoalRef.Index == Index)
                     {
                         node.Value.MakeScript(writer, story, nullTuple);
                         writer.WriteLine();
@@ -166,15 +156,15 @@ namespace LSLib.LS.Story
             writer.WriteLine("ENDEXITSECTION");
             writer.WriteLine();
 
-            foreach (var goalId in SubGoals)
+            foreach (var goalRef in SubGoals)
             {
-                var goal = story.Goals[goalId];
+                var goal = goalRef.Resolve();
                 writer.WriteLine("ParentTargetEdge \"{0}\"", goal.Name);
             }
 
-            foreach (var goalId in ParentGoals)
+            foreach (var goalRef in ParentGoals)
             {
-                var goal = story.Goals[goalId];
+                var goal = goalRef.Resolve();
                 writer.WriteLine("TargetEdge \"{0}\"", goal.Name);
             }
         }

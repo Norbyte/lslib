@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     abstract public class DataNode : Node
     {
@@ -29,13 +29,13 @@ namespace LSLib.LS.Story
 
             foreach (var reference in ReferencedBy)
             {
-                if (reference.NodeRef.IsValid())
+                if (reference.NodeRef.IsValid)
                 {
-                    var ruleNode = story.Nodes[reference.NodeRef.NodeIndex];
-                    if (reference.GoalId > 0 &&
+                    var ruleNode = reference.NodeRef.Resolve();
+                    if (!reference.GoalRef.IsNull &&
                         ruleNode is RuleNode)
                     {
-                        (ruleNode as RuleNode).DerivedGoalId = reference.GoalId;
+                        (ruleNode as RuleNode).DerivedGoalRef = new GoalReference(story, reference.GoalRef.Index);
                     }
                 }
             }

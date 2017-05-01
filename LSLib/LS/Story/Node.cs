@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     abstract public class Node : OsirisSerializable
     {
@@ -22,7 +22,8 @@ namespace LSLib.LS.Story
             UserQuery = 9
         };
 
-        public DatabaseRef DatabaseRef;
+        public UInt32 Index;
+        public DatabaseReference DatabaseRef;
         public string Name;
         public byte NumParams;
 
@@ -52,9 +53,9 @@ namespace LSLib.LS.Story
 
         public virtual void PostLoad(Story story)
         {
-            if (DatabaseRef.IsValid())
+            if (DatabaseRef.IsValid)
             {
-                var database = story.Databases[DatabaseRef.DatabaseIndex];
+                var database = DatabaseRef.Resolve();
                 if (database.OwnerNode != null)
                 {
                     throw new InvalidDataException("A database cannot be assigned to multiple database nodes!");
@@ -80,7 +81,7 @@ namespace LSLib.LS.Story
             }
 
             writer.Write("<{0}>", TypeName());
-            if (DatabaseRef.IsValid())
+            if (DatabaseRef.IsValid)
             {
                 writer.Write(", Database ");
                 DatabaseRef.DebugDump(writer, story);
@@ -112,12 +113,12 @@ namespace LSLib.LS.Story
         {
             base.PostLoad(story);
 
-            if (NextNode.NodeRef.IsValid())
+            if (NextNode.NodeRef.IsValid)
             {
-                var nextNode = story.Nodes[NextNode.NodeRef.NodeIndex];
+                var nextNode = NextNode.NodeRef.Resolve();
                 if (nextNode is RuleNode)
                 {
-                    (nextNode as RuleNode).DerivedGoalId = NextNode.GoalId;
+                    (nextNode as RuleNode).DerivedGoalRef = new GoalReference(story, NextNode.GoalRef.Index);
                 }
             }
         }

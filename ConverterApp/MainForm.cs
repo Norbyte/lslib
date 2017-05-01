@@ -3,7 +3,7 @@ using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS;
 using LSLib.LS.LSF;
-using LSLib.LS.Story;
+using LSLib.LS.Osiris;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -672,11 +672,11 @@ namespace ConverterApp
             using (var goalFile = new FileStream(unassignedPath, FileMode.Create, FileAccess.Write))
             using (var writer = new StreamWriter(goalFile))
             {
-                var dummyGoal = new Goal();
+                var dummyGoal = new Goal(Story);
                 dummyGoal.ExitCalls = new List<Call>();
                 dummyGoal.InitCalls = new List<Call>();
-                dummyGoal.ParentGoals = new List<uint>();
-                dummyGoal.SubGoals = new List<uint>();
+                dummyGoal.ParentGoals = new List<GoalReference>();
+                dummyGoal.SubGoals = new List<GoalReference>();
                 dummyGoal.Name = "UNASSIGNED_RULES";
                 dummyGoal.Index = 0;
                 dummyGoal.MakeScript(writer, Story);

@@ -1,6 +1,6 @@
 ﻿using QUT.Gppg;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public abstract class GoalScanBase : AbstractScanner<int, LexLocation>
     {

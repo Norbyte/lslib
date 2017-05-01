@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class Fact : OsirisSerializable
     {
@@ -197,6 +197,7 @@ namespace LSLib.LS.Story
 
     public class Database : OsirisSerializable
     {
+        public UInt32 Index;
         public ParameterList Parameters;
         public FactCollection Facts;
         public Node OwnerNode;
@@ -204,6 +205,7 @@ namespace LSLib.LS.Story
 
         public void Read(OsiReader reader)
         {
+            Index = reader.ReadUInt32();
             Parameters = new ParameterList();
             Parameters.Read(reader);
 
@@ -214,6 +216,7 @@ namespace LSLib.LS.Story
 
         public void Write(OsiWriter writer)
         {
+            writer.Write(Index);
             Parameters.Write(writer);
             writer.WriteList<Fact>(Facts);
         }

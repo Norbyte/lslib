@@ -5,18 +5,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class Adapter : OsirisSerializable
     {
+        /// <summary>
+        /// Unique identifier of this adapter
+        /// </summary>
+        public UInt32 Index;
         /// <summary>
         /// Constant output values
         /// </summary>
         public Tuple Constants;
         /// <summary>
-        /// Contains input logical attribute indices for each output physical attribute.
-        /// A -1 means that the output attribute is a constant or null value; otherwise
-        /// the output attribute maps to the specified logical index from the input tuple.
+        /// Contains input logical column indices for each output physical column.
+        /// A -1 means that the output column is a constant or null value; otherwise
+        /// the output column maps to the specified logical index from the input tuple.
         /// </summary>
         public List<sbyte> LogicalIndices;
         /// <summary>
@@ -30,6 +34,7 @@ namespace LSLib.LS.Story
 
         public void Read(OsiReader reader)
         {
+            Index = reader.ReadUInt32();
             Constants = new Tuple();
             Constants.Read(reader);
 
@@ -52,6 +57,7 @@ namespace LSLib.LS.Story
 
         public void Write(OsiWriter writer)
         {
+            writer.Write(Index);
             Constants.Write(writer);
 
             writer.Write((byte)LogicalIndices.Count);
@@ -74,7 +80,7 @@ namespace LSLib.LS.Story
             for (var i = 0; i < LogicalIndices.Count; i++)
             {
                 var index = LogicalIndices[i];
-                // If a logical index is present, emit an attribute from the input tuple
+                // If a logical index is present, emit a column from the input tuple
                 if (index != -1)
                 {
                     var value = columns.Logical[index];

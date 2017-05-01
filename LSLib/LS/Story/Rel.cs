@@ -5,13 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     abstract public class RelNode : TreeNode
     {
-        public NodeRef ParentRef;
-        public AdapterRef AdapterRef;
-        public DatabaseRef RelDatabaseRef;
+        public NodeReference ParentRef;
+        public AdapterReference AdapterRef;
+        public DatabaseReference RelDatabaseRef;
         public NodeEntryItem RelDatabase;
         public byte RelDatabaseFlag;
 
@@ -42,9 +42,9 @@ namespace LSLib.LS.Story
         {
             base.PostLoad(story);
 
-            if (AdapterRef.IsValid())
+            if (AdapterRef.IsValid)
             {
-                var adapter = story.Adapters[AdapterRef.AdapterIndex];
+                var adapter = AdapterRef.Resolve();
                 if (adapter.OwnerNode != null)
                 {
                     throw new InvalidDataException("An adapter cannot be assigned to multiple join/rel nodes!");
@@ -59,19 +59,19 @@ namespace LSLib.LS.Story
             base.DebugDump(writer, story);
 
             writer.Write("   ");
-            if (ParentRef.IsValid())
+            if (ParentRef.IsValid)
             {
                 writer.Write(" Parent ");
                 ParentRef.DebugDump(writer, story);
             }
 
-            if (AdapterRef.IsValid())
+            if (AdapterRef.IsValid)
             {
                 writer.Write(" Adapter ");
                 AdapterRef.DebugDump(writer, story);
             }
 
-            if (RelDatabaseRef.IsValid())
+            if (RelDatabaseRef.IsValid)
             {
                 writer.Write(" Database ");
                 RelDatabaseRef.DebugDump(writer, story);

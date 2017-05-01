@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class FunctionSignature : OsirisSerializable
     {
@@ -105,7 +105,7 @@ namespace LSLib.LS.Story
         public UInt32 Line;
         public UInt32 Unknown1;
         public UInt32 Unknown2;
-        public NodeRef NodeRef;
+        public NodeReference NodeRef;
         public FunctionType Type;
         public Guid GUID;
         public FunctionSignature Name;
@@ -137,9 +137,9 @@ namespace LSLib.LS.Story
         {
             writer.Write("{0} ", Type.ToString());
             Name.DebugDump(writer, story);
-            if (NodeRef.IsValid())
+            if (NodeRef.IsValid)
             {
-                var node = story.Nodes[NodeRef.NodeIndex];
+                var node = NodeRef.Resolve();
                 writer.Write(" @ {0}({1})", node.Name, node.NumParams);
             }
 

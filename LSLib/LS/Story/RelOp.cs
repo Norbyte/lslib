@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
     public class RelOpNode : RelNode
     {
@@ -19,23 +19,23 @@ namespace LSLib.LS.Story
             NotEqual = 5
         };
 
-        public sbyte Value1Index;
-        public sbyte Value2Index;
-        public Value Value1;
-        public Value Value2;
+        public sbyte LeftValueIndex;
+        public sbyte RightValueIndex;
+        public Value LeftValue;
+        public Value RightValue;
         public RelOpType RelOp;
 
         public override void Read(OsiReader reader)
         {
             base.Read(reader);
-            Value1Index = reader.ReadSByte();
-            Value2Index = reader.ReadSByte();
+            LeftValueIndex = reader.ReadSByte();
+            RightValueIndex = reader.ReadSByte();
 
-            Value1 = new Value();
-            Value1.Read(reader);
+            LeftValue = new Value();
+            LeftValue.Read(reader);
 
-            Value2 = new Value();
-            Value2.Read(reader);
+            RightValue = new Value();
+            RightValue.Read(reader);
 
             RelOp = (RelOpType)reader.ReadInt32();
         }
@@ -43,11 +43,11 @@ namespace LSLib.LS.Story
         public override void Write(OsiWriter writer)
         {
             base.Write(writer);
-            writer.Write(Value1Index);
-            writer.Write(Value2Index);
+            writer.Write(LeftValueIndex);
+            writer.Write(RightValueIndex);
 
-            Value1.Write(writer);
-            Value2.Write(writer);
+            LeftValue.Write(writer);
+            RightValue.Write(writer);
             writer.Write((UInt32)RelOp);
         }
 
@@ -66,30 +66,30 @@ namespace LSLib.LS.Story
             base.DebugDump(writer, story);
 
             writer.Write("    Left Value: ");
-            if (Value1Index != -1)
-                writer.Write("[Source Column {0}]", Value1Index);
+            if (LeftValueIndex != -1)
+                writer.Write("[Source Column {0}]", LeftValueIndex);
             else
-                Value1.DebugDump(writer, story);
+                LeftValue.DebugDump(writer, story);
             writer.WriteLine();
 
             writer.Write("    Right Value: ");
-            if (Value2Index != -1)
-                writer.Write("[Source Column {0}]", Value2Index);
+            if (RightValueIndex != -1)
+                writer.Write("[Source Column {0}]", RightValueIndex);
             else
-                Value2.DebugDump(writer, story);
+                RightValue.DebugDump(writer, story);
             writer.WriteLine();
         }
 
         public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
         {
-            var adaptedTuple = story.Adapters[AdapterRef.AdapterIndex].Adapt(tuple);
-            story.Nodes[ParentRef.NodeIndex].MakeScript(writer, story, adaptedTuple);
+            var adaptedTuple = AdapterRef.Resolve().Adapt(tuple);
+            ParentRef.Resolve().MakeScript(writer, story, adaptedTuple);
             writer.WriteLine("AND");
 
-            if (Value1Index != -1)
-                adaptedTuple.Logical[Value1Index].MakeScript(writer, story, tuple);
+            if (LeftValueIndex != -1)
+                adaptedTuple.Logical[LeftValueIndex].MakeScript(writer, story, tuple);
             else
-                Value1.MakeScript(writer, story, tuple);
+                LeftValue.MakeScript(writer, story, tuple);
 
             switch (RelOp)
             {
@@ -101,10 +101,10 @@ namespace LSLib.LS.Story
                 case RelOpType.NotEqual: writer.Write(" != "); break;
             }
 
-            if (Value2Index != -1)
-                adaptedTuple.Logical[Value2Index].MakeScript(writer, story, tuple);
+            if (RightValueIndex != -1)
+                adaptedTuple.Logical[RightValueIndex].MakeScript(writer, story, tuple);
             else
-                Value2.MakeScript(writer, story, tuple);
+                RightValue.MakeScript(writer, story, tuple);
             writer.WriteLine();
         }
     }

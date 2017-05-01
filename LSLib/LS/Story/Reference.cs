@@ -1,112 +1,215 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Osiris
 {
-    public class NodeRef : OsirisSerializable
+    public abstract class OsiReference<T> : OsirisSerializable
     {
-        public UInt32 NodeIndex;
+        public const UInt32 NullReference = 0;
+        // TODO: hide!
+        public UInt32 Index = NullReference;
+        protected Story Story;
+
+        public bool IsNull
+        {
+            get { return Index == NullReference; }
+        }
+
+        public bool IsValid
+        {
+            get { return Index != NullReference; }
+        }
+
+        public OsiReference()
+        {
+        }
+
+        public OsiReference(Story story, UInt32 reference)
+        {
+            Story = story;
+            Index = reference;
+        }
+
+        public void BindStory(Story story)
+        {
+            if (Story == null)
+                Story = story;
+            else
+                throw new InvalidOperationException("Reference already bound to a story!");
+        }
 
         public void Read(OsiReader reader)
         {
-            NodeIndex = reader.ReadUInt32();
+            Index = reader.ReadUInt32();
         }
 
         public void Write(OsiWriter writer)
         {
-            writer.Write(NodeIndex);
+            writer.Write(Index);
         }
 
-        public bool IsValid()
+        abstract public T Resolve();
+
+        abstract public void DebugDump(TextWriter writer, Story story);
+    }
+
+    public class NodeReference : OsiReference<Node>
+    {
+        public NodeReference()
+            : base()
         {
-            return NodeIndex != 0;
         }
 
-        public void DebugDump(TextWriter writer, Story story)
+        public NodeReference(Story story, UInt32 reference)
+            : base(story, reference)
         {
-            if (!IsValid())
+        }
+
+        public NodeReference(Story story, Node reference)
+            : base(story, reference.Index)
+        {
+        }
+
+        public override Node Resolve()
+        {
+            if (Index == NullReference)
+                return null;
+            else
+                return Story.Nodes[Index];
+        }
+
+        public override void DebugDump(TextWriter writer, Story story)
+        {
+            if (!IsValid)
             {
                 writer.Write("(None)");
             }
             else
             {
-                var node = story.Nodes[NodeIndex];
+                var node = Resolve();
                 if (node.Name.Length > 0)
                 {
-                    writer.Write("#{0} <{1}({2}) {3}>", NodeIndex, node.Name, node.NumParams, node.TypeName());
+                    writer.Write("#{0} <{1}({2}) {3}>", Index, node.Name, node.NumParams, node.TypeName());
                 }
                 else
                 {
-                    writer.Write("#{0} <{1}>", NodeIndex, node.TypeName());
+                    writer.Write("#{0} <{1}>", Index, node.TypeName());
                 }
             }
         }
     }
 
-    public class AdapterRef : OsirisSerializable
+    public class AdapterReference : OsiReference<Adapter>
     {
-        public UInt32 AdapterIndex;
-
-        public void Read(OsiReader reader)
+        public AdapterReference()
+            : base()
         {
-            AdapterIndex = reader.ReadUInt32();
         }
 
-        public void Write(OsiWriter writer)
+        public AdapterReference(Story story, UInt32 reference)
+            : base(story, reference)
         {
-            writer.Write(AdapterIndex);
         }
 
-        public bool IsValid()
+        public AdapterReference(Story story, Adapter reference)
+            : base(story, reference.Index)
         {
-            return AdapterIndex != 0;
         }
 
-        public void DebugDump(TextWriter writer, Story story)
+        public override Adapter Resolve()
         {
-            if (!IsValid())
+            if (Index == NullReference)
+                return null;
+            else
+                return Story.Adapters[Index];
+        }
+
+        public override void DebugDump(TextWriter writer, Story story)
+        {
+            if (!IsValid)
             {
                 writer.Write("(None)");
             }
             else
             {
-                writer.Write("#{0}", AdapterIndex);
+                writer.Write("#{0}", Index);
             }
         }
     }
 
-    public class DatabaseRef : OsirisSerializable
+    public class DatabaseReference : OsiReference<Database>
     {
-        public UInt32 DatabaseIndex;
-
-        public void Read(OsiReader reader)
+        public DatabaseReference()
+            : base()
         {
-            DatabaseIndex = reader.ReadUInt32();
         }
 
-        public void Write(OsiWriter writer)
+        public DatabaseReference(Story story, UInt32 reference)
+            : base(story, reference)
         {
-            writer.Write(DatabaseIndex);
         }
 
-        public bool IsValid()
+        public DatabaseReference(Story story, Database reference)
+            : base(story, reference.Index)
         {
-            return DatabaseIndex != 0;
         }
 
-        public void DebugDump(TextWriter writer, Story story)
+        public override Database Resolve()
         {
-            if (!IsValid())
+            if (Index == NullReference)
+                return null;
+            else
+                return Story.Databases[Index];
+        }
+
+        public override void DebugDump(TextWriter writer, Story story)
+        {
+            if (!IsValid)
             {
                 writer.Write("(None)");
             }
             else
             {
-                writer.Write("#{0}", DatabaseIndex);
+                writer.Write("#{0}", Index);
+            }
+        }
+    }
+
+    public class GoalReference : OsiReference<Goal>
+    {
+        public GoalReference()
+            : base()
+        {
+        }
+
+        public GoalReference(Story story, UInt32 reference)
+            : base(story, reference)
+        {
+        }
+
+        public GoalReference(Story story, Goal reference)
+            : base(story, reference.Index)
+        {
+        }
+
+        public override Goal Resolve()
+        {
+            if (Index == NullReference)
+                return null;
+            else
+                return Story.Goals[Index];
+        }
+
+        public override void DebugDump(TextWriter writer, Story story)
+        {
+            if (!IsValid)
+            {
+                writer.Write("(None)");
+            }
+            else
+            {
+                var goal = Resolve();
+                writer.Write("#{0} <{1}>", Index, goal.Name);
             }
         }
     }
