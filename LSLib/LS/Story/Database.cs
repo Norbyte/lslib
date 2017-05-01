@@ -48,13 +48,15 @@ namespace LSLib.LS.Story
     internal class FactPropertyDescriptor : PropertyDescriptor
     {
         public int Index { get; private set; }
-        public Value.Type ValueType { get; private set; }
+        public Value.Type BaseType { get; private set; }
+        public byte Type { get; private set; }
 
-        public FactPropertyDescriptor(int index, Value.Type type)
+        public FactPropertyDescriptor(int index, Value.Type baseType, byte type)
             : base(index.ToString(), new Attribute[0])
         {
             Index = index;
-            ValueType = type;
+            BaseType = baseType;
+            Type = type;
         }
 
         public override bool CanResetValue(object component)
@@ -82,15 +84,15 @@ namespace LSLib.LS.Story
         {
             get
             {
-                switch (ValueType)
+                switch (BaseType)
                 {
-                    case Value.Type.Unknown: throw new InvalidOperationException("Cannot retrieve type of an unknown attribute");
                     case Value.Type.Integer: return typeof(Int32);
                     case Value.Type.Integer64: return typeof(Int64);
                     case Value.Type.Float: return typeof(Single);
-                    case Value.Type.String: return typeof(String);
+                    case Value.Type.String:
                     case Value.Type.GuidString: return typeof(String);
-                    default: return typeof(String);
+                    case Value.Type.Unknown:
+                    default: throw new InvalidOperationException("Cannot retrieve type of an unknown column");
                 }
             }
         }
@@ -105,11 +107,8 @@ namespace LSLib.LS.Story
             Fact fact = (Fact)component;
             var column = fact.Columns[Index];
 
-            switch (ValueType)
+            switch (BaseType)
             {
-                case Value.Type.Unknown: 
-                    throw new InvalidOperationException("Cannot set value of an unknown attribute");
-
                 case Value.Type.Integer:
                     {
                         if (value is String) column.IntValue = Int32.Parse((String)value);
@@ -134,9 +133,16 @@ namespace LSLib.LS.Story
                         break;
                     }
 
-                default: 
-                    column.StringValue = value.ToString();
-                    break;
+                case Value.Type.String:
+                case Value.Type.GuidString:
+                    {
+                        column.StringValue = (String)value;
+                        break;
+                    }
+
+                case Value.Type.Unknown: 
+                default:
+                    throw new InvalidOperationException("Cannot retrieve type of an unknown column");
             }
         }
 
@@ -149,13 +155,15 @@ namespace LSLib.LS.Story
 
     public class FactCollection : List<Fact>, ITypedList
     {
+        private Story Story;
         private Database Database;
         private PropertyDescriptorCollection Properties;
 
-        public FactCollection(Database database)
+        public FactCollection(Database database, Story story)
             : base()
         {
             Database = database;
+            Story = story;
         }
 
         public PropertyDescriptorCollection GetItemProperties(PropertyDescriptor[] listAccessors)
@@ -166,7 +174,13 @@ namespace LSLib.LS.Story
                 var types = Database.Parameters.Types;
                 for (var i = 0; i < types.Count; i++)
                 {
-                    props.Add(new FactPropertyDescriptor(i, (Value.Type)types[i]));
+                    var type = Story.Types[types[i]];
+                    Value.Type baseType;
+                    if (type.Alias != 0)
+                        baseType = (Value.Type)type.Alias;
+                    else
+                        baseType = (Value.Type)type.Index;
+                    props.Add(new FactPropertyDescriptor(i, baseType, type.Index));
                 }
 
                 Properties = new PropertyDescriptorCollection(props.ToArray(), true);
@@ -194,7 +208,7 @@ namespace LSLib.LS.Story
             Parameters.Read(reader);
 
             FactsPosition = reader.BaseStream.Position;
-            Facts = new FactCollection(this);
+            Facts = new FactCollection(this, reader.Story);
             reader.ReadList<Fact>(Facts);
         }
 
