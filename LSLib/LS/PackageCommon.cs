@@ -370,13 +370,14 @@ namespace LSLib.LS
             EnumerateFiles(package, inputPath, inputPath);
 
             this.progressUpdate("Creating archive ...", 0, 1);
-            var writer = new PackageWriter(package, packagePath);
-            writer.writeProgress += WriteProgressUpdate;
-            writer.Version = version;
-            writer.Compression = compression;
-            writer.CompressionLevel = fastCompression ? LS.CompressionLevel.FastCompression : LS.CompressionLevel.DefaultCompression;
-            writer.Write();
-            writer.Dispose();
+            using (var writer = new PackageWriter(package, packagePath))
+            {
+                writer.writeProgress += WriteProgressUpdate;
+                writer.Version = version;
+                writer.Compression = compression;
+                writer.CompressionLevel = fastCompression ? LS.CompressionLevel.FastCompression : LS.CompressionLevel.DefaultCompression;
+                writer.Write();
+            }
         }
     }
 }

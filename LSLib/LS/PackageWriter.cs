@@ -10,7 +10,7 @@ using System.Text;
 
 namespace LSLib.LS
 {
-    public class PackageWriter
+    public class PackageWriter : IDisposable
     {
         public delegate void WriteProgressDelegate(FileInfo file, long numerator, long denominator);
         public WriteProgressDelegate writeProgress = delegate { };

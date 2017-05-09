@@ -165,14 +165,31 @@ namespace ConverterApp
                 }
             }
 
-            var packageWriter = new PackageWriter(package, storyFilePath.Text + ".tmp");
-            // TODO: Resave using original version and flags
-            packageWriter.Version = 13;
-            packageWriter.Compression = CompressionMethod.Zlib;
-            packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
-            packageWriter.Write();
+            using (var packageWriter = new PackageWriter(package, storyFilePath.Text + ".tmp"))
+            {
+                // TODO: Resave using original version and flags
+                packageWriter.Version = 13;
+                packageWriter.Compression = CompressionMethod.Zlib;
+                packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
+                packageWriter.Write();
+            }
 
             rewrittenStream.Dispose();
+            packageReader.Dispose();
+
+            // Create a backup of the original .lsf
+            var backupPath = storyFilePath.Text + ".backup";
+            if (!File.Exists(backupPath))
+            {
+                File.Move(storyFilePath.Text, backupPath);
+            }
+            else
+            {
+                File.Delete(storyFilePath.Text);
+            }
+
+            // Replace original savegame with new one
+            File.Move(storyFilePath.Text + ".tmp", storyFilePath.Text);
         }
 
         private void saveStory()

@@ -151,9 +151,9 @@
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(4, 6);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(74, 13);
+            this.label9.Size = new System.Drawing.Size(128, 13);
             this.label9.TabIndex = 60;
-            this.label9.Text = "Story file path:";
+            this.label9.Text = "Story/savegame file path:";
             // 
             // goalPath
             // 
