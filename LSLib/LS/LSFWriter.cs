@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LSLib.LS.LSF
 {
-    public class LSFWriter : IDisposable
+    public class LSFWriter
     {
         private static int StringHashMapSize = 0x200;
 
@@ -37,17 +37,12 @@ namespace LSLib.LS.LSF
             this.Version = version;
         }
 
-        public void Dispose()
-        {
-            Stream.Dispose();
-        }
-
         public void Write(Resource resource)
         {
             Compression = CompressionMethod.LZ4;
             CompressionLevel = CompressionLevel.MaxCompression;
 
-            using (this.Writer = new BinaryWriter(Stream))
+            using (this.Writer = new BinaryWriter(Stream, Encoding.Default, true))
             using (this.NodeStream = new MemoryStream())
             using (this.NodeWriter = new BinaryWriter(NodeStream))
             using (this.AttributeStream = new MemoryStream())

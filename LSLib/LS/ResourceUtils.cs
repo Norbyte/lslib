@@ -99,60 +99,54 @@ namespace LSLib.LS
 
         public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, int version = -1)
         {
-            var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write);
-            switch (format)
+            using (var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
             {
-                case ResourceFormat.LSX:
-                    {
-                        using (var writer = new LSXWriter(file))
+                switch (format)
+                {
+                    case ResourceFormat.LSX:
                         {
+                            var writer = new LSXWriter(file);
                             writer.PrettyPrint = true;
                             writer.Write(resource);
+                            break;
                         }
-                        break;
-                    }
 
-                case ResourceFormat.LSB:
-                    {
-                        using (var writer = new LSBWriter(file))
+                    case ResourceFormat.LSB:
                         {
+                            var writer = new LSBWriter(file);
                             writer.Write(resource);
-                        }
-                        break;
-                    }
-
-                case ResourceFormat.LSF:
-                    {
-                        uint lsfVersion;
-                        if (version == -1)
-                        {
-                            // Write in V2 format for D:OS EE compatibility
-                            lsfVersion = FileVersion.VerChunkedCompress;
-                        }
-                        else
-                        {
-                            lsfVersion = (uint)version;
+                            break;
                         }
 
-                        using (var writer = new LSFWriter(file, lsfVersion))
+                    case ResourceFormat.LSF:
                         {
+                            uint lsfVersion;
+                            if (version == -1)
+                            {
+                                // Write in V2 format for D:OS EE compatibility
+                                lsfVersion = FileVersion.VerChunkedCompress;
+                            }
+                            else
+                            {
+                                lsfVersion = (uint)version;
+                            }
+
+                            var writer = new LSFWriter(file, lsfVersion);
                             writer.Write(resource);
+                            break;
                         }
-                        break;
-                    }
 
-                case ResourceFormat.LSJ:
-                    {
-                        using (var writer = new LSJWriter(file))
+                    case ResourceFormat.LSJ:
                         {
+                            var writer = new LSJWriter(file);
                             writer.PrettyPrint = true;
                             writer.Write(resource);
+                            break;
                         }
-                        break;
-                    }
 
-                default:
-                    throw new ArgumentException("Invalid resource format");
+                    default:
+                        throw new ArgumentException("Invalid resource format");
+                }
             }
         }
 

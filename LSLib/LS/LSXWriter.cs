@@ -7,7 +7,7 @@ using System.Xml;
 
 namespace LSLib.LS
 {
-    public class LSXWriter : IDisposable
+    public class LSXWriter
     {
         private Stream stream;
         private XmlWriter writer;
@@ -16,11 +16,6 @@ namespace LSLib.LS
         public LSXWriter(Stream stream)
         {
             this.stream = stream;
-        }
-
-        public void Dispose()
-        {
-            stream.Dispose();
         }
 
         public void Write(Resource rsrc)

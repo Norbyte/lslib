@@ -71,7 +71,8 @@ namespace LSLib.LS
             packaged.OffsetInFile = (UInt32)stream.Position;
             packaged.Flags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
 
-            var reader = info.MakeReader();
+            var packagedStream = info.MakeStream();
+            var reader = new BinaryReader(packagedStream);
             var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
             var compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
             stream.Write(compressed, 0, compressed.Length);

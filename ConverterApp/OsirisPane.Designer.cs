@@ -187,7 +187,7 @@
             // storyPathDlg
             // 
             this.storyPathDlg.CheckFileExists = false;
-            this.storyPathDlg.Filter = "LS story files|*.osi";
+            this.storyPathDlg.Filter = "LS story/savegame files|*.osi;*.lsv";
             // 
             // OsirisPane
             // 

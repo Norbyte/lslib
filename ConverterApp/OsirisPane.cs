@@ -7,8 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using LSLib.LS;
 using LSLib.LS.Osiris;
 using System.IO;
+using LSLib.LS.LSF;
 
 namespace ConverterApp
 {
@@ -39,39 +41,147 @@ namespace ConverterApp
             }
         }
 
+        private void loadStory(Stream s)
+        {
+            var reader = new StoryReader();
+            Story = reader.Read(s);
+
+            databaseSelectorCb.Items.Clear();
+            foreach (var database in Story.Databases)
+            {
+                var name = "(Unnamed)";
+                var owner = database.Value.OwnerNode;
+                if (owner != null && owner.Name.Length > 0)
+                {
+                    name = String.Format("{0}({1})", owner.Name, owner.NumParams);
+                }
+                else if (owner != null)
+                {
+                    name = String.Format("<{0}>", owner.TypeName());
+                }
+
+                name += String.Format(" #{0} ({1} rows)", database.Key, database.Value.Facts.Count);
+
+                databaseSelectorCb.Items.Add(name);
+
+                if (databaseSelectorCb.Items.Count > 0)
+                {
+                    databaseSelectorCb.SelectedIndex = 0;
+                }
+            }
+        }
+
         private void loadStoryBtn_Click(object sender, EventArgs e)
         {
-            using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
+            var extension = Path.GetExtension(storyFilePath.Text).ToLower();
+
+            if (extension == ".lsv")
             {
-                var reader = new StoryReader();
-                Story = reader.Read(file);
+                var packageReader = new PackageReader(storyFilePath.Text);
+                var package = packageReader.Read();
 
-                databaseSelectorCb.Items.Clear();
-                foreach (var database in Story.Databases)
+                LSLib.LS.FileInfo file = package.Files.Where(p => p.Name == "globals.lsf").FirstOrDefault();
+                if (file == null)
                 {
-                    var name = "(Unnamed)";
-                    var owner = database.Value.OwnerNode;
-                    if (owner != null && owner.Name.Length > 0)
-                    {
-                        name = String.Format("{0}({1})", owner.Name, owner.NumParams);
-                    }
-                    else if (owner != null)
-                    {
-                        name = String.Format("<{0}>", owner.TypeName());
-                    }
+                    MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-                    name += String.Format(" #{0} ({1} rows)", database.Key, database.Value.Facts.Count);
+                Resource resource;
+                using (var rsrcStream = file.MakeStream())
+                using (var rsrcReader = new LSFReader(rsrcStream))
+                {
+                    resource = rsrcReader.Read();
+                }
 
-                    databaseSelectorCb.Items.Add(name);
+                var storyNode = resource.Regions["Story"].Children["Story"][0];
+                var storyStream = new MemoryStream(storyNode.Attributes["Story"].Value as byte[]);
+
+                loadStory(storyStream);
+
+                MessageBox.Show("Save game database loaded successfully.");
+            }
+            else if (extension == ".osi")
+            {
+                using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
+                {
+                    loadStory(file);
+                }
+
+                MessageBox.Show("Story file loaded successfully.");
+            }
+            else
+            {
+                MessageBox.Show("Unsupported file extension: " + extension, "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void saveSavegameDatabase()
+        {
+            var packageReader = new PackageReader(storyFilePath.Text);
+            var package = packageReader.Read();
+
+            LSLib.LS.FileInfo globalsLsf = package.Files.Where(p => p.Name == "globals.lsf").FirstOrDefault();
+            if (globalsLsf == null)
+            {
+                MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Load globals.lsf
+            Resource resource;
+            using (var rsrcStream = globalsLsf.MakeStream())
+            using (var rsrcReader = new LSFReader(rsrcStream))
+            {
+                resource = rsrcReader.Read();
+            }
+
+            // Save story resource and pack into the Story.Story attribute in globals.lsf
+            using (var storyStream = new MemoryStream())
+            {
+                var storyWriter = new StoryWriter();
+                storyWriter.Write(storyStream, Story);
+
+                var storyNode = resource.Regions["Story"].Children["Story"][0];
+                storyNode.Attributes["Story"].Value = storyStream.ToArray();
+            }
+
+            // Save globals.lsf
+            var rewrittenStream = new MemoryStream();
+            // TODO: Resave using original version
+            var rsrcWriter = new LSFWriter(rewrittenStream, FileVersion.CurrentVersion);
+            rsrcWriter.Write(resource);
+
+            // Re-package global.lsf
+            var rewrittenPackage = new Package();
+            var globalsRepacked = StreamFileInfo.CreateFromStream(rewrittenStream, "globals.lsf");
+            rewrittenPackage.Files.Add(globalsRepacked);
+
+            foreach (var file in package.Files)
+            {
+                if (file.Name != "globals.lsf")
+                {
+                    rewrittenPackage.Files.Add(file);
                 }
             }
 
-            if (databaseSelectorCb.Items.Count > 0)
-            {
-                databaseSelectorCb.SelectedIndex = 0;
-            }
+            var packageWriter = new PackageWriter(package, storyFilePath.Text + ".tmp");
+            // TODO: Resave using original version and flags
+            packageWriter.Version = 13;
+            packageWriter.Compression = CompressionMethod.Zlib;
+            packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
+            packageWriter.Write();
 
-            MessageBox.Show("Story file loaded successfully.");
+            rewrittenStream.Dispose();
+        }
+
+        private void saveStory()
+        {
+            using (var file = new FileStream(storyFilePath.Text, FileMode.Create, FileAccess.Write))
+            {
+                var writer = new StoryWriter();
+                writer.Write(file, Story);
+            }
         }
 
         private void saveStoryBtn_Click(object sender, EventArgs e)
@@ -87,13 +197,22 @@ namespace ConverterApp
                 return;
             }
 
-            using (var file = new FileStream(storyFilePath.Text, FileMode.Create, FileAccess.Write))
-            {
-                var writer = new StoryWriter();
-                writer.Write(file, Story);
-            }
+            var extension = Path.GetExtension(storyFilePath.Text).ToLower();
 
-            MessageBox.Show("Story file save successful.");
+            if (extension == ".lsv")
+            {
+                saveSavegameDatabase();
+                MessageBox.Show("Save game database save successful.");
+            }
+            else if (extension == ".osi")
+            {
+                saveStory();
+                MessageBox.Show("Story file save successful.");
+            }
+            else
+            {
+                MessageBox.Show("Unsupported file extension: " + extension, "Story save failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void decompileStoryBtn_Click(object sender, EventArgs e)

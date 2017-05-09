@@ -73,7 +73,7 @@ namespace LSLib.LS
 
         abstract public UInt32 Size();
         abstract public UInt32 CRC();
-        abstract public BinaryReader MakeReader();
+        abstract public Stream MakeStream();
     }
 
     public class PackagedFileInfo : FileInfo
@@ -99,7 +99,7 @@ namespace LSLib.LS
             return Crc;
         }
 
-        public override BinaryReader MakeReader()
+        public override Stream MakeStream()
         {
             var compressed = new byte[SizeOnDisk];
 
@@ -125,9 +125,7 @@ namespace LSLib.LS
             }
 
             var uncompressed = BinUtils.Decompress(compressed, (int)Size(), (byte)Flags);
-            var memStream = new MemoryStream(uncompressed);
-            var reader = new BinaryReader(memStream);
-            return reader;
+            return new MemoryStream(uncompressed);
         }
 
         internal static PackagedFileInfo CreateFromEntry(FileEntry13 entry, Stream dataStream)
@@ -228,10 +226,9 @@ namespace LSLib.LS
             throw new NotImplementedException("!");
         }
 
-        public override BinaryReader MakeReader()
+        public override Stream MakeStream()
         {
-            var fs = new FileStream(FilesystemPath, FileMode.Open, FileAccess.Read);
-            return new BinaryReader(fs);
+            return new FileStream(FilesystemPath, FileMode.Open, FileAccess.Read);
         }
 
         public static FilesystemFileInfo CreateFromEntry(string filesystemPath, string name)
@@ -246,12 +243,40 @@ namespace LSLib.LS
         }
     }
 
+    public class StreamFileInfo : FileInfo
+    {
+        public Stream Stream;
+
+        public override UInt32 Size()
+        {
+            return (UInt32)Stream.Length;
+        }
+
+        public override UInt32 CRC()
+        {
+            throw new NotImplementedException("!");
+        }
+
+        public override Stream MakeStream()
+        {
+            return Stream;
+        }
+
+        public static StreamFileInfo CreateFromStream(Stream stream, string name)
+        {
+            var info = new StreamFileInfo();
+            info.Name = name;
+            info.Stream = stream;
+            return info;
+        }
+    }
+
     public class Package
     {
         public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x50, 0x4B };
         public const UInt32 CurrentVersion = 13;
 
-        internal List<FileInfo> Files = new List<FileInfo>();
+        public List<FileInfo> Files = new List<FileInfo>();
 
         public static string MakePartFilename(string path, int part)
         {
@@ -284,6 +309,7 @@ namespace LSLib.LS
             long totalSize = package.Files.Sum(p => (long)p.Size());
             long currentSize = 0;
 
+            byte[] buffer = new byte[32768];
             foreach (var file in package.Files)
             {
                 this.progressUpdate(file.Name, currentSize, totalSize);
@@ -296,12 +322,12 @@ namespace LSLib.LS
                     Directory.CreateDirectory(dirName);
                 }
 
-                var inReader = file.MakeReader();
+                var inStream = file.MakeStream();
+                var inReader = new BinaryReader(inStream);
                 var outFile = new FileStream(outPath, FileMode.Create, FileAccess.Write);
 
                 if (inReader != null)
                 {
-                    byte[] buffer = new byte[32768];
                     int read;
                     while ((read = inReader.Read(buffer, 0, buffer.Length)) > 0)
                     {

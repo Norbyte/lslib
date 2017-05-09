@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace LSLib.LS
 {
-    public class LSJWriter : IDisposable
+    public class LSJWriter
     {
         private Stream stream;
         private JsonTextWriter writer;
@@ -13,11 +13,6 @@ namespace LSLib.LS
         public LSJWriter(Stream stream)
         {
             this.stream = stream;
-        }
-
-        public void Dispose()
-        {
-            stream.Dispose();
         }
 
         public void Write(Resource rsrc)

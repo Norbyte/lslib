@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LSLib.LS
 {
-    public class LSBWriter : IDisposable
+    public class LSBWriter
     {
         private Stream stream;
         private BinaryWriter writer;
@@ -16,11 +16,6 @@ namespace LSLib.LS
         public LSBWriter(Stream stream)
         {
             this.stream = stream;
-        }
-
-        public void Dispose()
-        {
-            stream.Dispose();
         }
 
         public void Write(Resource rsrc)
