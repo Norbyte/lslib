@@ -439,7 +439,7 @@ namespace LSLib.Granny.GR2
             else
                 defn.Unknown = (UInt32)Reader.ReadUInt64();
 
-            Debug.Assert(defn.Unknown == 0);
+            Debug.Assert(!defn.IsValid || defn.Unknown == 0);
 
             if (defn.Type == MemberType.Inline || defn.Type == MemberType.Reference || defn.Type == MemberType.ArrayOfReferences ||
                 defn.Type == MemberType.ReferenceToArray)

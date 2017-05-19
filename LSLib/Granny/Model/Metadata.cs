@@ -8,14 +8,6 @@ using OpenTK;
 
 namespace LSLib.Granny.Model
 {
-    public class ArtToolExtendedData
-    {
-    }
-
-    public class ExporterExtendedData
-    {
-    }
-
     public class ArtToolInfo
     {
         public String FromArtToolName;
