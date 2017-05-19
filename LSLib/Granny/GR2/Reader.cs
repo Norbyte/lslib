@@ -507,6 +507,13 @@ namespace LSLib.Granny.GR2
                 return cachedNode;
             }
 
+            // Work around serialization of UserData and ExtendedData fields
+            // whose structure may differ depending on the game and GR2 version
+            if (node != null && node.GetType() == typeof(System.Object))
+            {
+                node = null;
+            }
+
             if (node != null)
             {
                 // Don't save inline structs in the cached struct map, as they can occupy the same address as a non-inline struct
@@ -526,6 +533,11 @@ namespace LSLib.Granny.GR2
                 if (localMembers.Count != defnMembers.Count)
                 {
                     Trace.TraceWarning(String.Format("Struct {0} differs: Field count differs ({1} vs {2})", node.GetType().Name, localMembers.Count, defnMembers.Count));
+                    for (int i = 0; i < defnMembers.Count; i++)
+                    {
+                        var member = defnMembers[i];
+                        Trace.TraceWarning(String.Format("\tField {0}: {1}[{2}]", member.Name, member.Type, member.ArraySize));
+                    }
                 }
                 else
                 {
@@ -577,6 +589,16 @@ namespace LSLib.Granny.GR2
             }
             else
             {
+#if DEBUG_GR2_FORMAT_DIFFERENCES
+                var defnMembers = definition.Members.Where(m => m.ShouldSerialize(Header.tag)).ToList();
+                Trace.TraceWarning("Unnamed struct not defined locally");
+                for (int i = 0; i < defnMembers.Count; i++)
+                {
+                    var member = defnMembers[i];
+                    Trace.TraceWarning(String.Format("\tField {0}: {1}[{2}]", member.Name, member.Type, member.ArraySize));
+                }
+#endif
+
                 foreach (var member in definition.Members)
                 {
                     ReadInstance(member, null, null, null);

@@ -244,7 +244,7 @@ namespace LSLib.Granny.Model
         public string Name;
         public List<Bone> Bones;
         public int LODType;
-        [Serialization(Type = MemberType.VariantReference)]
+        [Serialization(Type = MemberType.VariantReference, MinVersion = 0x80000027)]
         public object ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
