@@ -538,11 +538,28 @@ namespace LSLib.Granny.Model
             ulong inputOffset = 0;
             var inputs = new List<InputLocal>();
             var inputOffsets = new List<InputLocalOffset>();
-            foreach (var component in PrimaryVertexData.VertexComponentNames)
+            List<string> componentNames;
+            if (PrimaryVertexData.VertexComponentNames != null
+                && PrimaryVertexData.VertexComponentNames.Count > 0
+                && PrimaryVertexData.VertexComponentNames[0].String != "")
+            {
+                componentNames = PrimaryVertexData.VertexComponentNames.Select(s => s.String).ToList();
+            }
+            else if (PrimaryVertexData.Vertices != null
+                && PrimaryVertexData.Vertices.Count > 0)
+            {
+                componentNames = PrimaryVertexData.Vertices[0].ComponentNames();
+            }
+            else
+            {
+                throw new ParsingException("Unable to determine mesh component list: No vertices and vertex component names available.");
+            }
+
+            foreach (var component in componentNames)
             {
                 var input = new InputLocal();
                 source source = null;
-                switch (component.String)
+                switch (component)
                 {
                     case "Position":
                         {
@@ -596,7 +613,7 @@ namespace LSLib.Granny.Model
                         {
                             if (options.ExportUVs)
                             {
-                                int uvIndex = Int32.Parse(component.String.Substring(component.String.Length - 1)) - 1;
+                                int uvIndex = Int32.Parse(component.Substring(component.Length - 1)) - 1;
                                 source = PrimaryVertexData.MakeColladaUVs(Name, uvIndex);
 
                                 var texInputOff = new InputLocalOffset();
@@ -618,7 +635,7 @@ namespace LSLib.Granny.Model
                         break;
 
                     default:
-                        throw new NotImplementedException("Vertex component not supported: " + component.String);
+                        throw new NotImplementedException("Vertex component not supported: " + component);
                 }
 
                 if (source != null)
