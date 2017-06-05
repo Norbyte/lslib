@@ -8,11 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using LSLib.LS;
+using System.Diagnostics;
 
 namespace ConverterApp
 {
     public partial class PackagePane : UserControl
     {
+        private Stopwatch DisplayTimer;
+
         public PackagePane()
         {
             InitializeComponent();
@@ -20,8 +23,27 @@ namespace ConverterApp
             compressionMethod.SelectedIndex = 4;
         }
 
-        private void PackageProgressUpdate(string status, long numerator, long denominator)
+        private void PackageProgressUpdate(string status, long numerator, long denominator, FileInfo file)
         {
+            if (file != null)
+            {
+                // Throttle the progress displays to 10 updates per second to prevent UI
+                // updates from slowing down the compression/decompression process
+                if (DisplayTimer == null)
+                {
+                    DisplayTimer = new Stopwatch();
+                    DisplayTimer.Start();
+                }
+                else if (DisplayTimer.ElapsedMilliseconds < 100)
+                {
+                    return;
+                }
+                else
+                {
+                    DisplayTimer.Restart();
+                }
+            }
+            
             packageProgressLabel.Text = status;
             if (denominator == 0)
             {
@@ -56,6 +78,8 @@ namespace ConverterApp
         private void extractPackageBtn_Click(object sender, EventArgs e)
         {
             extractPackageBtn.Enabled = false;
+            DisplayTimer = null;
+
             try
             {
                 var packager = new Packager();
@@ -78,6 +102,8 @@ namespace ConverterApp
         private void createPackageBtn_Click(object sender, EventArgs e)
         {
             createPackageBtn.Enabled = false;
+            DisplayTimer = null;
+
             try
             {
                 uint version = Package.CurrentVersion;

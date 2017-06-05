@@ -405,7 +405,7 @@ namespace LSLib.Granny.GR2
             stream.Seek(headerSize, SeekOrigin.Begin);
             byte[] body = new byte[fileSize - headerSize];
             stream.Read(body, 0, (int)(fileSize - headerSize));
-            UInt32 crc = Crc32.Compute(body);
+            UInt32 crc = Native.Crc32.Compute(body, 0);
             stream.Seek(originalPos, SeekOrigin.Begin);
             return crc;
         }

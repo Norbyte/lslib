@@ -79,7 +79,7 @@ namespace LSLib.LS
             reader.Dispose();
 
             packaged.SizeOnDisk = (UInt32)(stream.Position - packaged.OffsetInFile);
-            packaged.Crc = Crc32.Compute(compressed);
+            packaged.Crc = Native.Crc32.Compute(compressed, 0);
 
             var padLength = PaddingLength();
             if (stream.Position % padLength > 0)

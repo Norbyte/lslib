@@ -113,7 +113,7 @@ namespace LSLib.LS
 
             if (Crc != 0)
             {
-                var computedCrc = Crc32.Compute(compressed);
+                UInt32 computedCrc = Native.Crc32.Compute(compressed, 0);
                 if (computedCrc != Crc)
                 {
                     var msg = String.Format(
@@ -289,12 +289,12 @@ namespace LSLib.LS
 
     public class Packager
     {
-        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator);
+        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, FileInfo file);
         public ProgressUpdateDelegate progressUpdate = delegate { };
 
         private void WriteProgressUpdate(FileInfo file, long numerator, long denominator)
         {
-            this.progressUpdate(file.Name, numerator, denominator);
+            this.progressUpdate(file.Name, numerator, denominator, file);
         }
 
         public void UncompressPackage(string packagePath, string outputPath)
@@ -302,7 +302,7 @@ namespace LSLib.LS
             if (outputPath.Length > 0 && outputPath.Last() != '/' && outputPath.Last() != '\\')
                 outputPath += "/";
 
-            this.progressUpdate("Reading package headers ...", 0, 1);
+            this.progressUpdate("Reading package headers ...", 0, 1, null);
             var reader = new PackageReader(packagePath);
             var package = reader.Read();
 
@@ -312,7 +312,7 @@ namespace LSLib.LS
             byte[] buffer = new byte[32768];
             foreach (var file in package.Files)
             {
-                this.progressUpdate(file.Name, currentSize, totalSize);
+                this.progressUpdate(file.Name, currentSize, totalSize, file);
                 currentSize += file.Size();
 
                 var outPath = outputPath + file.Name;
@@ -365,11 +365,11 @@ namespace LSLib.LS
 
         public void CreatePackage(string packagePath, string inputPath, uint version = Package.CurrentVersion, CompressionMethod compression = CompressionMethod.None, bool fastCompression = true)
         {
-            this.progressUpdate("Enumerating files ...", 0, 1);
+            this.progressUpdate("Enumerating files ...", 0, 1, null);
             var package = new Package();
             EnumerateFiles(package, inputPath, inputPath);
 
-            this.progressUpdate("Creating archive ...", 0, 1);
+            this.progressUpdate("Creating archive ...", 0, 1, null);
             using (var writer = new PackageWriter(package, packagePath))
             {
                 writer.writeProgress += WriteProgressUpdate;
