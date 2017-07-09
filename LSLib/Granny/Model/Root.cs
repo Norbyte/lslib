@@ -54,7 +54,7 @@ namespace LSLib.Granny.Model
             {
                 if (param.name == null)
                     param.name = "default";
-                if (param.type == "float")
+                if (param.type == "float" || param.type == "double")
                 {
                     var items = new List<Single>((int)accessor.count);
                     var offset = (int)accessor.offset;
