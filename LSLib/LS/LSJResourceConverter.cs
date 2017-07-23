@@ -90,7 +90,11 @@ namespace LSLib.LS
                                 attribute.Value = Convert.ToUInt64(reader.Value);
                                 break;
 
+                            // TODO: Not sure if this is the correct format
                             case NodeAttribute.DataType.DT_ScratchBuffer:
+                                attribute.Value = Convert.FromBase64String(reader.Value.ToString());
+                                break;
+
                             case NodeAttribute.DataType.DT_Long:
                                 attribute.Value = Convert.ToInt64(reader.Value);
                                 break;
@@ -411,7 +415,11 @@ namespace LSLib.LS
                         writer.WriteValue(Convert.ToUInt64(attribute.Value.Value));
                         break;
 
+                    // TODO: Not sure if this is the correct format
                     case NodeAttribute.DataType.DT_ScratchBuffer:
+                        writer.WriteValue(Convert.ToBase64String((byte[])attribute.Value.Value));
+                        break;
+
                     case NodeAttribute.DataType.DT_Long:
                         writer.WriteValue(Convert.ToInt64(attribute.Value.Value));
                         break;
@@ -429,20 +437,45 @@ namespace LSLib.LS
                     case NodeAttribute.DataType.DT_UUID:
                         writer.WriteValue(((Guid)attribute.Value.Value).ToString());
                         break;
-
+                        
                     // TODO: haven't seen any vectors/matrices in D:OS JSON files so far
-                    case NodeAttribute.DataType.DT_None:
-                    case NodeAttribute.DataType.DT_IVec2:
-                    case NodeAttribute.DataType.DT_IVec3:
-                    case NodeAttribute.DataType.DT_IVec4:
                     case NodeAttribute.DataType.DT_Vec2:
                     case NodeAttribute.DataType.DT_Vec3:
                     case NodeAttribute.DataType.DT_Vec4:
+                        {
+                            var vec = (float[])attribute.Value.Value;
+                            writer.WriteValue(String.Join(" ", vec));
+                            break;
+                        }
+
+                    case NodeAttribute.DataType.DT_IVec2:
+                    case NodeAttribute.DataType.DT_IVec3:
+                    case NodeAttribute.DataType.DT_IVec4:
+                        {
+                            var ivec = (int[])attribute.Value.Value;
+                            writer.WriteValue(String.Join(" ", ivec));
+                            break;
+                        }
+
                     case NodeAttribute.DataType.DT_Mat2:
                     case NodeAttribute.DataType.DT_Mat3:
                     case NodeAttribute.DataType.DT_Mat3x4:
                     case NodeAttribute.DataType.DT_Mat4x3:
                     case NodeAttribute.DataType.DT_Mat4:
+                        {
+                            var mat = (Matrix)attribute.Value.Value;
+                            var str = "";
+                            for (var r = 0; r < mat.rows; r++)
+                            {
+                                for (var c = 0; c < mat.cols; c++)
+                                    str += mat[r, c].ToString() + ",";
+                            }
+
+                            writer.WriteValue(str);
+                            break;
+                        }
+
+                    case NodeAttribute.DataType.DT_None:
                     default:
                         throw new NotImplementedException("Don't know how to serialize type " + attribute.Value.Type.ToString());
                 }
