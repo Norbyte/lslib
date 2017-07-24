@@ -687,7 +687,7 @@ namespace LSLib.Granny.Model
                 ImportSkin(root, skin);
             }
 
-            if (collAnimations.Count > 0)
+            if (collAnimations.Count > 0 && root.Skeletons.Count > 0)
             {
                 ImportAnimations(collAnimations, root, root.Skeletons[0]);
             }
