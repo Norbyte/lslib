@@ -57,8 +57,8 @@ namespace LSLib.Granny
 
                 case ExportFormat.DAE:
                     {
-                        var root = new LSLib.Granny.Model.Root();
-                        root.ImportFromCollada(inputPath);
+                        var importer = new ColladaImporter();
+                        var root = importer.Import(inputPath);
                         return root;
                     }
 

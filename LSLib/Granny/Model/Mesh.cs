@@ -456,218 +456,6 @@ namespace LSLib.Granny.Model
         public Int32 DataIsDeltas;
     }
 
-    public class MeshColladaExporter
-    {
-        private Mesh ExportedMesh;
-        private ExporterOptions Options;
-        private List<source> Sources;
-        private List<InputLocal> Inputs;
-        private List<InputLocalOffset> InputOffsets;
-        private ulong LastInputOffset = 0;
-
-
-        public MeshColladaExporter(Mesh mesh, ExporterOptions options)
-        {
-            ExportedMesh = mesh;
-            Options = options;
-        }
-
-        private void AddInput(source collSource, string inputSemantic, string localInputSemantic = null)
-        {
-            if (collSource != null)
-            {
-                Sources.Add(collSource);
-            }
-
-            if (inputSemantic != null)
-            {
-                var input = new InputLocal();
-                input.semantic = inputSemantic;
-                input.source = "#" + collSource.id;
-                Inputs.Add(input);
-            }
-
-            if (localInputSemantic != null)
-            {
-                var vertexInputOff = new InputLocalOffset();
-                vertexInputOff.semantic = localInputSemantic;
-                vertexInputOff.source = "#" + collSource.id;
-                vertexInputOff.offset = LastInputOffset++;
-                InputOffsets.Add(vertexInputOff);
-            }
-        }
-
-        private void DetermineInputsFromComponentNames(List<string> componentNames)
-        {
-            foreach (var component in componentNames)
-            {
-                switch (component)
-                {
-                    case "Position":
-                        {
-                            var positions = ExportedMesh.PrimaryVertexData.MakeColladaPositions(ExportedMesh.Name);
-                            AddInput(positions, "POSITION", "VERTEX");
-                            break;
-                        }
-
-                    case "Normal":
-                        {
-                            if (Options.ExportNormals)
-                            {
-                                var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedMesh.Name);
-                                AddInput(normals, "NORMAL");
-                            }
-                            break;
-                        }
-
-                    case "Tangent":
-                        {
-                            if (Options.ExportTangents)
-                            {
-                                var tangents = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
-                                AddInput(tangents, "TANGENT");
-                            }
-                            break;
-                        }
-
-                    case "Binormal":
-                        {
-                            if (Options.ExportTangents)
-                            {
-                                var binormals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
-                                AddInput(binormals, "BINORMAL");
-                            }
-                            break;
-                        }
-
-                    case "TextureCoordinates0":
-                    case "TextureCoordinates1":
-                        {
-                            if (Options.ExportUVs)
-                            {
-                                int uvIndex = Int32.Parse(component.Substring(component.Length - 1));
-                                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex);
-                                AddInput(uvs, null, "TEXCOORD");
-                            }
-                            break;
-                        }
-
-                    // Same as TextureCoordinatesX, but with 1-based indices
-                    case "MaxChannel_1":
-                    case "MaxChannel_2":
-                    case "UVChannel_1":
-                    case "UVChannel_2":
-                    case "map1":
-                        {
-                            if (Options.ExportUVs)
-                            {
-                                int uvIndex = Int32.Parse(component.Substring(component.Length - 1)) - 1;
-                                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex);
-                                AddInput(uvs, null, "TEXCOORD");
-                            }
-                            break;
-                        }
-
-                    case "BoneWeights":
-                    case "BoneIndices":
-                        // These are handled in ExportSkin()
-                        break;
-
-                    case "DiffuseColor0":
-                        // TODO: This is not exported at the moment.
-                        break;
-
-                    default:
-                        throw new NotImplementedException("Vertex component not supported: " + component);
-                }
-            }
-        }
-
-        private void DetermineInputsFromVertex(Vertex vertex)
-        {
-            var desc = Vertex.Description(vertex.GetType());
-            if (!desc.Position)
-            {
-                throw new NotImplementedException("Cannot import vertices without position");
-            }
-
-            // Vertex positions
-            var positions = ExportedMesh.PrimaryVertexData.MakeColladaPositions(ExportedMesh.Name);
-            AddInput(positions, "POSITION", "VERTEX");
-
-            // Normals
-            if (desc.Normal && Options.ExportNormals)
-            {
-                var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedMesh.Name);
-                AddInput(normals, "NORMAL");
-            }
-
-            // Tangents
-            if (desc.Tangent && Options.ExportTangents)
-            {
-                var normals = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
-                AddInput(normals, "TANGENT");
-            }
-
-            // Binormals
-            if (desc.Binormal && Options.ExportTangents)
-            {
-                var normals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
-                AddInput(normals, "BINORMAL");
-            }
-
-            // Texture coordinates
-            if (Options.ExportUVs)
-            {
-                for (var uvIndex = 0; uvIndex < desc.TextureCoordinates; uvIndex++)
-                {
-                    var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex);
-                    AddInput(uvs, null, "TEXCOORD");
-                }
-            }
-            
-            // BoneWeights and BoneIndices are handled in ExportSkin()
-            // TODO: DiffuseColor0 is not exported at the moment.
-        }
-
-        public mesh Export()
-        {
-            Sources = new List<source>();
-            Inputs = new List<InputLocal>();
-            InputOffsets = new List<InputLocalOffset>();
-            LastInputOffset = 0;
-
-            var vertexData = ExportedMesh.PrimaryVertexData;
-            if (vertexData.Vertices != null
-                && vertexData.Vertices.Count > 0)
-            {
-                var vertex = vertexData.Vertices[0];
-                DetermineInputsFromVertex(vertex);
-            }
-            else
-            {
-                var componentNames = ExportedMesh.VertexComponentNames();
-                DetermineInputsFromComponentNames(componentNames);
-            }
-
-            // TODO: model transform/inverse transform?
-            var triangles = ExportedMesh.PrimaryTopology.MakeColladaTriangles(
-                InputOffsets.ToArray(),
-                vertexData.Deduplicator.VertexDeduplicationMap,
-                vertexData.Deduplicator.UVDeduplicationMaps
-            );
-
-            var colladaMesh = new mesh();
-            colladaMesh.vertices = new vertices();
-            colladaMesh.vertices.id = ExportedMesh.Name + "-vertices";
-            colladaMesh.vertices.input = Inputs.ToArray();
-            colladaMesh.source = Sources.ToArray();
-            colladaMesh.Items = new object[] { triangles };
-
-            return colladaMesh;
-        }
-    }
-
     public class Mesh
     {
         public string Name;
@@ -685,53 +473,6 @@ namespace LSLib.Granny.Model
 
         [Serialization(Kind = SerializationKind.None)]
         public Type VertexFormat;
-
-        public static Mesh ImportFromCollada(mesh mesh, string vertexFormat, bool rebuildNormals = false, bool rebuildTangents = false)
-        {
-            var collada = new ColladaMesh();
-            collada.ImportFromCollada(mesh, vertexFormat, rebuildNormals, rebuildTangents);
-
-            var m = new Mesh();
-            m.VertexFormat = VertexFormatRegistry.Resolve(vertexFormat);
-            m.Name = "Unnamed";
-
-            m.PrimaryVertexData = new VertexData();
-            var components = new List<GrannyString>();
-            components.Add(new GrannyString("Position"));
-
-            var vertexDesc = Vertex.Description(m.VertexFormat);
-            if (vertexDesc.BoneWeights)
-            {
-                components.Add(new GrannyString("BoneWeights"));
-                components.Add(new GrannyString("BoneIndices"));
-            }
-
-            components.Add(new GrannyString("Normal"));
-            components.Add(new GrannyString("Tangent"));
-            components.Add(new GrannyString("Binormal"));
-            components.Add(new GrannyString("MaxChannel_1"));
-            m.PrimaryVertexData.VertexComponentNames = components;
-            m.PrimaryVertexData.Vertices = collada.ConsolidatedVertices;
-
-            m.PrimaryTopology = new TriTopology();
-            m.PrimaryTopology.Indices = collada.ConsolidatedIndices;
-            m.PrimaryTopology.Groups = new List<TriTopologyGroup>();
-            var triGroup = new TriTopologyGroup();
-            triGroup.MaterialIndex = 0;
-            triGroup.TriFirst = 0;
-            triGroup.TriCount = collada.TriangleCount;
-            m.PrimaryTopology.Groups.Add(triGroup);
-
-            m.MaterialBindings = new List<MaterialBinding>();
-            m.MaterialBindings.Add(new MaterialBinding());
-
-            // m.BoneBindings; - TODO
-
-            m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
-            Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", (vertexDesc.BoneWeights ? "skinned" : "rigid"), m.PrimaryTopology.Groups.Count, collada.TriangleCount));
-
-            return m;
-        }
 
         public void PostLoad()
         {
@@ -760,140 +501,31 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public mesh ExportToCollada(ExporterOptions options)
-        {
-            var exporter = new MeshColladaExporter(this, options);
-            return exporter.Export();
-        }
-
-        public static Matrix4 FloatsToMatrix(float[] items)
-        {
-            return new Matrix4(
-                items[0], items[1], items[2], items[3],
-                items[4], items[5], items[6], items[7],
-                items[8], items[9], items[10], items[11],
-                items[12], items[13], items[14], items[15]
-            );
-        }
-
         public bool IsSkinned()
         {
             // Check if we have both the BoneWeights and BoneIndices vertex components.
             bool hasWeights = false, hasIndices = false;
-            foreach (var component in PrimaryVertexData.VertexComponentNames)
+
+            // If we have vertices, check the vertex prototype, as VertexComponentNames is unreliable.
+            if (PrimaryVertexData.Vertices.Count > 0)
             {
-                if (component.String == "BoneWeights")
-                    hasWeights = true;
-                else if (component.String == "BoneIndices")
-                    hasIndices = true;
+                var desc = Vertex.Description(PrimaryVertexData.Vertices[0].GetType());
+                hasWeights = desc.BoneWeights;
+                hasIndices = desc.BoneIndices;
+            }
+            else
+            {
+                // Otherwise try to figure out the components from VertexComponentNames
+                foreach (var component in PrimaryVertexData.VertexComponentNames)
+                {
+                    if (component.String == "BoneWeights")
+                        hasWeights = true;
+                    else if (component.String == "BoneIndices")
+                        hasIndices = true;
+                }
             }
 
             return hasWeights && hasIndices;
-        }
-
-        public skin ExportSkin(List<Bone> bones, Dictionary<string, Bone> nameMaps, string geometryId)
-        {
-            var sources = new List<source>();
-            var joints = new List<string>();
-            var poses = new List<float>();
-
-            var boundBones = new HashSet<string>();
-            var orderedBones = new List<Bone>();
-            foreach (var boneBinding in BoneBindings)
-            {
-                boundBones.Add(boneBinding.BoneName);
-                orderedBones.Add(nameMaps[boneBinding.BoneName]);
-            }
-
-            /*
-             * Append all bones to the end of the bone list, even if they're not influencing the mesh.
-             * We need this because some tools (eg. Blender) expect all bones to be present, otherwise their
-             * inverse world transform would reset to identity.
-             */
-            foreach (var bone in bones)
-            {
-                if (!boundBones.Contains(bone.Name))
-                {
-                    orderedBones.Add(bone);
-                }
-            }
-
-            foreach (var bone in orderedBones)
-            {
-                boundBones.Add(bone.Name);
-                joints.Add(bone.Name);
-
-                var invWorldTransform = FloatsToMatrix(bone.InverseWorldTransform);
-                invWorldTransform.Transpose();
-
-                poses.AddRange(new float[] {
-                    invWorldTransform.M11, invWorldTransform.M12, invWorldTransform.M13, invWorldTransform.M14,
-                    invWorldTransform.M21, invWorldTransform.M22, invWorldTransform.M23, invWorldTransform.M24,
-                    invWorldTransform.M31, invWorldTransform.M32, invWorldTransform.M33, invWorldTransform.M34,
-                    invWorldTransform.M41, invWorldTransform.M42, invWorldTransform.M43, invWorldTransform.M44
-                });
-            }
-
-            var jointSource = ColladaUtils.MakeNameSource(Name, "joints", new string[] { "JOINT" }, joints.ToArray());
-            var poseSource = ColladaUtils.MakeFloatSource(Name, "poses", new string[] { "TRANSFORM" }, poses.ToArray(), 16, "float4x4");
-            var weightsSource = PrimaryVertexData.MakeBoneWeights(Name);
-
-            var vertices = PrimaryVertexData.Deduplicator.DeduplicatedPositions;
-            var vertexInfluenceCounts = new List<int>(vertices.Count);
-            var vertexInfluences = new List<int>(vertices.Count);
-            int weightIdx = 0;
-            foreach (var vertex in vertices)
-            {
-                int influences = 0;
-                var indices = vertex.BoneIndices;
-                var weights = vertex.BoneWeights;
-                for (int i = 0; i < 4; i++)
-                {
-                    if (weights[i] > 0)
-                    {
-                        influences++;
-                        vertexInfluences.Add(indices[i]);
-                        vertexInfluences.Add(weightIdx++);
-                    }
-                }
-
-                vertexInfluenceCounts.Add(influences);
-            }
-
-            var jointOffsets = new InputLocalOffset();
-            jointOffsets.semantic = "JOINT";
-            jointOffsets.source = "#" + jointSource.id;
-            jointOffsets.offset = 0;
-
-            var weightOffsets = new InputLocalOffset();
-            weightOffsets.semantic = "WEIGHT";
-            weightOffsets.source = "#" + weightsSource.id;
-            weightOffsets.offset = 1;
-
-            var vertWeights = new skinVertex_weights();
-            vertWeights.count = (ulong)vertices.Count;
-            vertWeights.input = new InputLocalOffset[] { jointOffsets, weightOffsets };
-            vertWeights.v = string.Join(" ", vertexInfluences.Select(x => x.ToString()).ToArray());
-            vertWeights.vcount = string.Join(" ", vertexInfluenceCounts.Select(x => x.ToString()).ToArray());
-
-            var skin = new skin();
-            skin.source1 = "#" + geometryId;
-            skin.bind_shape_matrix = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1";
-
-            var skinJoints = new skinJoints();
-            var skinJointInput = new InputLocal();
-            skinJointInput.semantic = "JOINT";
-            skinJointInput.source = "#" + jointSource.id;
-            var skinInvBindInput = new InputLocal();
-            skinInvBindInput.semantic = "INV_BIND_MATRIX";
-            skinInvBindInput.source = "#" + poseSource.id;
-            skinJoints.input = new InputLocal[] { skinJointInput, skinInvBindInput };
-
-            skin.joints = skinJoints;
-            skin.source = new source[] { jointSource, poseSource, weightsSource };
-            skin.vertex_weights = vertWeights;
-
-            return skin;
         }
     }
 }

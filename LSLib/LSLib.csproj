@@ -69,7 +69,9 @@
     <Compile Include="Granny\GR2\Reader.cs" />
     <Compile Include="Granny\GR2\Writer.cs" />
     <Compile Include="Granny\Model\Animation.cs" />
+    <Compile Include="Granny\Model\ColladaExporter.cs" />
     <Compile Include="Granny\Model\ColladaHelpers.cs" />
+    <Compile Include="Granny\Model\ColladaImporter.cs" />
     <Compile Include="Granny\Model\ColladaMesh.cs" />
     <Compile Include="Granny\Model\CurveData\AnimationCurveData.cs" />
     <Compile Include="Granny\Model\CurveData\D3Constant32f.cs" />

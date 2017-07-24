@@ -70,10 +70,9 @@ namespace LSLib.Granny.Model
 
         private Root LoadDAE(string inPath)
         {
-            var root = new LSLib.Granny.Model.Root();
-            root.Options = Options;
-            root.ImportFromCollada(inPath);
-            return root;
+            var importer = new ColladaImporter();
+            importer.Options = Options;
+            return importer.Import(inPath);
         }
 
         private Root Load(string inPath, ExportFormat format)
@@ -116,21 +115,23 @@ namespace LSLib.Granny.Model
             f.Dispose();
         }
 
-        private void SaveDAE(string outPath, Root root)
+        private void SaveDAE(Root root, ExporterOptions options)
         {
-            root.ExportToCollada(outPath);
+            var exporter = new ColladaExporter();
+            exporter.Options = options;
+            exporter.Export(root, options.OutputPath);
         }
 
-        private void Save(string outPath, ExportFormat format, Root root)
+        private void Save(Root root, ExporterOptions options)
         {
-            switch (format)
+            switch (options.OutputFormat)
             {
                 case ExportFormat.GR2:
-                    SaveGR2(outPath, root);
+                    SaveGR2(options.OutputPath, root);
                     break;
 
                 case ExportFormat.DAE:
-                    SaveDAE(outPath, root);
+                    SaveDAE(root, options);
                     break;
 
                 default:
@@ -553,7 +554,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            Save(Options.OutputPath, Options.OutputFormat, Root);
+            Save(Root, Options);
         }
     }
 }

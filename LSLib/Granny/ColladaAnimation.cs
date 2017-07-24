@@ -12,20 +12,19 @@ namespace LSLib.Granny.Model
     public class ColladaAnimation
     {
         private animation Animation;
-        private Dictionary<String, Source> Sources;
-        private InputLocalOffset[] Inputs;
+        private Dictionary<String, ColladaSource> Sources;
         private List<Matrix4> Transforms;
         private List<Single> Times;
         private Bone Bone;
 
         private void ImportSources()
         {
-            Sources = new Dictionary<String, Source>();
+            Sources = new Dictionary<String, ColladaSource>();
             foreach (var item in Animation.Items)
             {
                 if (item is source)
                 {
-                    var src = Source.FromCollada(item as source);
+                    var src = ColladaSource.FromCollada(item as source);
                     Sources.Add(src.id, src);
                 }
             }
@@ -46,13 +45,13 @@ namespace LSLib.Granny.Model
             if (sampler == null)
                 throw new ParsingException("Animation " + Animation.id + " has no sampler!");
 
-            Source inputSource = null, outputSource = null, interpolationSource = null;
+            ColladaSource inputSource = null, outputSource = null, interpolationSource = null;
             foreach (var input in sampler.input)
             {
                 if (input.source[0] != '#')
                     throw new ParsingException("Only ID references are supported for animation input sources");
 
-                Source source;
+                ColladaSource source;
                 if (!Sources.TryGetValue(input.source.Substring(1), out source))
                     throw new ParsingException("Animation sampler " + input.semantic + " references nonexistent source: " + input.source);
 

@@ -12,7 +12,7 @@ namespace LSLib.Granny.Model
     public class ColladaMesh
     {
         private mesh Mesh;
-        private Dictionary<String, Source> Sources;
+        private Dictionary<String, ColladaSource> Sources;
         private InputLocalOffset[] Inputs;
         private List<Vertex> Vertices;
         private List<List<Vector2>> UVs;
@@ -237,7 +237,7 @@ namespace LSLib.Granny.Model
                 if (input.source[0] != '#')
                     throw new ParsingException("Only ID references are supported for vertex input sources");
 
-                Source inputSource = null;
+                ColladaSource inputSource = null;
                 if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
                     throw new ParsingException("Vertex input source does not exist: " + input.source);
 
@@ -281,7 +281,7 @@ namespace LSLib.Granny.Model
                     if (input.source[0] != '#')
                         throw new ParsingException("Only ID references are supported for Normal input sources");
 
-                    Source inputSource = null;
+                    ColladaSource inputSource = null;
                     if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
                         throw new ParsingException("Normal input source does not exist: " + input.source);
 
@@ -355,7 +355,7 @@ namespace LSLib.Granny.Model
                     if (input.source[0] != '#')
                         throw new ParsingException("Only ID references are supported for UV input sources");
 
-                    Source inputSource = null;
+                    ColladaSource inputSource = null;
                     if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
                         throw new ParsingException("UV input source does not exist: " + input.source);
 
@@ -376,10 +376,10 @@ namespace LSLib.Granny.Model
 
         private void ImportSources()
         {
-            Sources = new Dictionary<String, Source>();
+            Sources = new Dictionary<String, ColladaSource>();
             foreach (var source in Mesh.source)
             {
-                var src = Source.FromCollada(source);
+                var src = ColladaSource.FromCollada(source);
                 Sources.Add(src.id, src);
             }
         }
@@ -465,16 +465,6 @@ namespace LSLib.Granny.Model
                     Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
                 computeTangents();
             }
-        }
-
-        public static Matrix4 FloatsToMatrix(float[] items)
-        {
-            return new Matrix4(
-                items[0], items[1], items[2], items[3],
-                items[4], items[5], items[6], items[7],
-                items[8], items[9], items[10], items[11],
-                items[12], items[13], items[14], items[15]
-            );
         }
     }
 }
