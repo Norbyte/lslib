@@ -54,6 +54,7 @@
             this.label20 = new System.Windows.Forms.Label();
             this.gr2BatchOutputDir = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.flipUVs = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.exportableObjects = new System.Windows.Forms.ListView();
             this.exportableName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -74,13 +75,13 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
             this.gr2BatchTab.SuspendLayout();
@@ -364,6 +365,7 @@
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
+            this.groupBox2.Controls.Add(this.flipUVs);
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Controls.Add(this.exportableObjects);
             this.groupBox2.Controls.Add(this.exportUVs);
@@ -380,6 +382,18 @@
             this.groupBox2.TabIndex = 37;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export Options";
+            // 
+            // flipUVs
+            // 
+            this.flipUVs.AutoSize = true;
+            this.flipUVs.Checked = true;
+            this.flipUVs.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.flipUVs.Location = new System.Drawing.Point(189, 87);
+            this.flipUVs.Name = "flipUVs";
+            this.flipUVs.Size = new System.Drawing.Size(65, 17);
+            this.flipUVs.TabIndex = 23;
+            this.flipUVs.Text = "Flip UVs";
+            this.flipUVs.UseVisualStyleBackColor = true;
             // 
             // label2
             // 
@@ -467,7 +481,6 @@
             // filterUVs
             // 
             this.filterUVs.AutoSize = true;
-            this.filterUVs.Enabled = false;
             this.filterUVs.Location = new System.Drawing.Point(9, 110);
             this.filterUVs.Name = "filterUVs";
             this.filterUVs.Size = new System.Drawing.Size(71, 17);
@@ -603,6 +616,19 @@
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
             // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -626,19 +652,6 @@
             // 
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2";
             this.inputFileDlg.Title = "Select Input File";
-            // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // GR2Pane
             // 
@@ -717,5 +730,6 @@
         private System.Windows.Forms.SaveFileDialog outputFileDlg;
         private System.Windows.Forms.OpenFileDialog inputFileDlg;
         internal System.Windows.Forms.CheckBox use16bitIndex;
+        private System.Windows.Forms.CheckBox flipUVs;
     }
 }

@@ -28,20 +28,43 @@ namespace LSLib.Granny.Model
         public string OutputPath;
         public ExportFormat OutputFormat;
 
+        // Export 64-bit GR2
         public bool Is64Bit = false;
+        // Use alternate GR2 signature when saving
+        // (This is the signature D:OS EE and D:OS 2 uses, but GR2 tools
+        // don't recognize it as legitimate.) 
         public bool AlternateSignature = false;
+        // GR2 run-time tag that that'll appear in the output file
+        // If the GR2 tag doesn't match, the game will convert the GR2 to the latest tag,
+        // which is a slow process. The advantage of a mismatched tag is that we don't
+        // have to 1:1 match the GR2 structs for that version, as it won't just
+        // memcpy the struct from the GR2 file directly.
         public UInt32 VersionTag = Header.DefaultTag;
+        // Export vertex normals to DAE/GR2 file
         public bool ExportNormals = true;
+        // Export tangents/binormals to DAE/GR2 file
         public bool ExportTangents = true;
+        // Export UV-s to DAE/GR2 file
         public bool ExportUVs = true;
+        // Flip the V coord of UV-s (GR2 stores them in flipped format)
+        public bool FlipUVs = true;
+        // Recalculate normals, even if they're available in the source mesh
+        // (They'll be recalculated automatically if unavailable)
         public bool RecalculateNormals = false;
+        // Recalculate tangents/binormals, even if they're available in the source mesh
+        // (They'll be recalculated automatically if unavailable)
         public bool RecalculateTangents = false;
+        // Recalculate bone inverse world transforms
         public bool RecalculateIWT = false;
+        // Create a dummy skeleton if none exists in the mesh
+        // Some games will crash if they encounter a mesh without a skeleton
         public bool BuildDummySkeleton = false;
+        // Save 16-bit vertex indices, if possible
         public bool CompactIndices = false;
         public bool DeduplicateVertices = true; // TODO: Add Collada conforming vert. handling as well
         public bool DeduplicateUVs = true; // TODO: UNHANDLED
         public bool ApplyBasisTransforms = true;
+        // Use an obsolete version tag to prevent Granny from memory mapping the structs
         public bool UseObsoleteVersionTag = false;
         public string ConformGR2Path;
         public bool ConformSkeletons = true;

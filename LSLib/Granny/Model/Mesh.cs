@@ -236,7 +236,7 @@ namespace LSLib.Granny.Model
             return ColladaUtils.MakeFloatSource(name, "binormals", new string[] { "X", "Y", "Z" }, binormals);
         }
 
-        public source MakeColladaUVs(string name, int uvIndex)
+        public source MakeColladaUVs(string name, int uvIndex, bool flip)
         {
             EnsureDeduplicationMap();
 
@@ -245,7 +245,10 @@ namespace LSLib.Granny.Model
             foreach (var uv in Deduplicator.DeduplicatedUVs[uvIndex])
             {
                 uvs[index++] = uv[0];
-                uvs[index++] = uv[1];
+                if (flip)
+                    uvs[index++] = 1.0f - uv[1];
+                else
+                    uvs[index++] = uv[1];
             }
 
             return ColladaUtils.MakeFloatSource(name, "uvs" + uvIndex.ToString(), new string[] { "S", "T" }, uvs);

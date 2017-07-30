@@ -28,6 +28,7 @@ namespace LSLib.Granny.Model
         public List<Vertex> ConsolidatedVertices;
         public List<int> ConsolidatedIndices;
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
+        private ExporterOptions Options;
 
 
         private class VertexIndexComparer : IEqualityComparer<int[]>
@@ -344,6 +345,7 @@ namespace LSLib.Granny.Model
 
         private void ImportUVs()
         {
+            bool flip = Options.FlipUVs;
             UVInputIndices.Clear();
             UVs = new List<List<Vector2>>();
             foreach (var input in Inputs)
@@ -368,6 +370,7 @@ namespace LSLib.Granny.Model
                     UVs.Add(uvs);
                     for (var i = 0; i < s.Count; i++)
                     {
+                        if (flip) t[i] = 1.0f - t[i];
                         uvs.Add(new Vector2(s[i], t[i]));
                     }
                 }
@@ -384,8 +387,9 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public void ImportFromCollada(mesh mesh, string vertexFormat, bool rebuildNormals = false, bool rebuildTangents = false)
+        public void ImportFromCollada(mesh mesh, string vertexFormat, ExporterOptions options)
         {
+            Options = options;
             Mesh = mesh;
             VertexType = VertexFormatRegistry.Resolve(vertexFormat);
             ImportSources();
@@ -394,7 +398,7 @@ namespace LSLib.Granny.Model
 
             // TODO: This should be done before deduplication!
             // TODO: Move this to somewhere else ... ?
-            if (!HasNormals || rebuildNormals)
+            if (!HasNormals || Options.RecalculateNormals)
             {
                 if (!HasNormals)
                     Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
@@ -459,7 +463,7 @@ namespace LSLib.Granny.Model
                     OriginalToConsolidatedVertexIndexMap.Add(i, new List<int> { i });
             }
 
-            if (!HasTangents || rebuildTangents)
+            if (!HasTangents || Options.RecalculateTangents)
             {
                 if (!HasTangents)
                     Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));

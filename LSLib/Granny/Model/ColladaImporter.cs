@@ -241,10 +241,10 @@ namespace LSLib.Granny.Model
             return vertexFormat;
         }
 
-        private Mesh ImportMesh(mesh mesh, string vertexFormat, bool rebuildNormals = false, bool rebuildTangents = false)
+        private Mesh ImportMesh(mesh mesh, string vertexFormat)
         {
             var collada = new ColladaMesh();
-            collada.ImportFromCollada(mesh, vertexFormat, rebuildNormals, rebuildTangents);
+            collada.ImportFromCollada(mesh, vertexFormat, Options);
 
             var m = new Mesh();
             m.VertexFormat = VertexFormatRegistry.Resolve(vertexFormat);
@@ -290,7 +290,7 @@ namespace LSLib.Granny.Model
 
         private Mesh ImportMesh(Root root, string name, mesh mesh, string vertexFormat)
         {
-            var m = ImportMesh(mesh, vertexFormat, Options.RecalculateNormals, Options.RecalculateTangents);
+            var m = ImportMesh(mesh, vertexFormat);
             m.Name = name;
             root.VertexDatas.Add(m.PrimaryVertexData);
             root.TriTopologies.Add(m.PrimaryTopology);

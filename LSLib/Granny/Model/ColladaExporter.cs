@@ -97,7 +97,7 @@ namespace LSLib.Granny.Model
                             if (Options.ExportUVs)
                             {
                                 int uvIndex = Int32.Parse(component.Substring(component.Length - 1));
-                                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex);
+                                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
                                 AddInput(uvs, null, "TEXCOORD");
                             }
                             break;
@@ -113,7 +113,7 @@ namespace LSLib.Granny.Model
                             if (Options.ExportUVs)
                             {
                                 int uvIndex = Int32.Parse(component.Substring(component.Length - 1)) - 1;
-                                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex);
+                                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
                                 AddInput(uvs, null, "TEXCOORD");
                             }
                             break;
@@ -172,7 +172,7 @@ namespace LSLib.Granny.Model
             {
                 for (var uvIndex = 0; uvIndex < desc.TextureCoordinates; uvIndex++)
                 {
-                    var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex);
+                    var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
                     AddInput(uvs, null, "TEXCOORD");
                 }
             }

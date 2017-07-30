@@ -185,6 +185,7 @@ namespace ConverterApp
             settings.ExportNormals = exportNormals.Checked;
             settings.ExportTangents = exportTangents.Checked;
             settings.ExportUVs = exportUVs.Checked;
+            settings.FlipUVs = flipUVs.Checked;
             settings.RecalculateNormals = recalculateNormals.Checked;
             settings.RecalculateTangents = recalculateTangents.Checked;
             settings.RecalculateIWT = recalculateJointIWT.Checked;
