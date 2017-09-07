@@ -233,7 +233,7 @@ namespace LSLib.LS.Osiris
                 story.MinorVersion = header.MinorVersion;
                 story.MajorVersion = header.MajorVersion;
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion > 11))
+                if (reader.Ver > OsiVersion.VerLastSupported)
                 {
                     var msg = String.Format(
                         "Osiris version v{0}.{1} unsupported; this tool supports loading up to version 1.11.",
@@ -242,10 +242,10 @@ namespace LSLib.LS.Osiris
                     throw new InvalidDataException(msg);
                 }
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 4))
+                if (reader.Ver >= OsiVersion.VerScramble)
                     reader.Scramble = 0xAD;
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 5))
+                if (reader.Ver >= OsiVersion.VerAddTypeMap)
                 {
                     story.Types = ReadTypes(reader);
                     foreach (var type in story.Types)
@@ -259,7 +259,7 @@ namespace LSLib.LS.Osiris
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
                 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 11))
+                if (reader.Ver >= OsiVersion.VerExternalStringTable)
                     story.ExternalStringTable = ReadStrings(reader);
                 else
                     story.ExternalStringTable = new List<string>();
@@ -267,7 +267,7 @@ namespace LSLib.LS.Osiris
                 story.Types[0] = OsirisType.MakeBuiltin(0, "UNKNOWN");
                 story.Types[1] = OsirisType.MakeBuiltin(1, "INTEGER");
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 10))
+                if (reader.Ver >= OsiVersion.VerEnhancedTypes)
                 {
                     story.Types[2] = OsirisType.MakeBuiltin(2, "INTEGER64");
                     story.Types[3] = OsirisType.MakeBuiltin(3, "REAL");
@@ -382,7 +382,7 @@ namespace LSLib.LS.Osiris
                 Writer.MinorVersion = story.MinorVersion;
 
                 var header = new SaveFileHeader();
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 11))
+                if (Writer.Ver >= OsiVersion.VerExternalStringTable)
                 {
                     header.Version = "Osiris save file dd. 03/30/17 07:28:20. Version 1.8.";
                 }
@@ -398,7 +398,7 @@ namespace LSLib.LS.Osiris
                 header.DebugFlags = 0x000C10A0;
                 header.Write(Writer);
 
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion > 11))
+                if (Writer.Ver > OsiVersion.VerLastSupported)
                 {
                     var msg = String.Format(
                         "Osiris version v{0}.{1} unsupported; this tool supports saving up to version 1.11.",
@@ -407,10 +407,10 @@ namespace LSLib.LS.Osiris
                     throw new InvalidDataException(msg);
                 }
 
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 4))
+                if (Writer.Ver >= OsiVersion.VerScramble)
                     Writer.Scramble = 0xAD;
 
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 5))
+                if (Writer.Ver >= OsiVersion.VerAddTypeMap)
                 {
                     // Don't export builtin types, only externally declared ones
                     var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
@@ -418,7 +418,7 @@ namespace LSLib.LS.Osiris
                 }
                 
                 // TODO: regenerate string table?
-                if (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 11))
+                if (Writer.Ver >= OsiVersion.VerExternalStringTable)
                     WriteStrings(story.ExternalStringTable);
 
                 Writer.WriteList(story.DivObjects);

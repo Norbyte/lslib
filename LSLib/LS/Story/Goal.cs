@@ -35,7 +35,7 @@ namespace LSLib.LS.Osiris
 
             Unknown = reader.ReadByte();
 
-            if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 1))
+            if (reader.Ver >= OsiVersion.VerAddInitExitCalls)
             {
                 InitCalls = reader.ReadList<Call>();
                 ExitCalls = reader.ReadList<Call>();
@@ -58,7 +58,7 @@ namespace LSLib.LS.Osiris
 
             writer.Write(Unknown);
 
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 1))
+            if (writer.Ver >= OsiVersion.VerAddInitExitCalls)
             {
                 writer.WriteList<Call>(InitCalls);
                 writer.WriteList<Call>(ExitCalls);

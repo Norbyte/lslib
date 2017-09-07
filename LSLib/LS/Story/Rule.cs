@@ -45,7 +45,7 @@ namespace LSLib.LS.Osiris
 
             Line = reader.ReadUInt32();
 
-            if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 6))
+            if (reader.Ver >= OsiVersion.VerAddQuery)
                 IsQuery = reader.ReadBoolean();
             else
                 IsQuery = false;
@@ -64,7 +64,7 @@ namespace LSLib.LS.Osiris
             }
 
             writer.Write(Line);
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 6))
+            if (writer.Ver >= OsiVersion.VerAddQuery)
                 writer.Write(IsQuery);
         }
 

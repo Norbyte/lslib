@@ -13,6 +13,67 @@ namespace LSLib.LS.Osiris
         void Write(OsiWriter writer);
     }
 
+    /// <summary>
+    /// Osiris file format version numbers
+    /// </summary>
+    public static class OsiVersion
+    {
+        /// <summary>
+        /// Initial version
+        /// </summary>
+        public const uint VerInitial = 0x0100;
+
+        /// <summary>
+        /// Added Init/Exit calls to goals
+        /// </summary>
+        public const uint VerAddInitExitCalls = 0x0101;
+
+        /// <summary>
+        /// Added version string at the beginning of the OSI file
+        /// </summary>
+        public const uint VerAddVersionString = 0x0102;
+
+        /// <summary>
+        /// Added debug flags in the header
+        /// </summary>
+        public const uint VerAddDebugFlags = 0x0103;
+
+        /// <summary>
+        /// Started scrambling strings by xor-ing with 0xAD
+        /// </summary>
+        public const uint VerScramble = 0x0104;
+
+        /// <summary>
+        /// Added custom (string) types
+        /// </summary>
+        public const uint VerAddTypeMap = 0x0105;
+
+        /// <summary>
+        /// Added Query nodes
+        /// </summary>
+        public const uint VerAddQuery = 0x0106;
+
+        /// <summary>
+        /// Types can be aliases of any builtin type, not just strings
+        /// </summary>
+        public const uint VerTypeAliases = 0x0109;
+
+        /// <summary>
+        /// Added INT64, GUIDSTRING types
+        /// </summary>
+        public const uint VerEnhancedTypes = 0x010a;
+
+        /// <summary>
+        /// Added external string table
+        /// </summary>
+        public const uint VerExternalStringTable = 0x010b;
+
+        /// <summary>
+        /// Last supported Osi version
+        /// </summary>
+        public const uint VerLastSupported = VerExternalStringTable;
+    }
+
     public class OsiReader : BinaryReader
     {
         public byte Scramble = 0x00;
@@ -21,6 +82,11 @@ namespace LSLib.LS.Osiris
         public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
         // TODO: Make RO!
         public Story Story;
+
+        public uint Ver
+        {
+            get { return ((uint)MajorVersion << 8) | (uint)MinorVersion; }
+        }
 
         public OsiReader(Stream stream, Story story)
             : base(stream)
@@ -141,6 +207,11 @@ namespace LSLib.LS.Osiris
         public UInt32 MajorVersion;
         public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
 
+        public uint Ver
+        {
+            get { return ((uint)MajorVersion << 8) | (uint)MinorVersion; }
+        }
+
         public OsiWriter(Stream stream)
             : base(stream)
         {
@@ -184,6 +255,11 @@ namespace LSLib.LS.Osiris
         public string StoryFileVersion;
         public UInt32 DebugFlags;
 
+        public uint Ver
+        {
+            get { return ((uint)MajorVersion << 8) | (uint)MinorVersion; }
+        }
+
         public void Read(OsiReader reader)
         {
             reader.ReadByte();
@@ -193,10 +269,10 @@ namespace LSLib.LS.Osiris
             BigEndian = reader.ReadBoolean();
             Unused = reader.ReadByte();
 
-            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 2))
+            if (Ver >= OsiVersion.VerAddVersionString)
                 reader.ReadBytes(0x80); // Version string buffer
 
-            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 3))
+            if (Ver >= OsiVersion.VerAddDebugFlags)
                 DebugFlags = reader.ReadUInt32();
             else
                 DebugFlags = 0;
@@ -211,7 +287,7 @@ namespace LSLib.LS.Osiris
             writer.Write(BigEndian);
             writer.Write(Unused);
 
-            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 2))
+            if (Ver >= OsiVersion.VerAddVersionString)
             {
                 var versionString = String.Format("{0}.{1}", MajorVersion, MinorVersion);
                 var versionBytes = Encoding.UTF8.GetBytes(versionString);
@@ -220,7 +296,7 @@ namespace LSLib.LS.Osiris
                 writer.Write(version, 0, version.Length);
             }
 
-            if (MajorVersion > 1 || (MajorVersion == 1 && MinorVersion >= 3))
+            if (Ver >= OsiVersion.VerAddDebugFlags)
                 writer.Write(DebugFlags);
         }
     }
@@ -248,7 +324,7 @@ namespace LSLib.LS.Osiris
             Index = reader.ReadByte();
             IsBuiltin = false;
 
-            if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion >= 9))
+            if (reader.Ver >= OsiVersion.VerTypeAliases)
             {
                 Alias = reader.ReadByte();
             }
@@ -264,7 +340,7 @@ namespace LSLib.LS.Osiris
             writer.Write(Name);
             writer.Write(Index);
 
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 9))
+            if (writer.Ver >= OsiVersion.VerTypeAliases)
             {
                 writer.Write(Alias);
             }

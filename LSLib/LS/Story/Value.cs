@@ -114,13 +114,13 @@ namespace LSLib.LS.Osiris
                 if (reader.TypeAliases.TryGetValue(writtenTypeId, out alias))
                 {
                     writtenTypeId = alias;
-                    if (reader.MajorVersion == 1 && reader.MinorVersion < 10)
+                    if (reader.Ver < OsiVersion.VerEnhancedTypes)
                     {
                         dos1alias = true;
                     }
                 }
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion < 10))
+                if (reader.Ver < OsiVersion.VerEnhancedTypes)
                 {
                     // Convert D:OS 1 type ID to D:OS 2 type ID
                     writtenTypeId = ConvertOS1ToOS2Type(writtenTypeId);
@@ -182,7 +182,7 @@ namespace LSLib.LS.Osiris
             }
 
             writer.Write(TypeId);
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion < 10))
+            if (writer.Ver < OsiVersion.VerEnhancedTypes)
             {
                 // Make sure that we're serializing using the D:OS2 type ID
                 // (The alias map contains the D:OS 1 ID)
@@ -200,7 +200,7 @@ namespace LSLib.LS.Osiris
 
                 case Type.Integer64:
                     // D:OS 1 aliased strings didn't have a flag byte
-                    if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 10))
+                    if (writer.Ver >= OsiVersion.VerEnhancedTypes)
                     {
                         writer.Write(Int64Value);
                     }
@@ -217,7 +217,7 @@ namespace LSLib.LS.Osiris
 
                 case Type.String:
                 case Type.GuidString:
-                    if (!aliased || (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 10)))
+                    if (!aliased || (writer.Ver >= OsiVersion.VerEnhancedTypes))
                     {
                         writer.Write(StringValue != null);
                     }
