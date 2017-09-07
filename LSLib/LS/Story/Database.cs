@@ -216,7 +216,6 @@ namespace LSLib.LS.Osiris
 
         public void Write(OsiWriter writer)
         {
-            writer.Write(Index);
             Parameters.Write(writer);
             writer.WriteList<Fact>(Facts);
         }

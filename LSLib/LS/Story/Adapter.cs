@@ -57,7 +57,6 @@ namespace LSLib.LS.Osiris
 
         public void Write(OsiWriter writer)
         {
-            writer.Write(Index);
             Constants.Write(writer);
 
             writer.Write((byte)LogicalIndices.Count);

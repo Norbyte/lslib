@@ -322,8 +322,7 @@ namespace LSLib.LS.Osiris
             foreach (var type in types)
             {
                 type.Write(Writer);
-                if (type.Alias != 0
-                    && (Writer.MajorVersion > 1 || (Writer.MajorVersion == 1 && Writer.MinorVersion >= 9)))
+                if (type.Alias != 0)
                 {
                     Writer.TypeAliases.Add(type.Index, type.Alias);
                 }

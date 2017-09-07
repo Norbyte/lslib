@@ -49,6 +49,52 @@ namespace LSLib.LS.Osiris
             }
         }
 
+        public static uint ConvertOS1ToOS2Type(uint os1TypeId)
+        {
+            // Convert D:OS 1 type ID to D:OS 2 type ID
+            switch ((Type_OS1)os1TypeId)
+            {
+                case Type_OS1.Unknown:
+                    return (uint)Type.Unknown;
+
+                case Type_OS1.Integer:
+                    return (uint)Type.Integer;
+
+                case Type_OS1.Float:
+                    return (uint)Type.Float;
+
+                case Type_OS1.String:
+                    return (uint)Type.String;
+
+                default:
+                    return os1TypeId;
+            }
+        }
+
+        public static uint ConvertOS2ToOS1Type(uint os2TypeId)
+        {
+            // Convert D:OS 2 type ID to D:OS 1 type ID
+            switch ((Type)os2TypeId)
+            {
+                case Type.Unknown:
+                    return (uint)Type_OS1.Unknown;
+
+                case Type.Integer:
+                case Type.Integer64:
+                    return (uint)Type_OS1.Integer;
+
+                case Type.Float:
+                    return (uint)Type_OS1.Float;
+
+                case Type.String:
+                case Type.GuidString:
+                    return (uint)Type_OS1.String;
+
+                default:
+                    return os2TypeId;
+            }
+        }
+
         public virtual void Read(OsiReader reader)
         {
             // possibly isReference?
@@ -63,33 +109,21 @@ namespace LSLib.LS.Osiris
                 TypeId = reader.ReadUInt32();
                 uint writtenTypeId = TypeId;
 
-                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion < 10))
-                {
-                    // Convert D:OS 1 type ID to D:OS 2 type ID
-                    switch ((Type_OS1)TypeId)
-                    {
-                        case Type_OS1.Unknown:
-                            writtenTypeId = (uint)Type.Unknown;
-                            break;
-
-                        case Type_OS1.Integer:
-                            writtenTypeId = (uint)Type.Integer;
-                            break;
-
-                        case Type_OS1.Float:
-                            writtenTypeId = (uint)Type.Float;
-                            break;
-
-                        case Type_OS1.String:
-                            writtenTypeId = (uint)Type.String;
-                            break;
-                    }
-                }
-
                 uint alias;
+                bool dos1alias = false;
                 if (reader.TypeAliases.TryGetValue(writtenTypeId, out alias))
                 {
                     writtenTypeId = alias;
+                    if (reader.MajorVersion == 1 && reader.MinorVersion < 10)
+                    {
+                        dos1alias = true;
+                    }
+                }
+
+                if (reader.MajorVersion > 1 || (reader.MajorVersion == 1 && reader.MinorVersion < 10))
+                {
+                    // Convert D:OS 1 type ID to D:OS 2 type ID
+                    writtenTypeId = ConvertOS1ToOS2Type(writtenTypeId);
                 }
 
                 switch ((Type)writtenTypeId)
@@ -111,12 +145,17 @@ namespace LSLib.LS.Osiris
 
                     case Type.GuidString:
                     case Type.String:
-                        if (reader.ReadByte() > 0)
+                        // D:OS 1 aliased strings didn't have a flag byte
+                        if (dos1alias)
+                        {
+                            StringValue = reader.ReadString();
+                        }
+                        else if (reader.ReadByte() > 0)
                         {
                             StringValue = reader.ReadString();
                         }
                         break;
-
+                        
                     default:
                         StringValue = reader.ReadString();
                         break;
@@ -133,47 +172,21 @@ namespace LSLib.LS.Osiris
             // TODO: Is the == 0x31 case ever used when reading?
             writer.Write((byte)'0');
 
-            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion < 10))
-            {
-                uint os1TypeId;
-                // Convert D:OS 1 type ID to D:OS 2 type ID
-                switch ((Type)TypeId)
-                {
-                    case Type.Unknown:
-                        os1TypeId = (uint)Type_OS1.Unknown;
-                        break;
-
-                    case Type.Integer:
-                    case Type.Integer64:
-                        os1TypeId = (uint)Type_OS1.Integer;
-                        break;
-
-                    case Type.Float:
-                        os1TypeId = (uint)Type_OS1.Float;
-                        break;
-
-                    case Type.String:
-                    case Type.GuidString:
-                        os1TypeId = (uint)Type_OS1.String;
-                        break;
-
-                    default:
-                        os1TypeId = TypeId;
-                        break;
-                }
-
-                writer.Write(os1TypeId);
-            }
-            else
-            {
-                writer.Write(TypeId);
-            }
-
             uint writtenTypeId = TypeId;
+            bool aliased = false;
             uint alias;
             if (writer.TypeAliases.TryGetValue(TypeId, out alias))
             {
+                aliased = true;
                 writtenTypeId = alias;
+            }
+
+            writer.Write(TypeId);
+            if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion < 10))
+            {
+                // Make sure that we're serializing using the D:OS2 type ID
+                // (The alias map contains the D:OS 1 ID)
+                writtenTypeId = ConvertOS1ToOS2Type(writtenTypeId);
             }
 
             switch ((Type)writtenTypeId)
@@ -186,6 +199,7 @@ namespace LSLib.LS.Osiris
                     break;
 
                 case Type.Integer64:
+                    // D:OS 1 aliased strings didn't have a flag byte
                     if (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 10))
                     {
                         writer.Write(Int64Value);
@@ -203,7 +217,11 @@ namespace LSLib.LS.Osiris
 
                 case Type.String:
                 case Type.GuidString:
-                    writer.Write(StringValue != null);
+                    if (!aliased || (writer.MajorVersion > 1 || (writer.MajorVersion == 1 && writer.MinorVersion >= 10)))
+                    {
+                        writer.Write(StringValue != null);
+                    }
+
                     if (StringValue != null)
                         writer.Write(StringValue);
                     break;

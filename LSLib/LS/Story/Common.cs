@@ -50,6 +50,11 @@ namespace LSLib.LS.Osiris
         public override bool ReadBoolean()
         {
             var b = ReadByte();
+            if (b != 0 && b != 1)
+            {
+                throw new InvalidDataException("Invalid boolean value; expected 0 or 1.");
+            }
+
             return b == 1;
         }
 
@@ -249,7 +254,8 @@ namespace LSLib.LS.Osiris
             }
             else
             {
-                Alias = 0;
+                // D:OS 1 only supported string aliases
+                Alias = (int)Value.Type_OS1.String;
             }
         }
 
