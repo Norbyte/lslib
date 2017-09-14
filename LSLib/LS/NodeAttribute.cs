@@ -52,8 +52,10 @@ namespace LSLib.LS
             DT_WString = 29,
             DT_LSWString = 30,
             DT_UUID = 31,
+            DT_Unknown32 = 32,
+            DT_TranslatedString2 = 33,
             // Last supported datatype, always keep this one at the end
-            DT_Max = DT_UUID
+            DT_Max = DT_TranslatedString2
         };
 
         private DataType type;
@@ -277,6 +279,7 @@ namespace LSLib.LS
                     break;
 
                 case DataType.DT_TranslatedString:
+                case DataType.DT_TranslatedString2:
                     // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
                     // That can be changed separately via attribute.Value.Handle
                     if (value == null)

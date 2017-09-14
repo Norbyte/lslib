@@ -124,6 +124,7 @@ namespace LSLib.LS
                     }
 
                 case NodeAttribute.DataType.DT_TranslatedString:
+                case NodeAttribute.DataType.DT_TranslatedString2:
                     {
                         var attr = new NodeAttribute(type);
                         var str = new TranslatedString();

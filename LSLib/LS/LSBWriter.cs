@@ -109,6 +109,7 @@ namespace LSLib.LS
                     break;
 
                 case NodeAttribute.DataType.DT_TranslatedString:
+                case NodeAttribute.DataType.DT_TranslatedString2:
                     var str = (TranslatedString)attr.Value;
                     WriteString(str.Value, true);
                     WriteString(str.Handle, true);

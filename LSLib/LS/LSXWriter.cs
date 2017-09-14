@@ -69,7 +69,7 @@ namespace LSLib.LS
                 writer.WriteAttributeString("id", attribute.Key);
                 writer.WriteAttributeString("value", attribute.Value.ToString());
                 writer.WriteAttributeString("type", ((int)attribute.Value.Type).ToString());
-                if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString)
+                if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString || attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString2)
                     writer.WriteAttributeString("handle", ((TranslatedString)attribute.Value.Value).Handle);
                 writer.WriteEndElement();
             }

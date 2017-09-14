@@ -271,6 +271,7 @@ namespace LSLib.LS.LSF
                     break;
 
                 case NodeAttribute.DataType.DT_TranslatedString:
+                case NodeAttribute.DataType.DT_TranslatedString2:
                     var str = (TranslatedString)attr.Value;
                     WriteStringWithLength(writer, str.Value);
                     WriteStringWithLength(writer, str.Handle);

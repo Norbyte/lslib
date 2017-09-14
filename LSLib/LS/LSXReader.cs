@@ -112,7 +112,7 @@ namespace LSLib.LS
                                 Debug.Assert(attrValue != null);
                                 var attr = new NodeAttribute((NodeAttribute.DataType)attrTypeId);
                                 attr.FromString(attrValue);
-                                if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)
+                                if (attr.Type == NodeAttribute.DataType.DT_TranslatedString || attr.Type == NodeAttribute.DataType.DT_TranslatedString2)
                                 {
                                     ((TranslatedString)attr.Value).Handle = reader["handle"];
                                     Debug.Assert(((TranslatedString)attr.Value).Handle != null);

@@ -104,6 +104,7 @@ namespace LSLib.LS
                                 break;
 
                             case NodeAttribute.DataType.DT_TranslatedString:
+                            case NodeAttribute.DataType.DT_TranslatedString2:
                                 var translatedString = new TranslatedString();
                                 translatedString.Value = reader.Value.ToString();
                                 if (handle == null)
@@ -429,6 +430,7 @@ namespace LSLib.LS
                         break;
 
                     case NodeAttribute.DataType.DT_TranslatedString:
+                    case NodeAttribute.DataType.DT_TranslatedString2:
                         writer.WriteValue(attribute.Value.ToString());
                         writer.WritePropertyName("handle");
                         writer.WriteValue(((TranslatedString)attribute.Value.Value).Handle);
