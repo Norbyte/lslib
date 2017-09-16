@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace LSLib.LS
 {
@@ -205,6 +206,7 @@ namespace LSLib.LS
         {
             long totalSize = package.Files.Sum(p => (long)p.Size());
             long currentSize = 0;
+
             List<PackagedFileInfo> writtenFiles = new List<PackagedFileInfo>();
             foreach (var file in this.package.Files)
             {
@@ -238,11 +240,42 @@ namespace LSLib.LS
                 header.FileListSize = (UInt32)mainStream.Position - header.FileListOffset;
                 header.NumParts = (UInt16)streams.Count;
                 header.SomePartVar = 0; // ???
-                header.ArchiveGuid = Guid.NewGuid();
+                header.Md5 = ComputeArchiveHash();
                 BinUtils.WriteStruct<LSPKHeader13>(writer, ref header);
 
                 writer.Write((UInt32)(8 + Marshal.SizeOf(typeof(LSPKHeader13))));
                 writer.Write(Package.Signature);
+            }
+        }
+
+        public byte[] ComputeArchiveHash()
+        {
+            // MD5 is computed over the contents of all files in an alphabetically sorted order
+            var orderedFileList = this.package.Files.Select(item => item).ToList();
+            orderedFileList.Sort(delegate (FileInfo a, FileInfo b)
+            {
+                return String.Compare(a.Name, b.Name);
+            });
+
+            using (var md5 = MD5.Create())
+            {
+                foreach (var file in orderedFileList)
+                {
+                    var packagedStream = file.MakeStream();
+                    using (var reader = new BinaryReader(packagedStream))
+                    {
+                        var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+                        md5.TransformBlock(uncompressed, 0, uncompressed.Length, uncompressed, 0);
+                    }
+                }
+
+                md5.TransformFinalBlock(new byte[0], 0, 0);
+                var hash = md5.Hash;
+
+                // All hash bytes are incremented by 1
+                for (var i = 0; i < hash.Length; i++) hash[i] += 1;
+
+                return hash;
             }
         }
 

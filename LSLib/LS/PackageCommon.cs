@@ -51,7 +51,8 @@ namespace LSLib.LS
         public UInt32 FileListSize;
         public UInt16 NumParts;
         public UInt16 SomePartVar;
-        public Guid ArchiveGuid;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] Md5;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
