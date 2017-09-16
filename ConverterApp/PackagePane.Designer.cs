@@ -153,6 +153,7 @@
             this.packagePath.Name = "packagePath";
             this.packagePath.Size = new System.Drawing.Size(650, 20);
             this.packagePath.TabIndex = 50;
+            this.packagePath.TextChanged += new System.EventHandler(this.packagePath_TextChanged);
             // 
             // label4
             // 

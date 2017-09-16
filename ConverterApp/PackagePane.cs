@@ -63,6 +63,11 @@ namespace ConverterApp
             if (result == DialogResult.OK)
             {
                 packagePath.Text = packageFileDlg.FileName;
+                // Savegames (.lsv files) are saved using ZLib
+                if (System.IO.Path.GetExtension(packageFileDlg.FileName) == ".lsv")
+                {
+                    compressionMethod.SelectedIndex = 2;
+                }
             }
         }
 
@@ -169,6 +174,15 @@ namespace ConverterApp
                 packageProgressLabel.Text = "";
                 packageProgress.Value = 0;
                 createPackageBtn.Enabled = true;
+            }
+        }
+
+        private void packagePath_TextChanged(object sender, EventArgs e)
+        {
+            // Savegames (.lsv files) are saved using ZLib
+            if (System.IO.Path.GetExtension(packagePath.Text) == ".lsv")
+            {
+                compressionMethod.SelectedIndex = 2;
             }
         }
     }
