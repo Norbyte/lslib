@@ -87,7 +87,12 @@ namespace LSLib.LS
                                 break;
 
                             case NodeAttribute.DataType.DT_ULongLong:
-                                attribute.Value = Convert.ToUInt64(reader.Value);
+                                if (reader.Value.GetType() == typeof(System.Int64))
+                                    attribute.Value = Convert.ToUInt64((long)reader.Value);
+                                else if (reader.Value.GetType() == typeof(BigInteger))
+                                    attribute.Value = (ulong)((BigInteger)reader.Value);
+                                else
+                                    attribute.Value = (ulong)reader.Value;
                                 break;
 
                             // TODO: Not sure if this is the correct format
@@ -121,19 +126,52 @@ namespace LSLib.LS
                                 attribute.Value = new Guid(reader.Value.ToString());
                                 break;
 
-                            // TODO: haven't seen any vectors/matrices in D:OS JSON files so far
-                            case NodeAttribute.DataType.DT_None:
                             case NodeAttribute.DataType.DT_IVec2:
                             case NodeAttribute.DataType.DT_IVec3:
                             case NodeAttribute.DataType.DT_IVec4:
+                                {
+                                    string[] nums = reader.Value.ToString().Split(' ');
+                                    int length = attribute.GetColumns();
+                                    if (length != nums.Length)
+                                        throw new FormatException(String.Format("A vector of length {0} was expected, got {1}", length, nums.Length));
+
+                                    int[] vec = new int[length];
+                                    for (int i = 0; i < length; i++)
+                                        vec[i] = int.Parse(nums[i]);
+
+                                    attribute.Value = vec;
+                                    break;
+                                }
+
                             case NodeAttribute.DataType.DT_Vec2:
                             case NodeAttribute.DataType.DT_Vec3:
                             case NodeAttribute.DataType.DT_Vec4:
+                                {
+                                    string[] nums = reader.Value.ToString().Split(' ');
+                                    int length = attribute.GetColumns();
+                                    if (length != nums.Length)
+                                        throw new FormatException(String.Format("A vector of length {0} was expected, got {1}", length, nums.Length));
+
+                                    float[] vec = new float[length];
+                                    for (int i = 0; i < length; i++)
+                                        vec[i] = float.Parse(nums[i]);
+
+                                    attribute.Value = vec;
+                                    break;
+                                }
+
                             case NodeAttribute.DataType.DT_Mat2:
                             case NodeAttribute.DataType.DT_Mat3:
                             case NodeAttribute.DataType.DT_Mat3x4:
                             case NodeAttribute.DataType.DT_Mat4x3:
                             case NodeAttribute.DataType.DT_Mat4:
+                                var mat = Matrix.Parse(reader.Value.ToString());
+                                if (mat.cols != attribute.GetColumns() || mat.rows != attribute.GetRows())
+                                    throw new FormatException("Invalid column/row count for matrix");
+                                attribute.Value = mat;
+                                break;
+
+                            case NodeAttribute.DataType.DT_None:
                             default:
                                 throw new NotImplementedException("Don't know how to unserialize type " + attribute.Type.ToString());
                         }
@@ -470,7 +508,8 @@ namespace LSLib.LS
                             for (var r = 0; r < mat.rows; r++)
                             {
                                 for (var c = 0; c < mat.cols; c++)
-                                    str += mat[r, c].ToString() + ",";
+                                    str += mat[r, c].ToString() + " ";
+                                str += Environment.NewLine;
                             }
 
                             writer.WriteValue(str);
