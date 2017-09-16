@@ -1,4 +1,5 @@
 ﻿// #define DEBUG_LSF_SERIALIZATION
+// #define DUMP_LSF_SERIALIZATION
 
 using LZ4;
 using System;
@@ -454,6 +455,9 @@ namespace LSLib.LS.LSF
                 while (s.Position < s.Length)
                 {
                     var resolved = new NodeInfo();
+#if DEBUG_LSF_SERIALIZATION
+                    var pos = s.Position;
+#endif
 
                     if (longNodes)
                     {
@@ -474,8 +478,8 @@ namespace LSLib.LS.LSF
 
 #if DEBUG_LSF_SERIALIZATION
                     Console.WriteLine(String.Format(
-                        "{0}: {1} (parent {2}, firstAttribute {3})", 
-                        Nodes.Count, Names[resolved.NameIndex][resolved.NameOffset], resolved.ParentIndex, 
+                        "{0}: {1} @ {2:X} (parent {3}, firstAttribute {4})", 
+                        index, Names[resolved.NameIndex][resolved.NameOffset], pos, resolved.ParentIndex, 
                         resolved.FirstAttributeIndex
                     ));
 #endif
@@ -651,6 +655,13 @@ namespace LSLib.LS.LSF
                         uncompressed = compressed;
                     }
 
+#if DUMP_LSF_SERIALIZATION
+                    using (var nodesFile = new FileStream("names.bin", FileMode.Create, FileAccess.Write))
+                    {
+                        nodesFile.Write(uncompressed, 0, uncompressed.Length);
+                    }
+#endif
+
                     using (var namesStream = new MemoryStream(uncompressed))
                     {
                         ReadNames(namesStream);
@@ -662,7 +673,7 @@ namespace LSLib.LS.LSF
                     uint onDiskSize = isCompressed ? hdr.NodesSizeOnDisk : hdr.NodesUncompressedSize;
                     var uncompressed = Decompress(reader, onDiskSize, hdr.NodesUncompressedSize, hdr);
 
-#if DEBUG_LSF_SERIALIZATION
+#if DUMP_LSF_SERIALIZATION
                     using (var nodesFile = new FileStream("nodes.bin", FileMode.Create, FileAccess.Write))
                     {
                         nodesFile.Write(uncompressed, 0, uncompressed.Length);
@@ -682,7 +693,7 @@ namespace LSLib.LS.LSF
                     uint onDiskSize = isCompressed ? hdr.AttributesSizeOnDisk : hdr.AttributesUncompressedSize;
                     var uncompressed = Decompress(reader, onDiskSize, hdr.AttributesUncompressedSize, hdr);
 
-#if DEBUG_LSF_SERIALIZATION
+#if DUMP_LSF_SERIALIZATION
                     using (var attributesFile = new FileStream("attributes.bin", FileMode.Create, FileAccess.Write))
                     {
                         attributesFile.Write(uncompressed, 0, uncompressed.Length);
@@ -711,7 +722,7 @@ namespace LSLib.LS.LSF
                     var valueStream = new MemoryStream(uncompressed);
                     this.Values = valueStream;
 
-#if DEBUG_LSF_SERIALIZATION
+#if DUMP_LSF_SERIALIZATION
                     using (var valuesFile = new FileStream("values.bin", FileMode.Create, FileAccess.Write))
                     {
                         valuesFile.Write(uncompressed, 0, uncompressed.Length);
@@ -807,31 +818,53 @@ namespace LSLib.LS.LSF
                 case NodeAttribute.DataType.DT_LSString:
                 case NodeAttribute.DataType.DT_WString:
                 case NodeAttribute.DataType.DT_LSWString:
-                { 
-                    var attr = new NodeAttribute(type);
-                    attr.Value = ReadString(reader, (int)length);
-                    return attr;
-                }
+                    { 
+                        var attr = new NodeAttribute(type);
+                        attr.Value = ReadString(reader, (int)length);
+                        return attr;
+                    }
 
                 case NodeAttribute.DataType.DT_TranslatedString:
+                    {
+                        var attr = new NodeAttribute(type);
+                        var str = new TranslatedString();
+
+                        var valueLength = reader.ReadInt32();
+                        str.Value = ReadString(reader, valueLength);
+
+                        var handleLength = reader.ReadInt32();
+                        str.Handle = ReadString(reader, handleLength);
+
+                        attr.Value = str;
+                        return attr;
+                    }
+
                 case NodeAttribute.DataType.DT_TranslatedString2:
                     {
-                    var attr = new NodeAttribute(type);
-                    var str = new TranslatedString();
-                    var valueLength = reader.ReadInt32();
-                    str.Value = ReadString(reader, valueLength);
-                    var handleLength = reader.ReadInt32();
-                    str.Handle = ReadString(reader, handleLength);
-                    attr.Value = str;
-                    return attr;
-                }
+                        var attr = new NodeAttribute(type);
+                        var str = new TranslatedString();
+
+                        var valueLength = reader.ReadInt32();
+                        str.Value = ReadString(reader, valueLength);
+
+                        var handleLength = reader.ReadInt32();
+                        str.Handle = ReadString(reader, handleLength);
+                        attr.Value = str;
+
+                        var unkn = reader.ReadInt32();
+                        if (unkn != 0)
+                        {
+                            throw new InvalidDataException(String.Format("Unknown DT_TranslatedString2 flag set: {0:X}", unkn));
+                        }
+                        return attr;
+                    }
 
                 case NodeAttribute.DataType.DT_ScratchBuffer:
-                { 
-                    var attr = new NodeAttribute(type);
-                    attr.Value = reader.ReadBytes((int)length);
-                    return attr;
-                }
+                    { 
+                        var attr = new NodeAttribute(type);
+                        attr.Value = reader.ReadBytes((int)length);
+                        return attr;
+                    }
 
                 default:
                     return BinUtils.ReadAttribute(type, reader);

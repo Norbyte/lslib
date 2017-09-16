@@ -271,16 +271,28 @@ namespace LSLib.LS.LSF
                     break;
 
                 case NodeAttribute.DataType.DT_TranslatedString:
+                    {
+                        var str = (TranslatedString)attr.Value;
+                        WriteStringWithLength(writer, str.Value);
+                        WriteStringWithLength(writer, str.Handle);
+                        break;
+                    }
+
                 case NodeAttribute.DataType.DT_TranslatedString2:
-                    var str = (TranslatedString)attr.Value;
-                    WriteStringWithLength(writer, str.Value);
-                    WriteStringWithLength(writer, str.Handle);
-                    break;
+                    {
+                        var str = (TranslatedString)attr.Value;
+                        WriteStringWithLength(writer, str.Value);
+                        WriteStringWithLength(writer, str.Handle);
+                        writer.Write((UInt32)0);
+                        break;
+                    }
 
                 case NodeAttribute.DataType.DT_ScratchBuffer:
-                    var buffer = (byte[])attr.Value;
-                    writer.Write(buffer);
-                    break;
+                    {
+                        var buffer = (byte[])attr.Value;
+                        writer.Write(buffer);
+                        break;
+                    }
 
                 default:
                     BinUtils.WriteAttribute(writer, attr);

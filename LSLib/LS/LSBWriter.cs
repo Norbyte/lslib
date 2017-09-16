@@ -109,17 +109,29 @@ namespace LSLib.LS
                     break;
 
                 case NodeAttribute.DataType.DT_TranslatedString:
+                    {
+                        var str = (TranslatedString)attr.Value;
+                        WriteString(str.Value, true);
+                        WriteString(str.Handle, true);
+                        break;
+                    }
+
                 case NodeAttribute.DataType.DT_TranslatedString2:
-                    var str = (TranslatedString)attr.Value;
-                    WriteString(str.Value, true);
-                    WriteString(str.Handle, true);
-                    break;
+                    {
+                        var str = (TranslatedString)attr.Value;
+                        WriteString(str.Value, true);
+                        WriteString(str.Handle, true);
+                        writer.Write((UInt32)0);
+                        break;
+                    }
 
                 case NodeAttribute.DataType.DT_ScratchBuffer:
-                    var buffer = (byte[])attr.Value;
-                    writer.Write((UInt32)buffer.Length);
-                    writer.Write(buffer);
-                    break;
+                    {
+                        var buffer = (byte[])attr.Value;
+                        writer.Write((UInt32)buffer.Length);
+                        writer.Write(buffer);
+                        break;
+                    }
 
                 default:
                     BinUtils.WriteAttribute(writer, attr);
