@@ -290,7 +290,8 @@ namespace LSLib.LS.LSF
 
         private uint AddStaticString(string s)
         {
-            var bucket = (int)((uint)s.GetHashCode() % StringHashMapSize);
+            var hashCode = (uint)s.GetHashCode();
+            var bucket = (int)((hashCode & 0x1ff) ^ ((hashCode >> 9) & 0x1ff) ^ ((hashCode >> 18) & 0x1ff) ^ ((hashCode >> 27) & 0x1ff));
             for (int i = 0; i < StringHashMap[bucket].Count; i++)
             {
                 if (StringHashMap[bucket][i].Equals(s))
