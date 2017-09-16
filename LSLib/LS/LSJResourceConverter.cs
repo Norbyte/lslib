@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Numerics;
 
 namespace LSLib.LS
 {
@@ -19,7 +20,7 @@ namespace LSLib.LS
 
         private NodeAttribute ReadAttribute(JsonReader reader)
         {
-            string key = "", handle = "";
+            string key = "", handle = null;
             NodeAttribute attribute = null;
             while (reader.Read())
             {
@@ -112,13 +113,7 @@ namespace LSLib.LS
                             case NodeAttribute.DataType.DT_TranslatedString2:
                                 var translatedString = new TranslatedString();
                                 translatedString.Value = reader.Value.ToString();
-                                if (handle == null)
-                                {
-                                    throw new InvalidDataException("Missing handle for translated string");
-                                }
-
                                 translatedString.Handle = handle;
-                                handle = null;
                                 attribute.Value = translatedString;
                                 break;
 
@@ -178,7 +173,14 @@ namespace LSLib.LS
                     }
                     else if (key == "handle")
                     {
-                        handle = reader.Value.ToString();
+                        if (attribute.Value != null)
+                        {
+                            ((TranslatedString)attribute.Value).Handle = reader.Value.ToString();
+                        }
+                        else
+                        {
+                            handle = reader.Value.ToString();
+                        }
                     }
                     else
                     {
