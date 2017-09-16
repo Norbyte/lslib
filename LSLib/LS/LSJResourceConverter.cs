@@ -226,6 +226,7 @@ namespace LSLib.LS
                             childNode.Name = key;
                             ReadNode(reader, childNode);
                             node.AppendChild(childNode);
+                            childNode.Parent = node;
                         }
                         else
                         {
@@ -335,7 +336,7 @@ namespace LSLib.LS
                 {
                     var region = new Region();
                     ReadNode(reader, region);
-                    region.Name = "root";
+                    region.Name = key;
                     region.RegionName = key;
                     resource.Regions.Add(key, region);
                 }
