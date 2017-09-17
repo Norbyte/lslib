@@ -58,6 +58,35 @@ namespace LSLib.LS
             }
         }
 
+        private void WriteTranslatedFSString(TranslatedFSString fs)
+        {
+            writer.WriteStartElement("string");
+            writer.WriteAttributeString("value", fs.Value);
+            WriteTranslatedFSStringInner(fs);
+            writer.WriteEndElement();
+        }
+
+        private void WriteTranslatedFSStringInner(TranslatedFSString fs)
+        {
+            writer.WriteAttributeString("handle", fs.Handle);
+            writer.WriteAttributeString("arguments", fs.Arguments.Count.ToString());
+
+            if (fs.Arguments.Count > 0)
+            {
+                writer.WriteStartElement("arguments");
+                for (int i = 0; i < fs.Arguments.Count; i++)
+                {
+                    var argument = fs.Arguments[i];
+                    writer.WriteStartElement("argument");
+                    writer.WriteAttributeString("key", argument.Key);
+                    writer.WriteAttributeString("value", argument.Value);
+                    WriteTranslatedFSString(argument.String);
+                    writer.WriteEndElement();
+                }
+                writer.WriteEndElement();
+            }
+        }
+
         private void WriteNode(Node node)
         {
             writer.WriteStartElement("node");
@@ -69,8 +98,16 @@ namespace LSLib.LS
                 writer.WriteAttributeString("id", attribute.Key);
                 writer.WriteAttributeString("value", attribute.Value.ToString());
                 writer.WriteAttributeString("type", ((int)attribute.Value.Type).ToString());
-                if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString || attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString2)
-                    writer.WriteAttributeString("handle", ((TranslatedString)attribute.Value.Value).Handle);
+                if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString)
+                {
+                    var ts = ((TranslatedString)attribute.Value.Value);
+                    writer.WriteAttributeString("handle", ts.Handle);
+                }
+                else if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedFSString)
+                {
+                    var fs = ((TranslatedFSString)attribute.Value.Value);
+                    WriteTranslatedFSStringInner(fs);
+                }
                 writer.WriteEndElement();
             }
 

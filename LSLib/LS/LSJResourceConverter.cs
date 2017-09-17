@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Numerics;
+using System.Collections.Generic;
 
 namespace LSLib.LS
 {
@@ -18,9 +19,118 @@ namespace LSLib.LS
                 || objectType == typeof(Resource);
         }
 
+        private TranslatedFSStringArgument ReadFSStringArgument(JsonReader reader)
+        {
+            var fs = new TranslatedFSStringArgument();
+            string key = null;
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.EndObject)
+                {
+                    break;
+                }
+                else if (reader.TokenType == JsonToken.PropertyName)
+                {
+                    key = reader.Value.ToString();
+                }
+                else if (reader.TokenType == JsonToken.String)
+                {
+                    if (key == "key")
+                    {
+                        fs.Key = reader.Value.ToString();
+                    }
+                    else if (key == "value")
+                    {
+                        fs.Value = reader.Value.ToString();
+                    }
+                    else
+                    {
+                        throw new InvalidDataException("Unknown property encountered during TranslatedFSString argument parsing: " + key);
+                    }
+                }
+                else if (reader.TokenType == JsonToken.StartObject && key == "string")
+                {
+                    fs.String = ReadTranslatedFSString(reader);
+                }
+                else
+                {
+                    throw new InvalidDataException("Unexpected JSON token during parsing of TranslatedFSString argument: " + reader.TokenType);
+                }
+            }
+
+            return fs;
+        }
+
+        private TranslatedFSString ReadTranslatedFSString(JsonReader reader)
+        {
+            var fs = new TranslatedFSString();
+            string key = "";
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.PropertyName)
+                {
+                    key = reader.Value.ToString();
+                }
+                else if (reader.TokenType == JsonToken.String)
+                {
+                    if (key == "value")
+                    {
+                        fs.Value = reader.Value.ToString();
+                    }
+                    else if (key == "handle")
+                    {
+                        fs.Handle = reader.Value.ToString();
+                    }
+                    else
+                    {
+                        throw new InvalidDataException("Unknown TranslatedFSString property: " + key);
+                    }
+                }
+                else if (reader.TokenType == JsonToken.StartArray && key == "arguments")
+                {
+                    fs.Arguments = ReadFSStringArguments(reader);
+                }
+                else if (reader.TokenType == JsonToken.EndObject)
+                {
+                    break;
+                }
+                else
+                {
+                    throw new InvalidDataException("Unexpected JSON token during parsing of TranslatedFSString: " + reader.TokenType);
+                }
+            }
+
+            return fs;
+        }
+
+        private List<TranslatedFSStringArgument> ReadFSStringArguments(JsonReader reader)
+        {
+            var args = new List<TranslatedFSStringArgument>();
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.StartObject)
+                {
+                    args.Add(ReadFSStringArgument(reader));
+                }
+                else if (reader.TokenType == JsonToken.EndArray)
+                {
+                    break;
+                }
+                else
+                {
+                    throw new InvalidDataException("Unexpected JSON token during parsing of TranslatedFSString argument list: " + reader.TokenType);
+                }
+            }
+
+            return args;
+        }
+
         private NodeAttribute ReadAttribute(JsonReader reader)
         {
             string key = "", handle = null;
+            List<TranslatedFSStringArgument> fsStringArguments = null;
             NodeAttribute attribute = null;
             while (reader.Read())
             {
@@ -110,12 +220,23 @@ namespace LSLib.LS
                                 break;
 
                             case NodeAttribute.DataType.DT_TranslatedString:
-                            case NodeAttribute.DataType.DT_TranslatedString2:
-                                var translatedString = new TranslatedString();
-                                translatedString.Value = reader.Value.ToString();
-                                translatedString.Handle = handle;
-                                attribute.Value = translatedString;
-                                break;
+                                {
+                                    var translatedString = new TranslatedString();
+                                    translatedString.Value = reader.Value.ToString();
+                                    translatedString.Handle = handle;
+                                    attribute.Value = translatedString;
+                                    break;
+                                }
+
+                            case NodeAttribute.DataType.DT_TranslatedFSString:
+                                {
+                                    var fsString = new TranslatedFSString();
+                                    fsString.Value = reader.Value.ToString();
+                                    fsString.Handle = handle;
+                                    fsString.Arguments = fsStringArguments;
+                                    attribute.Value = fsString;
+                                    break;
+                                }
 
                             case NodeAttribute.DataType.DT_UUID:
                                 attribute.Value = new Guid(reader.Value.ToString());
@@ -175,7 +296,8 @@ namespace LSLib.LS
                     {
                         if (attribute.Value != null)
                         {
-                            ((TranslatedString)attribute.Value).Handle = reader.Value.ToString();
+                            var ts = ((TranslatedString)attribute.Value);
+                            ts.Handle = reader.Value.ToString();
                         }
                         else
                         {
@@ -185,6 +307,20 @@ namespace LSLib.LS
                     else
                     {
                         throw new InvalidDataException("Unknown property encountered during attribute parsing: " + key);
+                    }
+                }
+                else if (reader.TokenType == JsonToken.StartArray && key == "arguments")
+                {
+                    var args = ReadFSStringArguments(reader);
+
+                    if (attribute.Value != null)
+                    {
+                        var fs = ((TranslatedFSString)attribute.Value);
+                        fs.Arguments = args;
+                    }
+                    else
+                    {
+                        fsStringArguments = args;
                     }
                 }
                 else
@@ -399,6 +535,37 @@ namespace LSLib.LS
             writer.WriteEndObject();
         }
 
+        private void WriteTranslatedFSString(JsonWriter writer, TranslatedFSString fs)
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("value");
+            WriteTranslatedFSStringInner(writer, fs);
+            writer.WriteEndObject();
+        }
+
+        private void WriteTranslatedFSStringInner(JsonWriter writer, TranslatedFSString fs)
+        {
+            writer.WriteValue(fs.Value);
+            writer.WritePropertyName("handle");
+            writer.WriteValue(fs.Handle);
+            writer.WritePropertyName("arguments");
+            writer.WriteStartArray();
+            for (int i = 0; i < fs.Arguments.Count; i++)
+            {
+                var arg = fs.Arguments[i];
+                writer.WriteStartObject();
+                writer.WritePropertyName("key");
+                writer.WriteValue(arg.Key);
+                writer.WritePropertyName("string");
+                WriteTranslatedFSString(writer, arg.String);
+                writer.WritePropertyName("value");
+                writer.WriteValue(arg.Value);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
         private void WriteNode(JsonWriter writer, Node node, JsonSerializer serializer)
         {
             writer.WriteStartObject();
@@ -471,11 +638,20 @@ namespace LSLib.LS
                         break;
 
                     case NodeAttribute.DataType.DT_TranslatedString:
-                    case NodeAttribute.DataType.DT_TranslatedString2:
-                        writer.WriteValue(attribute.Value.ToString());
-                        writer.WritePropertyName("handle");
-                        writer.WriteValue(((TranslatedString)attribute.Value.Value).Handle);
-                        break;
+                        {
+                            var ts = (TranslatedString)attribute.Value.Value;
+                            writer.WriteValue(ts.Value);
+                            writer.WritePropertyName("handle");
+                            writer.WriteValue(ts.Handle);
+                            break;
+                        }
+
+                    case NodeAttribute.DataType.DT_TranslatedFSString:
+                        {
+                            var fs = (TranslatedFSString)attribute.Value.Value;
+                            WriteTranslatedFSStringInner(writer, fs);
+                            break;
+                        }
 
                     case NodeAttribute.DataType.DT_UUID:
                         writer.WriteValue(((Guid)attribute.Value.Value).ToString());

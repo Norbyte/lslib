@@ -16,6 +16,18 @@ namespace LSLib.LS
         }
     }
 
+    public class TranslatedFSStringArgument
+    {
+        public string Key;
+        public TranslatedFSString String;
+        public string Value;
+    }
+
+    public class TranslatedFSString : TranslatedString
+    {
+        public List<TranslatedFSStringArgument> Arguments;
+    }
+
     public class NodeAttribute
     {
         public enum DataType
@@ -53,9 +65,9 @@ namespace LSLib.LS
             DT_LSWString = 30,
             DT_UUID = 31,
             DT_Unknown32 = 32,
-            DT_TranslatedString2 = 33,
+            DT_TranslatedFSString = 33,
             // Last supported datatype, always keep this one at the end
-            DT_Max = DT_TranslatedString2
+            DT_Max = DT_TranslatedFSString
         };
 
         private DataType type;
@@ -279,13 +291,21 @@ namespace LSLib.LS
                     break;
 
                 case DataType.DT_TranslatedString:
-                case DataType.DT_TranslatedString2:
                     // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
                     // That can be changed separately via attribute.Value.Handle
                     if (value == null)
                         value = new TranslatedString();
 
                     ((TranslatedString)value).Value = str;
+                    break;
+
+                case DataType.DT_TranslatedFSString:
+                    // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
+                    // That can be changed separately via attribute.Value.Handle
+                    if (value == null)
+                        value = new TranslatedFSString();
+
+                    ((TranslatedFSString)value).Value = str;
                     break;
 
                 case DataType.DT_ULongLong:

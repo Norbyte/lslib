@@ -308,7 +308,7 @@
             this.groupBox4.Size = new System.Drawing.Size(895, 152);
             this.groupBox4.TabIndex = 61;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Convert LSX / LSB / LSF files / LSJ";
+            this.groupBox4.Text = "Convert LSX / LSB / LSF / LSJ files ";
             // 
             // resourceInputFileDlg
             // 

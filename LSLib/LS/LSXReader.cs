@@ -26,6 +26,59 @@ namespace LSLib.LS
             stream.Dispose();
         }
 
+        private void ReadTranslatedFSString(TranslatedFSString fs)
+        {
+            fs.Value = reader["value"];
+            fs.Handle = reader["handle"];
+            Debug.Assert(fs.Handle != null);
+
+            var arguments = Convert.ToInt32(reader["arguments"]);
+            fs.Arguments = new List<TranslatedFSStringArgument>(arguments);
+            if (arguments > 0)
+            {
+                while (reader.Read() && reader.NodeType != XmlNodeType.Element);
+                if (reader.Name != "arguments")
+                {
+                    throw new InvalidFormatException(String.Format("Expected <arguments>: {0}", reader.Name));
+                }
+
+                int processedArgs = 0;
+                while (processedArgs < arguments && reader.Read())
+                {
+                    if (reader.NodeType == XmlNodeType.Element)
+                    {
+                        if (reader.Name != "argument")
+                        {
+                            throw new InvalidFormatException(String.Format("Expected <argument>: {0}", reader.Name));
+                        }
+
+                        var arg = new TranslatedFSStringArgument();
+                        arg.Key = reader["key"];
+                        arg.Value = reader["value"];
+
+                        while (reader.Read() && reader.NodeType != XmlNodeType.Element);
+                        if (reader.Name != "string")
+                        {
+                            throw new InvalidFormatException(String.Format("Expected <string>: {0}", reader.Name));
+                        }
+
+                        arg.String = new TranslatedFSString();
+                        ReadTranslatedFSString(arg.String);
+
+                        fs.Arguments.Add(arg);
+                        processedArgs++;
+
+                        while (reader.Read() && reader.NodeType != XmlNodeType.EndElement);
+                    }
+                }
+
+                while (reader.Read() && reader.NodeType != XmlNodeType.EndElement);
+                // Close outer element
+                while (reader.Read() && reader.NodeType != XmlNodeType.EndElement);
+                Debug.Assert(processedArgs == arguments);
+            }
+        }
+
         public Resource Read()
         {
             using (this.reader = XmlReader.Create(stream))
@@ -112,10 +165,16 @@ namespace LSLib.LS
                                 Debug.Assert(attrValue != null);
                                 var attr = new NodeAttribute((NodeAttribute.DataType)attrTypeId);
                                 attr.FromString(attrValue);
-                                if (attr.Type == NodeAttribute.DataType.DT_TranslatedString || attr.Type == NodeAttribute.DataType.DT_TranslatedString2)
+                                if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)
                                 {
-                                    ((TranslatedString)attr.Value).Handle = reader["handle"];
-                                    Debug.Assert(((TranslatedString)attr.Value).Handle != null);
+                                    var ts = ((TranslatedString)attr.Value);
+                                    ts.Handle = reader["handle"];
+                                    Debug.Assert(ts.Handle != null);
+                                }
+                                else if (attr.Type == NodeAttribute.DataType.DT_TranslatedFSString)
+                                {
+                                    var fs = ((TranslatedFSString)attr.Value);
+                                    ReadTranslatedFSString(fs);
                                 }
 
                                 stack.Last().Attributes.Add(attrName, attr);

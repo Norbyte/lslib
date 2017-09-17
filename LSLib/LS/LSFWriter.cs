@@ -257,6 +257,19 @@ namespace LSLib.LS.LSF
             WriteNodeChildren(node);
         }
 
+        private void WriteTranslatedFSString(BinaryWriter writer, TranslatedFSString fs)
+        {
+            WriteStringWithLength(writer, fs.Value);
+            WriteStringWithLength(writer, fs.Handle);
+            writer.Write((UInt32)fs.Arguments.Count);
+            foreach (var arg in fs.Arguments)
+            {
+                WriteStringWithLength(writer, arg.Key);
+                WriteTranslatedFSString(writer, arg.String);
+                WriteStringWithLength(writer, arg.Value);
+            }
+        }
+
         private void WriteAttributeValue(BinaryWriter writer, NodeAttribute attr)
         {
             switch (attr.Type)
@@ -272,18 +285,16 @@ namespace LSLib.LS.LSF
 
                 case NodeAttribute.DataType.DT_TranslatedString:
                     {
-                        var str = (TranslatedString)attr.Value;
-                        WriteStringWithLength(writer, str.Value);
-                        WriteStringWithLength(writer, str.Handle);
+                        var ts = (TranslatedString)attr.Value;
+                        WriteStringWithLength(writer, ts.Value);
+                        WriteStringWithLength(writer, ts.Handle);
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_TranslatedString2:
+                case NodeAttribute.DataType.DT_TranslatedFSString:
                     {
-                        var str = (TranslatedString)attr.Value;
-                        WriteStringWithLength(writer, str.Value);
-                        WriteStringWithLength(writer, str.Handle);
-                        writer.Write((UInt32)0);
+                        var fs = (TranslatedFSString)attr.Value;
+                        WriteTranslatedFSString(writer, fs);
                         break;
                     }
 

@@ -839,23 +839,10 @@ namespace LSLib.LS.LSF
                         return attr;
                     }
 
-                case NodeAttribute.DataType.DT_TranslatedString2:
+                case NodeAttribute.DataType.DT_TranslatedFSString:
                     {
                         var attr = new NodeAttribute(type);
-                        var str = new TranslatedString();
-
-                        var valueLength = reader.ReadInt32();
-                        str.Value = ReadString(reader, valueLength);
-
-                        var handleLength = reader.ReadInt32();
-                        str.Handle = ReadString(reader, handleLength);
-                        attr.Value = str;
-
-                        var unkn = reader.ReadInt32();
-                        if (unkn != 0)
-                        {
-                            throw new InvalidDataException(String.Format("Unknown DT_TranslatedString2 flag set: {0:X}", unkn));
-                        }
+                        attr.Value = ReadTranslatedFSString(reader);
                         return attr;
                     }
 
@@ -869,6 +856,35 @@ namespace LSLib.LS.LSF
                 default:
                     return BinUtils.ReadAttribute(type, reader);
             }
+        }
+
+        private TranslatedFSString ReadTranslatedFSString(BinaryReader reader)
+        {
+            var str = new TranslatedFSString();
+
+            var valueLength = reader.ReadInt32();
+            str.Value = ReadString(reader, valueLength);
+
+            var handleLength = reader.ReadInt32();
+            str.Handle = ReadString(reader, handleLength);
+
+            var arguments = reader.ReadInt32();
+            str.Arguments = new List<TranslatedFSStringArgument>(arguments);
+            for (int i = 0; i < arguments; i++)
+            {
+                var arg = new TranslatedFSStringArgument();
+                var argKeyLength = reader.ReadInt32();
+                arg.Key = ReadString(reader, argKeyLength);
+
+                arg.String = ReadTranslatedFSString(reader);
+
+                var argValueLength = reader.ReadInt32();
+                arg.Value = ReadString(reader, argValueLength);
+
+                str.Arguments.Add(arg);
+            }
+
+            return str;
         }
 
         private string ReadString(BinaryReader reader, int length)

@@ -133,22 +133,6 @@ namespace LSLib.LS
                         return attr;
                     }
 
-                case NodeAttribute.DataType.DT_TranslatedString2:
-                    {
-                        var attr = new NodeAttribute(type);
-                        var str = new TranslatedString();
-                        str.Value = ReadString(true);
-                        str.Handle = ReadString(true);
-                        attr.Value = str;
-
-                        var unkn = reader.ReadInt32();
-                        if (unkn != 0)
-                        {
-                            throw new InvalidDataException(String.Format("Unknown DT_TranslatedString2 flag set: {0:X}", unkn));
-                        }
-                        return attr;
-                    }
-
                 case NodeAttribute.DataType.DT_ScratchBuffer:
                     {
                         var attr = new NodeAttribute(type);
@@ -157,6 +141,7 @@ namespace LSLib.LS
                         return attr;
                     }
 
+                // DT_TranslatedFSString not supported in LSB
                 default:
                     return BinUtils.ReadAttribute(type, reader);
             }

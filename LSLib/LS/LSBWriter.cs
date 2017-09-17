@@ -116,15 +116,6 @@ namespace LSLib.LS
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_TranslatedString2:
-                    {
-                        var str = (TranslatedString)attr.Value;
-                        WriteString(str.Value, true);
-                        WriteString(str.Handle, true);
-                        writer.Write((UInt32)0);
-                        break;
-                    }
-
                 case NodeAttribute.DataType.DT_ScratchBuffer:
                     {
                         var buffer = (byte[])attr.Value;
@@ -133,6 +124,7 @@ namespace LSLib.LS
                         break;
                     }
 
+                // DT_TranslatedFSString not supported in LSB
                 default:
                     BinUtils.WriteAttribute(writer, attr);
                     break;
