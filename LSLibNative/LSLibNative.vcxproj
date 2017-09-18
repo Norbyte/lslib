@@ -92,7 +92,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>BulletCollision.lib;BulletDynamics.lib;BulletWorldImporter.lib;LinearMath.lib;kernel32.lib;user32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\external\bullet-2.77\msvc\2008\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
       <AssemblyDebug>true</AssemblyDebug>
@@ -123,7 +123,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>BulletCollision.lib;BulletDynamics.lib;BulletWorldImporter.lib;LinearMath.lib;kernel32.lib;user32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\external\bullet-2.77\msvc\2008\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AssemblyDebug>true</AssemblyDebug>
     </Link>

@@ -7,6 +7,10 @@
 #include <fstream>
 #include "BulletWorldImporter/btBulletWorldImporter.h"
 #include "BulletCollision/CollisionShapes/btShapeHull.h"
+#pragma comment(lib, "BulletCollision.lib")
+#pragma comment(lib, "BulletDynamics.lib")
+#pragma comment(lib, "BulletWorldImporter.lib")
+#pragma comment(lib, "LinearMath.lib")
 #pragma managed(pop)
 
 namespace LSLib {
