@@ -45,7 +45,9 @@
 */Debug
 */Release
 */x64
-/external/*
+/External/gplex
+/External/gppg
+/External/bullet-2.77
 /TestApp
 /packages
 LSTools.VC.db
