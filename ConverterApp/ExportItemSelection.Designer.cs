@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.Type = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.Name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ItemName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.Format = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
@@ -40,8 +40,8 @@
             // 
             // Name
             // 
-            this.Name.Text = "Name";
-            this.Name.Width = 200;
+            this.ItemName.Text = "Name";
+            this.ItemName.Width = 200;
             // 
             // Format
             // 
@@ -51,7 +51,7 @@
             // ExportItemSelection
             // 
             this.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.Name,
+            this.ItemName,
             this.Type,
             this.Format});
             this.FullRowSelect = true;
@@ -63,7 +63,7 @@
         #endregion
 
         private System.Windows.Forms.ColumnHeader Type;
-        private System.Windows.Forms.ColumnHeader Name;
+        private System.Windows.Forms.ColumnHeader ItemName;
         private System.Windows.Forms.ColumnHeader Format;
     }
 }

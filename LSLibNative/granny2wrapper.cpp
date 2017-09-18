@@ -5,7 +5,7 @@
 
 namespace LSLib {
 	namespace Native {
-		typedef bool(* __stdcall GrannyDecompressDataProc)(int Format, bool FileIsByteReversed, int CompressedBytesSize, void *CompressedBytes, int Stop0, int Stop1, int Stop2, void *DecompressedBytes);
+		typedef bool(__stdcall * GrannyDecompressDataProc)(int Format, bool FileIsByteReversed, int CompressedBytesSize, void *CompressedBytes, int Stop0, int Stop1, int Stop2, void *DecompressedBytes);
 
 		array<byte> ^ Granny2Compressor::Decompress(Int32 format, array<byte> ^ compressed, Int32 decompressedSize, Int32 stop0, Int32 stop1, Int32 stop2)
 		{

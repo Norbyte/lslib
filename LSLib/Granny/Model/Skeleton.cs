@@ -124,114 +124,19 @@ namespace LSLib.Granny.Model
 
             var transforms = new List<object>();
             var transformTypes = new List<ItemsChoiceType2>();
-
-            if (false) // Separate transforms
-            {
-                var rotationX = new rotate();
-                rotationX.sid = "RotateX";
-                transforms.Add(rotationX);
-                transformTypes.Add(ItemsChoiceType2.rotate);
-
-                var rotationY = new rotate();
-                rotationY.sid = "RotateY";
-                transforms.Add(rotationY);
-                transformTypes.Add(ItemsChoiceType2.rotate);
-
-                var rotationZ = new rotate();
-                rotationZ.sid = "RotateZ";
-                transforms.Add(rotationZ);
-                transformTypes.Add(ItemsChoiceType2.rotate);
-
-                if ((Transform.Flags & (uint)Transform.TransformFlags.HasRotation) != 0)
-                {
-                    var rot = Transform.Rotation.Normalized();
-                    //var x = Math.Atan2(2 * (rot.W * rot.X + rot.Y * rot.Z), 1 - 2 * (rot.X * rot.X + rot.Y * rot.Y));
-                    //var y = Math.Asin(2 * (rot.W * rot.Y - rot.X * rot.Z));
-                    //var z = Math.Atan2(2 * (rot.W * rot.Z + rot.X * rot.Y), 1 - 2 * (rot.Y * rot.Y + rot.Z * rot.Z));
-
-                    //var x = Math.Atan2(2 * rot.Y * rot.W - 2 * rot.X * rot.Z, 1 - 2 * (rot.Y * rot.Y + rot.Z * rot.Z));
-                    //var y = Math.Asin(2 * (rot.X * rot.Y + rot.Z * rot.W));
-                    //var z = Math.Atan2(2 * rot.X * rot.W - 2 * rot.Y * rot.Z, 1 - 2 * (rot.X * rot.X + rot.Z * rot.Z));
-                    var q = new float[] { rot.X, rot.Y, rot.Z, rot.W };
-
-                    // sedris z-y-x
-                    /*var x = Math.Atan2(q[2] * q[3] + q[0] * q[1], 0.5f - (q[1] * q[1] + q[2] * q[2]));
-                    var y = Math.Asin(-2 * (q[1] * q[3] - q[0] * q[2]));
-                    var z = Math.Atan2(q[1] * q[2] + q[0] * q[3], 0.5f - (q[2] * q[2] + q[3] * q[3]));*/
-
-                    var sqw = rot.W * rot.W;
-                    var sqx = rot.X * rot.X;
-                    var sqy = rot.Y * rot.Y;
-                    var sqz = rot.Z * rot.Z;
-                    var x = Math.Atan2(2.0 * (rot.X * rot.Y + rot.Z * rot.W), (sqx - sqy - sqz + sqw));
-                    var z = Math.Atan2(2.0 * (rot.Y * rot.Z + rot.X * rot.W), (-sqx - sqy + sqz + sqw));
-                    var y = Math.Asin(-2.0 * (rot.X * rot.Z - rot.Y * rot.W) / (sqx + sqy + sqz + sqw));
-
-                    rotationX.Values = new double[] { 1.0, 0.0, 0.0, x * 180 / Math.PI };
-                    rotationY.Values = new double[] { 0.0, 1.0, 0.0, y * 180 / Math.PI };
-                    rotationZ.Values = new double[] { 0.0, 0.0, 1.0, z * 180 / Math.PI };
-
-                    var axisAngle = Transform.Rotation.ToAxisAngle();
-                    //rotation.Values = new double[] { axisAngle.X, axisAngle.Y, axisAngle.Z, axisAngle.W * 180 / Math.PI };
-                    //rotationX.Values = new double[] { axisAngle.X, 0.0, 0.0, axisAngle.W * 180 / Math.PI };
-                    //rotationY.Values = new double[] { 0.0, axisAngle.Y, 0.0, axisAngle.W * 180 / Math.PI };
-                    //rotationZ.Values = new double[] { 0.0, 0.0, axisAngle.Z, axisAngle.W * 180 / Math.PI };
-                    /*rotationX.Values = new double[] { 1.0, 0.0, 0.0, axisAngle.X * axisAngle.W * 180 / Math.PI };
-                    rotationY.Values = new double[] { 0.0, 1.0, 0.0, axisAngle.Y * axisAngle.W * 180 / Math.PI };
-                    rotationZ.Values = new double[] { 0.0, 0.0, 1.0, axisAngle.Z * axisAngle.W * 180 / Math.PI };*/
-                }
-                else
-                {
-                    rotationX.Values = new double[] { 1.0, 0.0, 0.0, 0.0 };
-                    rotationY.Values = new double[] { 0.0, 0.0, 0.0, 0.0 };
-                    rotationZ.Values = new double[] { 0.0, 0.0, 0.0, 0.0 };
-                }
-
-                var scale = new TargetableFloat3();
-                scale.sid = "Scale";
-                transforms.Add(scale);
-                transformTypes.Add(ItemsChoiceType2.scale);
-
-                if ((Transform.Flags & (uint)Transform.TransformFlags.HasScaleShear) != 0)
-                {
-                    var scaleShear = Transform.ScaleShear.Diagonal;
-                    scale.Values = new double[] { scaleShear.X, scaleShear.Y, scaleShear.Z };
-                }
-                else
-                {
-                    scale.Values = new double[] { 1.0, 1.0, 1.0 };
-                }
-
-                var translate = new TargetableFloat3();
-                translate.sid = "Translate";
-                transforms.Add(translate);
-                transformTypes.Add(ItemsChoiceType2.translate);
-
-                if ((Transform.Flags & (uint)Transform.TransformFlags.HasTranslation) != 0)
-                {
-                    var transVec = Transform.Translation;
-                    translate.Values = new double[] { transVec.X, transVec.Y, transVec.Z };
-                }
-                else
-                {
-                    translate.Values = new double[] { 0.0, 0.0, 0.0 };
-                }
-            }
-            else
-            {
-                var transform = new matrix();
-                transform.sid = "Transform";
-                var mat = Transform.ToMatrix4();
-                mat.Transpose();
-                transform.Values = new double[] {
-                    mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
-                    mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
-                    mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
-                    mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3] 
-                };
-                transforms.Add(transform);
-                transformTypes.Add(ItemsChoiceType2.matrix);
-            }
+            
+            var transform = new matrix();
+            transform.sid = "Transform";
+            var mat = Transform.ToMatrix4();
+            mat.Transpose();
+            transform.Values = new double[] {
+                mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
+                mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
+                mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
+                mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3] 
+            };
+            transforms.Add(transform);
+            transformTypes.Add(ItemsChoiceType2.matrix);
 
             node.Items = transforms.ToArray();
             node.ItemsElementName = transformTypes.ToArray();

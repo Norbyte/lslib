@@ -261,7 +261,7 @@ namespace LSLib.LS
                     for (int j = 0; j < nums.Length; j++) matrix[i, j] = double.Parse(nums[j]);
                 }
             }
-            catch (FormatException exc) { throw new MException("Wrong input format!"); }
+            catch (FormatException) { throw new MException("Wrong input format!"); }
             return matrix;
         }
 

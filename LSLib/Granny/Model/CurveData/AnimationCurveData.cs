@@ -161,17 +161,17 @@ namespace LSLib.Granny.Model.CurveData
 
     class ControlUInt8
     {
-        public Byte UInt8;
+        public Byte UInt8 = 0;
     }
 
     class ControlUInt16
     {
-        public UInt16 UInt16;
+        public UInt16 UInt16 = 0;
     }
 
     class ControlReal32
     {
-        public Single Real32;
+        public Single Real32 = 0;
     }
 
     class AnimationCurveDataTypeSelector : VariantTypeSelector
