@@ -35,6 +35,11 @@ namespace LSLib {
 
 		uint32_t Crc32::Compute(array<byte> ^ input, uint32_t previousCrc32)
 		{
+			if (input->Length == 0)
+			{
+				return previousCrc32;
+			}
+
 			pin_ptr<byte> inputPin(&input[input->GetLowerBound(0)]);
 
 			uint32_t * current = (uint32_t *)inputPin;
