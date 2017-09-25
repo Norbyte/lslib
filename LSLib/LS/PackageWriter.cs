@@ -73,12 +73,15 @@ namespace LSLib.LS
             packaged.Flags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
 
             var packagedStream = info.MakeStream();
-            var reader = new BinaryReader(packagedStream);
-            var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
-            var compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
-            stream.Write(compressed, 0, compressed.Length);
-            reader.Dispose();
+            byte[] compressed;
+            using (var reader = new BinaryReader(packagedStream, Encoding.UTF8, true))
+            {
+                var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+                compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
+                stream.Write(compressed, 0, compressed.Length);
+            }
 
+            info.ReleaseStream();
             packaged.SizeOnDisk = (UInt32)(stream.Position - packaged.OffsetInFile);
             packaged.Crc = Native.Crc32.Compute(compressed, 0);
 

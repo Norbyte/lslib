@@ -151,6 +151,7 @@ namespace ConverterApp
             // TODO: Resave using original version
             var rsrcWriter = new LSFWriter(rewrittenStream, FileVersion.CurrentVersion);
             rsrcWriter.Write(resource);
+            rewrittenStream.Seek(0, SeekOrigin.Begin);
 
             // Re-package global.lsf
             var rewrittenPackage = new Package();
@@ -165,7 +166,7 @@ namespace ConverterApp
                 }
             }
 
-            using (var packageWriter = new PackageWriter(package, storyFilePath.Text + ".tmp"))
+            using (var packageWriter = new PackageWriter(rewrittenPackage, storyFilePath.Text + ".tmp"))
             {
                 // TODO: Resave using original version and flags
                 packageWriter.Version = 13;

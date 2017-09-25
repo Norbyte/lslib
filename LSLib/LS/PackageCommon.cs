@@ -75,9 +75,10 @@ namespace LSLib.LS
         abstract public UInt32 Size();
         abstract public UInt32 CRC();
         abstract public Stream MakeStream();
+        abstract public void ReleaseStream();
     }
 
-    public class PackagedFileInfo : FileInfo
+    public class PackagedFileInfo : FileInfo, IDisposable
     {
         public Stream PackageStream;
         public UInt32 OffsetInFile;
@@ -86,6 +87,12 @@ namespace LSLib.LS
         public UInt32 ArchivePart;
         public UInt32 Flags;
         public UInt32 Crc;
+        private Stream UncompressedStream;
+
+        public void Dispose()
+        {
+            ReleaseStream();
+        }
 
         public override UInt32 Size()
         {
@@ -102,31 +109,45 @@ namespace LSLib.LS
 
         public override Stream MakeStream()
         {
-            var compressed = new byte[SizeOnDisk];
-
-            this.PackageStream.Seek(OffsetInFile, SeekOrigin.Begin);
-            int readSize = this.PackageStream.Read(compressed, 0, (int)SizeOnDisk);
-            if (readSize != SizeOnDisk)
+            if (UncompressedStream == null)
             {
-                var msg = String.Format("Failed to read {0} bytes from archive (only got {1})", SizeOnDisk, readSize);
-                throw new InvalidDataException(msg);
-            }
+                var compressed = new byte[SizeOnDisk];
 
-            if (Crc != 0)
-            {
-                UInt32 computedCrc = Native.Crc32.Compute(compressed, 0);
-                if (computedCrc != Crc)
+                this.PackageStream.Seek(OffsetInFile, SeekOrigin.Begin);
+                int readSize = this.PackageStream.Read(compressed, 0, (int)SizeOnDisk);
+                if (readSize != SizeOnDisk)
                 {
-                    var msg = String.Format(
-                        "CRC check failed on file '{0}', archive is possibly corrupted. Expected {1,8:X}, got {2,8:X}",
-                        Name, Crc, computedCrc
-                    );
+                    var msg = String.Format("Failed to read {0} bytes from archive (only got {1})", SizeOnDisk, readSize);
                     throw new InvalidDataException(msg);
                 }
+
+                if (Crc != 0)
+                {
+                    UInt32 computedCrc = Native.Crc32.Compute(compressed, 0);
+                    if (computedCrc != Crc)
+                    {
+                        var msg = String.Format(
+                            "CRC check failed on file '{0}', archive is possibly corrupted. Expected {1,8:X}, got {2,8:X}",
+                            Name, Crc, computedCrc
+                        );
+                        throw new InvalidDataException(msg);
+                    }
+                }
+
+                var uncompressed = BinUtils.Decompress(compressed, (int)Size(), (byte)Flags);
+                UncompressedStream = new MemoryStream(uncompressed);
             }
 
-            var uncompressed = BinUtils.Decompress(compressed, (int)Size(), (byte)Flags);
-            return new MemoryStream(uncompressed);
+            return UncompressedStream;
+        }
+
+        public override void ReleaseStream()
+        {
+            if (UncompressedStream != null)
+            {
+                UncompressedStream.Dispose();
+                UncompressedStream = null;
+            }
         }
 
         internal static PackagedFileInfo CreateFromEntry(FileEntry13 entry, Stream dataStream)
@@ -212,10 +233,16 @@ namespace LSLib.LS
         }
     }
 
-    public class FilesystemFileInfo : FileInfo
+    public class FilesystemFileInfo : FileInfo, IDisposable
     {
         public string FilesystemPath;
         public long CachedSize;
+        private FileStream Stream;
+
+        public void Dispose()
+        {
+            ReleaseStream();
+        }
 
         public override UInt32 Size()
         {
@@ -229,7 +256,21 @@ namespace LSLib.LS
 
         public override Stream MakeStream()
         {
-            return new FileStream(FilesystemPath, FileMode.Open, FileAccess.Read);
+            if (Stream == null)
+            {
+                Stream = new FileStream(FilesystemPath, FileMode.Open, FileAccess.Read);
+            }
+
+            return Stream;
+        }
+
+        public override void ReleaseStream()
+        {
+            if (Stream != null)
+            {
+                Stream.Dispose();
+                Stream = null;
+            }
         }
 
         public static FilesystemFileInfo CreateFromEntry(string filesystemPath, string name)
@@ -261,6 +302,10 @@ namespace LSLib.LS
         public override Stream MakeStream()
         {
             return Stream;
+        }
+
+        public override void ReleaseStream()
+        {
         }
 
         public static StreamFileInfo CreateFromStream(Stream stream, string name)
