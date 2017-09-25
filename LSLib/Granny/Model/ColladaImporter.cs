@@ -132,13 +132,15 @@ namespace LSLib.Granny.Model
 
             if (collada.asset != null)
             {
-                if (collada.asset.unit.name == "meter")
-                    toolInfo.UnitsPerMeter = (float)collada.asset.unit.meter;
-                else if (collada.asset.unit.name == "centimeter")
-                    toolInfo.UnitsPerMeter = (float)collada.asset.unit.meter * 100;
-                else
-                    throw new NotImplementedException("Unsupported asset unit type: " + collada.asset.unit.name);
-
+                if (collada.asset.unit != null)
+                {
+                    if (collada.asset.unit.name == "meter")
+                        toolInfo.UnitsPerMeter = (float)collada.asset.unit.meter;
+                    else if (collada.asset.unit.name == "centimeter")
+                        toolInfo.UnitsPerMeter = (float)collada.asset.unit.meter * 100;
+                    else
+                        throw new NotImplementedException("Unsupported asset unit type: " + collada.asset.unit.name);
+                }
 
                 if (collada.asset.contributor != null && collada.asset.contributor.Length > 0)
                 {
