@@ -88,10 +88,17 @@ namespace ConverterApp
                 }
 
                 Resource resource;
-                using (var rsrcStream = file.MakeStream())
-                using (var rsrcReader = new LSFReader(rsrcStream))
+                var rsrcStream = file.MakeStream();
+                try
                 {
-                    resource = rsrcReader.Read();
+                    using (var rsrcReader = new LSFReader(rsrcStream))
+                    {
+                        resource = rsrcReader.Read();
+                    }
+                }
+                finally
+                {
+                    file.ReleaseStream();
                 }
 
                 var storyNode = resource.Regions["Story"].Children["Story"][0];
@@ -130,10 +137,17 @@ namespace ConverterApp
 
             // Load globals.lsf
             Resource resource;
-            using (var rsrcStream = globalsLsf.MakeStream())
-            using (var rsrcReader = new LSFReader(rsrcStream))
+            var rsrcStream = globalsLsf.MakeStream();
+            try
             {
-                resource = rsrcReader.Read();
+                using (var rsrcReader = new LSFReader(rsrcStream))
+                {
+                    resource = rsrcReader.Read();
+                }
+            }
+            finally
+            {
+                globalsLsf.ReleaseStream();
             }
 
             // Save story resource and pack into the Story.Story attribute in globals.lsf

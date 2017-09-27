@@ -369,21 +369,23 @@ namespace LSLib.LS
                 }
 
                 var inStream = file.MakeStream();
-                var inReader = new BinaryReader(inStream);
-                var outFile = new FileStream(outPath, FileMode.Create, FileAccess.Write);
 
-                if (inReader != null)
+                try
                 {
-                    int read;
-                    while ((read = inReader.Read(buffer, 0, buffer.Length)) > 0)
+                    using (var inReader = new BinaryReader(inStream))
+                    using (var outFile = new FileStream(outPath, FileMode.Create, FileAccess.Write))
                     {
-                        outFile.Write(buffer, 0, read);
+                        int read;
+                        while ((read = inReader.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            outFile.Write(buffer, 0, read);
+                        }
                     }
-
-                    inReader.Dispose();
                 }
-
-                outFile.Dispose();
+                finally
+                {
+                    file.ReleaseStream();
+                }
             }
 
             reader.Dispose();

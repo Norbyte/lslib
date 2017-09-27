@@ -74,14 +74,20 @@ namespace LSLib.LS
 
             var packagedStream = info.MakeStream();
             byte[] compressed;
-            using (var reader = new BinaryReader(packagedStream, Encoding.UTF8, true))
+            try
             {
-                var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
-                compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
-                stream.Write(compressed, 0, compressed.Length);
+                using (var reader = new BinaryReader(packagedStream, Encoding.UTF8, true))
+                {
+                    var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+                    compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
+                    stream.Write(compressed, 0, compressed.Length);
+                }
+            }
+            finally
+            {
+                info.ReleaseStream();
             }
 
-            info.ReleaseStream();
             packaged.SizeOnDisk = (UInt32)(stream.Position - packaged.OffsetInFile);
             packaged.Crc = Native.Crc32.Compute(compressed, 0);
 
@@ -265,10 +271,17 @@ namespace LSLib.LS
                 foreach (var file in orderedFileList)
                 {
                     var packagedStream = file.MakeStream();
-                    using (var reader = new BinaryReader(packagedStream))
+                    try
                     {
-                        var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
-                        md5.TransformBlock(uncompressed, 0, uncompressed.Length, uncompressed, 0);
+                        using (var reader = new BinaryReader(packagedStream))
+                        {
+                            var uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+                            md5.TransformBlock(uncompressed, 0, uncompressed.Length, uncompressed, 0);
+                        }
+                    }
+                    finally
+                    {
+                        file.ReleaseStream();
                     }
                 }
 
