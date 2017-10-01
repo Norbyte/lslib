@@ -10,6 +10,21 @@ using System.Text;
 
 namespace LSLib.LS
 {
+    public class NotAPackageException : Exception
+    {
+        public NotAPackageException() : base()
+        {
+        }
+        
+        public NotAPackageException(string message) : base(message)
+        {
+        }
+
+        public NotAPackageException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+    };
+
     public class PackageReader
     {
         private String path;
@@ -158,7 +173,7 @@ namespace LSLib.LS
                     return ReadPackageV7(mainStream, reader);
                 }
 
-                throw new InvalidDataException("No valid signature found in package file");
+                throw new NotAPackageException("No valid signature found in package file");
             }
         }
     }
