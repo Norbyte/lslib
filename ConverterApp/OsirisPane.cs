@@ -305,5 +305,15 @@ namespace ConverterApp
                 }
             }
         }
+
+        private void btnDebugExport_Click(object sender, EventArgs e)
+        {
+            var filePath = goalPath.Text + "/debug.json";
+            using (var debugFileStream = new FileStream(filePath, FileMode.Create))
+            {
+                var sev = new StoryDebugExportVisitor(debugFileStream);
+                sev.Visit(Story);
+            }
+        }
     }
 }

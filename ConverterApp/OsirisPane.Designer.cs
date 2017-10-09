@@ -43,6 +43,7 @@
             this.label10 = new System.Windows.Forms.Label();
             this.storyPathDlg = new System.Windows.Forms.OpenFileDialog();
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
+            this.btnDebugExport = new System.Windows.Forms.Button();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).BeginInit();
             this.SuspendLayout();
@@ -66,9 +67,9 @@
             this.groupBox3.Controls.Add(this.databaseGrid);
             this.groupBox3.Controls.Add(this.databaseSelectorCb);
             this.groupBox3.Controls.Add(this.label18);
-            this.groupBox3.Location = new System.Drawing.Point(5, 136);
+            this.groupBox3.Location = new System.Drawing.Point(5, 147);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(849, 444);
+            this.groupBox3.Size = new System.Drawing.Size(849, 430);
             this.groupBox3.TabIndex = 68;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Database Editor";
@@ -82,7 +83,7 @@
             this.databaseGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.databaseGrid.Location = new System.Drawing.Point(9, 47);
             this.databaseGrid.Name = "databaseGrid";
-            this.databaseGrid.Size = new System.Drawing.Size(829, 383);
+            this.databaseGrid.Size = new System.Drawing.Size(829, 369);
             this.databaseGrid.TabIndex = 2;
             // 
             // databaseSelectorCb
@@ -189,10 +190,22 @@
             this.storyPathDlg.CheckFileExists = false;
             this.storyPathDlg.Filter = "LS story/savegame files|*.osi;*.lsv";
             // 
+            // btnDebugExport
+            // 
+            this.btnDebugExport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnDebugExport.Location = new System.Drawing.Point(728, 121);
+            this.btnDebugExport.Name = "btnDebugExport";
+            this.btnDebugExport.Size = new System.Drawing.Size(121, 23);
+            this.btnDebugExport.TabIndex = 70;
+            this.btnDebugExport.Text = "Debug Export";
+            this.btnDebugExport.UseVisualStyleBackColor = true;
+            this.btnDebugExport.Click += new System.EventHandler(this.btnDebugExport_Click);
+            // 
             // OsirisPane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.btnDebugExport);
             this.Controls.Add(this.saveStoryBtn);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.loadStoryBtn);
@@ -230,5 +243,6 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.OpenFileDialog storyPathDlg;
         private System.Windows.Forms.FolderBrowserDialog goalPathDlg;
+        private System.Windows.Forms.Button btnDebugExport;
     }
 }

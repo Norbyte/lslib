@@ -163,6 +163,7 @@
     <Compile Include="LS\Story\Database.cs" />
     <Compile Include="LS\Story\DatabaseNode.cs" />
     <Compile Include="LS\Story\DataNode.cs" />
+    <Compile Include="LS\Story\DebugExport.cs" />
     <Compile Include="LS\Story\Function.cs" />
     <Compile Include="LS\Story\Goal.cs" />
     <Compile Include="LS\Story\Join.cs" />
