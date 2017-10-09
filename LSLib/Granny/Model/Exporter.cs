@@ -263,11 +263,55 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void ConformSkeletonAnimations(Skeleton skeleton)
+        {
+            foreach (var trackGroup in Root.TrackGroups)
+            {
+                foreach (var track in trackGroup.TransformTracks)
+                {
+                    var bone = skeleton.GetBoneByName(track.Name);
+                    if (bone == null)
+                    {
+                        string msg = String.Format("Animation track references bone '{0}' that cannot be found in the skeleton.", track.Name);
+                        throw new ExportException(msg);
+                    }
+                }
+            }
+        }
+
         private void ConformSkeletons(IEnumerable<Skeleton> skeletons)
         {
             // We don't have any skeletons in this mesh, nothing to conform.
             if (Root.Skeletons == null || Root.Skeletons.Count == 0)
             {
+                // If we're exporting animations without a skeleton, copy the source skeleton
+                // and check if all animation tracks are referencing existing bones.
+                if (Root.Animations != null && Root.Animations.Count > 0)
+                {
+                    Root.Skeletons = skeletons.ToList();
+                    if (Root.Skeletons.Count != 1)
+                    {
+                        string msg = String.Format("Skeleton source file should contain exactly one skeleton.");
+                        throw new ExportException(msg);
+                    }
+
+                    var skeleton = Root.Skeletons.First();
+
+                    // Generate a dummy model if there isn't one, otherwise we won't
+                    // be able to bind the animations to anything
+                    if (Root.Models == null)
+                    {
+                        Root.Models = new List<Model>();
+                        var model = new Model();
+                        model.InitialPlacement = new Transform();
+                        model.Name = skeleton.Name;
+                        model.Skeleton = skeleton;
+                        Root.Models.Add(model);
+                    }
+
+                    ConformSkeletonAnimations(skeleton);
+                }
+
                 return;
             }
 
@@ -323,6 +367,11 @@ namespace LSLib.Granny.Model
 
         private void ConformMeshBoneBindings(IEnumerable<Mesh> meshes)
         {
+            if (Root.Meshes == null)
+            {
+                return;
+            }
+
             foreach (var mesh in Root.Meshes)
             {
                 Mesh conformingMesh = null;
@@ -424,6 +473,11 @@ namespace LSLib.Granny.Model
 
         private void ConformModels(IEnumerable<Model> models)
         {
+            if (Root.Models == null || Root.Models.Count == 0)
+            {
+                return;
+            }
+
             // Rebuild the model list to match the order used in the original GR2
             // If a model is missing, generate a dummy model & mesh.
             var originalModels = Root.Models;
@@ -531,7 +585,7 @@ namespace LSLib.Granny.Model
                 }
                 catch (ExportException e)
                 {
-                    throw new ExportException("Failed to conform skeleton:\n" + e.Message + "\nCheck bone counts and ordering.");
+                    throw new ExportException("Failed to conform skeleton:\n" + e.Message);
                 }
             }
 

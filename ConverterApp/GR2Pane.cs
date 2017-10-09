@@ -105,18 +105,31 @@ namespace ConverterApp
         private void UpdateInputState()
         {
             var skinned = (Root.Skeletons != null && Root.Skeletons.Count > 0);
-            conformToOriginal.Enabled = skinned;
-            if (!skinned)
-            {
-                conformToOriginal.Checked = false;
-            }
+            var animationsOnly = !skinned 
+                && (Root.Models == null || Root.Models.Count == 0) 
+                && Root.Animations != null && Root.Animations.Count > 0;
 
-            buildDummySkeleton.Enabled = !skinned;
             if (skinned)
             {
+                conformToOriginal.Enabled = true;
+                conformToOriginal.Text = "Conform to original GR2:";
+                buildDummySkeleton.Enabled = false;
                 buildDummySkeleton.Checked = false;
             }
-
+            else if (animationsOnly)
+            {
+                conformToOriginal.Enabled = true;
+                conformToOriginal.Text = "Copy skeleton from:";
+                buildDummySkeleton.Enabled = false;
+                buildDummySkeleton.Checked = false;
+            }
+            else
+            {
+                conformToOriginal.Enabled = false;
+                conformToOriginal.Checked = false;
+                buildDummySkeleton.Enabled = false;
+            }
+            
             UpdateExportableObjects();
             UpdateResourceFormats();
 
