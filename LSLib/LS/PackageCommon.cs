@@ -362,11 +362,8 @@ namespace LSLib.LS
                 currentSize += file.Size();
 
                 var outPath = outputPath + file.Name;
-                var dirName = Path.GetDirectoryName(outPath);
-                if (!Directory.Exists(dirName))
-                {
-                    Directory.CreateDirectory(dirName);
-                }
+
+                FileManager.TryToCreateDirectory(outPath);
 
                 var inStream = file.MakeStream();
 
@@ -413,6 +410,9 @@ namespace LSLib.LS
 
         public void CreatePackage(string packagePath, string inputPath, uint version = Package.CurrentVersion, CompressionMethod compression = CompressionMethod.None, bool fastCompression = true)
         {
+            FileManager.TryToCreateDirectory(packagePath);
+            FileManager.TryToCreateDirectory(inputPath);
+
             this.progressUpdate("Enumerating files ...", 0, 1, null);
             var package = new Package();
             EnumerateFiles(package, inputPath, inputPath);
