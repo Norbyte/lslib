@@ -13,7 +13,7 @@ namespace LSLib.LS
 {
     public class PackageWriter : IDisposable
     {
-        public delegate void WriteProgressDelegate(CommonPackageInfo commonPackage, long numerator, long denominator);
+        public delegate void WriteProgressDelegate(AbstractFileInfo abstractFile, long numerator, long denominator);
         public WriteProgressDelegate writeProgress = delegate { };
         public CompressionMethod Compression = CompressionMethod.None;
         public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
@@ -51,7 +51,7 @@ namespace LSLib.LS
             }
         }
 
-        public PackagedFileInfo WriteFile(CommonPackageInfo info)
+        public PackagedFileInfo WriteFile(AbstractFileInfo info)
         {
             // Assume that all files are written uncompressed (worst-case) when calculating package sizes
             var size = info.Size();
@@ -261,7 +261,7 @@ namespace LSLib.LS
         {
             // MD5 is computed over the contents of all files in an alphabetically sorted order
             var orderedFileList = this.package.Files.Select(item => item).ToList();
-            orderedFileList.Sort(delegate (CommonPackageInfo a, CommonPackageInfo b)
+            orderedFileList.Sort(delegate (AbstractFileInfo a, AbstractFileInfo b)
             {
                 return String.Compare(a.Name, b.Name);
             });

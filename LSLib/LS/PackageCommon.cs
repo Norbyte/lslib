@@ -68,7 +68,7 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
-    abstract public class CommonPackageInfo
+    abstract public class AbstractFileInfo
     {
         public String Name;
 
@@ -78,7 +78,7 @@ namespace LSLib.LS
         abstract public void ReleaseStream();
     }
 
-    public class PackagedFileInfo : CommonPackageInfo, IDisposable
+    public class PackagedFileInfo : AbstractFileInfo, IDisposable
     {
         public Stream PackageStream;
         public UInt32 OffsetInFile;
@@ -233,7 +233,7 @@ namespace LSLib.LS
         }
     }
 
-    public class FilesystemFileInfo : CommonPackageInfo, IDisposable
+    public class FilesystemFileInfo : AbstractFileInfo, IDisposable
     {
         public string FilesystemPath;
         public long CachedSize;
@@ -285,7 +285,7 @@ namespace LSLib.LS
         }
     }
 
-    public class StreamFileInfo : CommonPackageInfo
+    public class StreamFileInfo : AbstractFileInfo
     {
         public Stream Stream;
 
@@ -322,7 +322,7 @@ namespace LSLib.LS
         public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x50, 0x4B };
         public const UInt32 CurrentVersion = 13;
 
-        public List<CommonPackageInfo> Files = new List<CommonPackageInfo>();
+        public List<AbstractFileInfo> Files = new List<AbstractFileInfo>();
 
         public static string MakePartFilename(string path, int part)
         {
@@ -335,10 +335,10 @@ namespace LSLib.LS
 
     public class Packager
     {
-        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, CommonPackageInfo file);
+        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, AbstractFileInfo file);
         public ProgressUpdateDelegate progressUpdate = delegate { };
 
-        private void WriteProgressUpdate(CommonPackageInfo file, long numerator, long denominator)
+        private void WriteProgressUpdate(AbstractFileInfo file, long numerator, long denominator)
         {
             this.progressUpdate(file.Name, numerator, denominator, file);
         }
