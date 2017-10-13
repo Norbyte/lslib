@@ -411,7 +411,6 @@ namespace LSLib.LS
         public void CreatePackage(string packagePath, string inputPath, uint version = Package.CurrentVersion, CompressionMethod compression = CompressionMethod.None, bool fastCompression = true)
         {
             FileManager.TryToCreateDirectory(packagePath);
-            FileManager.TryToCreateDirectory(inputPath);
 
             this.progressUpdate("Enumerating files ...", 0, 1, null);
             var package = new Package();
