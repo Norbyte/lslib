@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using LSLib.LS;
 
 namespace LSLib.Granny.Model
 {
@@ -150,6 +151,7 @@ namespace LSLib.Granny.Model
             switch (options.OutputFormat)
             {
                 case ExportFormat.GR2:
+                    FileManager.TryToCreateDirectory(options.OutputPath);
                     SaveGR2(options.OutputPath, root);
                     break;
 
