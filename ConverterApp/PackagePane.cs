@@ -23,7 +23,7 @@ namespace ConverterApp
             compressionMethod.SelectedIndex = 4;
         }
 
-        private void PackageProgressUpdate(string status, long numerator, long denominator, FileInfo file)
+        private void PackageProgressUpdate(string status, long numerator, long denominator, CommonPackageInfo file)
         {
             if (file != null)
             {

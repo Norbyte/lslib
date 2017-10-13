@@ -80,7 +80,7 @@ namespace ConverterApp
                 var packageReader = new PackageReader(storyFilePath.Text);
                 var package = packageReader.Read();
 
-                LSLib.LS.FileInfo file = package.Files.Where(p => p.Name == "globals.lsf").FirstOrDefault();
+                CommonPackageInfo file = package.Files.Where(p => p.Name == "globals.lsf").FirstOrDefault();
                 if (file == null)
                 {
                     MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -128,7 +128,7 @@ namespace ConverterApp
             var packageReader = new PackageReader(storyFilePath.Text);
             var package = packageReader.Read();
 
-            LSLib.LS.FileInfo globalsLsf = package.Files.Where(p => p.Name == "globals.lsf").FirstOrDefault();
+            CommonPackageInfo globalsLsf = package.Files.Where(p => p.Name == "globals.lsf").FirstOrDefault();
             if (globalsLsf == null)
             {
                 MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);

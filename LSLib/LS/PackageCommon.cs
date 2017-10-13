@@ -68,7 +68,7 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
-    abstract public class FileInfo
+    abstract public class CommonPackageInfo
     {
         public String Name;
 
@@ -78,7 +78,7 @@ namespace LSLib.LS
         abstract public void ReleaseStream();
     }
 
-    public class PackagedFileInfo : FileInfo, IDisposable
+    public class PackagedFileInfo : CommonPackageInfo, IDisposable
     {
         public Stream PackageStream;
         public UInt32 OffsetInFile;
@@ -233,7 +233,7 @@ namespace LSLib.LS
         }
     }
 
-    public class FilesystemFileInfo : FileInfo, IDisposable
+    public class FilesystemFileInfo : CommonPackageInfo, IDisposable
     {
         public string FilesystemPath;
         public long CachedSize;
@@ -285,7 +285,7 @@ namespace LSLib.LS
         }
     }
 
-    public class StreamFileInfo : FileInfo
+    public class StreamFileInfo : CommonPackageInfo
     {
         public Stream Stream;
 
@@ -322,7 +322,7 @@ namespace LSLib.LS
         public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x50, 0x4B };
         public const UInt32 CurrentVersion = 13;
 
-        public List<FileInfo> Files = new List<FileInfo>();
+        public List<CommonPackageInfo> Files = new List<CommonPackageInfo>();
 
         public static string MakePartFilename(string path, int part)
         {
@@ -335,10 +335,10 @@ namespace LSLib.LS
 
     public class Packager
     {
-        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, FileInfo file);
+        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, CommonPackageInfo file);
         public ProgressUpdateDelegate progressUpdate = delegate { };
 
-        private void WriteProgressUpdate(FileInfo file, long numerator, long denominator)
+        private void WriteProgressUpdate(CommonPackageInfo file, long numerator, long denominator)
         {
             this.progressUpdate(file.Name, numerator, denominator, file);
         }
