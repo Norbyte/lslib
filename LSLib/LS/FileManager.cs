@@ -1,0 +1,57 @@
+﻿using System;
+using System.IO;
+
+namespace LSLib.LS
+{
+    internal class FileManager
+    {
+        private const int MAX_PATH = 248;
+
+        public static void TryToCreateDirectory(string path)
+        {
+            string outputPath = path;
+
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                throw new ArgumentNullException(nameof(path), "Cannot create directory without path");
+            }
+
+            // throw exception if path is relative
+            Uri uri;
+            try
+            {
+                Uri.TryCreate(outputPath, UriKind.RelativeOrAbsolute, out uri);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new ArgumentException("Cannot create directory without absolute path", nameof(path));
+            }
+
+            if (!Path.IsPathRooted(outputPath) || !uri.IsFile)
+            {
+                throw new ArgumentException("Cannot create directory without absolute path", nameof(path));
+            }
+
+            // validate path
+            outputPath = Path.GetFullPath(path);
+
+            outputPath = Path.GetDirectoryName(outputPath);
+
+            if (outputPath == null)
+            {
+                throw new NullReferenceException("Cannot create directory without non-null output path");
+            }
+
+            if (outputPath.Length > MAX_PATH)
+            {
+                throw new PathTooLongException($"Cannot create directory in path exceeding {MAX_PATH} characters");
+            }
+
+            // if the directory does not exist, create the directory
+            if (!Directory.Exists(outputPath))
+            {
+                Directory.CreateDirectory(outputPath);
+            }
+        }
+    }
+}
