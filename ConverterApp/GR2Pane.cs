@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -148,7 +149,7 @@ namespace ConverterApp
             UpdateCommonExporterSettings(settings);
 
             settings.InputPath = inputPath.Text;
-            if (settings.InputPath.Substring(settings.InputPath.Length - 4).ToLower() == ".gr2")
+            if (Path.GetExtension(settings.InputPath)?.ToLower() == ".gr2")
             {
                 settings.InputFormat = ExportFormat.GR2;
             }
@@ -158,7 +159,7 @@ namespace ConverterApp
             }
 
             settings.OutputPath = outputPath.Text;
-            if (settings.OutputPath.Substring(settings.OutputPath.Length - 4).ToLower() == ".gr2")
+            if (Path.GetExtension(settings.OutputPath)?.ToLower() == ".gr2")
             {
                 settings.OutputFormat = ExportFormat.GR2;
             }

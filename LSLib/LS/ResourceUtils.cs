@@ -99,6 +99,8 @@ namespace LSLib.LS
 
         public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, int version = -1)
         {
+            FileManager.TryToCreateDirectory(outputPath);
+
             using (var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
             {
                 switch (format)
@@ -185,11 +187,8 @@ namespace LSLib.LS
                 var path = paths[i];
                 var inPath = inputDir + "/" + path;
                 var outPath = outputDir + "/" + Path.ChangeExtension(path, outputFormat.ToString().ToLower());
-                var dirName = Path.GetDirectoryName(outPath);
-                if (!Directory.Exists(dirName))
-                {
-                    Directory.CreateDirectory(dirName);
-                }
+
+                FileManager.TryToCreateDirectory(outPath);
 
                 this.progressUpdate("Converting: " + inPath, i, paths.Count);
                 var resource = LoadResource(inPath, inputFormat);

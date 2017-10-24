@@ -68,7 +68,7 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
-    abstract public class FileInfo
+    abstract public class AbstractFileInfo
     {
         public String Name;
 
@@ -78,7 +78,7 @@ namespace LSLib.LS
         abstract public void ReleaseStream();
     }
 
-    public class PackagedFileInfo : FileInfo, IDisposable
+    public class PackagedFileInfo : AbstractFileInfo, IDisposable
     {
         public Stream PackageStream;
         public UInt32 OffsetInFile;
@@ -233,7 +233,7 @@ namespace LSLib.LS
         }
     }
 
-    public class FilesystemFileInfo : FileInfo, IDisposable
+    public class FilesystemFileInfo : AbstractFileInfo, IDisposable
     {
         public string FilesystemPath;
         public long CachedSize;
@@ -285,7 +285,7 @@ namespace LSLib.LS
         }
     }
 
-    public class StreamFileInfo : FileInfo
+    public class StreamFileInfo : AbstractFileInfo
     {
         public Stream Stream;
 
@@ -322,7 +322,7 @@ namespace LSLib.LS
         public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x50, 0x4B };
         public const UInt32 CurrentVersion = 13;
 
-        public List<FileInfo> Files = new List<FileInfo>();
+        public List<AbstractFileInfo> Files = new List<AbstractFileInfo>();
 
         public static string MakePartFilename(string path, int part)
         {
@@ -335,10 +335,10 @@ namespace LSLib.LS
 
     public class Packager
     {
-        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, FileInfo file);
+        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator, AbstractFileInfo file);
         public ProgressUpdateDelegate progressUpdate = delegate { };
 
-        private void WriteProgressUpdate(FileInfo file, long numerator, long denominator)
+        private void WriteProgressUpdate(AbstractFileInfo file, long numerator, long denominator)
         {
             this.progressUpdate(file.Name, numerator, denominator, file);
         }
@@ -362,11 +362,8 @@ namespace LSLib.LS
                 currentSize += file.Size();
 
                 var outPath = outputPath + file.Name;
-                var dirName = Path.GetDirectoryName(outPath);
-                if (!Directory.Exists(dirName))
-                {
-                    Directory.CreateDirectory(dirName);
-                }
+
+                FileManager.TryToCreateDirectory(outPath);
 
                 var inStream = file.MakeStream();
 
@@ -413,6 +410,8 @@ namespace LSLib.LS
 
         public void CreatePackage(string packagePath, string inputPath, uint version = Package.CurrentVersion, CompressionMethod compression = CompressionMethod.None, bool fastCompression = true)
         {
+            FileManager.TryToCreateDirectory(packagePath);
+
             this.progressUpdate("Enumerating files ...", 0, 1, null);
             var package = new Package();
             EnumerateFiles(package, inputPath, inputPath);
