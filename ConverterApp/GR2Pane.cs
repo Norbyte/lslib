@@ -127,7 +127,8 @@ namespace ConverterApp
             {
                 conformToOriginal.Enabled = false;
                 conformToOriginal.Checked = false;
-                buildDummySkeleton.Enabled = false;
+                buildDummySkeleton.Enabled = true;
+                buildDummySkeleton.Checked = true;
             }
             
             UpdateExportableObjects();
