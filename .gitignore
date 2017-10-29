@@ -35,6 +35,7 @@
 *.psess
 *.opensdf
 
+/.vs
 /ipch
 /Debug
 /Release
