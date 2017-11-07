@@ -35,7 +35,7 @@ namespace Divine.CLI
             string[] graphicsActions = { "convert-model", "convert-models" };
 
             LogLevel = CommandLineArguments.GetLogLevelByString(args.LogLevel);
-            CommandLineLogger.LogInfo($"Using log level: {LogLevel}");
+            CommandLineLogger.LogDebug($"Using log level: {LogLevel}");
 
             Game = CommandLineArguments.GetGameByString(args.Game);
             CommandLineLogger.LogDebug($"Using game: {Game}");
