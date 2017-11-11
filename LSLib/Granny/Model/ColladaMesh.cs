@@ -421,9 +421,12 @@ namespace LSLib.Granny.Model
 
             foreach (var input in Inputs)
             {
-                if (input.semantic == "TEXCOORD")
+                switch (input.semantic)
                 {
-                    numUVs++;
+                    case "NORMAL": hasNormals = true; break;
+                    case "TANGENT": hasTangents = true; break;
+                    case "BINORMAL": hasBinormals = true; break;
+                    case "TEXCOORD": numUVs++; break;
                 }
             }
 
