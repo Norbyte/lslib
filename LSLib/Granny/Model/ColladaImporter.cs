@@ -202,54 +202,14 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private string FindVertexFormat(Root root, geometry geom)
-        {
-            string vertexFormat;
-            // Use the override vertex format, if one was specified
-            if (!Options.VertexFormats.TryGetValue(geom.name, out vertexFormat))
-            {
-                vertexFormat = "P";
-                string attributeCounts = "3";
-
-                bool isSkinned = SkinnedMeshes.Contains(geom.id);
-                if (isSkinned)
-                {
-                    vertexFormat += "W";
-                    attributeCounts += "4";
-                }
-
-                // Granny doesn't have any skinned vertex formats without normals
-                if (Options.ExportNormals || isSkinned)
-                {
-                    vertexFormat += "N";
-                    attributeCounts += "3";
-                }
-
-                if (Options.ExportTangents)
-                {
-                    vertexFormat += "GB";
-                    attributeCounts += "33";
-                }
-
-                if (Options.ExportUVs)
-                {
-                    vertexFormat += "T";
-                    attributeCounts += "2";
-                }
-
-                vertexFormat += attributeCounts;
-            }
-
-            return vertexFormat;
-        }
-
-        private Mesh ImportMesh(mesh mesh, string vertexFormat)
+        private Mesh ImportMesh(geometry geom, mesh mesh, string vertexFormat)
         {
             var collada = new ColladaMesh();
-            collada.ImportFromCollada(mesh, vertexFormat, Options);
+            bool isSkinned = SkinnedMeshes.Contains(geom.id);
+            collada.ImportFromCollada(mesh, vertexFormat, isSkinned, Options);
 
             var m = new Mesh();
-            m.VertexFormat = VertexFormatRegistry.Resolve(vertexFormat);
+            m.VertexFormat = collada.InternalVertexType;
             m.Name = "Unnamed";
 
             m.PrimaryVertexData = new VertexData();
@@ -290,9 +250,9 @@ namespace LSLib.Granny.Model
             return m;
         }
 
-        private Mesh ImportMesh(Root root, string name, mesh mesh, string vertexFormat)
+        private Mesh ImportMesh(Root root, string name, geometry geom, mesh mesh, string vertexFormat)
         {
-            var m = ImportMesh(mesh, vertexFormat);
+            var m = ImportMesh(geom, mesh, vertexFormat);
             m.Name = name;
             root.VertexDatas.Add(m.PrimaryVertexData);
             root.TriTopologies.Add(m.PrimaryTopology);
@@ -678,7 +638,10 @@ namespace LSLib.Granny.Model
 
             foreach (var geometry in collGeometries)
             {
-                var mesh = ImportMesh(root, geometry.name, geometry.Item as mesh, FindVertexFormat(root, geometry));
+                string vertexFormat = null;
+                // Use the override vertex format, if one was specified
+                Options.VertexFormats.TryGetValue(geometry.name, out vertexFormat);
+                var mesh = ImportMesh(root, geometry.name, geometry, geometry.Item as mesh, vertexFormat);
                 ColladaGeometries.Add(geometry.id, mesh);
             }
 

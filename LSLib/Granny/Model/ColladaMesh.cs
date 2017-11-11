@@ -30,7 +30,11 @@ namespace LSLib.Granny.Model
         public List<int> ConsolidatedIndices;
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
         private ExporterOptions Options;
-
+        
+        public Type InternalVertexType
+        {
+            get { return VertexType; }
+        }
 
         private class VertexIndexComparer : IEqualityComparer<int[]>
         {
@@ -398,13 +402,81 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public void ImportFromCollada(mesh mesh, string vertexFormat, ExporterOptions options)
+        private string FindVertexFormat(bool isSkinned)
+        {
+            bool hasNormals = false,
+                hasTangents = false,
+                hasBinormals = false;
+            int numUVs = 0;
+
+            foreach (var input in Mesh.vertices.input)
+            {
+                switch (input.semantic)
+                {
+                    case "NORMAL": hasNormals = true; break;
+                    case "TANGENT": hasTangents = true; break;
+                    case "BINORMAL": hasBinormals = true; break;
+                }
+            }
+
+            foreach (var input in Inputs)
+            {
+                if (input.semantic == "TEXCOORD")
+                {
+                    numUVs++;
+                }
+            }
+
+            string vertexFormat;
+            vertexFormat = "P";
+            string attributeCounts = "3";
+
+            if (isSkinned)
+            {
+                vertexFormat += "W";
+                attributeCounts += "4";
+            }
+
+            // Granny doesn't have any skinned vertex formats without normals
+            if (hasNormals && (Options.ExportNormals || isSkinned))
+            {
+                vertexFormat += "N";
+                attributeCounts += "3";
+            }
+
+            if (((hasTangents && hasBinormals) || (hasNormals && numUVs > 0)) && Options.ExportTangents)
+            {
+                vertexFormat += "GB";
+                attributeCounts += "33";
+            }
+
+            if (Options.ExportUVs)
+            {
+                for (int i = 0; i < numUVs; i++)
+                {
+                    vertexFormat += "T";
+                    attributeCounts += "2";
+                }
+            }
+
+            vertexFormat += attributeCounts;
+
+            return vertexFormat;
+        }
+
+        public void ImportFromCollada(mesh mesh, string vertexFormat, bool isSkinned, ExporterOptions options)
         {
             Options = options;
             Mesh = mesh;
-            VertexType = VertexFormatRegistry.Resolve(vertexFormat);
             ImportSources();
             ImportFaces();
+
+            if (vertexFormat == null)
+            {
+                vertexFormat = FindVertexFormat(isSkinned);
+            }
+
+            VertexType = VertexFormatRegistry.Resolve(vertexFormat);
             ImportVertices();
 
             // TODO: This should be done before deduplication!
@@ -474,7 +546,8 @@ namespace LSLib.Granny.Model
                     OriginalToConsolidatedVertexIndexMap.Add(i, new List<int> { i });
             }
 
-            if (!HasTangents || Options.RecalculateTangents)
+            var description = Vertex.Description(VertexType);
+            if ((description.Tangent && description.Binormal) && (!HasTangents || Options.RecalculateTangents))
             {
                 if (!HasTangents)
                     Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
