@@ -18,6 +18,7 @@ namespace LSLib.Granny.Model
         private List<List<Vector2>> UVs;
         private List<int> Indices;
 
+        private int InputOffsetCount = 0;
         private int VertexInputIndex = -1;
         private List<int> UVInputIndices = new List<int>();
         private Type VertexType;
@@ -165,12 +166,12 @@ namespace LSLib.Granny.Model
 
         private int VertexIndexCount()
         {
-            return Indices.Count / Inputs.Length;
+            return Indices.Count / InputOffsetCount;
         }
 
         private int VertexIndex(int index)
         {
-            return Indices[index * Inputs.Length + VertexInputIndex];
+            return Indices[index * InputOffsetCount + VertexInputIndex];
         }
 
         private void computeNormals()
@@ -178,7 +179,8 @@ namespace LSLib.Granny.Model
             for (var vertexIdx = 0; vertexIdx < Vertices.Count; vertexIdx++)
             {
                 Vector3 N = new Vector3(0, 0, 0);
-                for (int triVertIdx = 0; triVertIdx < VertexIndexCount(); triVertIdx++)
+                var numIndices = VertexIndexCount();
+                for (int triVertIdx = 0; triVertIdx < numIndices; triVertIdx++)
                 {
                     if (VertexIndex(triVertIdx) == vertexIdx)
                     {
@@ -226,7 +228,16 @@ namespace LSLib.Granny.Model
             if (Indices == null || Inputs == null)
                 throw new ParsingException("No valid triangle source found, expected <triangles> or <polylist>");
 
-            if (Indices.Count % (Inputs.Length * 3) != 0 || Indices.Count / Inputs.Length / 3 != TriangleCount)
+            InputOffsetCount = 0;
+            foreach (var input in Inputs)
+            {
+                if ((int)input.offset >= InputOffsetCount)
+                {
+                    InputOffsetCount = (int)input.offset + 1;
+                }
+            }
+
+            if (Indices.Count % (InputOffsetCount * 3) != 0 || Indices.Count / InputOffsetCount / 3 != TriangleCount)
                 throw new ParsingException("Triangle input stride / vertex count mismatch.");
         }
 
@@ -331,8 +342,8 @@ namespace LSLib.Granny.Model
             {
                 for (var vert = 0; vert < TriangleCount * 3; vert++)
                 {
-                    var vertexIndex = Indices[vert * Inputs.Length + VertexInputIndex];
-                    var normalIndex = Indices[vert * Inputs.Length + normalInputIndex];
+                    var vertexIndex = Indices[vert * InputOffsetCount + VertexInputIndex];
+                    var normalIndex = Indices[vert * InputOffsetCount + normalInputIndex];
 
                     Vertex vertex = Vertices[vertexIndex];
                     vertex.Normal = normals[normalIndex];
@@ -414,10 +425,10 @@ namespace LSLib.Granny.Model
                 OriginalToConsolidatedVertexIndexMap = new Dictionary<int, List<int>>();
                 for (var vert = 0; vert < TriangleCount * 3; vert++)
                 {
-                    var index = new int[Inputs.Length];
-                    for (var i = 0; i < Inputs.Length; i++)
+                    var index = new int[InputOffsetCount];
+                    for (var i = 0; i < InputOffsetCount; i++)
                     {
-                        index[i] = Indices[vert * Inputs.Length + i];
+                        index[i] = Indices[vert * InputOffsetCount + i];
                     }
 
                     int consolidatedIndex;
