@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace LSLib.Granny.Model.VertexFormat
 {
     [StructSerialization(MixedMarshal = true)]
-    internal class PNGBTT33322_Prototype
+    internal class PNGBTT333322_Prototype
     {
         [Serialization(ArraySize = 3)]
         public float[] Position;
@@ -23,9 +23,9 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] TextureCoordinates1;
     }
 
-    [VertexPrototype(Prototype = typeof(PNGBTT33322_Prototype)),
+    [VertexPrototype(Prototype = typeof(PNGBTT333322_Prototype)),
     VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true, TextureCoordinates = 2)]
-    public class PNGBTT33322 : Vertex
+    public class PNGBTT333322 : Vertex
     {
         public override List<String> ComponentNames()
         {

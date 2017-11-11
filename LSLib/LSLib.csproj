@@ -115,7 +115,7 @@
     <Compile Include="Granny\Model\VertexFormats\P3.cs" />
     <Compile Include="Granny\Model\VertexFormats\PHNGBT34444.cs" />
     <Compile Include="Granny\Model\VertexFormats\PN33.cs" />
-    <Compile Include="Granny\Model\VertexFormats\PNGBTT33322.cs" />
+    <Compile Include="Granny\Model\VertexFormats\PNGBTT333322.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNG333.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNGB3333.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNGBDT333342.cs" />

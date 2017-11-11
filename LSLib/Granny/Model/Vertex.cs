@@ -345,6 +345,7 @@ namespace LSLib.Granny.Model
             Register(typeof(PNGB3333));
             Register(typeof(PNGBDT333342));
             Register(typeof(PNGBT33332));
+            Register(typeof(PNGBTT333322));
             Register(typeof(PNGT3332));
             Register(typeof(PNT332));
             Register(typeof(PNTT3322));
@@ -365,7 +366,6 @@ namespace LSLib.Granny.Model
             Register(typeof(PWNT3232));
             Register(typeof(PWNT3432));
             Register(typeof(PHNGBT34444));
-            Register(typeof(PNGBTT33322));
         }
 
         public static Type Resolve(String name)
