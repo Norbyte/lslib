@@ -347,6 +347,7 @@ namespace LSLib.Granny.Model
             Register(typeof(PNGBT33332));
             Register(typeof(PNGT3332));
             Register(typeof(PNT332));
+            Register(typeof(PNTT3322));
             Register(typeof(PNTG3323));
             Register(typeof(PT32));
             Register(typeof(PWN323));
