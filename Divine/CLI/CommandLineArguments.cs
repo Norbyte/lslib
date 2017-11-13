@@ -3,7 +3,7 @@ using System.Linq;
 using CommandLineParser.Arguments;
 using Divine.Enums;
 using LSLib.Granny.Model;
-using LSLib.LS;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -111,23 +111,29 @@ namespace Divine.CLI
 
             switch (optionLogLevel)
             {
-                case "silent":
-                    logLevel = Enums.LogLevel.SILENT;
-                    break;
-                case "info":
-                    logLevel = Enums.LogLevel.INFO;
-                    break;
-                case "warn":
-                    logLevel = Enums.LogLevel.WARN;
-                    break;
-                case "error":
-                    logLevel = Enums.LogLevel.ERROR;
+                case "off":
+                    logLevel = Enums.LogLevel.OFF;
                     break;
                 case "fatal":
                     logLevel = Enums.LogLevel.FATAL;
                     break;
+                case "error":
+                    logLevel = Enums.LogLevel.ERROR;
+                    break;
+                case "warn":
+                    logLevel = Enums.LogLevel.WARN;
+                    break;
+                case "info":
+                    logLevel = Enums.LogLevel.INFO;
+                    break;
                 case "debug":
                     logLevel = Enums.LogLevel.DEBUG;
+                    break;
+                case "trace":
+                    logLevel = Enums.LogLevel.TRACE;
+                    break;
+                case "all":
+                    logLevel = Enums.LogLevel.ALL;
                     break;
                 default:
                     logLevel = Enums.LogLevel.INFO;
@@ -157,11 +163,11 @@ namespace Divine.CLI
             return game;
         }
 
-        public static int GetFileVersionByGame(Game divinityGame)
+        public static FileVersion GetFileVersionByGame(Game divinityGame)
         {
             return divinityGame == Enums.Game.DivinityOriginalSin2
-                ? (int)LSLib.LS.LSF.FileVersion.VerExtendedNodes
-                : (int)LSLib.LS.LSF.FileVersion.VerChunkedCompress;
+                ? FileVersion.VerExtendedNodes
+                : FileVersion.VerChunkedCompress;
         }
 
         public static ExportFormat GetExportFormatByString(string optionExportFormat)
@@ -230,35 +236,35 @@ namespace Divine.CLI
             switch (compressionOption)
             {
                 case "zlibfast":
-                    compression = LSLib.LS.CompressionMethod.Zlib;
+                    compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                     fastCompression = true;
                     break;
 
                 case "zlib":
-                    compression = LSLib.LS.CompressionMethod.Zlib;
+                    compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                     fastCompression = false;
                     break;
 
                 case "lz4":
-                    compression = LSLib.LS.CompressionMethod.LZ4;
+                    compression = LSLib.LS.Enums.CompressionMethod.LZ4;
                     fastCompression = true;
                     break;
 
                 case "lz4hc":
-                    compression = LSLib.LS.CompressionMethod.LZ4;
+                    compression = LSLib.LS.Enums.CompressionMethod.LZ4;
                     fastCompression = false;
                     break;
 
                 default:
-                    compression = LSLib.LS.CompressionMethod.None;
+                    compression = LSLib.LS.Enums.CompressionMethod.None;
                     fastCompression = false;
                     break;
             }
 
             // fallback to zlib, if the package version doesn't support lz4
-            if (compression == LSLib.LS.CompressionMethod.LZ4 && version <= (PackageVersion) 9)
+            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && version <= (PackageVersion) 9)
             {
-                compression = LSLib.LS.CompressionMethod.Zlib;
+                compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                 fastCompression = false;
             }
 
@@ -271,7 +277,7 @@ namespace Divine.CLI
             return compressionOptions;
         }
 
-        public static Dictionary<string, bool> GetGraphicsOptions(string[] options)
+        public static Dictionary<string, bool> GetGR2Options(string[] options)
         {
             Dictionary<string, bool> results = new Dictionary<string, bool>
             {
