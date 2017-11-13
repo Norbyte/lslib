@@ -1,6 +1,6 @@
 ﻿using System;
-using Divine.Enums;
 using LSLib.LS;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -20,7 +20,7 @@ namespace Divine.CLI
             CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game)
         );
 
-        private static void ConvertResource(string sourcePath, string destinationPath, int fileVersion)
+        private static void ConvertResource(string sourcePath, string destinationPath, FileVersion fileVersion)
         {
             try
             {
@@ -33,11 +33,12 @@ namespace Divine.CLI
             }
             catch (Exception e)
             {
-                CommandLineLogger.LogFatal($"Failed to convert resource: {e.Message}{Environment.NewLine}{e.StackTrace}");
+                CommandLineLogger.LogFatal($"Failed to convert resource: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
             }
         }
 
-        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, int fileVersion)
+        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, FileVersion fileVersion)
         {
             try
             {
@@ -49,7 +50,8 @@ namespace Divine.CLI
             }
             catch (Exception e)
             {
-                CommandLineLogger.LogFatal($"Failed to batch convert resources: {e.Message}{Environment.NewLine}{e.StackTrace}");
+                CommandLineLogger.LogFatal($"Failed to batch convert resources: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
             }
         }
     }
