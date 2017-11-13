@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Divine.Enums;
 using LSLib.LS;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -19,7 +19,7 @@ namespace Divine.CLI
         {
             if (CommandLineActions.SourcePath == null)
             {
-                CommandLineLogger.LogFatal("Cannot extract package without non-null source path");
+                CommandLineLogger.LogFatal("Cannot extract package without source path", 1);
             }
 
             string extractionPath = Path.Combine(CommandLineActions.DestinationPath, Path.GetFileNameWithoutExtension(CommandLineActions.SourcePath));
@@ -80,11 +80,12 @@ namespace Divine.CLI
             }
             catch (NotAPackageException)
             {
-                CommandLineLogger.LogFatal("Failed to extract package because the package is not an Original Sin package or savegame archive");
+                CommandLineLogger.LogFatal("Failed to extract package because the package is not an Original Sin package or savegame archive", 1);
             }
             catch (Exception e)
             {
-                CommandLineLogger.LogFatal($"Failed to extract package: {e.Message}{Environment.NewLine}{e.StackTrace}");
+                CommandLineLogger.LogFatal($"Failed to extract package: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
             }
         }
 
