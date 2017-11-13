@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Divine.Enums;
-using LSLib.LS;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -18,7 +18,7 @@ namespace Divine.CLI
         public static ResourceFormat InputFormat;
         public static ResourceFormat OutputFormat;
         public static PackageVersion PackageVersion;
-        public static Dictionary<string, bool> GraphicsOptions;
+        public static Dictionary<string, bool> GR2Options;
 
         // TODO: OSI support
 
@@ -46,7 +46,7 @@ namespace Divine.CLI
                 {
                     if (args.InputFormat == null && args.Action != "extract-packages")
                     {
-                        CommandLineLogger.LogFatal("Cannot perform batch action without --input-format and --output-format arguments");
+                        CommandLineLogger.LogFatal("Cannot perform batch action without --input-format and --output-format arguments", 1);
                     }
                 }
 
@@ -68,10 +68,10 @@ namespace Divine.CLI
 
             if (graphicsActions.Any(args.Action.Contains))
             {
-                GraphicsOptions = CommandLineArguments.GetGraphicsOptions(args.Options);
-                CommandLineLogger.LogDebug($"Using graphics options: {GraphicsOptions}");
+                GR2Options = CommandLineArguments.GetGR2Options(args.Options);
+                CommandLineLogger.LogDebug($"Using graphics options: {GR2Options}");
 
-                if (GraphicsOptions["conform"])
+                if (GR2Options["conform"])
                 {
                     ConformPath = TryToValidatePath(args.ConformPath);
                 }
@@ -92,8 +92,8 @@ namespace Divine.CLI
                     CommandLinePackageProcessor.Extract();
                     break;
                 case "convert-model":
-                    CommandLineGraphicsProcessor.UpdateExporterSettings();
-                    CommandLineGraphicsProcessor.Convert();
+                    CommandLineGR2Processor.UpdateExporterSettings();
+                    CommandLineGR2Processor.Convert();
                     break;
                 case "convert-resource":
                     CommandLineDataProcessor.Convert();
@@ -102,7 +102,7 @@ namespace Divine.CLI
                     CommandLinePackageProcessor.BatchExtract();
                     break;
                 case "convert-models":
-                    CommandLineGraphicsProcessor.BatchConvert();
+                    CommandLineGR2Processor.BatchConvert();
                     break;
                 case "convert-resources":
                     CommandLineDataProcessor.BatchConvert();
@@ -118,7 +118,7 @@ namespace Divine.CLI
 
             if (string.IsNullOrWhiteSpace(path))
             {
-                CommandLineLogger.LogFatal($"Cannot parse path from input: {path}");
+                CommandLineLogger.LogFatal($"Cannot parse path from input: {path}", 1);
             }
 
             Uri uri = null;
@@ -128,12 +128,12 @@ namespace Divine.CLI
             }
             catch (InvalidOperationException)
             {
-                CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E1]: {path}");
+                CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E1]: {path}", 1);
             }
 
             if (uri != null && (!Path.IsPathRooted(path) || !uri.IsFile))
             {
-                CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E2]: {path}");
+                CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E2]: {path}", 1);
             }
 
             // ReSharper disable once AssignNullToNotNullAttribute
@@ -141,7 +141,7 @@ namespace Divine.CLI
 
             if (path.Length > MAX_PATH)
             {
-                CommandLineLogger.LogFatal($"Cannot proceed with path exceeding {MAX_PATH} characters: {path}");
+                CommandLineLogger.LogFatal($"Cannot proceed with path exceeding {MAX_PATH} characters: {path}", 1);
             }
 
             return path;
