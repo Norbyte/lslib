@@ -104,22 +104,28 @@ namespace Divine.CLI
                 case "create-package":
                     CommandLinePackageProcessor.Create();
                     break;
+
                 case "extract-package":
                     CommandLinePackageProcessor.Extract();
                     break;
+
                 case "convert-model":
                     CommandLineGR2Processor.UpdateExporterSettings();
                     CommandLineGR2Processor.Convert();
                     break;
+
                 case "convert-resource":
                     CommandLineDataProcessor.Convert();
                     break;
+
                 case "extract-packages":
                     CommandLinePackageProcessor.BatchExtract();
                     break;
+
                 case "convert-models":
                     CommandLineGR2Processor.BatchConvert();
                     break;
+
                 case "convert-resources":
                     CommandLineDataProcessor.BatchConvert();
                     break;
@@ -128,7 +134,7 @@ namespace Divine.CLI
 
         public static string TryToValidatePath(string path)
         {
-            const int MAX_PATH = 248;
+            const int maxPath = 248;
 
             CommandLineLogger.LogDebug($"Using path: {path}");
 
@@ -155,9 +161,9 @@ namespace Divine.CLI
             // ReSharper disable once AssignNullToNotNullAttribute
             path = Path.GetFullPath(path);
 
-            if (path.Length > MAX_PATH)
+            if (path.Length > maxPath)
             {
-                CommandLineLogger.LogFatal($"Cannot proceed with path exceeding {MAX_PATH} characters: {path}", 1);
+                CommandLineLogger.LogFatal($"Cannot proceed with path exceeding {maxPath} characters: {path}", 1);
             }
 
             return path;
