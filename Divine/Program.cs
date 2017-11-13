@@ -5,6 +5,7 @@ namespace Divine
 {
     internal class Program
     {
+        // ReSharper disable once InconsistentNaming
         public static CommandLineArguments argv;
 
         private static void Main(string[] args)
