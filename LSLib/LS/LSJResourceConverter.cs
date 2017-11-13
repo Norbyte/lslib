@@ -9,10 +9,6 @@ namespace LSLib.LS
 {
     public class LSJResourceConverter : JsonConverter
     {
-        public LSJResourceConverter()
-        {
-        }
-
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Node)

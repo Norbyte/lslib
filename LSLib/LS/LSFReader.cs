@@ -1,40 +1,15 @@
 ﻿// #define DEBUG_LSF_SERIALIZATION
 // #define DUMP_LSF_SERIALIZATION
 
-using LZ4;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS.LSF
 {
-    public struct FileVersion
-    {
-        /// <summary>
-        /// Initial version of the LSF format
-        /// </summary>
-        public const UInt32 VerInitial = 0x01;
-
-        /// <summary>
-        /// LSF version that added chunked compression for substreams
-        /// </summary>
-        public const UInt32 VerChunkedCompress = 0x02;
-
-        /// <summary>
-        /// LSF version that extended the node descriptors
-        /// </summary>
-        public const UInt32 VerExtendedNodes = 0x03;
-
-        /// <summary>
-        /// Latest version supported by this library
-        /// </summary>
-        public const UInt32 CurrentVersion = 0x03;
-    }
-
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct Header
     {
@@ -615,7 +590,7 @@ namespace LSLib.LS.LSF
 
         private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
         {
-            bool chunked = (header.Version >= FileVersion.VerChunkedCompress);
+            bool chunked = header.Version >= (ulong) FileVersion.VerChunkedCompress;
             byte[] compressed = reader.ReadBytes((int)compressedSize);
             return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags, chunked);
         }
@@ -634,7 +609,7 @@ namespace LSLib.LS.LSF
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.Version < FileVersion.VerInitial || hdr.Version > FileVersion.CurrentVersion)
+                if (hdr.Version < (ulong) FileVersion.VerInitial || hdr.Version > (ulong) FileVersion.CurrentVersion)
                 {
                     var msg = String.Format("LSF version {0} is not supported", hdr.Version);
                     throw new InvalidDataException(msg);
@@ -682,7 +657,7 @@ namespace LSLib.LS.LSF
 
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
-                        var longNodes = hdr.Version >= FileVersion.VerExtendedNodes 
+                        var longNodes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes 
                             && hdr.Extended == 1;
                         ReadNodes(nodesStream, longNodes);
                     }
@@ -702,7 +677,7 @@ namespace LSLib.LS.LSF
 
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
-                        var longAttributes = hdr.Version >= FileVersion.VerExtendedNodes
+                        var longAttributes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes
                             && hdr.Extended == 1;
                         if (longAttributes)
                         {

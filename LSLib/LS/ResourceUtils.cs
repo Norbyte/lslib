@@ -5,18 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
-    public enum ResourceFormat
-    {
-        LSX,
-        LSB,
-        LSF,
-        LSJ
-    };
-
-
     public class ResourceUtils
     {
         public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator);
@@ -97,7 +89,7 @@ namespace LSLib.LS
             SaveResource(resource, outputPath, ExtensionToResourceFormat(outputPath));
         }
 
-        public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, int version = -1)
+        public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, FileVersion version = 0x0)
         {
             FileManager.TryToCreateDirectory(outputPath);
 
@@ -122,16 +114,8 @@ namespace LSLib.LS
 
                     case ResourceFormat.LSF:
                         {
-                            uint lsfVersion;
-                            if (version == -1)
-                            {
-                                // Write in V2 format for D:OS EE compatibility
-                                lsfVersion = FileVersion.VerChunkedCompress;
-                            }
-                            else
-                            {
-                                lsfVersion = (uint)version;
-                            }
+                            // Write in V2 format for D:OS EE compatibility
+                            FileVersion lsfVersion = version == 0x0 ? FileVersion.VerChunkedCompress : version;
 
                             var writer = new LSFWriter(file, lsfVersion);
                             writer.Write(resource);
@@ -175,7 +159,7 @@ namespace LSLib.LS
             }
         }
 
-        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, int outputVersion = -1)
+        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, FileVersion outputVersion = 0x0)
         {
             this.progressUpdate("Enumerating files ...", 0, 1);
             var paths = new List<string>();

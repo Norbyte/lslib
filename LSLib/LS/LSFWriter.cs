@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS.LSF
 {
@@ -31,10 +31,10 @@ namespace LSLib.LS.LSF
         private List<List<string>> StringHashMap;
         private bool ExtendedNodes = false;
 
-        public LSFWriter(Stream stream, UInt32 version)
+        public LSFWriter(Stream stream, FileVersion version)
         {
             this.Stream = stream;
-            this.Version = version;
+            this.Version = (uint) version;
         }
 
         public void Write(Resource resource)
@@ -81,7 +81,7 @@ namespace LSLib.LS.LSF
                     (resource.Metadata.revision << 8) |
                     resource.Metadata.buildNumber;
 
-                bool chunked = (header.Version >= FileVersion.VerChunkedCompress);
+                bool chunked = header.Version >= (ulong) FileVersion.VerChunkedCompress;
                 byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
                 byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
@@ -112,7 +112,7 @@ namespace LSLib.LS.LSF
         {
             foreach (var region in resource.Regions)
             {
-                if (Version >= FileVersion.VerExtendedNodes
+                if (Version >= (ulong) FileVersion.VerExtendedNodes
                     && ExtendedNodes)
                 {
                     WriteNodeV3(region.Value);
@@ -179,8 +179,7 @@ namespace LSLib.LS.LSF
             {
                 foreach (var child in children.Value)
                 {
-                    if (Version >= FileVersion.VerExtendedNodes
-                        && ExtendedNodes)
+                    if (Version >= (ulong) FileVersion.VerExtendedNodes && ExtendedNodes)
                     {
                         WriteNodeV3(child);
                     }

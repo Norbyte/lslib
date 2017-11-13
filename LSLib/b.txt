@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LSLib</RootNamespace>
     <AssemblyName>LSLib</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -115,7 +115,7 @@
     <Compile Include="Granny\Model\VertexFormats\P3.cs" />
     <Compile Include="Granny\Model\VertexFormats\PHNGBT34444.cs" />
     <Compile Include="Granny\Model\VertexFormats\PN33.cs" />
-    <Compile Include="Granny\Model\VertexFormats\PNGBTT333322.cs" />
+    <Compile Include="Granny\Model\VertexFormats\PNGBTT34322.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNG333.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNGB3333.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNGBDT333342.cs" />
@@ -123,9 +123,7 @@
     <Compile Include="Granny\Model\VertexFormats\PNGT3332.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNT332.cs" />
     <Compile Include="Granny\Model\VertexFormats\PNTG3323.cs" />
-    <Compile Include="Granny\Model\VertexFormats\PNTT3322.cs" />
     <Compile Include="Granny\Model\VertexFormats\PT32.cs" />
-    <Compile Include="Granny\Model\VertexFormats\PTT322.cs" />
     <Compile Include="Granny\Model\VertexFormats\PWN323.cs" />
     <Compile Include="Granny\Model\VertexFormats\PWN343.cs" />
     <Compile Include="Granny\Model\VertexFormats\PWNG3233.cs" />
@@ -146,10 +144,9 @@
     <Compile Include="LS\Enums\CompressionLevel.cs" />
     <Compile Include="LS\Enums\CompressionFlags.cs" />
     <Compile Include="LS\Enums\CompressionMethod.cs" />
-    <Compile Include="LS\Enums\FileVersion.cs" />
     <Compile Include="LS\Enums\Game.cs" />
-    <Compile Include="LS\Enums\ResourceFormat.cs" />
     <Compile Include="LS\FileManager.cs" />
+    <Compile Include="LS\Enums\FileVersion.cs" />
     <Compile Include="LS\LSBReader.cs" />
     <Compile Include="LS\LSBWriter.cs" />
     <Compile Include="LS\LSFReader.cs" />
@@ -165,6 +162,7 @@
     <Compile Include="LS\PackageWriter.cs" />
     <Compile Include="LS\PackageCommon.cs" />
     <Compile Include="LS\Resource.cs" />
+    <Compile Include="LS\Enums\ResourceFormat.cs" />
     <Compile Include="LS\ResourceUtils.cs" />
     <Compile Include="LS\Story\Adapter.cs" />
     <Compile Include="LS\Story\Call.cs" />
@@ -213,14 +211,3 @@
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\Osiris.lex.cs" "$(ProjectDir)\LS\Story\Osiris.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\Osiris.yy.cs" "$(ProjectDir)\LS\Story\Osiris.yy"</PreBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-</Project>

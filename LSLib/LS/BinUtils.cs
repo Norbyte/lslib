@@ -1,36 +1,12 @@
 ﻿using zlib;
 using LZ4;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
-    public enum CompressionMethod
-    {
-        None = 0,
-        Zlib = 1,
-        LZ4 = 2
-    };
-
-    public enum CompressionFlags
-    {
-        FastCompress = 0x10,
-        DefaultCompress = 0x20,
-        MaxCompressionLevel = 0x40
-    };
-
-    public enum CompressionLevel
-    {
-        FastCompression,
-        DefaultCompression,
-        MaxCompression
-    };
-
     static class BinUtils
     {
         public static T ReadStruct<T>(BinaryReader reader)

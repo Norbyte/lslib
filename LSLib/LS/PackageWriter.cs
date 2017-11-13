@@ -1,6 +1,4 @@
-﻿using zlib;
-using LZ4;
-using LSLib.Granny;
+﻿using LZ4;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Security.Cryptography;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
