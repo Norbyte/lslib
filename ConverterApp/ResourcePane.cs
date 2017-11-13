@@ -24,7 +24,7 @@ namespace ConverterApp
             {
                 Resource = ResourceUtils.LoadResource(resourceInputPath.Text);
                 var format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
-                FileVersion outputVersion = Form.GetGame() == DivGame.DOS2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+                FileVersion outputVersion = Form.GetGame() == Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
                 ResourceUtils.SaveResource(Resource, resourceOutputPath.Text, format, outputVersion);
                 MessageBox.Show("Resource saved successfully.");
             }
@@ -121,7 +121,7 @@ namespace ConverterApp
 
                 case 2:
                     outputFormat = ResourceFormat.LSF;
-                    outputVersion = Form.GetGame() == DivGame.DOS2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+                    outputVersion = Form.GetGame() == Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
                     break;
 
                 case 3:

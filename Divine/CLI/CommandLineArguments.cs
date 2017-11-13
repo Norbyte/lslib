@@ -9,24 +9,7 @@ namespace Divine.CLI
 {
     public class CommandLineArguments
     {
-        [EnumeratedValueArgument(typeof(string), 'l', "loglevel",
-            Description = "Set verbosity level of log output",
-            DefaultValue = "info",
-            AllowedValues = "info;warn;error;fatal;debug;silent",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string LogLevel;
-
-        [EnumeratedValueArgument(typeof(string), 'g', "game",
-            Description = "Set target game when generating output",
-            DefaultValue = "dos2",
-            AllowedValues = "dos;dosee;dos2",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string Game;
-
+        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'a', "action",
             Description = "Set action to execute",
             DefaultValue = "extract-package",
@@ -36,14 +19,26 @@ namespace Divine.CLI
         )]
         public string Action;
 
-        [ValueArgument(typeof(string), 's', "source",
-            Description = "Set source file path or directory",
+        // @formatter:off
+        [EnumeratedValueArgument(typeof(string), 'c', "compression-method",
+            Description = "Set compression method",
+            DefaultValue = "lz4hc",
+            AllowedValues = "zlib;zlibfast;lz4;lz4hc;none",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string CompressionMethod;
+
+        // @formatter:off
+        [ValueArgument(typeof(string), "conform-path",
+            Description = "Set conform to original path",
             DefaultValue = null,
             ValueOptional = false,
-            Optional = false
+            Optional = true
         )]
-        public string Source;
+        public string ConformPath;
 
+        // @formatter:off
         [ValueArgument(typeof(string), 'd', "destination",
             Description = "Set destination file path or directory",
             DefaultValue = null,
@@ -52,6 +47,17 @@ namespace Divine.CLI
         )]
         public string Destination;
 
+        // @formatter:off
+        [EnumeratedValueArgument(typeof(string), 'g', "game",
+            Description = "Set target game when generating output",
+            DefaultValue = "dos2",
+            AllowedValues = "dos;dosee;dos2",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string Game;
+
+        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'i', "input-format",
             Description = "Set input format for batch operations",
             DefaultValue = null,
@@ -61,6 +67,27 @@ namespace Divine.CLI
         )]
         public string InputFormat;
 
+        // @formatter:off
+        [EnumeratedValueArgument(typeof(string), 'l', "loglevel",
+            Description = "Set verbosity level of log output",
+            DefaultValue = "info",
+            AllowedValues = "info;warn;error;fatal;debug;silent",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string LogLevel;
+
+        // @formatter:off
+        [EnumeratedValueArgument(typeof(string), "gr2-options",
+            Description = "Set extra options for GR2/DAE conversion",
+            AllowMultiple = true,
+            AllowedValues = "export-normals;export-tangents;export-uvs;deduplicate-vertices;filter-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string[] Options;
+
+        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'o', "output-format",
             Description = "Set output format for batch operations",
             DefaultValue = null,
@@ -70,23 +97,7 @@ namespace Divine.CLI
         )]
         public string OutputFormat;
 
-        [EnumeratedValueArgument(typeof(string), "gr2-options", 
-            Description = "Set extra options for GR2/DAE conversion",
-            AllowMultiple = true,
-            AllowedValues = "export-normals;export-tangents;export-uvs;deduplicate-vertices;filter-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string[] Options;
-
-        [ValueArgument(typeof(string), "conform-path", 
-            Description = "Set conform to original path", 
-            DefaultValue = null,
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string ConformPath;
-
+        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'p', "package-version",
             Description = "Set package version",
             DefaultValue = "v13",
@@ -96,14 +107,16 @@ namespace Divine.CLI
         )]
         public string PackageVersion;
 
-        [EnumeratedValueArgument(typeof(string), 'c', "compression-method",
-            Description = "Set compression method",
-            DefaultValue = "lz4hc",
-            AllowedValues = "zlib;zlibfast;lz4;lz4hc;none",
+        // @formatter:off
+        [ValueArgument(typeof(string), 's', "source",
+            Description = "Set source file path or directory",
+            DefaultValue = null,
             ValueOptional = false,
-            Optional = true
+            Optional = false
         )]
-        public string CompressionMethod;
+        public string Source;
+
+        // @formatter:on
 
         public static LogLevel GetLogLevelByString(string optionLogLevel)
         {
@@ -145,39 +158,34 @@ namespace Divine.CLI
 
         public static Game GetGameByString(string optionGame)
         {
-            Game game = Enums.Game.DivinityOriginalSin2;
+            Game game;
 
             switch (optionGame)
             {
                 case "dos":
-                    game = Enums.Game.DivinityOriginalSin;
+                    game = LSLib.LS.Enums.Game.DivinityOriginalSin;
                     break;
                 case "dosee":
-                    game = Enums.Game.DivinityOriginalSinEE;
+                    game = LSLib.LS.Enums.Game.DivinityOriginalSinEE;
                     break;
-                case "dos2":
-                    game = Enums.Game.DivinityOriginalSin2;
+//                case "dos2":
+//                    game = LSLib.LS.Enums.Game.DivinityOriginalSin2;
+//                    break;
+                default:
+                    game = LSLib.LS.Enums.Game.DivinityOriginalSin2;
                     break;
             }
 
             return game;
         }
 
-        public static FileVersion GetFileVersionByGame(Game divinityGame)
-        {
-            return divinityGame == Enums.Game.DivinityOriginalSin2
-                ? FileVersion.VerExtendedNodes
-                : FileVersion.VerChunkedCompress;
-        }
+        public static FileVersion GetFileVersionByGame(Game divinityGame) => divinityGame == LSLib.LS.Enums.Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
 
-        public static ExportFormat GetExportFormatByString(string optionExportFormat)
-        {
-            return optionExportFormat == "gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
-        }
+        public static ExportFormat GetExportFormatByString(string optionExportFormat) => optionExportFormat == "gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
 
         public static ResourceFormat GetResourceFormatByString(string optionResourceFormat)
         {
-            ResourceFormat resourceFormat = ResourceFormat.LSX;
+            ResourceFormat resourceFormat;
 
             switch (optionResourceFormat)
             {
@@ -193,6 +201,9 @@ namespace Divine.CLI
                 case "lsx":
                     resourceFormat = ResourceFormat.LSX;
                     break;
+                default:
+                    resourceFormat = ResourceFormat.LSX;
+                    break;
             }
 
             return resourceFormat;
@@ -201,27 +212,27 @@ namespace Divine.CLI
         public static PackageVersion GetPackageVersion(string versionOption)
         {
             PackageVersion version;
-            
+
             switch (versionOption)
             {
                 case "v7":
-                    version = Enums.PackageVersion.v7;
+                    version = Enums.PackageVersion.V7;
                     break;
 
                 case "v9":
-                    version = Enums.PackageVersion.v9;
+                    version = Enums.PackageVersion.V9;
                     break;
 
                 case "v10":
-                    version = Enums.PackageVersion.v10;
+                    version = Enums.PackageVersion.V10;
                     break;
 
                 case "v13":
-                    version = Enums.PackageVersion.v13;
+                    version = Enums.PackageVersion.V13;
                     break;
 
                 default:
-                    version = Enums.PackageVersion.v13;
+                    version = Enums.PackageVersion.V13;
                     break;
             }
 
@@ -268,7 +279,7 @@ namespace Divine.CLI
                 fastCompression = false;
             }
 
-            var compressionOptions = new Dictionary<string, object>
+            Dictionary<string, object> compressionOptions = new Dictionary<string, object>
             {
                 { "Compression", compression },
                 { "FastCompression", fastCompression }

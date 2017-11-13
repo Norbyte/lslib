@@ -30,16 +30,32 @@ namespace Divine.CLI
 
         private static void SetUpAndValidate(CommandLineArguments args)
         {
-            string[] batchActions = { "extract-packages", "convert-models", "convert-resources" };
-            string[] packageActions = { "create-package", "extract-package", "extract-packages" };
-            string[] graphicsActions = { "convert-model", "convert-models" };
+            string[] batchActions =
+            {
+                "extract-packages",
+                "convert-models",
+                "convert-resources"
+            };
+
+            string[] packageActions =
+            {
+                "create-package",
+                "extract-package",
+                "extract-packages"
+            };
+
+            string[] graphicsActions =
+            {
+                "convert-model",
+                "convert-models"
+            };
 
             LogLevel = CommandLineArguments.GetLogLevelByString(args.LogLevel);
             CommandLineLogger.LogDebug($"Using log level: {LogLevel}");
 
             Game = CommandLineArguments.GetGameByString(args.Game);
             CommandLineLogger.LogDebug($"Using game: {Game}");
-            
+
             if (batchActions.Any(args.Action.Contains))
             {
                 if (args.InputFormat == null || args.OutputFormat == null)

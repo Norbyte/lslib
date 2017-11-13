@@ -1,16 +1,10 @@
 ﻿using LSLib.LS;
 using System;
 using System.Windows.Forms;
+using LSLib.LS.Enums;
 
 namespace ConverterApp
 {
-    public enum DivGame
-    {
-        DOS = 0,
-        DOSEE = 1,
-        DOS2 = 2
-    };
-
     public partial class MainForm : Form
     {
         public MainForm()
@@ -41,22 +35,22 @@ namespace ConverterApp
             gr2Game.SelectedIndex = 1;
         }
 
-        public DivGame GetGame()
+        public Game GetGame()
         {
             switch (gr2Game.SelectedIndex)
             {
-                case 0: return DivGame.DOS;
-                case 1: return DivGame.DOSEE;
-                case 2: return DivGame.DOS2;
+                case 0: return Game.DivinityOriginalSin;
+                case 1: return Game.DivinityOriginalSinEE;
+                case 2: return Game.DivinityOriginalSin2;
                 default: throw new InvalidOperationException();
             }
         }
 
         private void gr2Game_SelectedIndexChanged(object sender, EventArgs e)
         {
-            DivGame game = GetGame();
+            Game game = GetGame();
             var pane = this.gr2Tab.Controls[0] as GR2Pane;
-            pane.use16bitIndex.Checked = game == DivGame.DOSEE || game == DivGame.DOS2;
+            pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game == Game.DivinityOriginalSin2;
         }
     }
 }

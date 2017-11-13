@@ -6,19 +6,15 @@ namespace Divine.CLI
 {
     internal class CommandLineDataProcessor
     {
-        public static void Convert() => ConvertResource(
-            CommandLineActions.SourcePath,
-            CommandLineActions.DestinationPath,
-            CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game)
-        );
+        public static void Convert()
+        {
+            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game));
+        }
 
-        public static void BatchConvert() => BatchConvertResource(
-            CommandLineActions.SourcePath,
-            CommandLineActions.DestinationPath,
-            CommandLineActions.InputFormat,
-            CommandLineActions.OutputFormat,
-            CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game)
-        );
+        public static void BatchConvert()
+        {
+            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game));
+        }
 
         private static void ConvertResource(string sourcePath, string destinationPath, FileVersion fileVersion)
         {
@@ -42,7 +38,7 @@ namespace Divine.CLI
         {
             try
             {
-                ResourceUtils resourceUtils = new ResourceUtils();
+                var resourceUtils = new ResourceUtils();
 
                 resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, fileVersion);
 

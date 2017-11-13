@@ -2,9 +2,9 @@
 {
     public enum PackageVersion
     {
-        v7 = 7,
-        v9 = 9,
-        v10 = 10,
-        v13 = 13
+        V7 = 7,
+        V9 = 9,
+        V10 = 10,
+        V13 = 13
     };
 }

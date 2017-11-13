@@ -5,7 +5,7 @@ namespace Divine.CLI
 {
     internal class CommandLineLogger
     {
-        private static readonly LogLevel optionLogLevel = CommandLineActions.LogLevel;
+        private static readonly LogLevel OptionLogLevel = CommandLineActions.LogLevel;
 
         public static void LogFatal(string message, int errorCode) => Log(LogLevel.FATAL, message, errorCode);
         public static void LogError(string message) => Log(LogLevel.ERROR, message);
@@ -17,12 +17,15 @@ namespace Divine.CLI
 
         private static void Log(LogLevel loglevel, string message, int errorCode = -1)
         {
-            if (optionLogLevel == LogLevel.OFF) return;
+            if (OptionLogLevel == LogLevel.OFF)
+            {
+                return;
+            }
 
             switch (loglevel)
             {
                 case LogLevel.FATAL:
-                    if (optionLogLevel > LogLevel.OFF)
+                    if (OptionLogLevel > LogLevel.OFF)
                     {
                         Console.WriteLine($"[FATAL] {message}");
                     }
@@ -33,32 +36,47 @@ namespace Divine.CLI
                     }
                     else
                     {
-                        Environment.Exit((int)LogLevel.FATAL + errorCode);
+                        Environment.Exit((int) LogLevel.FATAL + errorCode);
                     }
                     break;
 
                 case LogLevel.ERROR:
-                    if (optionLogLevel < LogLevel.ERROR) break;
+                    if (OptionLogLevel < LogLevel.ERROR)
+                    {
+                        break;
+                    }
                     Console.WriteLine($"[ERROR] {message}");
                     break;
 
                 case LogLevel.WARN:
-                    if (optionLogLevel < LogLevel.WARN) break;
+                    if (OptionLogLevel < LogLevel.WARN)
+                    {
+                        break;
+                    }
                     Console.WriteLine($"[WARN] {message}");
                     break;
 
                 case LogLevel.INFO:
-                    if (optionLogLevel < LogLevel.INFO) break;
+                    if (OptionLogLevel < LogLevel.INFO)
+                    {
+                        break;
+                    }
                     Console.WriteLine($"[INFO] {message}");
                     break;
 
                 case LogLevel.DEBUG:
-                    if (optionLogLevel < LogLevel.DEBUG) break;
+                    if (OptionLogLevel < LogLevel.DEBUG)
+                    {
+                        break;
+                    }
                     Console.WriteLine($"[DEBUG] {message}");
                     break;
 
                 case LogLevel.TRACE:
-                    if (optionLogLevel < LogLevel.TRACE) break;
+                    if (OptionLogLevel < LogLevel.TRACE)
+                    {
+                        break;
+                    }
                     Console.WriteLine($"[TRACE] {message}");
                     break;
             }

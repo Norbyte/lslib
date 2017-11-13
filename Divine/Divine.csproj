@@ -53,7 +53,6 @@
     <Compile Include="CLI\CommandLineLogger.cs" />
     <Compile Include="CLI\CommandLinePackageProcessor.cs" />
     <Compile Include="CLI\CommandLineArguments.cs" />
-    <Compile Include="Enums\Game.cs" />
     <Compile Include="Enums\LogLevel.cs" />
     <Compile Include="Enums\PackageVersion.cs" />
     <Compile Include="Program.cs" />

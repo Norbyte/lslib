@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using LSLib.Granny;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
+using LSLib.LS.Enums;
 
 namespace ConverterApp
 {
@@ -176,7 +177,7 @@ namespace ConverterApp
         private void UpdateCommonExporterSettings(ExporterOptions settings)
         {
             var game = Form.GetGame();
-            if (game == DivGame.DOS)
+            if (game == Game.DivinityOriginalSin)
             {
                 settings.Is64Bit = false;
                 settings.AlternateSignature = false;

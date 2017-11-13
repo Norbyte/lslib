@@ -1,4 +1,4 @@
-﻿namespace Divine.Enums
+﻿namespace LSLib.LS.Enums
 {
     public enum Game
     {

@@ -1,6 +1,5 @@
 ﻿using System;
 using Divine.CLI;
-using Divine.Enums;
 
 namespace Divine
 {
@@ -10,7 +9,11 @@ namespace Divine
 
         private static void Main(string[] args)
         {
-            CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser { IgnoreCase = true, ShowUsageOnEmptyCommandline = true };
+            var parser = new CommandLineParser.CommandLineParser
+            {
+                IgnoreCase = true,
+                ShowUsageOnEmptyCommandline = true
+            };
 
             argv = new CommandLineArguments();
 

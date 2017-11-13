@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Divine.Enums;
+using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -16,7 +17,7 @@ namespace Divine.CLI
 
         public static ExporterOptions UpdateExporterSettings()
         {
-            ExporterOptions exporterOptions = new ExporterOptions
+            var exporterOptions = new ExporterOptions
             {
                 InputPath = CommandLineActions.SourcePath,
                 OutputPath = CommandLineActions.DestinationPath,
@@ -42,13 +43,13 @@ namespace Divine.CLI
             {
                 exporterOptions.Is64Bit = false;
                 exporterOptions.AlternateSignature = false;
-                exporterOptions.VersionTag = LSLib.Granny.GR2.Header.Tag_DOS;
+                exporterOptions.VersionTag = Header.Tag_DOS;
             }
             else
             {
                 exporterOptions.Is64Bit = true;
                 exporterOptions.AlternateSignature = true;
-                exporterOptions.VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                exporterOptions.VersionTag = Header.Tag_DOSEE;
             }
 
             return exporterOptions;
@@ -56,7 +57,10 @@ namespace Divine.CLI
 
         private static void ConvertResource(string file)
         {
-            Exporter exporter = new Exporter { Options = UpdateExporterSettings() };
+            var exporter = new Exporter
+            {
+                Options = UpdateExporterSettings()
+            };
 
             if (!string.IsNullOrEmpty(file))
             {
