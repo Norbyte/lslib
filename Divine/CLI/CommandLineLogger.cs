@@ -5,7 +5,7 @@ namespace Divine.CLI
 {
     internal class CommandLineLogger
     {
-        private static readonly LogLevel OptionLogLevel = CommandLineActions.LogLevel;
+        private static readonly LogLevel LogLevelOption = CommandLineActions.LogLevel;
 
         public static void LogFatal(string message, int errorCode) => Log(LogLevel.FATAL, message, errorCode);
         public static void LogError(string message) => Log(LogLevel.ERROR, message);
@@ -15,17 +15,17 @@ namespace Divine.CLI
         public static void LogTrace(string message) => Log(LogLevel.TRACE, message);
         public static void LogAll(string message) => Log(LogLevel.ALL, message);
 
-        private static void Log(LogLevel loglevel, string message, int errorCode = -1)
+        private static void Log(LogLevel logLevel, string message, int errorCode = -1)
         {
-            if (OptionLogLevel == LogLevel.OFF)
+            if (LogLevelOption == LogLevel.OFF && logLevel != LogLevel.FATAL)
             {
                 return;
             }
 
-            switch (loglevel)
+            switch (logLevel)
             {
                 case LogLevel.FATAL:
-                    if (OptionLogLevel > LogLevel.OFF)
+                    if (LogLevelOption > LogLevel.OFF)
                     {
                         Console.WriteLine($"[FATAL] {message}");
                     }
@@ -41,7 +41,7 @@ namespace Divine.CLI
                     break;
 
                 case LogLevel.ERROR:
-                    if (OptionLogLevel < LogLevel.ERROR)
+                    if (LogLevelOption < logLevel)
                     {
                         break;
                     }
@@ -49,7 +49,7 @@ namespace Divine.CLI
                     break;
 
                 case LogLevel.WARN:
-                    if (OptionLogLevel < LogLevel.WARN)
+                    if (LogLevelOption < logLevel)
                     {
                         break;
                     }
@@ -57,7 +57,7 @@ namespace Divine.CLI
                     break;
 
                 case LogLevel.INFO:
-                    if (OptionLogLevel < LogLevel.INFO)
+                    if (LogLevelOption < logLevel)
                     {
                         break;
                     }
@@ -65,7 +65,7 @@ namespace Divine.CLI
                     break;
 
                 case LogLevel.DEBUG:
-                    if (OptionLogLevel < LogLevel.DEBUG)
+                    if (LogLevelOption < logLevel)
                     {
                         break;
                     }
@@ -73,7 +73,7 @@ namespace Divine.CLI
                     break;
 
                 case LogLevel.TRACE:
-                    if (OptionLogLevel < LogLevel.TRACE)
+                    if (LogLevelOption < logLevel)
                     {
                         break;
                     }
