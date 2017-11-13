@@ -24,15 +24,7 @@ namespace ConverterApp
             {
                 Resource = ResourceUtils.LoadResource(resourceInputPath.Text);
                 var format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
-                int outputVersion = -1;
-                if (Form.GetGame() == DivGame.DOS2)
-                {
-                    outputVersion = (int)FileVersion.VerExtendedNodes;
-                }
-                else
-                {
-                    outputVersion = (int)FileVersion.VerChunkedCompress;
-                }
+                FileVersion outputVersion = Form.GetGame() == DivGame.DOS2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
                 ResourceUtils.SaveResource(Resource, resourceOutputPath.Text, format, outputVersion);
                 MessageBox.Show("Resource saved successfully.");
             }
@@ -116,7 +108,7 @@ namespace ConverterApp
             }
 
             ResourceFormat outputFormat = ResourceFormat.LSF;
-            int outputVersion = -1;
+            FileVersion outputVersion = 0x0;
             switch (resourceOutputFormatCb.SelectedIndex)
             {
                 case 0:
@@ -129,14 +121,7 @@ namespace ConverterApp
 
                 case 2:
                     outputFormat = ResourceFormat.LSF;
-                    if (Form.GetGame() == DivGame.DOS2)
-                    {
-                        outputVersion = (int)FileVersion.VerExtendedNodes;
-                    }
-                    else
-                    {
-                        outputVersion = (int)FileVersion.VerChunkedCompress;
-                    }
+                    outputVersion = Form.GetGame() == DivGame.DOS2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
                     break;
 
                 case 3:
