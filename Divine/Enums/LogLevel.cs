@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Divine.Enums
+﻿namespace Divine.Enums
 {
     public enum LogLevel
     {
-        SILENT = 0,
-        INFO = 1,
-        WARN = 2,
-        ERROR = 3,
-        FATAL = 4,
-        DEBUG = 5
+        OFF = 0,
+        FATAL = 100,
+        ERROR = 200,
+        WARN = 300,
+        INFO = 400,
+        DEBUG = 500,
+        TRACE = 600,
+        ALL = 1000
     }
 }
