@@ -1,12 +1,10 @@
-﻿using zlib;
-using LZ4;
-using LSLib.Granny;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
@@ -422,7 +420,7 @@ namespace LSLib.LS
                 writer.writeProgress += WriteProgressUpdate;
                 writer.Version = version;
                 writer.Compression = compression;
-                writer.CompressionLevel = fastCompression ? LS.CompressionLevel.FastCompression : LS.CompressionLevel.DefaultCompression;
+                writer.CompressionLevel = fastCompression ? CompressionLevel.FastCompression : CompressionLevel.DefaultCompression;
                 writer.Write();
             }
         }

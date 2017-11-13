@@ -141,7 +141,11 @@
     <Compile Include="Granny\Utils.cs" />
     <Compile Include="LS\BinUtils.cs" />
     <Compile Include="LS\Common.cs" />
+    <Compile Include="LS\Enums\CompressionLevel.cs" />
+    <Compile Include="LS\Enums\CompressionFlags.cs" />
+    <Compile Include="LS\Enums\CompressionMethod.cs" />
     <Compile Include="LS\FileManager.cs" />
+    <Compile Include="LS\Enums\FileVersion.cs" />
     <Compile Include="LS\LSBReader.cs" />
     <Compile Include="LS\LSBWriter.cs" />
     <Compile Include="LS\LSFReader.cs" />
@@ -157,6 +161,7 @@
     <Compile Include="LS\PackageWriter.cs" />
     <Compile Include="LS\PackageCommon.cs" />
     <Compile Include="LS\Resource.cs" />
+    <Compile Include="LS\Enums\ResourceFormat.cs" />
     <Compile Include="LS\ResourceUtils.cs" />
     <Compile Include="LS\Story\Adapter.cs" />
     <Compile Include="LS\Story\Call.cs" />
