@@ -71,7 +71,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'l', "loglevel",
             Description = "Set verbosity level of log output",
             DefaultValue = "info",
-            AllowedValues = "info;warn;error;fatal;debug;silent",
+            AllowedValues = "off;fatal;error;warn;info;debug;trace;all",
             ValueOptional = false,
             Optional = true
         )]
@@ -118,137 +118,76 @@ namespace Divine.CLI
 
         // @formatter:on
 
-        public static LogLevel GetLogLevelByString(string optionLogLevel)
+        public static LogLevel GetLogLevelByString(string logLevel)
         {
-            LogLevel logLevel;
-
-            switch (optionLogLevel)
+            switch (logLevel)
             {
-                case "off":
-                    logLevel = Enums.LogLevel.OFF;
-                    break;
-                case "fatal":
-                    logLevel = Enums.LogLevel.FATAL;
-                    break;
-                case "error":
-                    logLevel = Enums.LogLevel.ERROR;
-                    break;
-                case "warn":
-                    logLevel = Enums.LogLevel.WARN;
-                    break;
-                case "info":
-                    logLevel = Enums.LogLevel.INFO;
-                    break;
-                case "debug":
-                    logLevel = Enums.LogLevel.DEBUG;
-                    break;
-                case "trace":
-                    logLevel = Enums.LogLevel.TRACE;
-                    break;
-                case "all":
-                    logLevel = Enums.LogLevel.ALL;
-                    break;
-                default:
-                    logLevel = Enums.LogLevel.INFO;
-                    break;
+                case "off": return Enums.LogLevel.OFF;
+                case "fatal": return Enums.LogLevel.FATAL;
+                case "error": return Enums.LogLevel.ERROR;
+                case "warn": return Enums.LogLevel.WARN;
+                case "info": return Enums.LogLevel.INFO;
+                case "debug": return Enums.LogLevel.DEBUG;
+                case "trace": return Enums.LogLevel.TRACE;
+                case "all": return Enums.LogLevel.ALL;
+                default: return Enums.LogLevel.INFO;
             }
-
-            return logLevel;
         }
 
-        public static Game GetGameByString(string optionGame)
+        // ReSharper disable once RedundantCaseLabel
+        public static Game GetGameByString(string game)
         {
-            Game game;
-
-            switch (optionGame)
+            switch (game)
             {
-                case "dos":
-                    game = LSLib.LS.Enums.Game.DivinityOriginalSin;
-                    break;
-                case "dosee":
-                    game = LSLib.LS.Enums.Game.DivinityOriginalSinEE;
-                    break;
-//                case "dos2":
-//                    game = LSLib.LS.Enums.Game.DivinityOriginalSin2;
-//                    break;
+                case "dos": return LSLib.LS.Enums.Game.DivinityOriginalSin;
+                case "dosee": return LSLib.LS.Enums.Game.DivinityOriginalSinEE;
+                case "dos2":
                 default:
-                    game = LSLib.LS.Enums.Game.DivinityOriginalSin2;
-                    break;
+                    return LSLib.LS.Enums.Game.DivinityOriginalSin2;
             }
-
-            return game;
         }
 
         public static FileVersion GetFileVersionByGame(Game divinityGame) => divinityGame == LSLib.LS.Enums.Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
 
         public static ExportFormat GetExportFormatByString(string optionExportFormat) => optionExportFormat == "gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
 
-        public static ResourceFormat GetResourceFormatByString(string optionResourceFormat)
+        // ReSharper disable once RedundantCaseLabel
+        public static ResourceFormat GetResourceFormatByString(string resourceFormat)
         {
-            ResourceFormat resourceFormat;
-
-            switch (optionResourceFormat)
+            switch (resourceFormat)
             {
-                case "lsb":
-                    resourceFormat = ResourceFormat.LSB;
-                    break;
-                case "lsf":
-                    resourceFormat = ResourceFormat.LSF;
-                    break;
-                case "lsj":
-                    resourceFormat = ResourceFormat.LSJ;
-                    break;
+                case "lsb": return ResourceFormat.LSB;
+                case "lsf": return ResourceFormat.LSF;
+                case "lsj": return ResourceFormat.LSJ;
                 case "lsx":
-                    resourceFormat = ResourceFormat.LSX;
-                    break;
                 default:
-                    resourceFormat = ResourceFormat.LSX;
-                    break;
+                    return ResourceFormat.LSX;
             }
-
-            return resourceFormat;
         }
 
-        public static PackageVersion GetPackageVersion(string versionOption)
+        // ReSharper disable once RedundantCaseLabel
+        public static PackageVersion GetPackageVersion(string packageVersion)
         {
-            PackageVersion version;
-
-            switch (versionOption)
+            switch (packageVersion)
             {
-                case "v7":
-                    version = Enums.PackageVersion.V7;
-                    break;
-
-                case "v9":
-                    version = Enums.PackageVersion.V9;
-                    break;
-
-                case "v10":
-                    version = Enums.PackageVersion.V10;
-                    break;
-
+                case "v7": return Enums.PackageVersion.V7;
+                case "v9": return Enums.PackageVersion.V9;
+                case "v10": return Enums.PackageVersion.V10;
                 case "v13":
-                    version = Enums.PackageVersion.V13;
-                    break;
-
                 default:
-                    version = Enums.PackageVersion.V13;
-                    break;
+                    return Enums.PackageVersion.V13;
             }
-
-            return version;
         }
 
-        public static Dictionary<string, object> GetCompressionOptions(string compressionOption, PackageVersion version)
+        public static Dictionary<string, object> GetCompressionOptions(string compressionOption, PackageVersion packageVersion)
         {
             CompressionMethod compression;
-            bool fastCompression;
+            var fastCompression = true;
 
             switch (compressionOption)
             {
                 case "zlibfast":
                     compression = LSLib.LS.Enums.CompressionMethod.Zlib;
-                    fastCompression = true;
                     break;
 
                 case "zlib":
@@ -258,7 +197,6 @@ namespace Divine.CLI
 
                 case "lz4":
                     compression = LSLib.LS.Enums.CompressionMethod.LZ4;
-                    fastCompression = true;
                     break;
 
                 case "lz4hc":
@@ -266,20 +204,21 @@ namespace Divine.CLI
                     fastCompression = false;
                     break;
 
+                // ReSharper disable once RedundantCaseLabel
+                case "none":
                 default:
                     compression = LSLib.LS.Enums.CompressionMethod.None;
-                    fastCompression = false;
                     break;
             }
 
             // fallback to zlib, if the package version doesn't support lz4
-            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && version <= (PackageVersion) 9)
+            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && packageVersion <= Enums.PackageVersion.V9)
             {
                 compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                 fastCompression = false;
             }
 
-            Dictionary<string, object> compressionOptions = new Dictionary<string, object>
+            var compressionOptions = new Dictionary<string, object>
             {
                 { "Compression", compression },
                 { "FastCompression", fastCompression }
@@ -290,7 +229,7 @@ namespace Divine.CLI
 
         public static Dictionary<string, bool> GetGR2Options(string[] options)
         {
-            Dictionary<string, bool> results = new Dictionary<string, bool>
+            var results = new Dictionary<string, bool>
             {
                 { "export-normals", false },
                 { "export-tangents", false },
@@ -313,12 +252,9 @@ namespace Divine.CLI
                 return results;
             }
 
-            foreach (string option in options)
+            foreach (string option in options.Where(option => results.Keys.Contains(option)))
             {
-                if (results.Keys.Contains(option))
-                {
-                    results[option] = true;
-                }
+                results[option] = true;
             }
 
             return results;
