@@ -6,9 +6,9 @@ using LSLib.Granny.Model;
 
 namespace Divine.CLI
 {
-    internal class CommandLineGraphicsProcessor
+    internal class CommandLineGR2Processor
     {
-        private static readonly Dictionary<string, bool> GraphicsOptions = CommandLineActions.GraphicsOptions;
+        private static readonly Dictionary<string, bool> GR2Options = CommandLineActions.GR2Options;
 
         public static void Convert(string file = "") => ConvertResource(file);
 
@@ -22,20 +22,20 @@ namespace Divine.CLI
                 OutputPath = CommandLineActions.DestinationPath,
                 InputFormat = CommandLineArguments.GetExportFormatByString(Program.argv.InputFormat),
                 OutputFormat = CommandLineArguments.GetExportFormatByString(Program.argv.OutputFormat),
-                ExportNormals = GraphicsOptions["export-normals"],
-                ExportTangents = GraphicsOptions["export-tangents"],
-                ExportUVs = GraphicsOptions["export-uvs"],
-                FlipUVs = GraphicsOptions["flip-uvs"],
-                RecalculateNormals = GraphicsOptions["recalculate-normals"],
-                RecalculateTangents = GraphicsOptions["recalculate-tangents"],
-                RecalculateIWT = GraphicsOptions["recalculate-iwt"],
-                BuildDummySkeleton = GraphicsOptions["build-dummy-skeleton"],
-                CompactIndices = GraphicsOptions["compact-tris"],
-                DeduplicateVertices = GraphicsOptions["deduplicate-vertices"],
-                DeduplicateUVs = GraphicsOptions["deduplicate-uvs"],
-                ApplyBasisTransforms = GraphicsOptions["apply-basis-transforms"],
-                UseObsoleteVersionTag = GraphicsOptions["force-legacy-version"],
-                ConformGR2Path = GraphicsOptions["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null
+                ExportNormals = GR2Options["export-normals"],
+                ExportTangents = GR2Options["export-tangents"],
+                ExportUVs = GR2Options["export-uvs"],
+                FlipUVs = GR2Options["flip-uvs"],
+                RecalculateNormals = GR2Options["recalculate-normals"],
+                RecalculateTangents = GR2Options["recalculate-tangents"],
+                RecalculateIWT = GR2Options["recalculate-iwt"],
+                BuildDummySkeleton = GR2Options["build-dummy-skeleton"],
+                CompactIndices = GR2Options["compact-tris"],
+                DeduplicateVertices = GR2Options["deduplicate-vertices"],
+                DeduplicateUVs = GR2Options["deduplicate-uvs"],
+                ApplyBasisTransforms = GR2Options["apply-basis-transforms"],
+                UseObsoleteVersionTag = GR2Options["force-legacy-version"],
+                ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null
             };
 
             if (CommandLineActions.Game == Game.DivinityOriginalSin)
@@ -70,7 +70,8 @@ namespace Divine.CLI
             }
             catch (Exception e)
             {
-                CommandLineLogger.LogFatal($"Export failed: {e.Message}{Environment.NewLine}{e.StackTrace}");
+                CommandLineLogger.LogFatal($"Export failed: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
             }
         }
 
@@ -80,7 +81,7 @@ namespace Divine.CLI
 
             if (files.Length == 0)
             {
-                CommandLineLogger.LogFatal($"Batch convert failed: *.{inputFormat} not found in source path");
+                CommandLineLogger.LogFatal($"Batch convert failed: *.{inputFormat} not found in source path", 1);
             }
 
             foreach (string file in files)
