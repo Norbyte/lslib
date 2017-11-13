@@ -49,7 +49,7 @@
   <ItemGroup>
     <Compile Include="CLI\CommandLineActions.cs" />
     <Compile Include="CLI\CommandLineDataProcessor.cs" />
-    <Compile Include="CLI\CommandLineGraphicsProcessor.cs" />
+    <Compile Include="CLI\CommandLineGR2Processor.cs" />
     <Compile Include="CLI\CommandLineLogger.cs" />
     <Compile Include="CLI\CommandLinePackageProcessor.cs" />
     <Compile Include="CLI\CommandLineArguments.cs" />
