@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Collada141;
+using System.Security.Cryptography;
 
 namespace LSLib.Granny
 {
@@ -34,6 +35,14 @@ namespace LSLib.Granny
 
         public static source MakeFloatSource(string parentName, string name, string[] components, float[] values, int stride = 1, string type = "float")
         {
+            var posName = parentName + "-" + name + "-array";
+            // Create a shortened source name if the length exceeds 64 bytes
+            if (posName.Length > 64)
+            {
+                var hash = MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(parentName));
+                parentName = string.Join("", hash.Select(c => ((int)c).ToString("X2")));
+            }
+
             var positions = new float_array();
             positions.id = parentName + "-" + name + "-array";
 
