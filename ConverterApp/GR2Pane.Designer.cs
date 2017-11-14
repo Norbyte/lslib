@@ -82,6 +82,7 @@
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
+            this.exportColors = new System.Windows.Forms.CheckBox();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
             this.gr2BatchTab.SuspendLayout();
@@ -365,6 +366,7 @@
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
+            this.groupBox2.Controls.Add(this.exportColors);
             this.groupBox2.Controls.Add(this.flipUVs);
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Controls.Add(this.exportableObjects);
@@ -481,7 +483,7 @@
             // filterUVs
             // 
             this.filterUVs.AutoSize = true;
-            this.filterUVs.Location = new System.Drawing.Point(9, 110);
+            this.filterUVs.Location = new System.Drawing.Point(189, 110);
             this.filterUVs.Name = "filterUVs";
             this.filterUVs.Size = new System.Drawing.Size(71, 17);
             this.filterUVs.TabIndex = 16;
@@ -503,7 +505,7 @@
             this.deduplicateVertices.AutoSize = true;
             this.deduplicateVertices.Checked = true;
             this.deduplicateVertices.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.deduplicateVertices.Location = new System.Drawing.Point(9, 87);
+            this.deduplicateVertices.Location = new System.Drawing.Point(9, 110);
             this.deduplicateVertices.Name = "deduplicateVertices";
             this.deduplicateVertices.Size = new System.Drawing.Size(123, 17);
             this.deduplicateVertices.TabIndex = 15;
@@ -653,6 +655,18 @@
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2";
             this.inputFileDlg.Title = "Select Input File";
             // 
+            // exportColors
+            // 
+            this.exportColors.AutoSize = true;
+            this.exportColors.Checked = true;
+            this.exportColors.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.exportColors.Location = new System.Drawing.Point(9, 87);
+            this.exportColors.Name = "exportColors";
+            this.exportColors.Size = new System.Drawing.Size(87, 17);
+            this.exportColors.TabIndex = 24;
+            this.exportColors.Text = "Export colors";
+            this.exportColors.UseVisualStyleBackColor = true;
+            // 
             // GR2Pane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -731,5 +745,6 @@
         private System.Windows.Forms.OpenFileDialog inputFileDlg;
         internal System.Windows.Forms.CheckBox use16bitIndex;
         private System.Windows.Forms.CheckBox flipUVs;
+        private System.Windows.Forms.CheckBox exportColors;
     }
 }

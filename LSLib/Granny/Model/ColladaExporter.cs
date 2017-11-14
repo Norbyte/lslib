@@ -23,7 +23,7 @@ namespace LSLib.Granny.Model
             Options = options;
         }
 
-        private void AddInput(source collSource, string inputSemantic, string localInputSemantic = null)
+        private void AddInput(source collSource, string inputSemantic, string localInputSemantic = null, ulong setIndex = 0)
         {
             if (collSource != null)
             {
@@ -44,6 +44,11 @@ namespace LSLib.Granny.Model
                 vertexInputOff.semantic = localInputSemantic;
                 vertexInputOff.source = "#" + collSource.id;
                 vertexInputOff.offset = LastInputOffset++;
+                if (localInputSemantic == "TEXCOORD" || localInputSemantic == "COLOR")
+                {
+                    vertexInputOff.set = setIndex;
+                }
+
                 InputOffsets.Add(vertexInputOff);
             }
         }
@@ -98,7 +103,7 @@ namespace LSLib.Granny.Model
                             {
                                 int uvIndex = Int32.Parse(component.Substring(component.Length - 1));
                                 var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
-                                AddInput(uvs, null, "TEXCOORD");
+                                AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
                             }
                             break;
                         }
@@ -114,7 +119,7 @@ namespace LSLib.Granny.Model
                             {
                                 int uvIndex = Int32.Parse(component.Substring(component.Length - 1)) - 1;
                                 var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
-                                AddInput(uvs, null, "TEXCOORD");
+                                AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
                             }
                             break;
                         }
@@ -125,8 +130,14 @@ namespace LSLib.Granny.Model
                         break;
 
                     case "DiffuseColor0":
-                        // TODO: This is not exported at the moment.
-                        break;
+                        {
+                            if (Options.ExportColors)
+                            {
+                                var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedMesh.Name, 0);
+                                AddInput(colors, null, "COLOR", 0);
+                            }
+                            break;
+                        }
 
                     default:
                         throw new NotImplementedException("Vertex component not supported: " + component);
@@ -173,7 +184,17 @@ namespace LSLib.Granny.Model
                 for (var uvIndex = 0; uvIndex < desc.TextureCoordinates; uvIndex++)
                 {
                     var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
-                    AddInput(uvs, null, "TEXCOORD");
+                    AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
+                }
+            }
+
+            // Vertex colors
+            if (Options.ExportColors)
+            {
+                for (var colorIndex = 0; colorIndex < desc.DiffuseColors; colorIndex++)
+                {
+                    var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedMesh.Name, colorIndex);
+                    AddInput(colors, null, "COLOR", (ulong)colorIndex);
                 }
             }
 
@@ -205,7 +226,8 @@ namespace LSLib.Granny.Model
             var triangles = ExportedMesh.PrimaryTopology.MakeColladaTriangles(
                 InputOffsets.ToArray(),
                 vertexData.Deduplicator.VertexDeduplicationMap,
-                vertexData.Deduplicator.UVDeduplicationMaps
+                vertexData.Deduplicator.UVDeduplicationMaps,
+                vertexData.Deduplicator.ColorDeduplicationMaps
             );
 
             var colladaMesh = new mesh();

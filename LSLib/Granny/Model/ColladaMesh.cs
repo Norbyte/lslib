@@ -16,11 +16,13 @@ namespace LSLib.Granny.Model
         private InputLocalOffset[] Inputs;
         private List<Vertex> Vertices;
         private List<List<Vector2>> UVs;
+        private List<List<Vector4>> Colors;
         private List<int> Indices;
 
         private int InputOffsetCount = 0;
         private int VertexInputIndex = -1;
         private List<int> UVInputIndices = new List<int>();
+        private List<int> ColorInputIndices = new List<int>();
         private Type VertexType;
         private bool HasNormals = false;
         private bool HasTangents = false;
@@ -358,6 +360,39 @@ namespace LSLib.Granny.Model
             HasTangents = tangents != null && binormals != null;
         }
 
+        private void ImportColors()
+        {
+            ColorInputIndices.Clear();
+            Colors = new List<List<Vector4>>();
+            foreach (var input in Inputs)
+            {
+                if (input.semantic == "COLOR")
+                {
+                    ColorInputIndices.Add((int)input.offset);
+
+                    if (input.source[0] != '#')
+                        throw new ParsingException("Only ID references are supported for color input sources");
+
+                    ColladaSource inputSource = null;
+                    if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
+                        throw new ParsingException("Color input source does not exist: " + input.source);
+
+                    List<Single> r = null, g = null, b = null;
+                    if (!inputSource.FloatParams.TryGetValue("R", out r) ||
+                        !inputSource.FloatParams.TryGetValue("G", out g) ||
+                        !inputSource.FloatParams.TryGetValue("B", out b))
+                        throw new ParsingException("Color input source " + input.source + " must have R, G, B float attributes");
+
+                    var colors = new List<Vector4>();
+                    Colors.Add(colors);
+                    for (var i = 0; i < r.Count; i++)
+                    {
+                        colors.Add(new Vector4(r[i], g[i], b[i], 1.0f));
+                    }
+                }
+            }
+        }
+
         private void ImportUVs()
         {
             bool flip = Options.FlipUVs;
@@ -407,7 +442,7 @@ namespace LSLib.Granny.Model
             bool hasNormals = false,
                 hasTangents = false,
                 hasBinormals = false;
-            int numUVs = 0;
+            int numUVs = 0, numColors = 0;
 
             foreach (var input in Mesh.vertices.input)
             {
@@ -427,6 +462,7 @@ namespace LSLib.Granny.Model
                     case "TANGENT": hasTangents = true; break;
                     case "BINORMAL": hasBinormals = true; break;
                     case "TEXCOORD": numUVs++; break;
+                    case "COLOR": numColors++; break;
                 }
             }
 
@@ -451,6 +487,15 @@ namespace LSLib.Granny.Model
             {
                 vertexFormat += "GB";
                 attributeCounts += "33";
+            }
+
+            if (Options.ExportColors)
+            {
+                for (int i = 0; i < numColors; i++)
+                {
+                    vertexFormat += "D";
+                    attributeCounts += "4";
+                }
             }
 
             if (Options.ExportUVs)
@@ -491,8 +536,9 @@ namespace LSLib.Granny.Model
                 computeNormals();
             }
 
+            ImportColors();
             ImportUVs();
-            if (UVInputIndices.Count() > 0)
+            if (UVInputIndices.Count() > 0 || ColorInputIndices.Count() > 0)
             {
                 var outVertexIndices = new Dictionary<int[], int>(new VertexIndexComparer());
                 ConsolidatedIndices = new List<int>(TriangleCount * 3);
@@ -514,7 +560,11 @@ namespace LSLib.Granny.Model
                         Vertex vertex = Vertices[vertexIndex].Clone();
                         for (int uv = 0; uv < UVInputIndices.Count(); uv++ )
                         {
-                            vertex.SetTextureCoordinates(uv, UVs[uv][index[UVInputIndices[uv]]]);
+                            vertex.SetUV(uv, UVs[uv][index[UVInputIndices[uv]]]);
+                        }
+                        for (int color = 0; color < ColorInputIndices.Count(); color++)
+                        {
+                            vertex.SetColor(color, Colors[color][index[ColorInputIndices[color]]]);
                         }
                         outVertexIndices.Add(index, consolidatedIndex);
                         ConsolidatedVertices.Add(vertex);

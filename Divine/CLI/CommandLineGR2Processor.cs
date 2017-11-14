@@ -26,6 +26,7 @@ namespace Divine.CLI
                 ExportNormals = GR2Options["export-normals"],
                 ExportTangents = GR2Options["export-tangents"],
                 ExportUVs = GR2Options["export-uvs"],
+                ExportColors = GR2Options["export-colors"],
                 FlipUVs = GR2Options["flip-uvs"],
                 RecalculateNormals = GR2Options["recalculate-normals"],
                 RecalculateTangents = GR2Options["recalculate-tangents"],

@@ -12,8 +12,10 @@ namespace LSLib.Granny.Model
     {
         public Dictionary<int, int> VertexDeduplicationMap = new Dictionary<int, int>();
         public List<Dictionary<int, int>> UVDeduplicationMaps = new List<Dictionary<int, int>>();
+        public List<Dictionary<int, int>> ColorDeduplicationMaps = new List<Dictionary<int, int>>();
         public List<Vertex> DeduplicatedPositions = new List<Vertex>();
         public List<List<Vector2>> DeduplicatedUVs = new List<List<Vector2>>();
+        public List<List<Vector4>> DeduplicatedColors = new List<List<Vector4>>();
 
         private class VertexPositionComparer : IEqualityComparer<Vector3>
         {
@@ -48,6 +50,24 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private class VertexColorComparer : IEqualityComparer<Vector4>
+        {
+            public bool Equals(Vector4 a, Vector4 b)
+            {
+                return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
+            }
+
+            public int GetHashCode(Vector4 v)
+            {
+                int hash = 17;
+                hash = hash * 23 + v.X.GetHashCode();
+                hash = hash * 23 + v.Y.GetHashCode();
+                hash = hash * 23 + v.Z.GetHashCode();
+                hash = hash * 23 + v.W.GetHashCode();
+                return hash;
+            }
+        }
+
         public void MakeIdentityMapping(List<Vertex> vertices)
         {
             for (var i = 0; i < vertices.Count; i++)
@@ -66,8 +86,23 @@ namespace LSLib.Granny.Model
 
                 for (var i = 0; i < vertices.Count; i++)
                 {
-                    deduplicatedUvs.Add(vertices[i].GetTextureCoordinates(uv));
+                    deduplicatedUvs.Add(vertices[i].GetUV(uv));
                     uvMap.Add(i, i);
+                }
+            }
+
+            var numColors = Vertex.Description(vertices[0].GetType()).DiffuseColors;
+            for (var color = 0; color < numColors; color++)
+            {
+                var colorMap = new Dictionary<int, int>();
+                var deduplicatedColors = new List<Vector4>();
+                ColorDeduplicationMaps.Add(colorMap);
+                DeduplicatedColors.Add(deduplicatedColors);
+
+                for (var i = 0; i < vertices.Count; i++)
+                {
+                    deduplicatedColors.Add(vertices[i].GetColor(color));
+                    colorMap.Add(i, i);
                 }
             }
         }
@@ -100,14 +135,37 @@ namespace LSLib.Granny.Model
                 for (var i = 0; i < vertices.Count; i++)
                 {
                     int mappedIndex;
-                    if (!uvs.TryGetValue(vertices[i].GetTextureCoordinates(uv), out mappedIndex))
+                    if (!uvs.TryGetValue(vertices[i].GetUV(uv), out mappedIndex))
                     {
                         mappedIndex = uvs.Count;
-                        uvs.Add(vertices[i].GetTextureCoordinates(uv), mappedIndex);
-                        deduplicatedUvs.Add(vertices[i].GetTextureCoordinates(uv));
+                        uvs.Add(vertices[i].GetUV(uv), mappedIndex);
+                        deduplicatedUvs.Add(vertices[i].GetUV(uv));
                     }
 
                     uvMap.Add(i, mappedIndex);
+                }
+            }
+
+            var numColors = Vertex.Description(vertices[0].GetType()).DiffuseColors;
+            for (var color = 0; color < numColors; color++)
+            {
+                var colorMap = new Dictionary<int, int>();
+                var deduplicatedColors = new List<Vector4>();
+                ColorDeduplicationMaps.Add(colorMap);
+                DeduplicatedColors.Add(deduplicatedColors);
+
+                var colors = new Dictionary<Vector4, int>(new VertexColorComparer());
+                for (var i = 0; i < vertices.Count; i++)
+                {
+                    int mappedIndex;
+                    if (!colors.TryGetValue(vertices[i].GetColor(color), out mappedIndex))
+                    {
+                        mappedIndex = colors.Count;
+                        colors.Add(vertices[i].GetColor(color), mappedIndex);
+                        deduplicatedColors.Add(vertices[i].GetColor(color));
+                    }
+
+                    colorMap.Add(i, mappedIndex);
                 }
             }
         }
@@ -254,6 +312,22 @@ namespace LSLib.Granny.Model
             return ColladaUtils.MakeFloatSource(name, "uvs" + uvIndex.ToString(), new string[] { "S", "T" }, uvs);
         }
 
+        public source MakeColladaColors(string name, int setIndex)
+        {
+            EnsureDeduplicationMap();
+
+            int index = 0;
+            var colors = new float[Deduplicator.DeduplicatedColors[setIndex].Count * 3];
+            foreach (var color in Deduplicator.DeduplicatedColors[setIndex])
+            {
+                colors[index++] = color[0];
+                colors[index++] = color[1];
+                colors[index++] = color[2];
+            }
+
+            return ColladaUtils.MakeFloatSource(name, "colors" + setIndex.ToString(), new string[] { "R", "G", "B" }, colors);
+        }
+
         public source MakeBoneWeights(string name)
         {
             EnsureDeduplicationMap();
@@ -347,7 +421,8 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, List<Dictionary<int, int>> uvMaps)
+        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, 
+            List<Dictionary<int, int>> uvMaps, List<Dictionary<int, int>> colorMaps)
         {
             int numTris = (from grp in Groups
                            select grp.TriCount).Sum();
@@ -355,6 +430,20 @@ namespace LSLib.Granny.Model
             var tris = new triangles();
             tris.count = (ulong)numTris;
             tris.input = inputs;
+
+            List<Dictionary<int, int>> inputMaps = new List<Dictionary<int, int>>();
+            int uvIndex = 0, colorIndex = 0;
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                var input = inputs[i];
+                switch (input.semantic)
+                {
+                    case "VERTEX": inputMaps.Add(vertexMaps); break;
+                    case "TEXCOORD": inputMaps.Add(uvMaps[uvIndex]); uvIndex++; break;
+                    case "COLOR": inputMaps.Add(colorMaps[colorIndex]); colorIndex++; break;
+                    default: throw new InvalidOperationException("No input maps available for semantic " + input.semantic);
+                }
+            }
 
             var indicesBuilder = new StringBuilder();
             foreach (var group in Groups)
@@ -367,11 +456,7 @@ namespace LSLib.Granny.Model
                     {
                         for (int i = 0; i < inputs.Length; i++)
                         {
-                            // TODO: Hacky!
-                            if (i == 0)
-                                indicesBuilder.Append(vertexMaps[indices[firstIdx + vertIndex]]);
-                            else
-                                indicesBuilder.Append(uvMaps[i - 1][indices[firstIdx + vertIndex]]);
+                            indicesBuilder.Append(inputMaps[i][indices[firstIdx + vertIndex]]);
                             indicesBuilder.Append(" ");
                         }
                     }

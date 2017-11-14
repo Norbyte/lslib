@@ -47,6 +47,8 @@ namespace LSLib.Granny.Model
         public bool ExportTangents = true;
         // Export UV-s to DAE/GR2 file
         public bool ExportUVs = true;
+        // Export vertex colors to DAE/GR2 file
+        public bool ExportColors = true;
         // Flip the V coord of UV-s (GR2 stores them in flipped format)
         public bool FlipUVs = true;
         // Recalculate normals, even if they're available in the source mesh

@@ -61,7 +61,7 @@ namespace LSLib.Granny.Model
         public bool Normal = false;
         public bool Tangent = false;
         public bool Binormal = false;
-        public bool DiffuseColor = false;
+        public int DiffuseColors = 0;
         public int TextureCoordinates = 0;
     }
 
@@ -77,7 +77,7 @@ namespace LSLib.Granny.Model
         public Vector2 TextureCoordinates0;
         public Vector2 TextureCoordinates1;
 
-        public Vector2 GetTextureCoordinates(int index)
+        public Vector2 GetUV(int index)
         {
             if (index == 0)
                 return TextureCoordinates0;
@@ -87,7 +87,7 @@ namespace LSLib.Granny.Model
                 throw new ArgumentException("At most 2 UV sets are supported.");
         }
 
-        public void SetTextureCoordinates(int index, Vector2 uv)
+        public void SetUV(int index, Vector2 uv)
         {
             if (index == 0)
                 TextureCoordinates0 = uv;
@@ -95,6 +95,22 @@ namespace LSLib.Granny.Model
                 TextureCoordinates1 = uv;
             else
                 throw new ArgumentException("At most 2 UV sets are supported.");
+        }
+
+        public Vector4 GetColor(int index)
+        {
+            if (index == 0)
+                return DiffuseColor0;
+            else
+                throw new ArgumentException("At most 1 diffuse color set is supported.");
+        }
+
+        public void SetColor(int index, Vector4 color)
+        {
+            if (index == 0)
+                DiffuseColor0 = color;
+            else
+                throw new ArgumentException("At most 1 diffuse color set is supported.");
         }
 
         protected Vector2 ReadVector2(GR2Reader reader)
