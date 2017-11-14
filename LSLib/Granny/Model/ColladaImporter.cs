@@ -223,10 +223,31 @@ namespace LSLib.Granny.Model
                 components.Add(new GrannyString("BoneIndices"));
             }
 
-            components.Add(new GrannyString("Normal"));
-            components.Add(new GrannyString("Tangent"));
-            components.Add(new GrannyString("Binormal"));
-            components.Add(new GrannyString("MaxChannel_1"));
+            if (vertexDesc.Normal)
+            {
+                components.Add(new GrannyString("Normal"));
+            }
+
+            if (vertexDesc.Tangent)
+            {
+                components.Add(new GrannyString("Tangent"));
+            }
+
+            if (vertexDesc.Binormal)
+            {
+                components.Add(new GrannyString("Binormal"));
+            }
+
+            for (int i = 0; i < vertexDesc.DiffuseColors; i++)
+            {
+                components.Add(new GrannyString("DiffuseColor" + i.ToString()));
+            }
+
+            for (int i = 0; i < vertexDesc.TextureCoordinates; i++)
+            {
+                components.Add(new GrannyString("TextureCoordinate" + i.ToString()));
+            }
+
             m.PrimaryVertexData.VertexComponentNames = components;
             m.PrimaryVertexData.Vertices = collada.ConsolidatedVertices;
 
