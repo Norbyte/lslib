@@ -272,8 +272,8 @@ namespace LSLib.Granny.GR2
 
 #if DEBUG_GR2_SERIALIZATION
                 System.Console.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
-                System.Console.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}", 
-                    offsetInSection + section.Header.offsetInFile, 
+                System.Console.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}",
+                    offsetInSection + section.Header.offsetInFile,
                     reference.Offset + Sections[(int)reference.Section].Header.offsetInFile));
 #endif
             }
@@ -674,10 +674,10 @@ namespace LSLib.Granny.GR2
 
             var kind = definition.SerializationKind;
             Debug.Assert(kind == SerializationKind.Builtin || !definition.IsScalar);
-            if (node == null && 
-                propertyType != null && 
+            if (node == null &&
+                propertyType != null &&
                 !definition.IsScalar &&
-                (kind == SerializationKind.Builtin || kind == SerializationKind.UserElement) && 
+                (kind == SerializationKind.Builtin || kind == SerializationKind.UserElement) &&
                 // Variant construction is a special case as we don't know the struct defn beforehand
                 definition.Type != MemberType.VariantReference)
             {
@@ -825,7 +825,7 @@ namespace LSLib.Granny.GR2
 
                         Debug.Assert(itemsRef.IsValid == (itemsRef.Size != 0));
 
-                        if (itemsRef.IsValid && 
+                        if (itemsRef.IsValid &&
                             parent != null &&
                             (node != null || kind == SerializationKind.UserMember))
                         {
@@ -843,7 +843,7 @@ namespace LSLib.Granny.GR2
                             {
                                 var items = node as System.Collections.IList;
                                 var type = items.GetType().GetGenericArguments().Single();
-                                if (definition.Type == MemberType.ReferenceToVariantArray && 
+                                if (definition.Type == MemberType.ReferenceToVariantArray &&
                                     kind != SerializationKind.UserElement &&
                                     definition.TypeSelector != null)
                                     type = definition.TypeSelector.SelectType(definition, structType, parent);

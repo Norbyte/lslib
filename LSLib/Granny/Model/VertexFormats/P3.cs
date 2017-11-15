@@ -1,10 +1,10 @@
-﻿using LSLib.Granny.GR2;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using LSLib.Granny.GR2;
 
 #pragma warning disable 0649
 
-namespace LSLib.Granny.Model.VertexFormat
+namespace LSLib.Granny.Model.VertexFormats
 {
     [StructSerialization(MixedMarshal = true)]
     internal class P3_Prototype
@@ -13,7 +13,7 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] Position;
     }
 
-    [VertexPrototype(Prototype = typeof(P3_Prototype)), 
+    [VertexPrototype(Prototype = typeof(P3_Prototype)),
     VertexDescription(Position = true)]
     public class P3 : Vertex
     {

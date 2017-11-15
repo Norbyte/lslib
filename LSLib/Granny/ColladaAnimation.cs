@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Collada141;
-using OpenTK;
 using LSLib.Granny.GR2;
+using LSLib.Granny.Model;
 using LSLib.Granny.Model.CurveData;
+using OpenTK;
 
-namespace LSLib.Granny.Model
+namespace LSLib.Granny
 {
     public class ColladaAnimation
     {

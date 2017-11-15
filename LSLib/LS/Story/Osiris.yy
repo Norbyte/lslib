@@ -1,4 +1,4 @@
-%namespace LSLib.LS.Osiris
+%namespace LSLib.LS.Story
 %partial 
 %visibility public
 %parsertype GoalParser

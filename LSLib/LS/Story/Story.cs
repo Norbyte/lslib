@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
     public class Story
     {
@@ -256,7 +256,7 @@ namespace LSLib.LS.Osiris
                 }
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
-                
+
                 if (reader.Ver >= OsiVersion.VerExternalStringTable)
                     story.ExternalStringTable = ReadStrings(reader);
                 else
@@ -414,7 +414,7 @@ namespace LSLib.LS.Osiris
                     var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
                     WriteTypes(types);
                 }
-                
+
                 // TODO: regenerate string table?
                 if (Writer.Ver >= OsiVersion.VerExternalStringTable)
                     WriteStrings(story.ExternalStringTable);

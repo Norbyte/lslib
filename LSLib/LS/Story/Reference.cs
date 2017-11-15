@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
     public abstract class OsiReference<T> : OsirisSerializable
     {

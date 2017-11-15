@@ -1,5 +1,4 @@
-%namespace LSLib.LS.Osiris
-%using QUT.Gppg;
+%namespace LSLib.LS.Story
 %visibility public
 %scannertype GoalScanner
 %scanbasetype GoalScanBase

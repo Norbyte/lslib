@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Collada141;
 using OpenTK;
 using LSLib.Granny.GR2;
-using LSLib.Granny.Model.VertexFormat;
 
 namespace LSLib.Granny.Model
 {
@@ -32,7 +29,7 @@ namespace LSLib.Granny.Model
         public List<int> ConsolidatedIndices;
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
         private ExporterOptions Options;
-        
+
         public Type InternalVertexType
         {
             get { return VertexType; }

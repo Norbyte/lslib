@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using OpenTK;
-using Collada141;
 using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model.CurveData
@@ -193,7 +190,7 @@ namespace LSLib.Granny.Model.CurveData
     }
 
     [StructSerialization(MixedMarshal = true)]
-    abstract public class AnimationCurveData
+    public abstract class AnimationCurveData
     {
         public enum ExportType
         {
@@ -218,8 +215,8 @@ namespace LSLib.Granny.Model.CurveData
             return GetKnots()[NumKnots() - 1];
         }
 
-        abstract public int NumKnots();
-        abstract public List<float> GetKnots();
+        public abstract int NumKnots();
+        public abstract List<float> GetKnots();
 
         public virtual List<Vector3> GetPoints()
         {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using LSLib.LS.Enums;
 
-namespace LSLib.LS.LSF
+namespace LSLib.LS
 {
     public class LSFWriter
     {
@@ -166,7 +166,7 @@ namespace LSLib.LS.LSF
                 }
                 attributeInfo.Offset = (UInt32)ValueStream.Position;
                 BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref attributeInfo);
-                
+
                 NextAttributeIndex++;
 
                 lastOffset = (UInt32)ValueStream.Position;

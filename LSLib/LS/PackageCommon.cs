@@ -66,14 +66,14 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
-    abstract public class AbstractFileInfo
+    public abstract class AbstractFileInfo
     {
         public String Name;
 
-        abstract public UInt32 Size();
-        abstract public UInt32 CRC();
-        abstract public Stream MakeStream();
-        abstract public void ReleaseStream();
+        public abstract UInt32 Size();
+        public abstract UInt32 CRC();
+        public abstract Stream MakeStream();
+        public abstract void ReleaseStream();
     }
 
     public class PackagedFileInfo : AbstractFileInfo, IDisposable

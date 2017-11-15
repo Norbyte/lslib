@@ -126,7 +126,7 @@ namespace LSLib.LS
                     header.DataOffset += (UInt32)(paddingLength - (header.DataOffset % paddingLength));
                 }
 
-                // Write a placeholder instead of the actual headers; we'll write them after we 
+                // Write a placeholder instead of the actual headers; we'll write them after we
                 // compressed and flushed all files to disk
                 var placeholder = new byte[header.DataOffset];
                 writer.Write(placeholder);
@@ -174,7 +174,7 @@ namespace LSLib.LS
                     header.DataOffset += (UInt32)(paddingLength - (header.DataOffset % paddingLength));
                 }
 
-                // Write a placeholder instead of the actual headers; we'll write them after we 
+                // Write a placeholder instead of the actual headers; we'll write them after we
                 // compressed and flushed all files to disk
                 var placeholder = new byte[header.DataOffset];
                 writer.Write(placeholder);
@@ -190,7 +190,7 @@ namespace LSLib.LS
                 }
 
                 mainStream.Seek(0, SeekOrigin.Begin);
-                writer.Write(Package.Signature); 
+                writer.Write(Package.Signature);
                 header.NumParts = (UInt16)streams.Count;
                 header.SomePartVar = 0; // ???
                 BinUtils.WriteStruct<LSPKHeader10>(writer, ref header);

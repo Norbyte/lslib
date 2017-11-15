@@ -12,7 +12,7 @@ namespace LSLib.LS
         public NotAPackageException() : base()
         {
         }
-        
+
         public NotAPackageException(string message) : base(message)
         {
         }

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Collada141;
 using OpenTK;
-using System.Diagnostics;
 using LSLib.Granny.Model.CurveData;
 using LSLib.Granny.GR2;
 

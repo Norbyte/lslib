@@ -1,10 +1,6 @@
-﻿using LSLib.LS.LSF;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS

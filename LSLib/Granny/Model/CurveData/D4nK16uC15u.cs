@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using OpenTK;
 using LSLib.Granny.GR2;
 
@@ -9,15 +7,15 @@ namespace LSLib.Granny.Model.CurveData
 {
     public class D4nK16uC15u : AnimationCurveData
     {
-        private static float[] ScaleTable = { 
-            1.4142135f, 0.70710677f, 0.35355338f, 0.35355338f, 
-            0.35355338f, 0.17677669f, 0.17677669f, 0.17677669f, 
+        private static float[] ScaleTable = {
+            1.4142135f, 0.70710677f, 0.35355338f, 0.35355338f,
+            0.35355338f, 0.17677669f, 0.17677669f, 0.17677669f,
             -1.4142135f, -0.70710677f, -0.35355338f, -0.35355338f,
             -0.35355338f, -0.17677669f, -0.17677669f, -0.17677669f
         };
 
-        private static float[] OffsetTable = { 
-            -0.70710677f, -0.35355338f, -0.53033006f, -0.17677669f, 
+        private static float[] OffsetTable = {
+            -0.70710677f, -0.35355338f, -0.53033006f, -0.17677669f,
             0.17677669f, -0.17677669f, -0.088388346f, 0.0f,
             0.70710677f, 0.35355338f, 0.53033006f, 0.17677669f,
             -0.17677669f, 0.17677669f, 0.088388346f, -0.0f
@@ -107,8 +105,8 @@ namespace LSLib.Granny.Model.CurveData
             for (var i = 0; i < numKnots; i++)
             {
                 var quat = QuatFromControl(
-                    KnotsControls[numKnots + i * 3 + 0], 
-                    KnotsControls[numKnots + i * 3 + 1], 
+                    KnotsControls[numKnots + i * 3 + 0],
+                    KnotsControls[numKnots + i * 3 + 1],
                     KnotsControls[numKnots + i * 3 + 2],
                     scaleTable, offsetTable
                 );

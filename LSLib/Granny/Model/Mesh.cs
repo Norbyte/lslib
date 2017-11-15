@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Collada141;
 using OpenTK;
 using LSLib.Granny.GR2;
 
@@ -421,7 +420,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps, 
+        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps,
             List<Dictionary<int, int>> uvMaps, List<Dictionary<int, int>> colorMaps)
         {
             int numTris = (from grp in Groups
@@ -478,7 +477,7 @@ namespace LSLib.Granny.Model
         [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
         public List<Int32> TriangleIndices;
     }
-    
+
     public class MaterialReference
     {
         public string Usage;

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
     public class StoryDebugExportVisitor
     {

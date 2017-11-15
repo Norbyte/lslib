@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LSLib.LS.Enums;
 
-namespace LSLib.LS.LSF
+namespace LSLib.LS
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct Header
@@ -185,7 +185,7 @@ namespace LSLib.LS.LSF
         /// </summary>
         public int FirstAttributeIndex;
     };
-    
+
     /// <summary>
     /// V2 attribute extension in the LSF file
     /// </summary>
@@ -453,8 +453,8 @@ namespace LSLib.LS.LSF
 
 #if DEBUG_LSF_SERIALIZATION
                     Console.WriteLine(String.Format(
-                        "{0}: {1} @ {2:X} (parent {3}, firstAttribute {4})", 
-                        index, Names[resolved.NameIndex][resolved.NameOffset], pos, resolved.ParentIndex, 
+                        "{0}: {1} @ {2:X} (parent {3}, firstAttribute {4})",
+                        index, Names[resolved.NameIndex][resolved.NameOffset], pos, resolved.ParentIndex,
                         resolved.FirstAttributeIndex
                     ));
 #endif
@@ -657,7 +657,7 @@ namespace LSLib.LS.LSF
 
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
-                        var longNodes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes 
+                        var longNodes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes
                             && hdr.Extended == 1;
                         ReadNodes(nodesStream, longNodes);
                     }
@@ -750,7 +750,7 @@ namespace LSLib.LS.LSF
         private void ReadNode(NodeInfo defn, Node node, BinaryReader attributeReader)
         {
             node.Name = Names[defn.NameIndex][defn.NameOffset];
-            
+
 #if DEBUG_LSF_SERIALIZATION
             Console.WriteLine(String.Format("Begin node {0}", node.Name));
 #endif
@@ -793,7 +793,7 @@ namespace LSLib.LS.LSF
                 case NodeAttribute.DataType.DT_LSString:
                 case NodeAttribute.DataType.DT_WString:
                 case NodeAttribute.DataType.DT_LSWString:
-                    { 
+                    {
                         var attr = new NodeAttribute(type);
                         attr.Value = ReadString(reader, (int)length);
                         return attr;
@@ -822,7 +822,7 @@ namespace LSLib.LS.LSF
                     }
 
                 case NodeAttribute.DataType.DT_ScratchBuffer:
-                    { 
+                    {
                         var attr = new NodeAttribute(type);
                         attr.Value = reader.ReadBytes((int)length);
                         return attr;

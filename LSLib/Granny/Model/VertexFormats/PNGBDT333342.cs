@@ -1,10 +1,10 @@
-﻿using LSLib.Granny.GR2;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using LSLib.Granny.GR2;
 
 #pragma warning disable 0649
 
-namespace LSLib.Granny.Model.VertexFormat
+namespace LSLib.Granny.Model.VertexFormats
 {
     [StructSerialization(MixedMarshal = true)]
     internal class PNGBDT333342_Prototype
@@ -23,7 +23,7 @@ namespace LSLib.Granny.Model.VertexFormat
         public float[] TextureCoordinates0;
     }
 
-    [VertexPrototype(Prototype = typeof(PNGBDT333342_Prototype)), 
+    [VertexPrototype(Prototype = typeof(PNGBDT333342_Prototype)),
     VertexDescription(Position = true, Normal = true, Tangent = true, Binormal = true, DiffuseColors = 1, TextureCoordinates = 1)]
     public class PNGBDT333342 : Vertex
     {

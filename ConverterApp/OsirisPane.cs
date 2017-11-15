@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using LSLib.LS;
-using LSLib.LS.Osiris;
 using System.IO;
 using LSLib.LS.Enums;
-using LSLib.LS.LSF;
+using LSLib.LS.Story;
 
 namespace ConverterApp
 {

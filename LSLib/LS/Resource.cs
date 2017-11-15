@@ -57,7 +57,7 @@ namespace LSLib.LS
         public Node Parent;
         public Dictionary<string, NodeAttribute> Attributes = new Dictionary<string, NodeAttribute>();
         public Dictionary<string, List<Node>> Children = new Dictionary<string, List<Node>>();
-        
+
         public int ChildCount
         {
             get
