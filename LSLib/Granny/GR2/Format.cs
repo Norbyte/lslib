@@ -6,7 +6,6 @@ using System.Text;
 using OpenTK;
 using System.IO;
 using System.Reflection;
-using LSLib.Native;
 
 namespace LSLib.Granny.GR2
 {
@@ -93,7 +92,7 @@ namespace LSLib.Granny.GR2
             transform[1, 3] = Translation[1];
             transform[2, 3] = Translation[2];
             transform[3, 3] = 1.0f;*/
-            
+
             transform[3, 0] = Translation[0];
             transform[3, 1] = Translation[1];
             transform[3, 2] = Translation[2];

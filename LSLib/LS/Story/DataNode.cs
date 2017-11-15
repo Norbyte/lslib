@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
-    abstract public class DataNode : Node
+    public abstract class DataNode : Node
     {
         public List<NodeEntryItem> ReferencedBy;
 

@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
     public class Fact : OsirisSerializable
     {
@@ -140,7 +137,7 @@ namespace LSLib.LS.Osiris
                         break;
                     }
 
-                case Value.Type.Unknown: 
+                case Value.Type.Unknown:
                 default:
                     throw new InvalidOperationException("Cannot retrieve type of an unknown column");
             }

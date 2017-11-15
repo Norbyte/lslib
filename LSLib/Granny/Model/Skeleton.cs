@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Collada141;
 using OpenTK;
 using LSLib.Granny.GR2;
 
@@ -74,9 +71,9 @@ namespace LSLib.Granny.Model
         {
             var iwt = CalculateInverseWorldTransform(bones);
             InverseWorldTransform = new float[] {
-                iwt[0, 0], iwt[0, 1], iwt[0, 2], iwt[0, 3], 
-                iwt[1, 0], iwt[1, 1], iwt[1, 2], iwt[1, 3], 
-                iwt[2, 0], iwt[2, 1], iwt[2, 2], iwt[2, 3], 
+                iwt[0, 0], iwt[0, 1], iwt[0, 2], iwt[0, 3],
+                iwt[1, 0], iwt[1, 1], iwt[1, 2], iwt[1, 3],
+                iwt[2, 0], iwt[2, 1], iwt[2, 2], iwt[2, 3],
                 iwt[3, 0], iwt[3, 1], iwt[3, 2], iwt[3, 3]
             };
         }
@@ -124,7 +121,7 @@ namespace LSLib.Granny.Model
 
             var transforms = new List<object>();
             var transformTypes = new List<ItemsChoiceType2>();
-            
+
             var transform = new matrix();
             transform.sid = "Transform";
             var mat = Transform.ToMatrix4();
@@ -133,7 +130,7 @@ namespace LSLib.Granny.Model
                 mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
                 mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
                 mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
-                mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3] 
+                mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3]
             };
             transforms.Add(transform);
             transformTypes.Add(ItemsChoiceType2.matrix);

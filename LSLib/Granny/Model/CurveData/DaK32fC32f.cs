@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using OpenTK;
 using LSLib.Granny.GR2;
 
@@ -102,9 +101,9 @@ namespace LSLib.Granny.Model.CurveData
 
         public void SetMatrices(List<Matrix3> matrices)
         {
-            Controls = matrices.SelectMany(m => new float[] { 
-                m[0, 0],  m[0, 1], m[0, 2], 
-                m[1, 0],  m[1, 1], m[1, 2], 
+            Controls = matrices.SelectMany(m => new float[] {
+                m[0, 0],  m[0, 1], m[0, 2],
+                m[1, 0],  m[1, 1], m[1, 2],
                 m[2, 0],  m[2, 1], m[2, 2]
             }).ToList();
         }

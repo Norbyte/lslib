@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
-    abstract public class QueryNode : Node
+    public abstract class QueryNode : Node
     {
         public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
         {

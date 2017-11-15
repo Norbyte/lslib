@@ -3,7 +3,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using OpenTK;
 
@@ -51,7 +50,7 @@ namespace LSLib.Granny.GR2
         public void Finish()
         {
             var dataOffset = (UInt32)MainStream.Length;
-            
+
             foreach (var dataFixup in DataFixups)
             {
                 Fixups.Add(dataFixup.Key + dataOffset, dataFixup.Value);
@@ -143,7 +142,7 @@ namespace LSLib.Granny.GR2
                     GR2.Types.Add(defn.Type, defn);
                 }
             }
-            
+
             if (GR2.Magic.Is32Bit)
                 Writer.Write((UInt32)0);
             else
@@ -288,7 +287,7 @@ namespace LSLib.Granny.GR2
                 }
             }
 
-            // When the struct is empty, we need to write a dummy byte to make sure that another 
+            // When the struct is empty, we need to write a dummy byte to make sure that another
             // struct won't have the same address.
             if (definition.Members.Count == 0)
             {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LSLib.Granny.Model
+﻿namespace LSLib.Granny.Model
 {
     /// <summary>
     /// Helper class for Half conversions and some low level operations.
@@ -22,7 +16,7 @@ namespace LSLib.Granny.Model
         private static ushort[] baseTable = GenerateBaseTable();
         private static sbyte[] shiftTable = GenerateShiftTable();
 
-        // Transforms the subnormal representation to a normalized one. 
+        // Transforms the subnormal representation to a normalized one.
         private static uint ConvertMantissa(int i)
         {
             uint m = (uint)(i << 13); // Zero pad mantissa bits
@@ -32,7 +26,7 @@ namespace LSLib.Granny.Model
             while ((m & 0x00800000) == 0)
             {
                 e -= 0x00800000; // Decrement exponent (1<<23)
-                m <<= 1; // Shift mantissa                
+                m <<= 1; // Shift mantissa
             }
             m &= unchecked((uint)~0x00800000); // Clear leading 1 bit
             e += 0x38800000; // Adjust bias ((127-14)<<23)

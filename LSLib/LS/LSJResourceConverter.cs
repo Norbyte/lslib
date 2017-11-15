@@ -373,7 +373,7 @@ namespace LSLib.LS
                     throw new InvalidDataException("Unexpected JSON token during parsing of node: " + reader.TokenType);
                 }
             }
-            
+
             return node;
         }
 
@@ -652,7 +652,7 @@ namespace LSLib.LS
                     case NodeAttribute.DataType.DT_UUID:
                         writer.WriteValue(((Guid)attribute.Value.Value).ToString());
                         break;
-                        
+
                     // TODO: haven't seen any vectors/matrices in D:OS JSON files so far
                     case NodeAttribute.DataType.DT_Vec2:
                     case NodeAttribute.DataType.DT_Vec3:

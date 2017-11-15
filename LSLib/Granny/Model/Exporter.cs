@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using LSLib.LS;
 
 namespace LSLib.Granny.Model
@@ -33,14 +32,14 @@ namespace LSLib.Granny.Model
         public bool Is64Bit = false;
         // Use alternate GR2 signature when saving
         // (This is the signature D:OS EE and D:OS 2 uses, but GR2 tools
-        // don't recognize it as legitimate.) 
+        // don't recognize it as legitimate.)
         public bool AlternateSignature = false;
         // GR2 run-time tag that that'll appear in the output file
         // If the GR2 tag doesn't match, the game will convert the GR2 to the latest tag,
         // which is a slow process. The advantage of a mismatched tag is that we don't
         // have to 1:1 match the GR2 structs for that version, as it won't just
         // memcpy the struct from the GR2 file directly.
-        public UInt32 VersionTag = Header.DefaultTag;
+        public UInt32 VersionTag = GR2.Header.DefaultTag;
         // Export vertex normals to DAE/GR2 file
         public bool ExportNormals = true;
         // Export tangents/binormals to DAE/GR2 file
@@ -258,7 +257,7 @@ namespace LSLib.Granny.Model
                         throw new ExportException(msg);
                     }
                 }
-                
+
 
                 // The bones match, copy relevant parameters from the conforming skeleton to the input.
                 inputBone.InverseWorldTransform = conformBone.InverseWorldTransform;
@@ -438,7 +437,7 @@ namespace LSLib.Granny.Model
             var newModel = new Model();
             newModel.InitialPlacement = original.InitialPlacement;
             newModel.Name = original.Name;
-            
+
             if (original.Skeleton != null)
             {
                 var skeleton = Root.Skeletons.Where(skel => skel.Name == original.Skeleton.Name).FirstOrDefault();
@@ -506,7 +505,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            // If the new GR2 contains models that are not in the original GR2, 
+            // If the new GR2 contains models that are not in the original GR2,
             // append them to the end of the model list
             Root.Models.AddRange(originalModels.Where(m => !Root.Models.Contains(m)));
         }
@@ -597,7 +596,7 @@ namespace LSLib.Granny.Model
             {
                 GenerateDummySkeleton(Root);
             }
-            
+
             // This option should be handled after everything else, as it converts Indices
             // into Indices16 and breaks every other operation that manipulates tri topologies.
             if (Options.OutputFormat == ExportFormat.GR2 && Options.CompactIndices)

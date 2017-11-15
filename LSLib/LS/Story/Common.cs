@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
     public interface OsirisSerializable
     {

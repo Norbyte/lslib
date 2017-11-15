@@ -1,10 +1,8 @@
 ﻿using LSLib.Granny.GR2;
-using LSLib.Granny.Model.VertexFormat;
 using OpenTK;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using LSLib.Granny.Model.VertexFormats;
 
 namespace LSLib.Granny.Model
 {

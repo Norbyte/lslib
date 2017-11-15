@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
-    abstract public class Node : OsirisSerializable
+    public abstract class Node : OsirisSerializable
     {
         public enum Type : byte
         {
@@ -36,7 +32,7 @@ namespace LSLib.LS.Osiris
                 NumParams = reader.ReadByte();
             }
         }
-        
+
         public virtual void Write(OsiWriter writer)
         {
             DatabaseRef.Write(writer);
@@ -45,11 +41,11 @@ namespace LSLib.LS.Osiris
                 writer.Write(NumParams);
         }
 
-        abstract public Type NodeType();
+        public abstract Type NodeType();
 
-        abstract public string TypeName();
+        public abstract string TypeName();
 
-        abstract public void MakeScript(TextWriter writer, Story story, Tuple tuple);
+        public abstract void MakeScript(TextWriter writer, Story story, Tuple tuple);
 
         public virtual void PostLoad(Story story)
         {
@@ -92,7 +88,7 @@ namespace LSLib.LS.Osiris
     }
 
 
-    abstract public class TreeNode : Node
+    public abstract class TreeNode : Node
     {
         public NodeEntryItem NextNode;
 

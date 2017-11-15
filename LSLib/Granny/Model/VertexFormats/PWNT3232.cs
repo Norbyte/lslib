@@ -1,10 +1,10 @@
-﻿using LSLib.Granny.GR2;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using LSLib.Granny.GR2;
 
 #pragma warning disable 0649
 
-namespace LSLib.Granny.Model.VertexFormat
+namespace LSLib.Granny.Model.VertexFormats
 {
     [StructSerialization(MixedMarshal = true)]
     internal class PWNT3232_Prototype

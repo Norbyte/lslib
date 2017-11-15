@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
-    abstract public class JoinNode : TreeNode
+    public abstract class JoinNode : TreeNode
     {
         public NodeReference LeftParentRef;
         public NodeReference RightParentRef;

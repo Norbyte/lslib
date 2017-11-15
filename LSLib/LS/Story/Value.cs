@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
     public class Value : OsirisSerializable
     {
@@ -155,7 +153,7 @@ namespace LSLib.LS.Osiris
                             StringValue = reader.ReadString();
                         }
                         break;
-                        
+
                     default:
                         StringValue = reader.ReadString();
                         break;
@@ -208,7 +206,7 @@ namespace LSLib.LS.Osiris
                     {
                         writer.Write((int)Int64Value);
                     }
-                        
+
                     break;
 
                 case Type.Float:
@@ -286,7 +284,7 @@ namespace LSLib.LS.Osiris
                 case Type.GuidString:
                     writer.Write("\"{0}\"", StringValue);
                     break;
-                    
+
                 default:
                     writer.Write(StringValue);
                     break;

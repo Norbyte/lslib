@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Collada141;
 using LSLib.Granny.GR2;
-using OpenTK;
 
 namespace LSLib.Granny.Model
 {

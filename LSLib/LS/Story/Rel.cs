@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
-namespace LSLib.LS.Osiris
+namespace LSLib.LS.Story
 {
-    abstract public class RelNode : TreeNode
+    public abstract class RelNode : TreeNode
     {
         public NodeReference ParentRef;
         public AdapterReference AdapterRef;
