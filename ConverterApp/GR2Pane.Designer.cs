@@ -242,7 +242,7 @@
             this.gr2BatchInputBrowseBtn.TabIndex = 37;
             this.gr2BatchInputBrowseBtn.Text = "...";
             this.gr2BatchInputBrowseBtn.UseVisualStyleBackColor = true;
-            this.gr2BatchInputBrowseBtn.Click += new System.EventHandler(this.gr2BatchInputBrowseBtn_Click);
+            this.gr2BatchInputBrowseBtn.Click += new System.EventHandler(this.GR2BatchInputBrowseBtn_Click);
             // 
             // gr2BatchOutputBrowseBtn
             // 
@@ -253,7 +253,7 @@
             this.gr2BatchOutputBrowseBtn.TabIndex = 40;
             this.gr2BatchOutputBrowseBtn.Text = "...";
             this.gr2BatchOutputBrowseBtn.UseVisualStyleBackColor = true;
-            this.gr2BatchOutputBrowseBtn.Click += new System.EventHandler(this.gr2BatchOutputBrowseBtn_Click);
+            this.gr2BatchOutputBrowseBtn.Click += new System.EventHandler(this.GR2BatchOutputBrowseBtn_Click);
             // 
             // gr2BatchProgressBar
             // 
@@ -333,7 +333,7 @@
             this.gr2BatchConvertBtn.TabIndex = 42;
             this.gr2BatchConvertBtn.Text = "Convert";
             this.gr2BatchConvertBtn.UseVisualStyleBackColor = true;
-            this.gr2BatchConvertBtn.Click += new System.EventHandler(this.gr2BatchConvertBtn_Click);
+            this.gr2BatchConvertBtn.Click += new System.EventHandler(this.GR2BatchConvertBtn_Click);
             // 
             // gr2BatchInputDir
             // 

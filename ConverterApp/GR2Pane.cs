@@ -1,21 +1,24 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using LSLib.Granny;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS.Enums;
+using Animation = LSLib.Granny.Model.Animation;
+using Mesh = LSLib.Granny.Model.Mesh;
 
 namespace ConverterApp
 {
     public partial class GR2Pane : UserControl
     {
-        private Root Root;
-        private MainForm Form;
+        private readonly MainForm _form;
+        private Root _root;
 
         public GR2Pane(MainForm form)
         {
-            Form = form;
+            _form = form;
             InitializeComponent();
             gr2BatchInputFormat.SelectedIndex = 0;
             gr2BatchOutputFormat.SelectedIndex = 1;
@@ -25,31 +28,47 @@ namespace ConverterApp
         {
             exportableObjects.Items.Clear();
 
-            if (Root.Models != null)
+            if (_root.Models != null)
             {
-                foreach (var model in Root.Models)
+                foreach (Model model in _root.Models)
                 {
-                    var item = new ListViewItem(new string[] { model.Name, "Model" });
+                    // ReSharper disable once UseObjectOrCollectionInitializer
+                    var item = new ListViewItem(new[]
+                    {
+                        model.Name,
+                        "Model"
+                    });
                     item.Checked = true;
                     exportableObjects.Items.Add(item);
                 }
             }
 
-            if (Root.Skeletons != null)
+            if (_root.Skeletons != null)
             {
-                foreach (var skeleton in Root.Skeletons)
+                foreach (Skeleton skeleton in _root.Skeletons)
                 {
-                    var item = new ListViewItem(new string[] { skeleton.Name, "Skeleton" });
+                    // ReSharper disable once UseObjectOrCollectionInitializer
+                    var item = new ListViewItem(new[]
+                    {
+                        skeleton.Name,
+                        "Skeleton"
+                    });
                     item.Checked = true;
                     exportableObjects.Items.Add(item);
                 }
             }
 
-            if (Root.Animations != null)
+            // ReSharper disable once InvertIf
+            if (_root.Animations != null)
             {
-                foreach (var animation in Root.Animations)
+                foreach (Animation animation in _root.Animations)
                 {
-                    var item = new ListViewItem(new string[] { animation.Name, "Animation" });
+                    // ReSharper disable once UseObjectOrCollectionInitializer
+                    var item = new ListViewItem(new[]
+                    {
+                        animation.Name,
+                        "Animation"
+                    });
                     item.Checked = true;
                     exportableObjects.Items.Add(item);
                 }
@@ -60,36 +79,58 @@ namespace ConverterApp
         {
             resourceFormats.Items.Clear();
 
-            if (Root.Meshes != null)
+            if (_root.Meshes != null)
             {
-                foreach (var mesh in Root.Meshes)
+                foreach (Mesh mesh in _root.Meshes)
                 {
-                    var item = new ListViewItem(new string[] { mesh.Name, "Mesh", "Automatic" });
+                    var item = new ListViewItem(new[]
+                    {
+                        mesh.Name,
+                        "Mesh",
+                        "Automatic"
+                    });
                     resourceFormats.Items.Add(item);
                 }
             }
 
-            if (Root.TrackGroups != null)
+            // ReSharper disable once InvertIf
+            if (_root.TrackGroups != null)
             {
-                foreach (var trackGroup in Root.TrackGroups)
+                foreach (TrackGroup trackGroup in _root.TrackGroups)
                 {
-                    foreach (var track in trackGroup.TransformTracks)
+                    foreach (TransformTrack track in trackGroup.TransformTracks)
                     {
                         if (track.PositionCurve.CurveData.NumKnots() > 2)
                         {
-                            var item = new ListViewItem(new string[] { track.Name, "Position Track", "Automatic" });
+                            var item = new ListViewItem(new[]
+                            {
+                                track.Name,
+                                "Position Track",
+                                "Automatic"
+                            });
                             resourceFormats.Items.Add(item);
                         }
 
                         if (track.OrientationCurve.CurveData.NumKnots() > 2)
                         {
-                            var item = new ListViewItem(new string[] { track.Name, "Rotation Track", "Automatic" });
+                            var item = new ListViewItem(new[]
+                            {
+                                track.Name,
+                                "Rotation Track",
+                                "Automatic"
+                            });
                             resourceFormats.Items.Add(item);
                         }
 
+                        // ReSharper disable once InvertIf
                         if (track.ScaleShearCurve.CurveData.NumKnots() > 2)
                         {
-                            var item = new ListViewItem(new string[] { track.Name, "Scale/Shear Track", "Automatic" });
+                            var item = new ListViewItem(new[]
+                            {
+                                track.Name,
+                                "Scale/Shear Track",
+                                "Automatic"
+                            });
                             resourceFormats.Items.Add(item);
                         }
                     }
@@ -99,10 +140,8 @@ namespace ConverterApp
 
         private void UpdateInputState()
         {
-            var skinned = (Root.Skeletons != null && Root.Skeletons.Count > 0);
-            var animationsOnly = !skinned 
-                && (Root.Models == null || Root.Models.Count == 0) 
-                && Root.Animations != null && Root.Animations.Count > 0;
+            bool skinned = _root.Skeletons != null && _root.Skeletons.Count > 0;
+            bool animationsOnly = !skinned && (_root.Models == null || _root.Models.Count == 0) && _root.Animations != null && _root.Animations.Count > 0;
 
             if (skinned)
             {
@@ -125,7 +164,7 @@ namespace ConverterApp
                 buildDummySkeleton.Enabled = true;
                 buildDummySkeleton.Checked = true;
             }
-            
+
             UpdateExportableObjects();
             UpdateResourceFormats();
 
@@ -134,7 +173,7 @@ namespace ConverterApp
 
         private void LoadFile(string inPath)
         {
-            Root = GR2Utils.LoadModel(inPath);
+            _root = GR2Utils.LoadModel(inPath);
             UpdateInputState();
         }
 
@@ -143,31 +182,16 @@ namespace ConverterApp
             UpdateCommonExporterSettings(settings);
 
             settings.InputPath = inputPath.Text;
-            if (Path.GetExtension(settings.InputPath)?.ToLower() == ".gr2")
-            {
-                settings.InputFormat = ExportFormat.GR2;
-            }
-            else
-            {
-                settings.InputFormat = ExportFormat.DAE;
-            }
+            settings.InputFormat = Path.GetExtension(settings.InputPath)?.ToLower() == ".gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
 
             settings.OutputPath = outputPath.Text;
-            if (Path.GetExtension(settings.OutputPath)?.ToLower() == ".gr2")
-            {
-                settings.OutputFormat = ExportFormat.GR2;
-            }
-            else
-            {
-                settings.OutputFormat = ExportFormat.DAE;
-            }
+            settings.OutputFormat = Path.GetExtension(settings.OutputPath)?.ToLower() == ".gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
 
-            foreach (var item in resourceFormats.Items)
+            foreach (ListViewItem setting in from object item in resourceFormats.Items select item as ListViewItem)
             {
-                var setting = item as ListViewItem;
-                var name = setting.SubItems[0].Text;
-                var type = setting.SubItems[1].Text;
-                var value = setting.SubItems[2].Text;
+                string name = setting.SubItems[0].Text;
+                string type = setting.SubItems[1].Text;
+                string value = setting.SubItems[2].Text;
                 if (type == "Mesh" && value != "Automatic")
                 {
                     settings.VertexFormats.Add(name, value);
@@ -177,7 +201,7 @@ namespace ConverterApp
 
         private void UpdateCommonExporterSettings(ExporterOptions settings)
         {
-            var game = Form.GetGame();
+            Game game = _form.GetGame();
             if (game == Game.DivinityOriginalSin)
             {
                 settings.Is64Bit = false;
@@ -206,20 +230,12 @@ namespace ConverterApp
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
 
-            if (conformToOriginal.Checked && conformantGR2Path.Text.Length > 0)
-            {
-                settings.ConformGR2Path = conformantGR2Path.Text;
-            }
-            else
-            {
-                settings.ConformGR2Path = null;
-            }
+            settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;
         }
 
         private void inputFileBrowseBtn_Click(object sender, EventArgs e)
         {
-            var result = inputFileDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
+            if (inputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 inputPath.Text = inputFileDlg.FileName;
             }
@@ -227,17 +243,19 @@ namespace ConverterApp
 
         private void loadInputBtn_Click(object sender, EventArgs e)
         {
+            string nl = Environment.NewLine;
+
             try
             {
                 LoadFile(inputPath.Text);
             }
             catch (ParsingException exc)
             {
-                MessageBox.Show("Import failed!\r\n\r\n" + exc.Message, "Import Failed");
+                MessageBox.Show($"Import failed!{nl}{nl}{exc.Message}", "Import Failed");
             }
             catch (Exception exc)
             {
-                MessageBox.Show("Internal error!\r\n\r\n" + exc.ToString(), "Import Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Internal error!{nl}{nl}{exc}", "Import Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -249,8 +267,7 @@ namespace ConverterApp
 
         private void outputFileBrowserBtn_Click(object sender, EventArgs e)
         {
-            var result = outputFileDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
+            if (outputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 outputPath.Text = outputFileDlg.FileName;
             }
@@ -258,8 +275,7 @@ namespace ConverterApp
 
         private void conformantSkeletonBrowseBtn_Click(object sender, EventArgs e)
         {
-            var result = conformSkeletonFileDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
+            if (conformSkeletonFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 conformantGR2Path.Text = conformSkeletonFileDlg.FileName;
             }
@@ -280,19 +296,17 @@ namespace ConverterApp
             }
         }
 
-        private void gr2BatchInputBrowseBtn_Click(object sender, EventArgs e)
+        private void GR2BatchInputBrowseBtn_Click(object sender, EventArgs e)
         {
-            var result = gr2InputDirDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
+            if (gr2InputDirDlg.ShowDialog(this) == DialogResult.OK)
             {
                 gr2BatchInputDir.Text = gr2InputDirDlg.SelectedPath;
             }
         }
 
-        private void gr2BatchOutputBrowseBtn_Click(object sender, EventArgs e)
+        private void GR2BatchOutputBrowseBtn_Click(object sender, EventArgs e)
         {
-            var result = gr2OutputDirDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
+            if (gr2OutputDirDlg.ShowDialog(this) == DialogResult.OK)
             {
                 gr2BatchOutputDir.Text = gr2OutputDirDlg.SelectedPath;
             }
@@ -301,62 +315,51 @@ namespace ConverterApp
         private void GR2ProgressUpdate(string status, long numerator, long denominator)
         {
             gr2BatchProgressLabel.Text = status;
-            if (denominator == 0)
-            {
-                gr2BatchProgressBar.Value = 0;
-            }
-            else
-            {
-                gr2BatchProgressBar.Value = (int)(numerator * 100 / denominator);
-            }
+            gr2BatchProgressBar.Value = denominator == 0 ? 0 : (int) (numerator * 100 / denominator);
 
             Application.DoEvents();
         }
 
-        private void GR2ConversionError(string inputPath, string outputPath, Exception exc)
+        private static void GR2ConversionError(string inputPath, string outputPath, Exception exc)
         {
-            var pathText = "File: " + inputPath + Environment.NewLine;
-            if (exc is ExportException)
+            string nl = Environment.NewLine;
+
+            string pathText = $"Input File: {inputPath}{nl}Output File: {outputPath}{nl}";
+            switch (exc)
             {
-                var msg = "Export failed!" + Environment.NewLine + Environment.NewLine +
-                    pathText + Environment.NewLine + exc.Message;
-                MessageBox.Show(msg, "Export Failed");
-            }
-            else if (exc is ParsingException)
-            {
-                var msg = "Export failed!" + Environment.NewLine + Environment.NewLine +
-                    pathText + Environment.NewLine + exc.Message;
-                MessageBox.Show(msg, "Export Failed");
-            }
-            else
-            {
-                var msg = "Internal error!" + Environment.NewLine + Environment.NewLine +
-                    pathText + Environment.NewLine + exc.ToString();
-                MessageBox.Show(msg, "Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                case ExportException _:
+                case ParsingException _:
+                {
+                    MessageBox.Show($"Export failed!{nl}{nl}{pathText}{nl}{exc.Message}", "Export Failed");
+                    break;
+                }
+                default:
+                {
+                    MessageBox.Show($"Internal error!{nl}{nl}{pathText}{nl}{exc}", "Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
+                }
             }
         }
 
-        private void gr2BatchConvertBtn_Click(object sender, EventArgs e)
+        private void GR2BatchConvertBtn_Click(object sender, EventArgs e)
         {
             gr2BatchConvertBtn.Enabled = false;
             var exporter = new Exporter();
             UpdateCommonExporterSettings(exporter.Options);
 
-            if (gr2BatchInputFormat.SelectedIndex == 0)
-                exporter.Options.InputFormat = ExportFormat.GR2;
-            else
-                exporter.Options.InputFormat = ExportFormat.DAE;
+            exporter.Options.InputFormat = gr2BatchInputFormat.SelectedIndex == 0 ? ExportFormat.GR2 : ExportFormat.DAE;
 
-            if (gr2BatchOutputFormat.SelectedIndex == 0)
-                exporter.Options.OutputFormat = ExportFormat.GR2;
-            else
-                exporter.Options.OutputFormat = ExportFormat.DAE;
+            exporter.Options.OutputFormat = gr2BatchOutputFormat.SelectedIndex == 0 ? ExportFormat.GR2 : ExportFormat.DAE;
 
-            var batchConverter = new GR2Utils();
-            batchConverter.progressUpdate = GR2ProgressUpdate;
-            batchConverter.conversionError = GR2ConversionError;
+            var batchConverter = new GR2Utils
+            {
+                ProgressUpdate = GR2ProgressUpdate,
+                ConversionError = GR2ConversionError
+            };
+
             batchConverter.ConvertModels(gr2BatchInputDir.Text, gr2BatchOutputDir.Text, exporter);
             gr2BatchConvertBtn.Enabled = true;
+
             MessageBox.Show("Batch export completed.");
         }
     }
