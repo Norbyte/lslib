@@ -151,6 +151,8 @@
     <Compile Include="LS\Enums\CompressionMethod.cs" />
     <Compile Include="LS\Enums\FileVersion.cs" />
     <Compile Include="LS\Enums\Game.cs" />
+    <Compile Include="LS\Enums\LogLevel.cs" />
+    <Compile Include="LS\Enums\PackageVersion.cs" />
     <Compile Include="LS\Enums\ResourceFormat.cs" />
     <Compile Include="LS\FileManager.cs" />
     <Compile Include="LS\LSBReader.cs" />
