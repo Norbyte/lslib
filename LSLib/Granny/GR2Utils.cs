@@ -1,21 +1,25 @@
-﻿using LSLib.Granny.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using LSLib.Granny.GR2;
+using LSLib.Granny.Model;
+using LSLib.LS;
 
 namespace LSLib.Granny
 {
     public class GR2Utils
     {
-        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator);
-        public ProgressUpdateDelegate progressUpdate = delegate { };
-
         public delegate void ConversionErrorDelegate(string inputPath, string outputPath, Exception exc);
-        public ConversionErrorDelegate conversionError = delegate { };
+
+        public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator);
+
+        public ConversionErrorDelegate ConversionError = delegate { };
+        public ProgressUpdateDelegate ProgressUpdate = delegate { };
 
         public static ExportFormat ExtensionToModelFormat(string path)
         {
-            var extension = Path.GetExtension(path).ToLower();
+            string extension = Path.GetExtension(path)?.ToLower();
 
             switch (extension)
             {
@@ -26,37 +30,34 @@ namespace LSLib.Granny
                     return ExportFormat.DAE;
 
                 default:
-                    throw new ArgumentException("Unrecognized model file extension: " + extension);
+                    throw new ArgumentException($"Unrecognized model file extension: {extension}");
             }
         }
 
-        public static Root LoadModel(string inputPath)
-        {
-            return LoadModel(inputPath, ExtensionToModelFormat(inputPath));
-        }
+        public static Root LoadModel(string inputPath) => LoadModel(inputPath, ExtensionToModelFormat(inputPath));
 
         public static Root LoadModel(string inputPath, ExportFormat format)
         {
             switch (format)
             {
                 case ExportFormat.GR2:
+                {
+                    using (var fs = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
-                        using (var fs = new FileStream(inputPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite))
-                        {
-                            var root = new LSLib.Granny.Model.Root();
-                            var gr2 = new LSLib.Granny.GR2.GR2Reader(fs);
-                            gr2.Read(root);
-                            root.PostLoad();
-                            return root;
-                        }
-                    }
-
-                case ExportFormat.DAE:
-                    {
-                        var importer = new ColladaImporter();
-                        var root = importer.Import(inputPath);
+                        var root = new Root();
+                        var gr2 = new GR2Reader(fs);
+                        gr2.Read(root);
+                        root.PostLoad();
                         return root;
                     }
+                }
+
+                case ExportFormat.DAE:
+                {
+                    var importer = new ColladaImporter();
+                    Root root = importer.Import(inputPath);
+                    return root;
+                }
 
                 default:
                     throw new ArgumentException("Invalid model format");
@@ -71,56 +72,41 @@ namespace LSLib.Granny
             exporter.Export();
         }
 
-        private void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string extension)
+        private static List<string> EnumerateFiles(string path, ExportFormat format)
         {
-            foreach (string filePath in Directory.GetFiles(currentPath))
+            if (!path.EndsWith(Path.DirectorySeparatorChar.ToString()))
             {
-                var fileExtension = Path.GetExtension(filePath);
-                if (fileExtension.ToLower() == extension)
-                {
-                    var relativePath = filePath.Substring(rootPath.Length);
-                    if (relativePath[0] == '/' || relativePath[0] == '\\')
-                    {
-                        relativePath = relativePath.Substring(1);
-                    }
-
-                    paths.Add(relativePath);
-                }
+                path += Path.DirectorySeparatorChar;
             }
 
-            foreach (string directoryPath in Directory.GetDirectories(currentPath))
-            {
-                EnumerateFiles(paths, rootPath, directoryPath, extension);
-            }
+            return Directory.EnumerateFiles(path, $"*.{format.ToString().ToLower()}", SearchOption.AllDirectories).ToList();
         }
 
-        public void ConvertModels(string inputDir, string outputDir, Exporter exporter)
+        public void ConvertModels(string inputDirectoryPath, string outputDirectoryPath, Exporter exporter)
         {
-            this.progressUpdate("Enumerating files ...", 0, 1);
-            var paths = new List<string>();
-            EnumerateFiles(paths, inputDir, inputDir, "." + exporter.Options.InputFormat.ToString().ToLower());
+            string outputExtension = exporter.Options.OutputFormat.ToString().ToLower();
 
-            this.progressUpdate("Converting resources ...", 0, 1);
-            for (var i = 0; i < paths.Count; i++)
+            ProgressUpdate("Enumerating files ...", 0, 1);
+            List<string> inputFilePaths = EnumerateFiles(inputDirectoryPath, exporter.Options.InputFormat);
+
+            ProgressUpdate("Converting resources ...", 0, 1);
+            for (var i = 0; i < inputFilePaths.Count; i++)
             {
-                var path = paths[i];
-                var inPath = inputDir + "/" + path;
-                var outPath = outputDir + "/" + Path.ChangeExtension(path, exporter.Options.OutputFormat.ToString().ToLower());
-                var dirName = Path.GetDirectoryName(outPath);
-                if (!Directory.Exists(dirName))
-                {
-                    Directory.CreateDirectory(dirName);
-                }
+                string inputFilePath = inputFilePaths[i];
 
-                this.progressUpdate("Converting: " + inPath, i, paths.Count);
+                string outputFilePath = Path.ChangeExtension(inputFilePath.Replace(inputDirectoryPath, outputDirectoryPath), outputExtension);
+
+                FileManager.TryToCreateDirectory(outputFilePath);
+
+                ProgressUpdate($"Converting: {inputFilePath}", i, inputFilePaths.Count);
                 try
                 {
-                    var model = LoadModel(inPath, exporter.Options.InputFormat);
-                    SaveModel(model, outPath, exporter);
+                    Root model = LoadModel(inputFilePath, exporter.Options.InputFormat);
+                    SaveModel(model, outputFilePath, exporter);
                 }
                 catch (Exception exc)
                 {
-                    conversionError(inPath, outPath, exc);
+                    ConversionError(inputFilePath, outputFilePath, exc);
                 }
             }
         }
