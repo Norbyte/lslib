@@ -5,7 +5,7 @@ namespace LSLib.LS
 {
     internal class FileManager
     {
-        private const int MAX_PATH = 248;
+        private const int MaxPath = 248;
 
         public static void TryToCreateDirectory(string path)
         {
@@ -42,9 +42,9 @@ namespace LSLib.LS
                 throw new NullReferenceException("Cannot create directory without non-null output path");
             }
 
-            if (outputPath.Length > MAX_PATH)
+            if (outputPath.Length > MaxPath)
             {
-                throw new PathTooLongException($"Cannot create directory in path exceeding {MAX_PATH} characters");
+                throw new PathTooLongException($"Cannot create directory in path exceeding {MaxPath} characters");
             }
 
             // if the directory does not exist, create the directory
