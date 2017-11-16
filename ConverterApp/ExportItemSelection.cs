@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using LSLib.Granny.Model;
@@ -6,151 +7,160 @@ using LSLib.Granny.Model.CurveData;
 
 namespace ConverterApp
 {
-    public partial class ExportItemSelection : System.Windows.Forms.ListView
+    public partial class ExportItemSelection : ListView
     {
-        private ComboBox CurrentItemCombo;
-        private ListViewItem CurrentItem;
+        private ListViewItem _currentItem;
+        private ComboBox _currentItemCombo;
 
         public ExportItemSelection()
         {
             InitializeComponent();
 
-            this.MouseUp += EventMouseUp;
+            MouseUp += EventMouseUp;
         }
 
-        void PopulateCombo()
+        private void PopulateCombo()
         {
-            if (CurrentItem.SubItems[1].Text == "Mesh")
+            switch (_currentItem.SubItems[1].Text)
             {
-                CurrentItemCombo.Items.Add("Automatic");
-                foreach (var defn in VertexFormatRegistry.GetAllTypes())
+                case "Mesh":
                 {
-                    CurrentItemCombo.Items.Add(defn.Key);
+                    _currentItemCombo.Items.Add("Automatic");
+                    foreach (KeyValuePair<string, Type> defn in VertexFormatRegistry.GetAllTypes())
+                    {
+                        _currentItemCombo.Items.Add(defn.Key);
+                    }
+                    break;
                 }
-            }
-            else if (CurrentItem.SubItems[1].Text == "Position Track" ||
-                CurrentItem.SubItems[1].Text == "Rotation Track" ||
-                CurrentItem.SubItems[1].Text == "Scale/Shear Track")
-            {
-                CurrentItemCombo.Items.Add("Automatic");
-                foreach (var defn in CurveRegistry.GetAllTypes())
+                case "Position Track":
+                case "Rotation Track":
+                case "Scale/Shear Track":
                 {
-                    CurrentItemCombo.Items.Add(defn.Key);
+                    _currentItemCombo.Items.Add("Automatic");
+                    foreach (KeyValuePair<string, Type> defn in CurveRegistry.GetAllTypes())
+                    {
+                        _currentItemCombo.Items.Add(defn.Key);
+                    }
+                    break;
                 }
             }
         }
 
-        void CreateItemSelectionCombo(Rectangle bounds)
+        private void CreateItemSelectionCombo(Rectangle bounds)
         {
-            CurrentItemCombo = new ComboBox();
-            CurrentItemCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+            _currentItemCombo = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
 
             PopulateCombo();
-            if (CurrentItemCombo.Items.Count == 0)
+            if (_currentItemCombo.Items.Count == 0)
             {
-                CurrentItemCombo = null;
+                _currentItemCombo = null;
                 return;
             }
 
             // Assign calculated bounds to the ComboBox.
-            CurrentItemCombo.Bounds = bounds;
+            _currentItemCombo.Bounds = bounds;
 
             // Set default text for ComboBox to match the item that is clicked.
-            CurrentItemCombo.Text = CurrentItem.SubItems[2].Text;
+            _currentItemCombo.Text = _currentItem.SubItems[2].Text;
 
             // Display the ComboBox, and make sure that it is on top with focus.
-            CurrentItemCombo.Parent = this;
-            CurrentItemCombo.Visible = true;
-            CurrentItemCombo.BringToFront();
-            CurrentItemCombo.Focus();
+            _currentItemCombo.Parent = this;
+            _currentItemCombo.Visible = true;
+            _currentItemCombo.BringToFront();
+            _currentItemCombo.Focus();
 
-            CurrentItemCombo.SelectedValueChanged += FormatCombo_ValueChanged;
-            CurrentItemCombo.Leave += FormatCombo_ValueChanged;
-            CurrentItemCombo.KeyPress += FormatCombo_KeyPress;
+            _currentItemCombo.SelectedValueChanged += FormatCombo_ValueChanged;
+            _currentItemCombo.Leave += FormatCombo_ValueChanged;
+            _currentItemCombo.KeyPress += FormatCombo_KeyPress;
         }
 
-        void FormatCombo_KeyPress(object sender, KeyPressEventArgs e)
+        private void FormatCombo_KeyPress(object sender, KeyPressEventArgs e)
         {
             // Verify that the user presses ESC.
             switch (e.KeyChar)
             {
-                case (char)(int)Keys.Escape:
-                    {
-                        // Reset the original text value, and then hide the ComboBox.
-                        FormatCombo_ValueChanged(sender, e);
-                        break;
-                    }
+                case (char) (int) Keys.Escape:
+                {
+                    // Reset the original text value, and then hide the ComboBox.
+                    FormatCombo_ValueChanged(sender, e);
+                    break;
+                }
 
-                case (char)(int)Keys.Enter:
-                    {
-                        // Hide the ComboBox.
-                        CurrentItemCombo.Hide();
-                        CurrentItemCombo.Parent = null;
-                        CurrentItemCombo = null;
-                        break;
-                    }
+                case (char) (int) Keys.Enter:
+                {
+                    // Hide the ComboBox.
+                    _currentItemCombo.Hide();
+                    _currentItemCombo.Parent = null;
+                    _currentItemCombo = null;
+                    break;
+                }
             }
         }
 
-        void FormatCombo_ValueChanged(object sender, EventArgs e)
+        private void FormatCombo_ValueChanged(object sender, EventArgs e)
         {
-            if (CurrentItemCombo.Text.Length > 0)
+            if (_currentItemCombo.Text.Length > 0)
             {
-                CurrentItem.SubItems[2].Text = CurrentItemCombo.Text;
+                _currentItem.SubItems[2].Text = _currentItemCombo.Text;
             }
 
-            CurrentItemCombo.Hide();
-            CurrentItemCombo = null;
+            _currentItemCombo.Hide();
+            _currentItemCombo = null;
         }
 
-        void EventMouseUp(object sender, MouseEventArgs e)
+        private void EventMouseUp(object sender, MouseEventArgs e)
         {
             // Get the item on the row that is clicked.
-            var Item = GetItemAt(e.X, e.Y);
+            ListViewItem item = GetItemAt(e.X, e.Y);
 
             // Make sure that an item is clicked.
-            if (Item != null)
+            if (item == null)
             {
-                // Get the bounds of the item that is clicked.
-                Rectangle ClickedItem = Item.Bounds;
+                return;
+            }
 
-                // Verify that the column is completely scrolled off to the left.
-                if ((ClickedItem.Left + Columns[2].Width) < 0)
-                {
-                    // If the cell is out of view to the left, do nothing.
-                    return;
-                }
+            // Get the bounds of the item that is clicked.
+            Rectangle clickedItem = item.Bounds;
 
-                // Verify that the column is partially scrolled off to the left.
-                else if (ClickedItem.Left < 0)
+            // Verify that the column is completely scrolled off to the left.
+            if (clickedItem.Left + Columns[2].Width < 0)
+            {
+                // If the cell is out of view to the left, do nothing.
+                return;
+            }
+
+            // Verify that the column is partially scrolled off to the left.
+            if (clickedItem.Left < 0)
+            {
+                // Determine if column extends beyond right side of ListView.
+                if (clickedItem.Left + Columns[2].Width > Width)
                 {
-                    // Determine if column extends beyond right side of ListView.
-                    if ((ClickedItem.Left + Columns[2].Width) > Width)
-                    {
-                        // Set width of column to match width of ListView.
-                        ClickedItem.Width = Width;
-                        ClickedItem.X = 0;
-                    }
-                    else
-                    {
-                        // Right side of cell is in view.
-                        ClickedItem.Width = Columns[2].Width + ClickedItem.Left;
-                        ClickedItem.X = 2;
-                    }
-                }
-                else if (Columns[2].Width > Width)
-                {
-                    ClickedItem.Width = Width;
+                    // Set width of column to match width of ListView.
+                    clickedItem.Width = Width;
+                    clickedItem.X = 0;
                 }
                 else
                 {
-                    ClickedItem.Width = Columns[2].Width;
-                    ClickedItem.X = 2 + Columns[0].Width + Columns[1].Width;
+                    // Right side of cell is in view.
+                    clickedItem.Width = Columns[2].Width + clickedItem.Left;
+                    clickedItem.X = 2;
                 }
-
-                CurrentItem = Item;
-                CreateItemSelectionCombo(ClickedItem);
             }
+            else if (Columns[2].Width > Width)
+            {
+                clickedItem.Width = Width;
+            }
+            else
+            {
+                clickedItem.Width = Columns[2].Width;
+                clickedItem.X = 2 + Columns[0].Width + Columns[1].Width;
+            }
+
+            _currentItem = item;
+            CreateItemSelectionCombo(clickedItem);
         }
     }
 }
