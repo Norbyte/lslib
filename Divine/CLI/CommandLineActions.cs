@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Divine.Enums;
 using LSLib.LS.Enums;
 
 namespace Divine.CLI
@@ -102,33 +101,47 @@ namespace Divine.CLI
             switch (args.Action)
             {
                 case "create-package":
+                {
                     CommandLinePackageProcessor.Create();
                     break;
+                }
 
                 case "extract-package":
+                {
                     CommandLinePackageProcessor.Extract();
                     break;
+                }
 
                 case "convert-model":
+                {
                     CommandLineGR2Processor.UpdateExporterSettings();
                     CommandLineGR2Processor.Convert();
                     break;
+                }
 
                 case "convert-resource":
+                {
                     CommandLineDataProcessor.Convert();
                     break;
+                }
 
                 case "extract-packages":
+                {
                     CommandLinePackageProcessor.BatchExtract();
                     break;
+                }
 
                 case "convert-models":
+                {
                     CommandLineGR2Processor.BatchConvert();
                     break;
+                }
 
                 case "convert-resources":
+                {
                     CommandLineDataProcessor.BatchConvert();
                     break;
+                }
             }
         }
 

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using CommandLineParser.Arguments;
-using Divine.Enums;
 using LSLib.Granny.Model;
 using LSLib.LS.Enums;
 
@@ -10,42 +9,14 @@ namespace Divine.CLI
     public class CommandLineArguments
     {
         // @formatter:off
-        [EnumeratedValueArgument(typeof(string), 'a', "action",
-            Description = "Set action to execute",
-            DefaultValue = "extract-package",
-            AllowedValues = "create-package;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
-            ValueOptional = false,
-            Optional = false
-        )]
-        public string Action;
-
-        // @formatter:off
-        [EnumeratedValueArgument(typeof(string), 'c', "compression-method",
-            Description = "Set compression method",
-            DefaultValue = "lz4hc",
-            AllowedValues = "zlib;zlibfast;lz4;lz4hc;none",
+        [EnumeratedValueArgument(typeof(string), 'l', "loglevel",
+            Description = "Set verbosity level of log output",
+            DefaultValue = "info",
+            AllowedValues = "off;fatal;error;warn;info;debug;trace;all",
             ValueOptional = false,
             Optional = true
         )]
-        public string CompressionMethod;
-
-        // @formatter:off
-        [ValueArgument(typeof(string), "conform-path",
-            Description = "Set conform to original path",
-            DefaultValue = null,
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string ConformPath;
-
-        // @formatter:off
-        [ValueArgument(typeof(string), 'd', "destination",
-            Description = "Set destination file path or directory",
-            DefaultValue = null,
-            ValueOptional = false,
-            Optional = false
-        )]
-        public string Destination;
+        public string LogLevel;
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'g', "game",
@@ -58,6 +29,24 @@ namespace Divine.CLI
         public string Game;
 
         // @formatter:off
+        [ValueArgument(typeof(string), 's', "source",
+            Description = "Set source file path or directory",
+            DefaultValue = null,
+            ValueOptional = false,
+            Optional = false
+        )]
+        public string Source;
+
+        // @formatter:off
+        [ValueArgument(typeof(string), 'd', "destination",
+            Description = "Set destination file path or directory",
+            DefaultValue = null,
+            ValueOptional = false,
+            Optional = false
+        )]
+        public string Destination;
+
+        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'i', "input-format",
             Description = "Set input format for batch operations",
             DefaultValue = null,
@@ -66,26 +55,6 @@ namespace Divine.CLI
             Optional = true
         )]
         public string InputFormat;
-
-        // @formatter:off
-        [EnumeratedValueArgument(typeof(string), 'l', "loglevel",
-            Description = "Set verbosity level of log output",
-            DefaultValue = "info",
-            AllowedValues = "off;fatal;error;warn;info;debug;trace;all",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string LogLevel;
-
-        // @formatter:off
-        [EnumeratedValueArgument(typeof(string), "gr2-options",
-            Description = "Set extra options for GR2/DAE conversion",
-            AllowMultiple = true,
-            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;filter-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string[] Options;
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'o', "output-format",
@@ -98,6 +67,16 @@ namespace Divine.CLI
         public string OutputFormat;
 
         // @formatter:off
+        [EnumeratedValueArgument(typeof(string), 'a', "action",
+            Description = "Set action to execute",
+            DefaultValue = "extract-package",
+            AllowedValues = "create-package;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
+            ValueOptional = false,
+            Optional = false
+        )]
+        public string Action;
+
+        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'p', "package-version",
             Description = "Set package version",
             DefaultValue = "v13",
@@ -108,13 +87,33 @@ namespace Divine.CLI
         public string PackageVersion;
 
         // @formatter:off
-        [ValueArgument(typeof(string), 's', "source",
-            Description = "Set source file path or directory",
+        [EnumeratedValueArgument(typeof(string), 'c', "compression-method",
+            Description = "Set compression method",
+            DefaultValue = "lz4hc",
+            AllowedValues = "zlib;zlibfast;lz4;lz4hc;none",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string CompressionMethod;
+
+        // @formatter:off
+        [EnumeratedValueArgument(typeof(string), "gr2-options",
+            Description = "Set extra options for GR2/DAE conversion",
+            AllowMultiple = true,
+            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;filter-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string[] Options;
+
+        // @formatter:off
+        [ValueArgument(typeof(string), "conform-path",
+            Description = "Set conform to original path",
             DefaultValue = null,
             ValueOptional = false,
-            Optional = false
+            Optional = true
         )]
-        public string Source;
+        public string ConformPath;
 
         // @formatter:on
 
@@ -122,15 +121,42 @@ namespace Divine.CLI
         {
             switch (logLevel)
             {
-                case "off": return Enums.LogLevel.OFF;
-                case "fatal": return Enums.LogLevel.FATAL;
-                case "error": return Enums.LogLevel.ERROR;
-                case "warn": return Enums.LogLevel.WARN;
-                case "info": return Enums.LogLevel.INFO;
-                case "debug": return Enums.LogLevel.DEBUG;
-                case "trace": return Enums.LogLevel.TRACE;
-                case "all": return Enums.LogLevel.ALL;
-                default: return Enums.LogLevel.INFO;
+                case "off":
+                {
+                    return LSLib.LS.Enums.LogLevel.OFF;
+                }
+                case "fatal":
+                {
+                    return LSLib.LS.Enums.LogLevel.FATAL;
+                }
+                case "error":
+                {
+                    return LSLib.LS.Enums.LogLevel.ERROR;
+                }
+                case "warn":
+                {
+                    return LSLib.LS.Enums.LogLevel.WARN;
+                }
+                case "info":
+                {
+                    return LSLib.LS.Enums.LogLevel.INFO;
+                }
+                case "debug":
+                {
+                    return LSLib.LS.Enums.LogLevel.DEBUG;
+                }
+                case "trace":
+                {
+                    return LSLib.LS.Enums.LogLevel.TRACE;
+                }
+                case "all":
+                {
+                    return LSLib.LS.Enums.LogLevel.ALL;
+                }
+                default:
+                {
+                    return LSLib.LS.Enums.LogLevel.INFO;
+                }
             }
         }
 
@@ -139,11 +165,19 @@ namespace Divine.CLI
         {
             switch (game)
             {
-                case "dos": return LSLib.LS.Enums.Game.DivinityOriginalSin;
-                case "dosee": return LSLib.LS.Enums.Game.DivinityOriginalSinEE;
+                case "dos":
+                {
+                    return LSLib.LS.Enums.Game.DivinityOriginalSin;
+                }
+                case "dosee":
+                {
+                    return LSLib.LS.Enums.Game.DivinityOriginalSinEE;
+                }
                 case "dos2":
                 default:
+                {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2;
+                }
             }
         }
 
@@ -156,12 +190,23 @@ namespace Divine.CLI
         {
             switch (resourceFormat)
             {
-                case "lsb": return ResourceFormat.LSB;
-                case "lsf": return ResourceFormat.LSF;
-                case "lsj": return ResourceFormat.LSJ;
+                case "lsb":
+                {
+                    return ResourceFormat.LSB;
+                }
+                case "lsf":
+                {
+                    return ResourceFormat.LSF;
+                }
+                case "lsj":
+                {
+                    return ResourceFormat.LSJ;
+                }
                 case "lsx":
                 default:
+                {
                     return ResourceFormat.LSX;
+                }
             }
         }
 
@@ -170,12 +215,23 @@ namespace Divine.CLI
         {
             switch (packageVersion)
             {
-                case "v7": return Enums.PackageVersion.V7;
-                case "v9": return Enums.PackageVersion.V9;
-                case "v10": return Enums.PackageVersion.V10;
+                case "v7":
+                {
+                    return LSLib.LS.Enums.PackageVersion.V7;
+                }
+                case "v9":
+                {
+                    return LSLib.LS.Enums.PackageVersion.V9;
+                }
+                case "v10":
+                {
+                    return LSLib.LS.Enums.PackageVersion.V10;
+                }
                 case "v13":
                 default:
-                    return Enums.PackageVersion.V13;
+                {
+                    return LSLib.LS.Enums.PackageVersion.V13;
+                }
             }
         }
 
@@ -187,32 +243,42 @@ namespace Divine.CLI
             switch (compressionOption)
             {
                 case "zlibfast":
+                {
                     compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                     break;
+                }
 
                 case "zlib":
+                {
                     compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                     fastCompression = false;
                     break;
+                }
 
                 case "lz4":
+                {
                     compression = LSLib.LS.Enums.CompressionMethod.LZ4;
                     break;
+                }
 
                 case "lz4hc":
+                {
                     compression = LSLib.LS.Enums.CompressionMethod.LZ4;
                     fastCompression = false;
                     break;
+                }
 
                 // ReSharper disable once RedundantCaseLabel
                 case "none":
                 default:
+                {
                     compression = LSLib.LS.Enums.CompressionMethod.None;
                     break;
+                }
             }
 
             // fallback to zlib, if the package version doesn't support lz4
-            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && packageVersion <= Enums.PackageVersion.V9)
+            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && packageVersion <= LSLib.LS.Enums.PackageVersion.V9)
             {
                 compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                 fastCompression = false;

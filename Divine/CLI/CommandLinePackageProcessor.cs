@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Divine.Enums;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
@@ -47,8 +46,8 @@ namespace Divine.CLI
                 CommandLineLogger.LogDebug($"Using destination path: {file}");
             }
 
-            PackageVersion version = CommandLineActions.PackageVersion;
-            Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, version);
+            PackageVersion packageVersion = CommandLineActions.PackageVersion;
+            Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, packageVersion);
 
             var compressionMethod = (CompressionMethod) compressionOptions["Compression"];
             var compressionSpeed = (bool) compressionOptions["FastCompression"];
@@ -57,7 +56,7 @@ namespace Divine.CLI
             CommandLineLogger.LogDebug($"Using fast compression: {compressionSpeed}");
 
             var packager = new Packager();
-            packager.CreatePackage(file, CommandLineActions.SourcePath, (uint) version, compressionMethod, compressionSpeed);
+            packager.CreatePackage(file, CommandLineActions.SourcePath, packageVersion, compressionMethod, compressionSpeed);
 
             CommandLineLogger.LogInfo("Package created successfully.");
         }

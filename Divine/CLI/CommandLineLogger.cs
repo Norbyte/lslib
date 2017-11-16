@@ -1,5 +1,5 @@
 ﻿using System;
-using Divine.Enums;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -25,6 +25,7 @@ namespace Divine.CLI
             switch (logLevel)
             {
                 case LogLevel.FATAL:
+                {
                     if (LogLevelOption > LogLevel.OFF)
                     {
                         Console.WriteLine($"[FATAL] {message}");
@@ -39,46 +40,57 @@ namespace Divine.CLI
                         Environment.Exit((int) LogLevel.FATAL + errorCode);
                     }
                     break;
+                }
 
                 case LogLevel.ERROR:
+                {
                     if (LogLevelOption < logLevel)
                     {
                         break;
                     }
                     Console.WriteLine($"[ERROR] {message}");
                     break;
+                }
 
                 case LogLevel.WARN:
+                {
                     if (LogLevelOption < logLevel)
                     {
                         break;
                     }
                     Console.WriteLine($"[WARN] {message}");
                     break;
+                }
 
                 case LogLevel.INFO:
+                {
                     if (LogLevelOption < logLevel)
                     {
                         break;
                     }
                     Console.WriteLine($"[INFO] {message}");
                     break;
+                }
 
                 case LogLevel.DEBUG:
+                {
                     if (LogLevelOption < logLevel)
                     {
                         break;
                     }
                     Console.WriteLine($"[DEBUG] {message}");
                     break;
+                }
 
                 case LogLevel.TRACE:
+                {
                     if (LogLevelOption < logLevel)
                     {
                         break;
                     }
                     Console.WriteLine($"[TRACE] {message}");
                     break;
+                }
             }
         }
     }
