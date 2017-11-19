@@ -1,15 +1,15 @@
-﻿using LZ4;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using LZ4;
 
 namespace LSLib.LS
 {
     public class NotAPackageException : Exception
     {
-        public NotAPackageException() : base()
+        public NotAPackageException()
         {
         }
 
@@ -20,21 +20,18 @@ namespace LSLib.LS
         public NotAPackageException(string message, Exception innerException) : base(message, innerException)
         {
         }
-    };
+    }
 
     public class PackageReader
     {
-        private String path;
-        private Stream[] streams;
+        private readonly String _path;
+        private Stream[] _streams;
 
-        public PackageReader(string path)
-        {
-            this.path = path;
-        }
+        public PackageReader(string path) => this._path = path;
 
         public void Dispose()
         {
-            foreach (var stream in streams)
+            foreach (Stream stream in _streams)
             {
                 stream.Dispose();
             }
@@ -43,13 +40,13 @@ namespace LSLib.LS
         private void OpenStreams(FileStream mainStream, int numParts)
         {
             // Open a stream for each file chunk
-            streams = new Stream[numParts];
-            streams[0] = mainStream;
+            _streams = new Stream[numParts];
+            _streams[0] = mainStream;
 
-            for (int part = 1; part < numParts; part++)
+            for (var part = 1; part < numParts; part++)
             {
-                var partPath = Package.MakePartFilename(path, part);
-                streams[part] = new FileStream(partPath, FileMode.Open, FileAccess.Read);
+                string partPath = Package.MakePartFilename(_path, part);
+                _streams[part] = new FileStream(partPath, FileMode.Open, FileAccess.Read);
             }
         }
 
@@ -59,7 +56,7 @@ namespace LSLib.LS
             mainStream.Seek(0, SeekOrigin.Begin);
             var header = BinUtils.ReadStruct<LSPKHeader7>(reader);
 
-            OpenStreams(mainStream, (int)header.NumParts);
+            OpenStreams(mainStream, (int) header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
             {
                 var entry = BinUtils.ReadStruct<FileEntry7>(reader);
@@ -67,7 +64,7 @@ namespace LSLib.LS
                 {
                     entry.OffsetInFile += header.DataOffset;
                 }
-                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, streams[entry.ArchivePart]));
+                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
             }
 
             return package;
@@ -90,7 +87,7 @@ namespace LSLib.LS
 
                 // Add missing compression level flags
                 entry.Flags = (entry.Flags & 0x0f) | 0x20;
-                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, streams[entry.ArchivePart]));
+                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
             }
 
             return package;
@@ -101,9 +98,9 @@ namespace LSLib.LS
             var package = new Package();
             var header = BinUtils.ReadStruct<LSPKHeader13>(reader);
 
-            if (header.Version != Package.CurrentVersion)
+            if (header.Version != (ulong) Package.CurrentVersion)
             {
-                var msg = String.Format("Unsupported package version {0}; this extractor only supports {1}", header.Version, Package.CurrentVersion);
+                string msg = $"Unsupported package version {header.Version}; this extractor only supports {Package.CurrentVersion}";
                 throw new InvalidDataException(msg);
             }
 
@@ -111,23 +108,23 @@ namespace LSLib.LS
             mainStream.Seek(header.FileListOffset, SeekOrigin.Begin);
             int numFiles = reader.ReadInt32();
             int fileBufferSize = Marshal.SizeOf(typeof(FileEntry13)) * numFiles;
-            byte[] compressedFileList = reader.ReadBytes((int)header.FileListSize - 4);
+            byte[] compressedFileList = reader.ReadBytes((int) header.FileListSize - 4);
 
             var uncompressedList = new byte[fileBufferSize];
-            var uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, true);
+            int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, true);
             if (uncompressedSize != fileBufferSize)
             {
-                var msg = String.Format("LZ4 compressor disagrees about the size of file headers; expected {0}, got {1}", fileBufferSize, uncompressedSize);
+                string msg = $"LZ4 compressor disagrees about the size of file headers; expected {fileBufferSize}, got {uncompressedSize}";
                 throw new InvalidDataException(msg);
             }
 
             var ms = new MemoryStream(uncompressedList);
             var msr = new BinaryReader(ms);
 
-            for (int i = 0; i < numFiles; i++)
+            for (var i = 0; i < numFiles; i++)
             {
                 var entry = BinUtils.ReadStruct<FileEntry13>(msr);
-                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, streams[entry.ArchivePart]));
+                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
             }
 
             return package;
@@ -135,7 +132,7 @@ namespace LSLib.LS
 
         public Package Read()
         {
-            var mainStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            var mainStream = new FileStream(_path, FileMode.Open, FileAccess.Read);
 
             using (var reader = new BinaryReader(mainStream, new UTF8Encoding(), true))
             {
