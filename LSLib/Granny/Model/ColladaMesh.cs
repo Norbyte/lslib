@@ -226,6 +226,10 @@ namespace LSLib.Granny.Model
                             throw new ParsingException("Non-triangle found in COLLADA polylist. Make sure that all geometries are triangulated.");
                     }
                 }
+                else if (item is lines)
+                {
+                    throw new ParsingException("Lines found in input geometry. Make sure that all geometries are triangulated.");
+                }
             }
 
             if (Indices == null || Inputs == null)
