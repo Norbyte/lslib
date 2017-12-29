@@ -320,6 +320,7 @@ namespace LSLib.Granny.Model
 
             foreach (var skeleton in Root.Skeletons)
             {
+                // Check if there is a matching skeleton in the source file
                 Skeleton conformingSkel = null;
                 foreach (var skel in skeletons)
                 {
@@ -328,6 +329,12 @@ namespace LSLib.Granny.Model
                         conformingSkel = skel;
                         break;
                     }
+                }
+
+                // Allow name mismatches if there is only 1 skeleton in each file
+                if (conformingSkel == null && skeletons.Count() == 1 && Root.Skeletons.Count() == 1)
+                {
+                    conformingSkel = skeletons.First();
                 }
 
                 if (conformingSkel == null)
