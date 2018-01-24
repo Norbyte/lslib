@@ -229,6 +229,14 @@ namespace LSLib.Granny
             var positions = Transforms.Select(m => m.ExtractTranslation()).ToList();
             var rotations = Transforms.Select(m => m.ExtractRotation()).ToList();
             var scales = Transforms.Select(m => ScaleToScaleShear(m.ExtractScale())).ToList();
+            for (var i = 0; i < rotations.Count; i++)
+            {
+                var r = rotations[i];
+                if (r.W < 0)
+                {
+                    rotations[i] = new Quaternion(-r.X, -r.Y, -r.Z, -r.W);
+                }
+            }
 
             // Quaternion sign fixup
             // Since GR2 interpolation operates on the raw XYZ values of the quaternion, two subsequent quaternions
@@ -238,8 +246,9 @@ namespace LSLib.Granny
             {
                 var r0 = rotations[i - 1];
                 var r1 = rotations[i];
-                var dot = r0.W * r1.W + r0.X * r1.X + r0.Y * r1.Y + r0.Z * r1.Z;
-                if (dot < 0.0)
+                var distance = Math.Abs(r0.X - r1.X) + Math.Abs(r0.Y - r1.Y) + Math.Abs(r0.Z - r1.Z);
+                var inverseDistance = Math.Abs(r0.X + r1.X) + Math.Abs(r0.Y + r1.Y) + Math.Abs(r0.Z + r1.Z);
+                if (distance > inverseDistance)
                 {
                     rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, r1.W);
                 }
