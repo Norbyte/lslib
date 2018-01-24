@@ -419,18 +419,32 @@ namespace LSLib.Granny.Model
 
         public node ExportSkeleton(Skeleton skeleton, string name)
         {
+            int rootIndex = -1;
+
             // Find the root bone and export it
-            for (int i = 0; i < skeleton.Bones.Count; i++)
+            for (var i = 0; i < skeleton.Bones.Count; i++)
             {
                 if (skeleton.Bones[i].ParentIndex == -1)
                 {
-                    var root = ExportBone(skeleton, name, i, skeleton.Bones[i]);
-                    // root.id = Name + "-skeleton";
-                    return root;
+                    if (rootIndex == -1)
+                    {
+                        rootIndex = i;
+                    }
+                    else
+                    {
+                        throw new ParsingException(
+                            "Model has multiple root bones! Please use the \"Conform to GR2\" option to " +
+                            "make sure that all bones from the base mesh are included in the export.");
+                    }
                 }
             }
 
-            throw new ParsingException("Model has no root bone!");
+            if (rootIndex == -1)
+            {
+                throw new ParsingException("Model has no root bone!");
+            }
+            
+            return ExportBone(skeleton, name, rootIndex, skeleton.Bones[rootIndex]);
         }
 
         private void ExportModels(Root root, List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
