@@ -144,8 +144,14 @@ namespace LSLib.Granny.Model
             foreach (var keyframe in keyframes)
             {
                 var transform = Matrix4.Identity;
+
+                if (keyframe.hasTranslation)
+                {
+                    transform *= Matrix4.CreateTranslation(keyframe.translation);
+                }
+
                 if (keyframe.hasRotation)
-                    transform *= Matrix4.CreateFromQuaternion(keyframe.rotation.Inverted());
+                    transform = Matrix4.CreateFromQuaternion(keyframe.rotation) * transform;
 
                 if (keyframe.hasScaleShear)
                 {
@@ -153,19 +159,13 @@ namespace LSLib.Granny.Model
                     for (int i = 0; i < 3; i++)
                     {
                         for (int j = 0; j < 3; j++)
-                            scaleShear[i, j] = keyframe.scaleShear[i, j];
+                            scaleShear[j, i] = keyframe.scaleShear[i, j];
                     }
 
-                    transform *= scaleShear;
+                    transform = scaleShear * transform;
                 }
 
-                if (keyframe.hasTranslation)
-                {
-                    transform[0, 3] += keyframe.translation[0];
-                    transform[1, 3] += keyframe.translation[1];
-                    transform[2, 3] += keyframe.translation[2];
-                }
-
+                transform.Transpose();
                 for (int i = 0; i < 4; i++)
                 {
                     for (int j = 0; j < 4; j++)
