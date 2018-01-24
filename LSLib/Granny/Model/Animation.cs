@@ -61,9 +61,7 @@ namespace LSLib.Granny.Model
                     if (k2 != null)
                     {
                         float alpha = (k1.time - k0.time) / (k2.time - k0.time);
-                        k1.translation[0] = k0.translation[0] * alpha + k2.translation[0] * (1.0f - alpha);
-                        k1.translation[1] = k0.translation[1] * alpha + k2.translation[1] * (1.0f - alpha);
-                        k1.translation[2] = k0.translation[2] * alpha + k2.translation[2] * (1.0f - alpha);
+                        k1.translation = Vector3.Lerp(k0.translation, k2.translation, alpha);
                     }
                     else
                     {
@@ -87,10 +85,7 @@ namespace LSLib.Granny.Model
                     if (k2 != null)
                     {
                         float alpha = (k1.time - k0.time) / (k2.time - k0.time);
-                        k1.rotation.X = k0.rotation.X * alpha + k2.rotation.X * (1.0f - alpha);
-                        k1.rotation.Y = k0.rotation.Y * alpha + k2.rotation.Y * (1.0f - alpha);
-                        k1.rotation.Z = k0.rotation.Z * alpha + k2.rotation.Z * (1.0f - alpha);
-                        k1.rotation.W = k0.rotation.W * alpha + k2.rotation.W * (1.0f - alpha);
+                        k1.rotation = Quaternion.Slerp(k0.rotation, k2.rotation, alpha);
                     }
                     else
                     {
@@ -114,9 +109,9 @@ namespace LSLib.Granny.Model
                     if (k2 != null)
                     {
                         float alpha = (k1.time - k0.time) / (k2.time - k0.time);
-                        k1.scaleShear[0, 0] = k0.scaleShear[0, 0] * alpha + k2.scaleShear[0, 0] * (1.0f - alpha);
-                        k1.scaleShear[1, 1] = k0.scaleShear[1, 1] * alpha + k2.scaleShear[1, 1] * (1.0f - alpha);
-                        k1.scaleShear[2, 2] = k0.scaleShear[2, 2] * alpha + k2.scaleShear[2, 2] * (1.0f - alpha);
+                        k1.scaleShear[0, 0] = k0.scaleShear[0, 0] * (1.0f - alpha) + k2.scaleShear[0, 0] * alpha;
+                        k1.scaleShear[1, 1] = k0.scaleShear[1, 1] * (1.0f - alpha) + k2.scaleShear[1, 1] * alpha;
+                        k1.scaleShear[2, 2] = k0.scaleShear[2, 2] * (1.0f - alpha) + k2.scaleShear[2, 2] * alpha;
                     }
                     else
                     {
