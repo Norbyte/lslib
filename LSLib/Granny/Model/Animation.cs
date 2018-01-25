@@ -246,31 +246,8 @@ namespace LSLib.Granny.Model
             var anims = new List<animation>();
             var name = "Bone_" + Name.Replace(' ', '_');
 
-            // Export all tracks separately
-            /* var keyframes = new SortedList<float, Keyframe>();
-            PositionCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Position);
-            anims.AddRange(ExportTransform(keyframes.Values, name + "_Rotation", name + "/Rotation"));
-
-            keyframes.Clear();
-            OrientationCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Rotation);
-            anims.AddRange(ExportTransform(keyframes.Values, name + "_Position", name + "/Position"));
-
-            keyframes.Clear();
-            ScaleShearCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.ScaleShear);
-            anims.AddRange(ExportTransform(keyframes.Values, name + "_ScaleShear", name + "/ScaleShear"));*/
-
             // Export all tracks in a single transform
             anims.AddRange(ExportTransform(mergeKeyframes(), name + "_Transform", name + "/Transform"));
-
-            // if (false) // Separate channels support
-            {
-                // anims.AddRange(PositionCurve.CurveData.ExportPositions(name + "_Position", name + "/Translate"));
-                // anims.AddRange(OrientationCurve.CurveData.ExportRotations(name + "_Orientation", name + "/Rotate"));
-                // anims.AddRange(OrientationCurve.CurveData.ExportRotation(name + "_Orientation", name + "/Rotate"));
-                // anims.AddRange(OrientationCurve.CurveData.ExportTransform(name + "_Orientation", name + "/Transform"));
-                // TODO: Needs scale matrix support
-                // anims.AddRange(ScaleShearCurve.CurveData.ExportMatrices(name + "_Scale", name + "/Scale"));
-            }
 
             return anims;
         }
