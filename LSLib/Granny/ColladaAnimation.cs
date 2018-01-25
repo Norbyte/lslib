@@ -169,6 +169,12 @@ namespace LSLib.Granny
                     i++;
                 }
             }
+
+            if (transforms.Count == 2 && (transforms[0] - transforms[1]).Length < 0.0001f)
+            {
+                times.RemoveAt(1);
+                transforms.RemoveAt(1);
+            }
         }
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Quaternion> transforms)
@@ -189,14 +195,18 @@ namespace LSLib.Granny
                     i++;
                 }
             }
+
+            if (transforms.Count == 2 && (transforms[0] - transforms[1]).Length < 0.0001f)
+            {
+                times.RemoveAt(1);
+                transforms.RemoveAt(1);
+            }
         }
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Matrix3> transforms)
         {
-            var newTimes = new List<Single> { times[0] };
-            var newTransforms = new List<Matrix3> { transforms[0], transforms[1] };
-
-            for (var i = 2; i < times.Count; i++)
+            var i = 2;
+            while (i < transforms.Count)
             {
                 Matrix3 t0 = transforms[i - 2],
                     t1 = transforms[i - 1],
@@ -212,15 +222,34 @@ namespace LSLib.Granny
                     }
                 }
 
-                if (diff1 > 0.0001f || diff2 > 0.0001f)
+                if (diff1 < 0.001f && diff2 < 0.001f)
                 {
-                    newTimes.Add(times[i]);
-                    newTransforms.Add(t2);
+                    times.RemoveAt(i);
+                    transforms.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
                 }
             }
 
-            times = newTimes;
-            transforms = newTransforms;
+            if (transforms.Count == 2)
+            {
+                float diff = 0.0f;
+                for (var x = 0; x < 3; x++)
+                {
+                    for (var y = 0; y < 3; y++)
+                    {
+                        diff += Math.Abs(transforms[0][x, y] - transforms[1][x, y]);
+                    }
+                }
+
+                if (diff < 0.001f)
+                {
+                    times.RemoveAt(1);
+                    transforms.RemoveAt(1);
+                }
+            }
         }
 
         public TransformTrack MakeTrack()
@@ -264,7 +293,7 @@ namespace LSLib.Granny
             {
                 var posCurve = new D3Constant32f();
                 posCurve.CurveDataHeader_D3Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D3Constant32f, Degree = 2 };
-                posCurve.Controls = new float[3] { positions[0].X, positions[0].Y, positions[0].Z };
+                posCurve.Controls = new float[3] { minPositions[0].X, minPositions[0].Y, minPositions[0].Z };
                 track.PositionCurve = new AnimationCurve { CurveData = posCurve };
             }
             else
@@ -283,7 +312,7 @@ namespace LSLib.Granny
             {
                 var rotCurve = new D4Constant32f();
                 rotCurve.CurveDataHeader_D4Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D4Constant32f, Degree = 2 };
-                rotCurve.Controls = new float[4] { rotations[0].X, rotations[0].Y, rotations[0].Z, rotations[0].W };
+                rotCurve.Controls = new float[4] { minRotations[0].X, minRotations[0].Y, minRotations[0].Z, minRotations[0].W };
                 track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
             }
             else

@@ -38,6 +38,43 @@ namespace LSLib.Granny.Model
         public Animation ParentAnimation;
 
 
+        private void MergeAdjacentFrames(List<Keyframe> keyframes)
+        {
+            int i = 1;
+            while (i < keyframes.Count)
+            {
+                Keyframe k0 = keyframes[i - 1],
+                    k1 = keyframes[i];
+
+                if (k1.time - k0.time < 0.004f)
+                {
+                    if (k1.hasTranslation && !k0.hasTranslation)
+                    {
+                        k0.hasTranslation = true;
+                        k0.translation = k1.translation;
+                    }
+
+                    if (k1.hasRotation && !k0.hasRotation)
+                    {
+                        k0.hasRotation = true;
+                        k0.rotation = k1.rotation;
+                    }
+
+                    if (k1.hasScaleShear && !k0.hasScaleShear)
+                    {
+                        k0.hasScaleShear = true;
+                        k0.scaleShear = k1.scaleShear;
+                    }
+
+                    keyframes.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+        }
+
         private void InterpolateFrames(List<Keyframe> keyframes)
         {
             for (int i = 1; i < keyframes.Count; i++)
@@ -122,7 +159,7 @@ namespace LSLib.Granny.Model
         }
 
 
-        private List<Keyframe> mergeKeyframes()
+        public List<Keyframe> mergeKeyframes()
         {
             var keyframes = new SortedList<float, Keyframe>();
             OrientationCurve.CurveData.ExportKeyframes(keyframes, AnimationCurveData.ExportType.Rotation);
@@ -131,6 +168,7 @@ namespace LSLib.Granny.Model
 
             var outFrames = keyframes.Values.ToList();
             InterpolateFrames(outFrames);
+            MergeAdjacentFrames(outFrames);
             return outFrames;
         }
 
