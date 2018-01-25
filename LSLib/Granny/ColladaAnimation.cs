@@ -153,66 +153,69 @@ namespace LSLib.Granny
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Vector3> transforms)
         {
-            var newTimes = new List<Single> { times[0] };
-            var newTransforms = new List<Vector3> { transforms[0] };
-
-            for (var i = 1; i < times.Count; i++)
+            var i = 2;
+            while (i < transforms.Count)
             {
-                var t0 = newTransforms.Last();
-                var t1 = transforms[i];
-                if ((t0 - t1).Length > 0.0001)
+                Vector3 t0 = transforms[i - 2],
+                    t1 = transforms[i - 1],
+                    t2 = transforms[i];
+                if ((t0 - t1).Length < 0.0001f && (t1 - t2).Length < 0.0001f)
                 {
-                    newTimes.Add(times[i]);
-                    newTransforms.Add(t1);
+                    times.RemoveAt(i);
+                    transforms.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
                 }
             }
-
-            times = newTimes;
-            transforms = newTransforms;
         }
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Quaternion> transforms)
         {
-            var newTimes = new List<Single> { times[0] };
-            var newTransforms = new List<Quaternion> { transforms[0] };
-
-            for (var i = 1; i < times.Count; i++)
+            var i = 2;
+            while (i < transforms.Count)
             {
-                var t0 = newTransforms.Last();
-                var t1 = transforms[i];
-                if ((t0 - t1).Length > 0.0001)
+                Quaternion t0 = transforms[i - 2],
+                    t1 = transforms[i - 1],
+                    t2 = transforms[i];
+                if ((t0 - t1).Length < 0.0001f && (t1 - t2).Length < 0.0001f)
                 {
-                    newTimes.Add(times[i]);
-                    newTransforms.Add(t1);
+                    times.RemoveAt(i);
+                    transforms.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
                 }
             }
-
-            times = newTimes;
-            transforms = newTransforms;
         }
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Matrix3> transforms)
         {
             var newTimes = new List<Single> { times[0] };
-            var newTransforms = new List<Matrix3> { transforms[0] };
+            var newTransforms = new List<Matrix3> { transforms[0], transforms[1] };
 
-            for (var i = 1; i < times.Count; i++)
+            for (var i = 2; i < times.Count; i++)
             {
-                var t0 = newTransforms.Last();
-                var t1 = transforms[i];
-                var diff = 0.0;
+                Matrix3 t0 = transforms[i - 2],
+                    t1 = transforms[i - 1],
+                    t2 = transforms[i];
+
+                float diff1 = 0.0f, diff2 = 0.0f;
                 for (var x = 0; x < 3; x++)
                 {
                     for (var y = 0; y < 3; y++)
                     {
-                        diff += Math.Abs(t1[x, y] - t0[x, y]);
+                        diff1 += Math.Abs(t1[x, y] - t0[x, y]);
+                        diff2 += Math.Abs(t2[x, y] - t1[x, y]);
                     }
                 }
 
-                if (diff > 0.0001)
+                if (diff1 > 0.0001f || diff2 > 0.0001f)
                 {
                     newTimes.Add(times[i]);
-                    newTransforms.Add(t1);
+                    newTransforms.Add(t2);
                 }
             }
 
@@ -254,7 +257,7 @@ namespace LSLib.Granny
                 }
             }
 
-            var posTimes = Times;
+            var posTimes = Times.ToList();
             var minPositions = positions;
             RemoveTrivialFrames(ref posTimes, ref minPositions);
             if (minPositions.Count == 1)
@@ -268,12 +271,12 @@ namespace LSLib.Granny
             {
                 var posCurve = new DaK32fC32f();
                 posCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
-                posCurve.SetKnots(Times);
-                posCurve.SetPoints(positions);
+                posCurve.SetKnots(posTimes);
+                posCurve.SetPoints(minPositions);
                 track.PositionCurve = new AnimationCurve { CurveData = posCurve };
             }
 
-            var rotTimes = Times;
+            var rotTimes = Times.ToList();
             var minRotations = rotations;
             RemoveTrivialFrames(ref rotTimes, ref minRotations);
             if (minRotations.Count == 1)
@@ -287,12 +290,12 @@ namespace LSLib.Granny
             {
                 var rotCurve = new DaK32fC32f();
                 rotCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
-                rotCurve.SetKnots(Times);
-                rotCurve.SetQuaternions(rotations);
+                rotCurve.SetKnots(rotTimes);
+                rotCurve.SetQuaternions(minRotations);
                 track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
             }
 
-            var scaleTimes = Times;
+            var scaleTimes = Times.ToList();
             var minScales = scales;
             RemoveTrivialFrames(ref scaleTimes, ref minScales);
             if (minScales.Count == 1)
@@ -312,8 +315,8 @@ namespace LSLib.Granny
             {
                 var scaleCurve = new DaK32fC32f();
                 scaleCurve.CurveDataHeader_DaK32fC32f = new CurveDataHeader { Format = (int)CurveFormat.DaK32fC32f, Degree = 2 };
-                scaleCurve.SetKnots(Times);
-                scaleCurve.SetMatrices(scales);
+                scaleCurve.SetKnots(scaleTimes);
+                scaleCurve.SetMatrices(minScales);
                 track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
             }
 
