@@ -153,13 +153,21 @@ namespace LSLib.Granny
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Vector3> transforms)
         {
-            var i = 2;
-            while (i < transforms.Count)
+            var i = 1;
+            while (i < transforms.Count - 1)
             {
-                Vector3 t0 = transforms[i - 2],
-                    t1 = transforms[i - 1],
-                    t2 = transforms[i];
-                if ((t0 - t1).Length < 0.0001f && (t1 - t2).Length < 0.0001f)
+                Vector3 v0 = transforms[i - 1],
+                    v1 = transforms[i],
+                    v2 = transforms[i + 1];
+
+                Single t0 = times[i - 1],
+                    t1 = times[i],
+                    t2 = times[i + 1];
+
+                Single alpha = (t1 - t0) / (t2 - t0);
+                Vector3 v1l = Vector3.Lerp(v0, v2, alpha);
+
+                if ((v1 - v1l).Length < 0.001f)
                 {
                     times.RemoveAt(i);
                     transforms.RemoveAt(i);
@@ -179,13 +187,21 @@ namespace LSLib.Granny
 
         private void RemoveTrivialFrames(ref List<Single> times, ref List<Quaternion> transforms)
         {
-            var i = 2;
-            while (i < transforms.Count)
+            var i = 1;
+            while (i < transforms.Count - 1)
             {
-                Quaternion t0 = transforms[i - 2],
-                    t1 = transforms[i - 1],
-                    t2 = transforms[i];
-                if ((t0 - t1).Length < 0.0001f && (t1 - t2).Length < 0.0001f)
+                Quaternion v0 = transforms[i - 1],
+                    v1 = transforms[i],
+                    v2 = transforms[i + 1];
+
+                Single t0 = times[i - 1],
+                    t1 = times[i],
+                    t2 = times[i + 1];
+
+                Single alpha = (t1 - t0) / (t2 - t0);
+                Quaternion v1l = Quaternion.Slerp(v0, v2, alpha);
+
+                if ((v1 - v1l).Length < 0.001f)
                 {
                     times.RemoveAt(i);
                     transforms.RemoveAt(i);
