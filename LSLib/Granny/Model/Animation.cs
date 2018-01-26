@@ -185,7 +185,7 @@ namespace LSLib.Granny.Model
 
                 if (keyframe.hasTranslation)
                 {
-                    transform *= Matrix4.CreateTranslation(keyframe.translation);
+                    transform = Matrix4.CreateTranslation(keyframe.translation);
                 }
 
                 if (keyframe.hasRotation)

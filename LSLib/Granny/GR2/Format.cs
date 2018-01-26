@@ -42,61 +42,99 @@ namespace LSLib.Granny.GR2
         public Quaternion Rotation = Quaternion.Identity;
         public Matrix3 ScaleShear = Matrix3.Identity;
 
+        public bool HasTranslation
+        {
+            get { return ((Flags & (uint)TransformFlags.HasTranslation) != 0); }
+        }
+
+        public bool HasRotation
+        {
+            get { return ((Flags & (uint)TransformFlags.HasRotation) != 0); }
+        }
+
+        public bool HasScaleShear
+        {
+            get { return ((Flags & (uint)TransformFlags.HasScaleShear) != 0); }
+        }
+
+        public void SetTranslation(Vector3 translation)
+        {
+            if (translation.Length > 0.0001f)
+            {
+                Translation = translation;
+                Flags |= (uint)TransformFlags.HasTranslation;
+            }
+            else
+            {
+                Translation = Vector3.Zero;
+                Flags &= ~(uint)TransformFlags.HasTranslation;
+            }
+        }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            if (rotation.Length > 0.0001f)
+            {
+                Rotation = rotation;
+                Flags |= (uint)TransformFlags.HasRotation;
+            }
+            else
+            {
+                Rotation = Quaternion.Identity;
+                Flags &= ~(uint)TransformFlags.HasRotation;
+            }
+        }
+
+        public void SetScale(Vector3 scale)
+        {
+            ScaleShear = Matrix3.Identity;
+            if (scale.Length > 0.0001f)
+            {
+                ScaleShear[0, 0] = scale[0];
+                ScaleShear[1, 1] = scale[1];
+                ScaleShear[2, 2] = scale[2];
+                Flags |= (uint)TransformFlags.HasScaleShear;
+            }
+            else
+            {
+                Flags &= ~(uint)TransformFlags.HasScaleShear;
+            }
+        }
+
         public static Transform FromMatrix4(Matrix4 mat)
         {
             var transform = new Transform();
-            var translation = mat.ExtractTranslation();
-            transform.Translation = translation;
-
-            if (translation != Vector3.Zero)
-                transform.Flags |= (int)Transform.TransformFlags.HasTranslation;
-
-            var rotation = mat.ExtractRotation();
-            transform.Rotation = rotation;
-
-            if (rotation != Quaternion.Identity)
-                transform.Flags |= (int)Transform.TransformFlags.HasRotation;
-
-            var scale = mat.ExtractScale();
-            transform.ScaleShear[0, 0] = scale[0];
-            transform.ScaleShear[1, 1] = scale[1];
-            transform.ScaleShear[2, 2] = scale[2];
-
-            if (transform.ScaleShear != Matrix3.Identity)
-                transform.Flags |= (int)Transform.TransformFlags.HasScaleShear;
-
+            transform.SetTranslation(mat.ExtractTranslation());
+            transform.SetRotation(mat.ExtractRotation());
+            transform.SetScale(mat.ExtractScale());
             return transform;
         }
 
         public Matrix4 ToMatrix4()
         {
-            Matrix3 rotation;
-            if ((Flags & (uint)TransformFlags.HasRotation) != 0)
-                // BAD: rotation = Matrix3.CreateFromQuaternion(Rotation.Inverted());
-                rotation = Matrix3.CreateFromQuaternion(Rotation);
-            else
-                rotation = Matrix3.Identity;
-
-            if ((Flags & (uint)TransformFlags.HasScaleShear) != 0)
-                rotation *= ScaleShear;
-
-            Matrix4 transform = new Matrix4();
-            for (var i = 0; i < 3; i++)
+            Matrix4 transform = Matrix4.Identity;
+            if (HasTranslation)
             {
-                for (var j = 0; j < 3; j++)
-                    transform[i, j] = rotation[i, j];
-
+                transform = Matrix4.CreateTranslation(Translation);
             }
 
-            /* BAD transform[0, 3] = Translation[0];
-            transform[1, 3] = Translation[1];
-            transform[2, 3] = Translation[2];
-            transform[3, 3] = 1.0f;*/
+            if (HasRotation)
+            {
+                transform = Matrix4.CreateFromQuaternion(Rotation) * transform;
+            }
 
-            transform[3, 0] = Translation[0];
-            transform[3, 1] = Translation[1];
-            transform[3, 2] = Translation[2];
-            transform[3, 3] = 1.0f;
+            if (HasScaleShear)
+            {
+                Matrix4 scaleShear = Matrix4.Identity;
+                for (var i = 0; i < 3; i++)
+                {
+                    for (var j = 0; j < 3; j++)
+                        transform[i, j] = ScaleShear[i, j];
+                }
+
+                transform = scaleShear * transform;
+            }
+            
             return transform;
         }
 

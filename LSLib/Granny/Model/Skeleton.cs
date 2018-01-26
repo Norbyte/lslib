@@ -94,7 +94,7 @@ namespace LSLib.Granny.Model
             colladaBone.ParentIndex = parentIndex;
             colladaBone.Name = bone.name;
             colladaBone.LODError = 0; // TODO
-            colladaBone.Transform = transMat.transform;
+            colladaBone.Transform = Transform.FromMatrix4(transMat.transform);
             colladaBone.UpdateInverseWorldTransform(bones);
 
             if (bone.node1 != null)
