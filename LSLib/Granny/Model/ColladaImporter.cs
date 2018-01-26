@@ -611,9 +611,12 @@ namespace LSLib.Granny.Model
                     {
                         foreach (var scene in scenes.visual_scene)
                         {
-                            foreach (var node in scene.node)
+                            if (scene.node != null)
                             {
-                                FindRootBones(null, node, rootBones);
+                                foreach (var node in scene.node)
+                                {
+                                    FindRootBones(null, node, rootBones);
+                                }
                             }
                         }
                     }
