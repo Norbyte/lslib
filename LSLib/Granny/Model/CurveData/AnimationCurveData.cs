@@ -255,54 +255,8 @@ namespace LSLib.Granny.Model.CurveData
             return quats;
         }
         
-        private static Int32 FindFrame<T>(IList<T> list, T value, IComparer<T> comparer = null)
-        {
-            if (list == null)
-                throw new ArgumentNullException("list");
 
-            comparer = comparer ?? Comparer<T>.Default;
-
-            Int32 lower = 0;
-            Int32 upper = list.Count - 1;
-
-            while (lower <= upper)
-            {
-                Int32 middle = lower + (upper - lower) / 2;
-                Int32 comparisonResult = comparer.Compare(value, list[middle]);
-                if (comparisonResult == 0)
-                    return middle;
-                else if (comparisonResult < 0)
-                    upper = middle - 1;
-                else
-                    lower = middle + 1;
-            }
-
-            return ~lower;
-        }
-
-
-        private Keyframe FindFrame(SortedList<float, Keyframe> keyframes, float time)
-        {
-            Int32 lower = FindFrame(keyframes.Keys, time);
-            if (lower >= 0)
-            {
-                return keyframes.Values[lower];
-            }
-
-            if (-lower <= keyframes.Count)
-            {
-                float frameTime = keyframes.Keys[-lower - 1];
-                if (Math.Abs(frameTime - time) < 0.001)
-                {
-                    return keyframes.Values[-lower - 1];
-                }
-            }
-
-            return null;
-        }
-
-
-        public void ExportKeyframes(SortedList<float, Keyframe> keyframes, ExportType type)
+        public void ExportKeyframes(KeyframeTrack track, ExportType type)
         {
             var numKnots = NumKnots();
             var knots = GetKnots();
@@ -311,16 +265,7 @@ namespace LSLib.Granny.Model.CurveData
                 var positions = GetPoints();
                 for (var i = 0; i < numKnots; i++)
                 {
-                    Keyframe frame = FindFrame(keyframes, knots[i]);
-                    if (frame == null)
-                    {
-                        frame = new Keyframe();
-                        frame.time = knots[i];
-                        keyframes[frame.time] = frame;
-                    }
-
-                    frame.translation = positions[i];
-                    frame.hasTranslation = true;
+                    track.AddTranslation(knots[i], positions[i]);
                 }
             }
             else if (type == ExportType.Rotation)
@@ -328,16 +273,7 @@ namespace LSLib.Granny.Model.CurveData
                 var quats = GetQuaternions();
                 for (var i = 0; i < numKnots; i++)
                 {
-                    Keyframe frame = FindFrame(keyframes, knots[i]);
-                    if (frame == null)
-                    {
-                        frame = new Keyframe();
-                        frame.time = knots[i];
-                        keyframes[frame.time] = frame;
-                    }
-
-                    frame.rotation = quats[i];
-                    frame.hasRotation = true;
+                    track.AddRotation(knots[i], quats[i]);
                 }
             }
             else if (type == ExportType.ScaleShear)
@@ -345,101 +281,9 @@ namespace LSLib.Granny.Model.CurveData
                 var mats = GetMatrices();
                 for (var i = 0; i < numKnots; i++)
                 {
-                    Keyframe frame = FindFrame(keyframes, knots[i]);
-                    if (frame == null)
-                    {
-                        frame = new Keyframe();
-                        frame.time = knots[i];
-                        keyframes[frame.time] = frame;
-                    }
-
-                    frame.scaleShear = mats[i];
-                    frame.hasScaleShear = true;
+                    track.AddScaleShear(knots[i], mats[i]);
                 }
             }
-        }
-
-
-        public List<animation> ExportTransform(string name, string target)
-        {
-            var anims = new List<animation>();
-            if (NumKnots() > 0)
-            {
-                var inputs = new List<InputLocal>();
-                var numKnots = NumKnots();
-                var knots = GetKnots();
-
-                var outputs = new List<float>(knots.Count * 16);
-                var quats = GetQuaternions();
-                foreach (var rotation in quats)
-                {
-                    var transform = Matrix4.CreateFromQuaternion(rotation);
-                    for (int i = 0; i < 4; i++)
-                        for (int j = 0; j < 4; j++)
-                        outputs.Add(transform[i, j]);
-                }
-
-                var interpolations = new List<string>(numKnots);
-                for (int i = 0; i < numKnots; i++)
-                {
-                    // TODO: Add control point estimation code and add in/out tangents for Bezier
-                    //interpolations.Add("BEZIER");
-                    interpolations.Add("LINEAR");
-                }
-
-                /*
-                 * Fix up animations that have only one keyframe by adding another keyframe at
-                 * the end of the animation.
-                 * (This mainly applies to DaIdentity and DnConstant32f)
-                 */
-                if (numKnots == 1)
-                {
-                    knots.Add(ParentAnimation.Duration);
-                    for (int i = 0; i < 16; i++ )
-                        outputs.Add(outputs[i]);
-                    interpolations.Add(interpolations[0]);
-                }
-
-                var knotsSource = ColladaUtils.MakeFloatSource(name, "inputs", new string[] { "TIME" }, knots.ToArray());
-                var knotsInput = new InputLocal();
-                knotsInput.semantic = "INPUT";
-                knotsInput.source = "#" + knotsSource.id;
-                inputs.Add(knotsInput);
-
-                var outSource = ColladaUtils.MakeFloatSource(name, "outputs", new string[] { "TRANSFORM" }, outputs.ToArray(), 16, "float4x4");
-                var outInput = new InputLocal();
-                outInput.semantic = "OUTPUT";
-                outInput.source = "#" + outSource.id;
-                inputs.Add(outInput);
-
-                var interpSource = ColladaUtils.MakeNameSource(name, "interpolations", new string[] { "" }, interpolations.ToArray());
-
-                var interpInput = new InputLocal();
-                interpInput.semantic = "INTERPOLATION";
-                interpInput.source = "#" + interpSource.id;
-                inputs.Add(interpInput);
-
-                var sampler = new sampler();
-                sampler.id = name + "_sampler";
-                sampler.input = inputs.ToArray();
-
-                var channel = new channel();
-                channel.source = "#" + sampler.id;
-                channel.target = target;
-
-                var animation = new animation();
-                animation.id = name;
-                animation.name = name;
-                var animItems = new List<object>();
-                animItems.Add(knotsSource);
-                animItems.Add(outSource);
-                animItems.Add(interpSource);
-                animItems.Add(sampler);
-                animItems.Add(channel);
-                animation.Items = animItems.ToArray();
-                anims.Add(animation);
-            }
-            return anims;
         }
     }
 }

@@ -76,7 +76,6 @@
     <Compile Include="Granny\Collada.cs" />
     <Compile Include="Granny\ColladaAnimation.cs" />
     <Compile Include="Granny\ColladaSchema.cs" />
-    <Compile Include="Granny\GR2.cs" />
     <Compile Include="Granny\GR2Utils.cs" />
     <Compile Include="Granny\GR2\Format.cs" />
     <Compile Include="Granny\GR2\Helpers.cs" />

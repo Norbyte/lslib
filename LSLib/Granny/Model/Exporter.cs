@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LSLib.LS;
+using OpenTK;
 
 namespace LSLib.Granny.Model
 {
@@ -70,6 +71,7 @@ namespace LSLib.Granny.Model
         public bool UseObsoleteVersionTag = false;
         public string ConformGR2Path;
         public bool ConformSkeletons = true;
+        public bool ConformAnimations = true;
         public bool ConformMeshBoneBindings = true;
         public bool ConformModels = true;
         public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
@@ -206,6 +208,38 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void ConformAnimationBindPoses(Skeleton skeleton, Skeleton conformToSkeleton)
+        {
+            foreach (var trackGroup in Root.TrackGroups)
+            {
+                for (var i = 0; i < trackGroup.TransformTracks.Count; i++)
+                {
+                    var track = trackGroup.TransformTracks[i];
+                    var bone = skeleton.GetBoneByName(track.Name);
+                    if (bone == null)
+                    {
+                        string msg = String.Format("Animation track references bone '{0}' that cannot be found in the skeleton.", track.Name);
+                        throw new ExportException(msg);
+                    }
+
+                    var conformingBone = conformToSkeleton.GetBoneByName(track.Name);
+                    if (conformingBone == null)
+                    {
+                        string msg = String.Format("Animation track references bone '{0}' that cannot be found in the conforming skeleton.", track.Name);
+                        throw new ExportException(msg);
+                    }
+                    
+                    var keyframes = track.ToKeyframes();
+                    keyframes.SwapBindPose(bone.OriginalTransform, conformingBone.Transform.ToMatrix4());
+                    var newTrack = TransformTrack.FromKeyframes(keyframes);
+                    newTrack.Flags = track.Flags;
+                    newTrack.Name = track.Name;
+                    newTrack.ParentAnimation = track.ParentAnimation;
+                    trackGroup.TransformTracks[i] = newTrack;
+                }
+            }
+        }
+
         private void ConformSkeleton(Skeleton skeleton, Skeleton conformToSkeleton)
         {
             skeleton.LODType = conformToSkeleton.LODType;
@@ -263,6 +297,11 @@ namespace LSLib.Granny.Model
                 inputBone.InverseWorldTransform = conformBone.InverseWorldTransform;
                 inputBone.LODError = conformBone.LODError;
                 inputBone.Transform = conformBone.Transform;
+            }
+
+            if (Options.ConformAnimations)
+            {
+                ConformAnimationBindPoses(skeleton, conformToSkeleton);
             }
         }
 

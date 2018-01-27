@@ -88,11 +88,24 @@ namespace LSLib.Granny.GR2
         public void SetScale(Vector3 scale)
         {
             ScaleShear = Matrix3.Identity;
-            if (scale.Length > 0.0001f)
+            if ((scale - Vector3.One).Length > 0.0001f)
             {
                 ScaleShear[0, 0] = scale[0];
                 ScaleShear[1, 1] = scale[1];
                 ScaleShear[2, 2] = scale[2];
+                Flags |= (uint)TransformFlags.HasScaleShear;
+            }
+            else
+            {
+                Flags &= ~(uint)TransformFlags.HasScaleShear;
+            }
+        }
+
+        public void SetScaleShear(Matrix3 scaleShear)
+        {
+            if ((scaleShear.Diagonal - Vector3.One).Length > 0.0001f)
+            {
+                ScaleShear = scaleShear;
                 Flags |= (uint)TransformFlags.HasScaleShear;
             }
             else
@@ -129,7 +142,7 @@ namespace LSLib.Granny.GR2
                 for (var i = 0; i < 3; i++)
                 {
                     for (var j = 0; j < 3; j++)
-                        transform[i, j] = ScaleShear[i, j];
+                        scaleShear[i, j] = ScaleShear[i, j];
                 }
 
                 transform = scaleShear * transform;

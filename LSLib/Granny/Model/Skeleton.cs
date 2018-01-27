@@ -51,6 +51,8 @@ namespace LSLib.Granny.Model
 
         [Serialization(Kind = SerializationKind.None)]
         public string TransformSID;
+        [Serialization(Kind = SerializationKind.None)]
+        public Matrix4 OriginalTransform;
 
         public Matrix4 CalculateInverseWorldTransform(List<Bone> bones)
         {
@@ -94,6 +96,7 @@ namespace LSLib.Granny.Model
             colladaBone.ParentIndex = parentIndex;
             colladaBone.Name = bone.name;
             colladaBone.LODError = 0; // TODO
+            colladaBone.OriginalTransform = transMat.transform;
             colladaBone.Transform = Transform.FromMatrix4(transMat.transform);
             colladaBone.UpdateInverseWorldTransform(bones);
 

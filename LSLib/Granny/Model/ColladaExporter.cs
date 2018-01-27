@@ -474,6 +474,138 @@ namespace LSLib.Granny.Model
             }
         }
 
+        public List<animation> ExportKeyframeTrack(TransformTrack transformTrack, string name, string target)
+        {
+            var track = transformTrack.ToKeyframes();
+            track.MergeAdjacentFrames();
+            track.InterpolateFrames();
+
+            var anims = new List<animation>();
+            var inputs = new List<InputLocal>();
+
+            var outputs = new List<float>(track.Keyframes.Count * 16);
+            foreach (var keyframe in track.Keyframes.Values)
+            {
+                var transform = keyframe.ToTransform().ToMatrix4();
+                transform.Transpose();
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                        outputs.Add(transform[i, j]);
+                }
+            }
+
+            var interpolations = new List<string>(track.Keyframes.Count);
+            for (int i = 0; i < track.Keyframes.Count; i++)
+            {
+                interpolations.Add("LINEAR");
+            }
+
+            var knots = new List<float>(track.Keyframes.Count);
+            foreach (var keyframe in track.Keyframes)
+            {
+                knots.Add(keyframe.Key);
+            }
+
+            /*
+             * Fix up animations that have only one keyframe by adding another keyframe at
+             * the end of the animation.
+             * (This mainly applies to DaIdentity and DnConstant32f)
+             */
+            if (track.Keyframes.Count == 1)
+            {
+                knots.Add(transformTrack.ParentAnimation.Duration);
+                for (int i = 0; i < 16; i++)
+                    outputs.Add(outputs[i]);
+                interpolations.Add(interpolations[0]);
+            }
+
+            var knotsSource = ColladaUtils.MakeFloatSource(name, "inputs", new string[] { "TIME" }, knots.ToArray());
+            var knotsInput = new InputLocal();
+            knotsInput.semantic = "INPUT";
+            knotsInput.source = "#" + knotsSource.id;
+            inputs.Add(knotsInput);
+
+            var outSource = ColladaUtils.MakeFloatSource(name, "outputs", new string[] { "TRANSFORM" }, outputs.ToArray(), 16, "float4x4");
+            var outInput = new InputLocal();
+            outInput.semantic = "OUTPUT";
+            outInput.source = "#" + outSource.id;
+            inputs.Add(outInput);
+
+            var interpSource = ColladaUtils.MakeNameSource(name, "interpolations", new string[] { "INTERPOLATION" }, interpolations.ToArray());
+
+            var interpInput = new InputLocal();
+            interpInput.semantic = "INTERPOLATION";
+            interpInput.source = "#" + interpSource.id;
+            inputs.Add(interpInput);
+
+            var sampler = new sampler();
+            sampler.id = name + "_sampler";
+            sampler.input = inputs.ToArray();
+
+            var channel = new channel();
+            channel.source = "#" + sampler.id;
+            channel.target = target;
+
+            var animation = new animation();
+            animation.id = name;
+            animation.name = name;
+            var animItems = new List<object>();
+            animItems.Add(knotsSource);
+            animItems.Add(outSource);
+            animItems.Add(interpSource);
+            animItems.Add(sampler);
+            animItems.Add(channel);
+            animation.Items = animItems.ToArray();
+            anims.Add(animation);
+            return anims;
+        }
+
+        public List<animation> ExportTrack(TransformTrack track)
+        {
+            var anims = new List<animation>();
+            var name = "Bone_" + track.Name.Replace(' ', '_');
+
+            // Export all tracks in a single transform
+            anims.AddRange(ExportKeyframeTrack(track, name + "_Transform", name + "/Transform"));
+
+            return anims;
+        }
+
+        public List<animation> ExportTracks(TrackGroup trackGroup)
+        {
+            var anims = new List<animation>();
+            foreach (var track in trackGroup.TransformTracks)
+            {
+                anims.AddRange(ExportTrack(track));
+            }
+
+            return anims;
+        }
+
+        public List<animation> ExportAnimations(Animation animation)
+        {
+            var animations = new List<animation>();
+            foreach (var trackGroup in animation.TrackGroups)
+            {
+                /*
+                 * We need to propagate animation data as the track exporter may need information from it
+                 * (Duration and TimeStep usually)
+                 */
+                foreach (var track in trackGroup.TransformTracks)
+                {
+                    track.ParentAnimation = animation;
+                    track.OrientationCurve.CurveData.ParentAnimation = animation;
+                    track.PositionCurve.CurveData.ParentAnimation = animation;
+                    track.ScaleShearCurve.CurveData.ParentAnimation = animation;
+                }
+
+                animations.AddRange(ExportTracks(trackGroup));
+            }
+
+            return animations;
+        }
+
         public void Export(Root root, string outputPath)
         {
             var collada = new COLLADA();
@@ -507,7 +639,7 @@ namespace LSLib.Granny.Model
             {
                 foreach (var anim in root.Animations)
                 {
-                    var anims = anim.ExportAnimations();
+                    var anims = ExportAnimations(anim);
                     animations.AddRange(anims);
                     var clip = new animation_clip();
                     clip.id = anim.Name + "_Animation";
