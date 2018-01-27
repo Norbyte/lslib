@@ -519,6 +519,9 @@ namespace LSLib.Granny.Model
 
             if (trackGroup.TransformTracks.Count > 0)
             {
+                // This is needed by Granny; otherwise it'll fail to find animation tracks
+                trackGroup.TransformTracks.Sort((t1, t2) => t1.Name.CompareTo(t2.Name));
+
                 animation.Duration =
                     Math.Max(
                         trackGroup.TransformTracks.Max(t => t.OrientationCurve.CurveData.Duration()),
