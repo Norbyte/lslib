@@ -10,7 +10,7 @@ namespace Divine
 
         private static void Main(string[] args)
         {
-            var parser = new CommandLineParser.CommandLineParser
+            CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser
             {
                 IgnoreCase = true,
                 ShowUsageOnEmptyCommandline = true

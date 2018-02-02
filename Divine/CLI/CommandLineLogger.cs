@@ -7,13 +7,40 @@ namespace Divine.CLI
     {
         private static readonly LogLevel LogLevelOption = CommandLineActions.LogLevel;
 
-        public static void LogFatal(string message, int errorCode) => Log(LogLevel.FATAL, message, errorCode);
-        public static void LogError(string message) => Log(LogLevel.ERROR, message);
-        public static void LogWarn(string message) => Log(LogLevel.WARN, message);
-        public static void LogInfo(string message) => Log(LogLevel.INFO, message);
-        public static void LogDebug(string message) => Log(LogLevel.DEBUG, message);
-        public static void LogTrace(string message) => Log(LogLevel.TRACE, message);
-        public static void LogAll(string message) => Log(LogLevel.ALL, message);
+        public static void LogFatal(string message, int errorCode)
+        {
+            Log(LogLevel.FATAL, message, errorCode);
+        }
+
+        public static void LogError(string message)
+        {
+            Log(LogLevel.ERROR, message);
+        }
+
+        public static void LogWarn(string message)
+        {
+            Log(LogLevel.WARN, message);
+        }
+
+        public static void LogInfo(string message)
+        {
+            Log(LogLevel.INFO, message);
+        }
+
+        public static void LogDebug(string message)
+        {
+            Log(LogLevel.DEBUG, message);
+        }
+
+        public static void LogTrace(string message)
+        {
+            Log(LogLevel.TRACE, message);
+        }
+
+        public static void LogAll(string message)
+        {
+            Log(LogLevel.ALL, message);
+        }
 
         private static void Log(LogLevel logLevel, string message, int errorCode = -1)
         {

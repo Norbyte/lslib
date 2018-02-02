@@ -11,13 +11,19 @@ namespace Divine.CLI
     {
         private static readonly Dictionary<string, bool> GR2Options = CommandLineActions.GR2Options;
 
-        public static void Convert(string file = "") => ConvertResource(file);
+        public static void Convert(string file = "")
+        {
+            ConvertResource(file);
+        }
 
-        public static void BatchConvert() => BatchConvertResources(CommandLineActions.SourcePath, Program.argv.InputFormat);
+        public static void BatchConvert()
+        {
+            BatchConvertResources(CommandLineActions.SourcePath, Program.argv.InputFormat);
+        }
 
         public static ExporterOptions UpdateExporterSettings()
         {
-            var exporterOptions = new ExporterOptions
+            ExporterOptions exporterOptions = new ExporterOptions
             {
                 InputPath = CommandLineActions.SourcePath,
                 OutputPath = CommandLineActions.DestinationPath,
@@ -58,7 +64,7 @@ namespace Divine.CLI
 
         private static void ConvertResource(string file)
         {
-            var exporter = new Exporter
+            Exporter exporter = new Exporter
             {
                 Options = UpdateExporterSettings()
             };
