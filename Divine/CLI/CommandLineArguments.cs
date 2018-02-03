@@ -115,6 +115,13 @@ namespace Divine.CLI
         )]
         public string ConformPath;
 
+        // @formatter:off
+        [SwitchArgument("use-package-name", false,
+            Description = "Use package name for destination folder",
+            Optional = true
+        )]
+        public bool UsePackageName;
+
         // @formatter:on
 
         public static LogLevel GetLogLevelByString(string logLevel)
@@ -181,9 +188,15 @@ namespace Divine.CLI
             }
         }
 
-        public static FileVersion GetFileVersionByGame(Game divinityGame) => divinityGame == LSLib.LS.Enums.Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+        public static FileVersion GetFileVersionByGame(Game divinityGame)
+        {
+            return divinityGame == LSLib.LS.Enums.Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+        }
 
-        public static ExportFormat GetExportFormatByString(string optionExportFormat) => optionExportFormat == "gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
+        public static ExportFormat GetExportFormatByString(string optionExportFormat)
+        {
+            return optionExportFormat == "gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
+        }
 
         // ReSharper disable once RedundantCaseLabel
         public static ResourceFormat GetResourceFormatByString(string resourceFormat)
@@ -238,7 +251,7 @@ namespace Divine.CLI
         public static Dictionary<string, object> GetCompressionOptions(string compressionOption, PackageVersion packageVersion)
         {
             CompressionMethod compression;
-            var fastCompression = true;
+            bool fastCompression = true;
 
             switch (compressionOption)
             {
@@ -284,7 +297,7 @@ namespace Divine.CLI
                 fastCompression = false;
             }
 
-            var compressionOptions = new Dictionary<string, object>
+            Dictionary<string, object> compressionOptions = new Dictionary<string, object>
             {
                 { "Compression", compression },
                 { "FastCompression", fastCompression }
@@ -295,7 +308,7 @@ namespace Divine.CLI
 
         public static Dictionary<string, bool> GetGR2Options(string[] options)
         {
-            var results = new Dictionary<string, bool>
+            Dictionary<string, bool> results = new Dictionary<string, bool>
             {
                 { "export-normals", false },
                 { "export-tangents", false },

@@ -20,8 +20,10 @@ namespace Divine.CLI
         {
             try
             {
+                ResourceFormat resourceFormat = ResourceUtils.ExtensionToResourceFormat(destinationPath);
+                CommandLineLogger.LogDebug($"Using destination extension: {resourceFormat}");
+
                 Resource resource = ResourceUtils.LoadResource(sourcePath);
-                ResourceFormat resourceFormat = ResourceUtils.ExtensionToResourceFormat(sourcePath);
 
                 ResourceUtils.SaveResource(resource, destinationPath, resourceFormat, fileVersion);
 
@@ -38,8 +40,9 @@ namespace Divine.CLI
         {
             try
             {
-                var resourceUtils = new ResourceUtils();
+                CommandLineLogger.LogDebug($"Using destination extension: {outputFormat}");
 
+                ResourceUtils resourceUtils = new ResourceUtils();
                 resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, fileVersion);
 
                 CommandLineLogger.LogInfo($"Wrote resources to: {destinationPath}");

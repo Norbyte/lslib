@@ -10,7 +10,10 @@ namespace Divine.CLI
     {
         private static readonly CommandLineArguments Args = Program.argv;
 
-        public static void Create() => CreatePackageResource();
+        public static void Create()
+        {
+            CreatePackageResource();
+        }
 
         public static void Extract()
         {
@@ -20,7 +23,10 @@ namespace Divine.CLI
             }
             else
             {
-                string extractionPath = Path.Combine(CommandLineActions.DestinationPath, Path.GetFileNameWithoutExtension(CommandLineActions.SourcePath));
+                string extractionPath = GetExtractionPath(CommandLineActions.SourcePath, CommandLineActions.DestinationPath);
+
+                CommandLineLogger.LogDebug($"Extracting package: {CommandLineActions.SourcePath}");
+
                 ExtractPackageResource(CommandLineActions.SourcePath, extractionPath);
             }
         }
@@ -31,11 +37,17 @@ namespace Divine.CLI
 
             foreach (string file in files)
             {
-                string packageName = Path.GetFileNameWithoutExtension(file);
+                string extractionPath = GetExtractionPath(file, CommandLineActions.DestinationPath);
 
                 CommandLineLogger.LogDebug($"Extracting package: {file}");
-                ExtractPackageResource(file, packageName);
+
+                ExtractPackageResource(file, extractionPath);
             }
+        }
+
+        private static string GetExtractionPath(string sourcePath, string destinationPath)
+        {
+            return Args.UsePackageName ? Path.Combine(destinationPath, Path.GetFileNameWithoutExtension(sourcePath) ?? throw new InvalidOperationException()) : CommandLineActions.DestinationPath;
         }
 
         private static void CreatePackageResource(string file = "")
@@ -49,13 +61,13 @@ namespace Divine.CLI
             PackageVersion packageVersion = CommandLineActions.PackageVersion;
             Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, packageVersion);
 
-            var compressionMethod = (CompressionMethod) compressionOptions["Compression"];
-            var compressionSpeed = (bool) compressionOptions["FastCompression"];
+            CompressionMethod compressionMethod = (CompressionMethod) compressionOptions["Compression"];
+            bool compressionSpeed = (bool) compressionOptions["FastCompression"];
 
             CommandLineLogger.LogDebug($"Using compression method: {compressionMethod.ToString()}");
             CommandLineLogger.LogDebug($"Using fast compression: {compressionSpeed}");
 
-            var packager = new Packager();
+            Packager packager = new Packager();
             packager.CreatePackage(file, CommandLineActions.SourcePath, packageVersion, compressionMethod, compressionSpeed);
 
             CommandLineLogger.LogInfo("Package created successfully.");
@@ -71,8 +83,12 @@ namespace Divine.CLI
 
             try
             {
-                var packager = new Packager();
-                string extractionPath = Path.Combine(CommandLineActions.DestinationPath, folder);
+                Packager packager = new Packager();
+
+                string extractionPath = GetExtractionPath(folder, CommandLineActions.DestinationPath);
+
+                CommandLineLogger.LogDebug($"Using extraction path: {extractionPath}");
+
                 packager.UncompressPackage(file, extractionPath);
 
                 CommandLineLogger.LogInfo($"Extracted package to: {extractionPath}");
