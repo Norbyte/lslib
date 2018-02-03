@@ -213,5 +213,23 @@ namespace ConverterApp
                 compressionMethod.SelectedIndex = 2;
             }
         }
+
+        public void SetGame(Game game)
+        {
+            switch (game)
+            {
+                case Game.DivinityOriginalSin:
+                    packageVersion.SelectedIndex = 2;
+                    break;
+
+                case Game.DivinityOriginalSinEE:
+                    packageVersion.SelectedIndex = 1;
+                    break;
+
+                case Game.DivinityOriginalSin2:
+                    packageVersion.SelectedIndex = 0;
+                    break;
+            }
+        }
     }
 }

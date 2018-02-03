@@ -7,6 +7,8 @@ namespace ConverterApp
 {
     public sealed partial class MainForm : Form
     {
+        PackagePane packagePane;
+
         public MainForm()
         {
             InitializeComponent();
@@ -18,7 +20,7 @@ namespace ConverterApp
             };
             gr2Tab.Controls.Add(gr2Pane);
 
-            var packagePane = new PackagePane
+            packagePane = new PackagePane
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = packageTab.ClientSize
@@ -73,6 +75,8 @@ namespace ConverterApp
             {
                 pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game == Game.DivinityOriginalSin2;
             }
+
+            packagePane.SetGame(game);
         }
     }
 }

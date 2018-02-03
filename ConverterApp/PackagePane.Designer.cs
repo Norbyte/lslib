@@ -34,25 +34,25 @@
             this.extractPackageFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.packageProgressLabel = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.extractPackageBtn = new System.Windows.Forms.Button();
             this.extractPathBrowseBtn = new System.Windows.Forms.Button();
             this.extractPackageBrowseBtn = new System.Windows.Forms.Button();
             this.extractPackagePath = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.extractionPath = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.extractPackageBtn = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.createSrcPathBrowseBtn = new System.Windows.Forms.Button();
-            this.createSrcPath = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
+            this.createPackagePathBrowseBtn = new System.Windows.Forms.Button();
+            this.createPackagePath = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.packageVersion = new System.Windows.Forms.ComboBox();
             this.label8 = new System.Windows.Forms.Label();
             this.compressionMethod = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
             this.createPackageBtn = new System.Windows.Forms.Button();
-            this.createPackagePathBrowseBtn = new System.Windows.Forms.Button();
-            this.createPackagePath = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.createSrcPathBrowseBtn = new System.Windows.Forms.Button();
+            this.createSrcPath = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.createPackageFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.createPackagePathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.groupBox1.SuspendLayout();
@@ -107,6 +107,17 @@
             this.groupBox1.TabIndex = 65;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Extract Package";
+            // 
+            // extractPackageBtn
+            // 
+            this.extractPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.extractPackageBtn.Location = new System.Drawing.Point(709, 109);
+            this.extractPackageBtn.Name = "extractPackageBtn";
+            this.extractPackageBtn.Size = new System.Drawing.Size(160, 23);
+            this.extractPackageBtn.TabIndex = 62;
+            this.extractPackageBtn.Text = "Extract Package";
+            this.extractPackageBtn.UseVisualStyleBackColor = true;
+            this.extractPackageBtn.Click += new System.EventHandler(this.extractPackageBtn_Click);
             // 
             // extractPathBrowseBtn
             // 
@@ -166,17 +177,6 @@
             this.label3.TabIndex = 60;
             this.label3.Text = "Destination path:";
             // 
-            // extractPackageBtn
-            // 
-            this.extractPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.extractPackageBtn.Location = new System.Drawing.Point(709, 109);
-            this.extractPackageBtn.Name = "extractPackageBtn";
-            this.extractPackageBtn.Size = new System.Drawing.Size(160, 23);
-            this.extractPackageBtn.TabIndex = 62;
-            this.extractPackageBtn.Text = "Extract Package";
-            this.extractPackageBtn.UseVisualStyleBackColor = true;
-            this.extractPackageBtn.Click += new System.EventHandler(this.extractPackageBtn_Click);
-            // 
             // groupBox2
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -199,34 +199,35 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Create Package";
             // 
-            // createSrcPathBrowseBtn
+            // createPackagePathBrowseBtn
             // 
-            this.createSrcPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.createSrcPathBrowseBtn.Location = new System.Drawing.Point(829, 35);
-            this.createSrcPathBrowseBtn.Name = "createSrcPathBrowseBtn";
-            this.createSrcPathBrowseBtn.Size = new System.Drawing.Size(41, 23);
-            this.createSrcPathBrowseBtn.TabIndex = 61;
-            this.createSrcPathBrowseBtn.Text = "...";
-            this.createSrcPathBrowseBtn.UseVisualStyleBackColor = true;
-            this.createSrcPathBrowseBtn.Click += new System.EventHandler(this.createSrcPathBrowseBtn_Click);
+            this.createPackagePathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.createPackagePathBrowseBtn.Location = new System.Drawing.Point(828, 78);
+            this.createPackagePathBrowseBtn.Name = "createPackagePathBrowseBtn";
+            this.createPackagePathBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.createPackagePathBrowseBtn.TabIndex = 71;
+            this.createPackagePathBrowseBtn.Text = "...";
+            this.createPackagePathBrowseBtn.UseVisualStyleBackColor = true;
+            this.createPackagePathBrowseBtn.Click += new System.EventHandler(this.createPackagePathBrowseBtn_Click);
             // 
-            // createSrcPath
+            // createPackagePath
             // 
-            this.createSrcPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.createPackagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.createSrcPath.Location = new System.Drawing.Point(9, 37);
-            this.createSrcPath.Name = "createSrcPath";
-            this.createSrcPath.Size = new System.Drawing.Size(821, 20);
-            this.createSrcPath.TabIndex = 59;
+            this.createPackagePath.Location = new System.Drawing.Point(8, 80);
+            this.createPackagePath.Name = "createPackagePath";
+            this.createPackagePath.Size = new System.Drawing.Size(821, 20);
+            this.createPackagePath.TabIndex = 69;
+            this.createPackagePath.TextChanged += new System.EventHandler(this.packagePath_TextChanged);
             // 
-            // label2
+            // label1
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(6, 21);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(68, 13);
-            this.label2.TabIndex = 60;
-            this.label2.Text = "Source path:";
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(5, 64);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(77, 13);
+            this.label1.TabIndex = 70;
+            this.label1.Text = "Package path:";
             // 
             // packageVersion
             // 
@@ -235,8 +236,8 @@
             this.packageVersion.Items.AddRange(new object[] {
             "V13 (Divinity Original Sin: EE, Original Sin 2)",
             "V10 (Divinity Original Sin)",
-            "V9 (Divinity Original Sin Old)",
-            "V7 (Divinity Original Sin Old)"});
+            "V9 (Divinity Original Sin Classic)",
+            "V7 (Divinity Original Sin Classic - Old)"});
             this.packageVersion.Location = new System.Drawing.Point(9, 129);
             this.packageVersion.Name = "packageVersion";
             this.packageVersion.Size = new System.Drawing.Size(237, 21);
@@ -286,35 +287,34 @@
             this.createPackageBtn.UseVisualStyleBackColor = true;
             this.createPackageBtn.Click += new System.EventHandler(this.createPackageBtn_Click);
             // 
-            // createPackagePathBrowseBtn
+            // createSrcPathBrowseBtn
             // 
-            this.createPackagePathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.createPackagePathBrowseBtn.Location = new System.Drawing.Point(828, 78);
-            this.createPackagePathBrowseBtn.Name = "createPackagePathBrowseBtn";
-            this.createPackagePathBrowseBtn.Size = new System.Drawing.Size(41, 23);
-            this.createPackagePathBrowseBtn.TabIndex = 71;
-            this.createPackagePathBrowseBtn.Text = "...";
-            this.createPackagePathBrowseBtn.UseVisualStyleBackColor = true;
-            this.createPackagePathBrowseBtn.Click += new System.EventHandler(this.createPackagePathBrowseBtn_Click);
+            this.createSrcPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.createSrcPathBrowseBtn.Location = new System.Drawing.Point(829, 35);
+            this.createSrcPathBrowseBtn.Name = "createSrcPathBrowseBtn";
+            this.createSrcPathBrowseBtn.Size = new System.Drawing.Size(41, 23);
+            this.createSrcPathBrowseBtn.TabIndex = 61;
+            this.createSrcPathBrowseBtn.Text = "...";
+            this.createSrcPathBrowseBtn.UseVisualStyleBackColor = true;
+            this.createSrcPathBrowseBtn.Click += new System.EventHandler(this.createSrcPathBrowseBtn_Click);
             // 
-            // createPackagePath
+            // createSrcPath
             // 
-            this.createPackagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.createSrcPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.createPackagePath.Location = new System.Drawing.Point(8, 80);
-            this.createPackagePath.Name = "createPackagePath";
-            this.createPackagePath.Size = new System.Drawing.Size(821, 20);
-            this.createPackagePath.TabIndex = 69;
-            this.createPackagePath.TextChanged += new System.EventHandler(this.packagePath_TextChanged);
+            this.createSrcPath.Location = new System.Drawing.Point(9, 37);
+            this.createSrcPath.Name = "createSrcPath";
+            this.createSrcPath.Size = new System.Drawing.Size(821, 20);
+            this.createSrcPath.TabIndex = 59;
             // 
-            // label1
+            // label2
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(5, 64);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(77, 13);
-            this.label1.TabIndex = 70;
-            this.label1.Text = "Package path:";
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(6, 21);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(68, 13);
+            this.label2.TabIndex = 60;
+            this.label2.Text = "Source path:";
             // 
             // createPackageFileDlg
             // 
