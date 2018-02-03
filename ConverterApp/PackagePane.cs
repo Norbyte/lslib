@@ -52,30 +52,6 @@ namespace ConverterApp
             Application.DoEvents();
         }
 
-        private void packageBrowseBtn_Click(object sender, EventArgs e)
-        {
-            if (packageFileDlg.ShowDialog(this) != DialogResult.OK)
-            {
-                return;
-            }
-
-            packagePath.Text = packageFileDlg.FileName;
-            // Savegames (.lsv files) are saved using ZLib
-            if (Path.GetExtension(packageFileDlg.FileName) == ".lsv")
-            {
-                compressionMethod.SelectedIndex = 2;
-            }
-        }
-
-        private void exportPathBrowseBtn_Click(object sender, EventArgs e)
-        {
-            DialogResult result = exportPathDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
-            {
-                extractionPath.Text = exportPathDlg.SelectedPath;
-            }
-        }
-
         private void extractPackageBtn_Click(object sender, EventArgs e)
         {
             extractPackageBtn.Enabled = false;
@@ -85,12 +61,12 @@ namespace ConverterApp
             {
                 var packager = new Packager();
                 packager.ProgressUpdate += PackageProgressUpdate;
-                packager.UncompressPackage(packagePath.Text, extractionPath.Text);
+                packager.UncompressPackage(extractPackagePath.Text, extractionPath.Text);
                 MessageBox.Show("Package extracted successfully.");
             }
             catch (NotAPackageException)
             {
-                MessageBox.Show($"The specified package ({packagePath.Text}) is not an Original Sin package or savegame archive.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"The specified package ({extractPackagePath.Text}) is not an Original Sin package or savegame archive.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             catch (Exception exc)
             {
@@ -172,7 +148,7 @@ namespace ConverterApp
 
                 var packager = new Packager();
                 packager.ProgressUpdate += PackageProgressUpdate;
-                packager.CreatePackage(packagePath.Text, extractionPath.Text, version, compression, fastCompression);
+                packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, version, compression, fastCompression);
 
                 MessageBox.Show("Package created successfully.");
             }
@@ -191,7 +167,48 @@ namespace ConverterApp
         private void packagePath_TextChanged(object sender, EventArgs e)
         {
             // Savegames (.lsv files) are saved using ZLib
-            if (Path.GetExtension(packagePath.Text) == ".lsv")
+            if (Path.GetExtension(createPackagePath.Text) == ".lsv")
+            {
+                compressionMethod.SelectedIndex = 2;
+            }
+        }
+
+        private void extractPackageBrowseBtn_Click(object sender, EventArgs e)
+        {
+            if (extractPackageFileDlg.ShowDialog(this) == DialogResult.OK)
+            {
+                extractPackagePath.Text = extractPackageFileDlg.FileName;
+            }
+        }
+
+        private void extractPathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            DialogResult result = extractPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                extractionPath.Text = extractPathDlg.SelectedPath;
+            }
+        }
+
+        private void createSrcPathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            DialogResult result = createPackagePathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                createPackagePath.Text = createPackagePathDlg.SelectedPath;
+            }
+        }
+
+        private void createPackagePathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            if (createPackageFileDlg.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            createSrcPath.Text = createPackageFileDlg.FileName;
+            // Savegames (.lsv files) are saved using ZLib
+            if (Path.GetExtension(createPackageFileDlg.FileName) == ".lsv")
             {
                 compressionMethod.SelectedIndex = 2;
             }
