@@ -127,20 +127,24 @@ namespace LSLib.Granny.GR2
             header.extraTags = new UInt32[Header.ExtraTagCount];
             for (int i = 0; i < Header.ExtraTagCount; i++)
                 header.extraTags[i] = InputReader.ReadUInt32();
-            header.stringTableCrc = InputReader.ReadUInt32();
-            header.reserved1 = InputReader.ReadUInt32();
-            header.reserved2 = InputReader.ReadUInt32();
-            header.reserved3 = InputReader.ReadUInt32();
 
-            if (header.version != Header.Version)
-                throw new ParsingException(String.Format("Unsupported GR2 version; expected {0}, got {1}", Header.Version, header.version));
+            if (header.version >= 7)
+            {
+                header.stringTableCrc = InputReader.ReadUInt32();
+                header.reserved1 = InputReader.ReadUInt32();
+                header.reserved2 = InputReader.ReadUInt32();
+                header.reserved3 = InputReader.ReadUInt32();
+            }
+
+            if (header.version < 6 || header.version > 7)
+                throw new ParsingException(String.Format("Unsupported GR2 version; file is version {0}, supported versions are 6 and 7", header.version));
 
             // if (header.tag != Header.Tag)
             //    throw new ParsingException(String.Format("Incorrect header tag; expected {0:X8}, got {1:X8}", Header.Tag, header.tag));
 
             Debug.Assert(header.fileSize <= InputStream.Length);
             Debug.Assert(header.CalculateCRC(InputStream) == header.crc);
-            Debug.Assert(header.sectionsOffset == Header.HeaderSize);
+            Debug.Assert(header.sectionsOffset == header.Size());
             Debug.Assert(header.rootType.Section < header.numSections);
             // TODO: check rootTypeOffset after serialization
             Debug.Assert(header.stringTableCrc == 0);
@@ -406,7 +410,7 @@ namespace LSLib.Granny.GR2
                 reference.Offset = Reader.ReadUInt32();
             else
                 reference.Offset = Reader.ReadUInt64();
-            Debug.Assert(!reference.IsValid || reference.Offset + reference.Size * 4 <= (ulong)Stream.Length);
+            Debug.Assert(!reference.IsValid || reference.Size == 0 || reference.Offset + reference.Size * 4 <= (ulong)Stream.Length);
             return reference;
         }
 
@@ -771,9 +775,12 @@ namespace LSLib.Granny.GR2
                         System.Console.WriteLine(String.Format("    Array of references at [{0:X8}]", indices.Offset));
 #endif
 
-                        Debug.Assert(indices.IsValid == (indices.Size != 0));
+                        if (Header.version >= 7)
+                        {
+                            Debug.Assert(indices.IsValid == (indices.Size != 0));
+                        }
 
-                        if (indices.IsValid && node != null && parent != null)
+                        if (indices.IsValid && indices.Size > 0 && node != null && parent != null)
                         {
                             var items = node as System.Collections.IList;
                             var type = items.GetType().GetGenericArguments().Single();
@@ -823,9 +830,13 @@ namespace LSLib.Granny.GR2
 
                         var itemsRef = ReadArrayReference();
 
-                        Debug.Assert(itemsRef.IsValid == (itemsRef.Size != 0));
+                        if (Header.version >= 7)
+                        {
+                            Debug.Assert(itemsRef.IsValid == (itemsRef.Size != 0));
+                        }
 
                         if (itemsRef.IsValid &&
+                            itemsRef.Size > 0 &&
                             parent != null &&
                             (node != null || kind == SerializationKind.UserMember))
                         {

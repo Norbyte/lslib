@@ -799,7 +799,7 @@ namespace LSLib.Granny.GR2
                 Header.rootNode = new SectionReference(SectionType.Main, 0);
                 Header.fileSize = (UInt32)Stream.Length;
 
-                Stream.Seek(Magic.MagicSize + Header.HeaderSize, SeekOrigin.Begin);
+                Stream.Seek(Magic.MagicSize + Header.Size(), SeekOrigin.Begin);
 
                 foreach (var section in Sections)
                 {
@@ -845,7 +845,7 @@ namespace LSLib.Granny.GR2
             header.version = Header.Version;
             header.fileSize = 0; // Set after serialization is finished
             header.crc = 0; // Set after serialization is finished
-            header.sectionsOffset = Header.HeaderSize;
+            header.sectionsOffset = Header.Size();
             header.rootType = new SectionReference(); // Updated after serialization is finished
             header.rootNode = new SectionReference(); // Updated after serialization is finished
             header.numSections = (UInt32)SectionType.Max + 1;

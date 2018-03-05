@@ -185,42 +185,47 @@ namespace LSLib.Granny.GR2
     public class Magic
     {
         /// <summary>
-        /// Magic value used for little-endian 32-bit Granny files
+        /// Magic value used for version 7 little-endian 32-bit Granny files
         /// </summary>
         private static byte[] LittleEndian32Magic = new byte[] { 0x29, 0xDE, 0x6C, 0xC0, 0xBA, 0xA4, 0x53, 0x2B, 0x25, 0xF5, 0xB7, 0xA5, 0xF6, 0x66, 0xE2, 0xEE };
 
         /// <summary>
-        /// Magic value used for little-endian 32-bit Granny files
+        /// Magic value used for version 7 little-endian 32-bit Granny files
         /// </summary>
         private static byte[] LittleEndian32Magic2 = new byte[] { 0x29, 0x75, 0x31, 0x82, 0xBA, 0x02, 0x11, 0x77, 0x25, 0x3A, 0x60, 0x2F, 0xF6, 0x6A, 0x8C, 0x2E };
+        
+        /// <summary>
+        /// Magic value used for version 6 little-endian 32-bit Granny files
+        /// </summary>
+        private static byte[] LittleEndian32MagicV6 = new byte[] { 0xB8, 0x67, 0xB0, 0xCA, 0xF8, 0x6D, 0xB1, 0x0F, 0x84, 0x72, 0x8C, 0x7E, 0x5E, 0x19, 0x00, 0x1E };
 
         /// <summary>
-        /// Magic value used for big-endian 32-bit Granny files
+        /// Magic value used for version 7 big-endian 32-bit Granny files
         /// </summary>
         private static byte[] BigEndian32Magic = new byte[] { 0x0E, 0x11, 0x95, 0xB5, 0x6A, 0xA5, 0xB5, 0x4B, 0xEB, 0x28, 0x28, 0x50, 0x25, 0x78, 0xB3, 0x04 };
 
         /// <summary>
-        /// Magic value used for big-endian 32-bit Granny files
+        /// Magic value used for version 7 big-endian 32-bit Granny files
         /// </summary>
         private static byte[] BigEndian32Magic2 = new byte[] { 0x0E, 0x74, 0xA2, 0x0A, 0x6A, 0xEB, 0xEB, 0x64, 0xEB, 0x4E, 0x1E, 0xAB, 0x25, 0x91, 0xDB, 0x8F };
 
         /// <summary>
-        /// Magic value used for little-endian 64-bit Granny files
+        /// Magic value used for version 7 little-endian 64-bit Granny files
         /// </summary>
         private static byte[] LittleEndian64Magic = new byte[] { 0xE5, 0x9B, 0x49, 0x5E, 0x6F, 0x63, 0x1F, 0x14, 0x1E, 0x13, 0xEB, 0xA9, 0x90, 0xBE, 0xED, 0xC4 };
 
         /// <summary>
-        /// Magic value used for little-endian 64-bit Granny files
+        /// Magic value used for version 7 little-endian 64-bit Granny files
         /// </summary>
         private static byte[] LittleEndian64Magic2 = new byte[] { 0xE5, 0x2F, 0x4A, 0xE1, 0x6F, 0xC2, 0x8A, 0xEE, 0x1E, 0xD2, 0xB4, 0x4C, 0x90, 0xD7, 0x55, 0xAF };
 
         /// <summary>
-        /// Magic value used for big-endian 64-bit Granny files
+        /// Magic value used for version 7 big-endian 64-bit Granny files
         /// </summary>
         private static byte[] BigEndian64Magic = new byte[] { 0x31, 0x95, 0xD4, 0xE3, 0x20, 0xDC, 0x4F, 0x62, 0xCC, 0x36, 0xD0, 0x3A, 0xB1, 0x82, 0xFF, 0x89 };
 
         /// <summary>
-        /// Magic value used for big-endian 64-bit Granny files
+        /// Magic value used for version 7 big-endian 64-bit Granny files
         /// </summary>
         private static byte[] BigEndian64Magic2 = new byte[] { 0x31, 0xC2, 0x4E, 0x7C, 0x20, 0x40, 0xA3, 0x25, 0xCC, 0xE1, 0xC2, 0x7A, 0xB1, 0x32, 0x49, 0xF3 };
 
@@ -292,7 +297,7 @@ namespace LSLib.Granny.GR2
 
         public static Format FormatFromSignature(byte[] sig)
         {
-            if (sig.SequenceEqual(LittleEndian32Magic) || sig.SequenceEqual(LittleEndian32Magic2))
+            if (sig.SequenceEqual(LittleEndian32Magic) || sig.SequenceEqual(LittleEndian32Magic2) || sig.SequenceEqual(LittleEndian32MagicV6))
                 return Format.LittleEndian32;
 
             if (sig.SequenceEqual(BigEndian32Magic) || sig.SequenceEqual(BigEndian32Magic2))
@@ -395,13 +400,17 @@ namespace LSLib.Granny.GR2
         public const UInt32 Tag_DOSEE = 0x80000039;
 
         /// <summary>
-        /// Granny file format we support (currently only version 7)
+        /// Granny file format we support for writing (currently only version 7)
         /// </summary>
         public const UInt32 Version = 7;
         /// <summary>
-        /// Size of header structure, in bytes
+        /// Size of header structure for V6 headers, in bytes
         /// </summary>
-        public const UInt32 HeaderSize = 0x48;
+        public const UInt32 HeaderSize_V6 = 0x38;
+        /// <summary>
+        /// Size of header structure for V7 headers, in bytes
+        /// </summary>
+        public const UInt32 HeaderSize_V7 = 0x48;
         /// <summary>
         /// Number of user-defined tags in the header
         /// </summary>
@@ -448,13 +457,26 @@ namespace LSLib.Granny.GR2
         public UInt32 reserved2;
         public UInt32 reserved3;
 
+        public UInt32 Size()
+        {
+            UInt32 headerSize;
+            switch (version)
+            {
+                case 6: headerSize = HeaderSize_V6; break;
+                case 7: headerSize = HeaderSize_V7; break;
+                default: throw new InvalidDataException("Cannot calculate CRC for unknown header versions.");
+            }
+
+            return headerSize;
+        }
+
         public UInt32 CalculateCRC(Stream stream)
         {
             var originalPos = stream.Position;
-            var headerSize = HeaderSize + Magic.MagicSize;
-            stream.Seek(headerSize, SeekOrigin.Begin);
-            byte[] body = new byte[fileSize - headerSize];
-            stream.Read(body, 0, (int)(fileSize - headerSize));
+            var totalHeaderSize = Size() + Magic.MagicSize;
+            stream.Seek(totalHeaderSize, SeekOrigin.Begin);
+            byte[] body = new byte[fileSize - totalHeaderSize];
+            stream.Read(body, 0, (int)(fileSize - totalHeaderSize));
             UInt32 crc = Native.Crc32.Compute(body, 0);
             stream.Seek(originalPos, SeekOrigin.Begin);
             return crc;
