@@ -252,7 +252,7 @@ namespace LSLib.Granny.GR2
             if (Writer == MainWriter)
             {
                 // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
-                while ((MainStream.Position % 4) != 0)
+                while ((MainStream.Position % Header.alignment) != 0)
                 {
                     Writer.Write((Byte)0);
                 }
@@ -260,7 +260,7 @@ namespace LSLib.Granny.GR2
             else
             {
                 // Align the struct so its size (and the address of the subsequent struct) is a multiple of 4
-                while ((DataStream.Position % 4) != 0)
+                while ((DataStream.Position % Header.alignment) != 0)
                 {
                     Writer.Write((Byte)0);
                 }
@@ -772,13 +772,17 @@ namespace LSLib.Granny.GR2
                 foreach (var section in Sections)
                 {
                     relocSection.WriteSectionRelocations(section);
+                }
+
+                foreach (var section in Sections)
+                {
                     relocSection.WriteSectionMixedMarshallingRelocations(section);
                 }
 
                 foreach (var section in Sections)
                 {
-                    // Pad section size to a multiple of 4
-                    while (section.MainStream.Position % 4 > 0)
+                    // Pad section size to a multiple of the section alignment
+                    while ((section.MainStream.Position % section.Header.alignment) > 0)
                         section.Writer.Write((Byte)0);
 
                     section.MainStream.Flush();
