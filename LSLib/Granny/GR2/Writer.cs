@@ -845,7 +845,7 @@ namespace LSLib.Granny.GR2
             header.version = Header.Version;
             header.fileSize = 0; // Set after serialization is finished
             header.crc = 0; // Set after serialization is finished
-            header.sectionsOffset = Header.Size();
+            header.sectionsOffset = header.Size();
             header.rootType = new SectionReference(); // Updated after serialization is finished
             header.rootNode = new SectionReference(); // Updated after serialization is finished
             header.numSections = (UInt32)SectionType.Max + 1;
