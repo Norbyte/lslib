@@ -54,6 +54,7 @@
             this.label20 = new System.Windows.Forms.Label();
             this.gr2BatchOutputDir = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.exportColors = new System.Windows.Forms.CheckBox();
             this.flipUVs = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.exportableObjects = new System.Windows.Forms.ListView();
@@ -75,14 +76,14 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.exportColors = new System.Windows.Forms.CheckBox();
+            this.rigid = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
             this.gr2BatchTab.SuspendLayout();
@@ -385,6 +386,18 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export Options";
             // 
+            // exportColors
+            // 
+            this.exportColors.AutoSize = true;
+            this.exportColors.Checked = true;
+            this.exportColors.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.exportColors.Location = new System.Drawing.Point(9, 87);
+            this.exportColors.Name = "exportColors";
+            this.exportColors.Size = new System.Drawing.Size(87, 17);
+            this.exportColors.TabIndex = 24;
+            this.exportColors.Text = "Export colors";
+            this.exportColors.UseVisualStyleBackColor = true;
+            // 
             // flipUVs
             // 
             this.flipUVs.AutoSize = true;
@@ -527,6 +540,7 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.rigid);
             this.groupBox1.Controls.Add(this.applyBasisTransforms);
             this.groupBox1.Controls.Add(this.conformantGR2BrowseBtn);
             this.groupBox1.Controls.Add(this.conformantGR2Path);
@@ -618,19 +632,6 @@
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
             // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -655,17 +656,28 @@
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2";
             this.inputFileDlg.Title = "Select Input File";
             // 
-            // exportColors
+            // rigid
             // 
-            this.exportColors.AutoSize = true;
-            this.exportColors.Checked = true;
-            this.exportColors.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.exportColors.Location = new System.Drawing.Point(9, 87);
-            this.exportColors.Name = "exportColors";
-            this.exportColors.Size = new System.Drawing.Size(87, 17);
-            this.exportColors.TabIndex = 24;
-            this.exportColors.Text = "Export colors";
-            this.exportColors.UseVisualStyleBackColor = true;
+            this.rigid.AutoSize = true;
+            this.rigid.Location = new System.Drawing.Point(245, 45);
+            this.rigid.Name = "rigid";
+            this.rigid.Size = new System.Drawing.Size(50, 17);
+            this.rigid.TabIndex = 27;
+            this.rigid.Text = "Rigid";
+            this.rigid.UseVisualStyleBackColor = true;
+            // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
             // 
             // GR2Pane
             // 
@@ -746,5 +758,6 @@
         internal System.Windows.Forms.CheckBox use16bitIndex;
         private System.Windows.Forms.CheckBox flipUVs;
         private System.Windows.Forms.CheckBox exportColors;
+        private System.Windows.Forms.CheckBox rigid;
     }
 }

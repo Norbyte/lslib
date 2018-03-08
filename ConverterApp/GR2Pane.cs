@@ -165,6 +165,8 @@ namespace ConverterApp
                 buildDummySkeleton.Checked = true;
             }
 
+            var modelType = DivinityHelpers.DetermineModelType(_root);
+            rigid.Checked = (modelType == DivinityModelType.Rigid);
             UpdateExportableObjects();
             UpdateResourceFormats();
 
@@ -229,6 +231,15 @@ namespace ConverterApp
             settings.DeduplicateUVs = filterUVs.Checked;
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
+
+            if (rigid.Checked)
+            {
+                settings.ModelType = DivinityModelType.Rigid;
+            }
+            else
+            {
+                settings.ModelType = DivinityModelType.Normal;
+            }
 
             settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;
         }

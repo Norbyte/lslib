@@ -75,6 +75,9 @@ namespace LSLib.Granny.Model
         public bool ConformMeshBoneBindings = true;
         public bool ConformModels = true;
         public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
+        // Update the UserDefinedProperties property of meshes/bones (D:OS 2-specific)
+        public bool WriteUserDefinedProperties = true;
+        public DivinityModelType ModelType = DivinityModelType.Undefined;
     }
 
 

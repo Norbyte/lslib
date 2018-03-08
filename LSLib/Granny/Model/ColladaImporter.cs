@@ -178,6 +178,49 @@ namespace LSLib.Granny.Model
             return exporterInfo;
         }
 
+        private void UpdateUserDefinedProperties(Root root)
+        {
+            var modelType = Options.ModelType;
+            if (modelType == DivinityModelType.Undefined)
+            {
+                modelType = DivinityHelpers.DetermineModelType(root);
+            }
+
+            var userDefinedProperties = DivinityHelpers.ModelTypeToUserDefinedProperties(modelType);
+            
+            if (root.Meshes != null)
+            {
+                foreach (var mesh in root.Meshes)
+                {
+                    if (mesh.ExtendedData == null)
+                    {
+                        mesh.ExtendedData = new DivinityExtendedData();
+                    }
+
+                    mesh.ExtendedData.UserDefinedProperties = userDefinedProperties;
+                }
+            }
+
+            if (root.Skeletons != null)
+            {
+                foreach (var skeleton in root.Skeletons)
+                {
+                    if (skeleton.Bones != null)
+                    {
+                        foreach (var bone in skeleton.Bones)
+                        {
+                            if (bone.ExtendedData == null)
+                            {
+                                bone.ExtendedData = new DivinityExtendedData();
+                            }
+
+                            bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
+                        }
+                    }
+                }
+            }
+        }
+
         private void FindRootBones(node parent, node node, List<node> rootBones)
         {
             if (node.type == NodeType.JOINT)
@@ -519,6 +562,7 @@ namespace LSLib.Granny.Model
 
             if (trackGroup.TransformTracks.Count > 0)
             {
+                // Reorder transform tracks in lexicographic order
                 // This is needed by Granny; otherwise it'll fail to find animation tracks
                 trackGroup.TransformTracks.Sort((t1, t2) => t1.Name.CompareTo(t2.Name));
 
@@ -705,6 +749,12 @@ namespace LSLib.Granny.Model
                 root.Skeletons[0].UpdateInverseWorldTransforms();
             root.ZUp = ZUp;
             root.PostLoad();
+
+            if (Options.WriteUserDefinedProperties)
+            {
+                this.UpdateUserDefinedProperties(root);
+            }
+
             return root;
         }
     }

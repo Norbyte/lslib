@@ -553,7 +553,7 @@ namespace LSLib.Granny.Model
         public List<MaterialBinding> MaterialBindings;
         public List<BoneBinding> BoneBindings;
         [Serialization(Type = MemberType.VariantReference)]
-        public object ExtendedData;
+        public DivinityExtendedData ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
