@@ -68,9 +68,14 @@ namespace LSLib.LS.Story
         public const uint VerExternalStringTable = 0x010b;
 
         /// <summary>
+        /// Removed external string table
+        /// </summary>
+        public const uint VerRemoveExternalStringTable = 0x010c;
+
+        /// <summary>
         /// Last supported Osi version
         /// </summary>
-        public const uint VerLastSupported = VerExternalStringTable;
+        public const uint VerLastSupported = VerRemoveExternalStringTable;
     }
 
     public class OsiReader : BinaryReader

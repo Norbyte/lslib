@@ -234,7 +234,7 @@ namespace LSLib.LS.Story
                 if (reader.Ver > OsiVersion.VerLastSupported)
                 {
                     var msg = String.Format(
-                        "Osiris version v{0}.{1} unsupported; this tool supports loading up to version 1.11.",
+                        "Osiris version v{0}.{1} unsupported; this tool supports loading up to version 1.12.",
                         reader.MajorVersion, reader.MinorVersion
                     );
                     throw new InvalidDataException(msg);
@@ -257,7 +257,7 @@ namespace LSLib.LS.Story
                 else
                     story.Types = new Dictionary<uint, OsirisType>();
 
-                if (reader.Ver >= OsiVersion.VerExternalStringTable)
+                if (reader.Ver >= OsiVersion.VerExternalStringTable && reader.Ver < OsiVersion.VerRemoveExternalStringTable)
                     story.ExternalStringTable = ReadStrings(reader);
                 else
                     story.ExternalStringTable = new List<string>();
@@ -416,7 +416,7 @@ namespace LSLib.LS.Story
                 }
 
                 // TODO: regenerate string table?
-                if (Writer.Ver >= OsiVersion.VerExternalStringTable)
+                if (Writer.Ver >= OsiVersion.VerExternalStringTable && Writer.Ver < OsiVersion.VerRemoveExternalStringTable)
                     WriteStrings(story.ExternalStringTable);
 
                 Writer.WriteList(story.DivObjects);
