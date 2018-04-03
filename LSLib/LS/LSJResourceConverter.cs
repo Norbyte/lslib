@@ -290,7 +290,7 @@ namespace LSLib.LS
                     }
                     else if (key == "handle")
                     {
-                        if (attribute.Value != null)
+                        if (attribute != null)
                         {
                             var ts = ((TranslatedString)attribute.Value);
                             ts.Handle = reader.Value.ToString();

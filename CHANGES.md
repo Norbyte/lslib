@@ -5,6 +5,7 @@ v1.9.1 (beta)
 - Package extraction UI improvements
 - Change default package version when selecting game version
 - Fixed crash during cli resource conversion (thanks @fireundubh)
+- Fix loading of LSJ files where the translated string key handle precedes the type
 - GR2: Fixed possible crash during commandline GR2 conversion
 - GR2: Improved GR2 frame interpolation and trivial frame elimination to reduce animation jitter
 - GR2: Fixed export of multi-track animations where bones weren't in lexical order
