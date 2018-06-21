@@ -33,7 +33,7 @@ namespace LSLib.Granny.Model.VertexFormats
             WriteVector3(section, Position);
             WriteInfluences2(section, BoneWeights);
             WriteInfluences2(section, BoneIndices);
-            WriteVector2(section, TextureCoordinates0);
+            WriteVector3(section, Normal);
         }
 
         public override void Unserialize(GR2Reader reader)
@@ -41,7 +41,7 @@ namespace LSLib.Granny.Model.VertexFormats
             Position = ReadVector3(reader);
             BoneWeights = ReadInfluences2(reader);
             BoneIndices = ReadInfluences2(reader);
-            TextureCoordinates0 = ReadVector2(reader);
+            Normal = ReadVector3(reader);
         }
     }
 }
