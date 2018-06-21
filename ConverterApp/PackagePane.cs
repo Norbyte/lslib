@@ -195,7 +195,7 @@ namespace ConverterApp
             DialogResult result = createPackagePathDlg.ShowDialog(this);
             if (result == DialogResult.OK)
             {
-                createPackagePath.Text = createPackagePathDlg.SelectedPath;
+                createSrcPath.Text = createPackagePathDlg.SelectedPath;
             }
         }
 
@@ -206,7 +206,7 @@ namespace ConverterApp
                 return;
             }
 
-            createSrcPath.Text = createPackageFileDlg.FileName;
+            createPackagePath.Text = createPackageFileDlg.FileName;
             // Savegames (.lsv files) are saved using ZLib
             if (Path.GetExtension(createPackageFileDlg.FileName) == ".lsv")
             {
