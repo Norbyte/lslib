@@ -289,8 +289,8 @@ namespace LSLib.Granny.Model
             var times = Keyframes.Where(f => f.Value.HasRotation).Select(f => f.Key).ToList();
             var transforms = Keyframes.Where(f => f.Value.HasRotation).Select(f => f.Value.Rotation).ToList();
 
-            var i = 1;
-            while (i < transforms.Count - 1)
+            var keyframesToRemove = 0;
+            for (int i = 1; i < transforms.Count - 1; i++)
             {
                 Quaternion v0 = transforms[i - 1],
                     v1 = transforms[i],
@@ -305,23 +305,20 @@ namespace LSLib.Granny.Model
 
                 if ((v1 - v1l).Length < 0.001f)
                 {
-                    Keyframes[times[i]].HasRotation = false;
-                    Keyframes[times[i]].Rotation = Quaternion.Identity;
-                    times.RemoveAt(i);
-                    transforms.RemoveAt(i);
-                }
-                else
-                {
-                    i++;
+                    keyframesToRemove++;
                 }
             }
 
-            if (transforms.Count == 2 && (transforms[0] - transforms[1]).Length < 0.0001f)
+            if (keyframesToRemove == transforms.Count - 2 && (transforms[0] - transforms[transforms.Count - 1]).Length < 0.0001f)
             {
-                Keyframes[times[1]].HasRotation = false;
-                Keyframes[times[1]].Rotation = Quaternion.Identity;
-                times.RemoveAt(1);
-                transforms.RemoveAt(1);
+                for (int i = 1; i < times.Count; i++)
+                {
+                    Keyframes[times[i]].HasRotation = false;
+                    Keyframes[times[i]].Rotation = Quaternion.Identity;
+                }
+
+                times.RemoveRange(1, times.Count - 1);
+                transforms.RemoveRange(1, transforms.Count - 1);
             }
         }
 
