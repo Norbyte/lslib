@@ -415,28 +415,18 @@ namespace LSLib.Granny.Model
             var rotations = transforms.Select(m => m.ExtractRotation()).ToList();
             var scales = transforms.Select(m => m.ExtractScale()).ToList();
 
-            for (var i = 0; i < rotations.Count; i++)
-            {
-                var r = rotations[i];
-                if (r.W < 0)
-                {
-                    rotations[i] = new Quaternion(-r.X, -r.Y, -r.Z, -r.W);
-                }
-            }
-
             // Quaternion sign fixup
-            // Since GR2 interpolation operates on the raw XYZ values of the quaternion, two subsequent quaternions
-            // that express the same rotation (eg. [1, 0.5, 0.5, -0.5] and [1, -0.5, -0.5, 0.5]) will result in a 360 deg
-            // rotation during the animation. Shuffle XYZ signs around to make this less likely to happen
+            // The same rotation can be represented by both q and -q. However the Slerp path
+            // will be different; one will go the long away around, the other the short away around.
+            // Replace quaterions to ensure that Slerp will take the short path.
             for (var i = 1; i < rotations.Count; i++)
             {
                 var r0 = rotations[i - 1];
                 var r1 = rotations[i];
-                var distance = Math.Abs(r0.X - r1.X) + Math.Abs(r0.Y - r1.Y) + Math.Abs(r0.Z - r1.Z);
-                var inverseDistance = Math.Abs(r0.X + r1.X) + Math.Abs(r0.Y + r1.Y) + Math.Abs(r0.Z + r1.Z);
-                if (distance > inverseDistance)
+                var dot = Vector3.Dot(r0.Xyz, r1.Xyz);
+                if (dot < 0.0f)
                 {
-                    rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, r1.W);
+                    rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, -r1.W);
                 }
             }
 
