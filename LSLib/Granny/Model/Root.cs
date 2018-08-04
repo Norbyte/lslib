@@ -97,6 +97,23 @@ namespace LSLib.Granny.Model
                     }
                 }
             }
+
+            // Upgrade legacy animation formats
+            if (TrackGroups != null)
+            {
+                foreach (var group in TrackGroups)
+                {
+                    if (group.TransformTracks != null)
+                    {
+                        foreach (var track in group.TransformTracks)
+                        {
+                            track.OrientationCurve.UpgradeToGr7();
+                            track.PositionCurve.UpgradeToGr7();
+                            track.ScaleShearCurve.UpgradeToGr7();
+                        }
+                    }
+                }
+            }
         }
 
         public void PreSave()

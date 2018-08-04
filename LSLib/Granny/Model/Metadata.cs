@@ -8,6 +8,7 @@ namespace LSLib.Granny.Model
         public String FromArtToolName;
         public Int32 ArtToolMajorRevision;
         public Int32 ArtToolMinorRevision;
+        [Serialization(MinVersion = 0x80000011)]
         public Int32 ArtToolPointerSize;
         public Single UnitsPerMeter;
         [Serialization(ArraySize = 3)]
@@ -18,7 +19,7 @@ namespace LSLib.Granny.Model
         public Single[] UpVector;
         [Serialization(ArraySize = 3)]
         public Single[] BackVector;
-        [Serialization(Type = MemberType.VariantReference)]
+        [Serialization(Type = MemberType.VariantReference, MinVersion = 0x80000011)]
         public object ExtendedData;
 
         public void SetYUp()
@@ -43,7 +44,7 @@ namespace LSLib.Granny.Model
         public Int32 ExporterMinorRevision;
         public Int32 ExporterCustomization;
         public Int32 ExporterBuildNumber;
-        [Serialization(Type = MemberType.VariantReference)]
+        [Serialization(Type = MemberType.VariantReference, MinVersion = 0x80000011)]
         public object ExtendedData;
     }
 }

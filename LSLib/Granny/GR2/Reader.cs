@@ -552,7 +552,7 @@ namespace LSLib.Granny.GR2
                         if (member.Type != local.Type)
                         {
                             Trace.TraceWarning(String.Format(
-                                "Struct {0}: Field {1} type differs ({1} vs {2})",
+                                "Struct {0}: Field {1} type differs ({2} vs {3})",
                                 node.GetType().Name, local.Name, local.Type, member.Type
                             ));
                         }
@@ -560,7 +560,7 @@ namespace LSLib.Granny.GR2
                         if (!member.GrannyName.Equals(local.GrannyName))
                         {
                             Trace.TraceWarning(String.Format(
-                                "Struct {0}: Field {1} name differs ({1} vs {2})",
+                                "Struct {0}: Field {1} name differs ({2} vs {3})",
                                 node.GetType().Name, local.Name, local.GrannyName, member.GrannyName
                             ));
                         }
@@ -568,7 +568,7 @@ namespace LSLib.Granny.GR2
                         if (member.ArraySize != local.ArraySize)
                         {
                             Trace.TraceWarning(String.Format(
-                                "Struct {0}: Field {1} array size differs ({1} vs {2})",
+                                "Struct {0}: Field {1} array size differs ({2} vs {3})",
                                 node.GetType().Name, local.Name, local.ArraySize, member.ArraySize
                             ));
                         }

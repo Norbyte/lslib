@@ -9,8 +9,53 @@ namespace LSLib.Granny.Model
 {
     public class AnimationCurve
     {
-        [Serialization(TypeSelector = typeof(AnimationCurveDataTypeSelector), Type = MemberType.VariantReference)]
+        [Serialization(TypeSelector = typeof(AnimationCurveDataTypeSelector), Type = MemberType.VariantReference, MinVersion = 0x80000011)]
         public AnimationCurveData CurveData;
+        [Serialization(MaxVersion = 0x80000010)]
+        public Int32 Degree;
+        [Serialization(Prototype = typeof(ControlReal32), Kind = SerializationKind.UserMember, Serializer = typeof(SingleListSerializer), MaxVersion = 0x80000010)]
+        public List<Single> Knots;
+        [Serialization(Prototype = typeof(ControlReal32), Kind = SerializationKind.UserMember, Serializer = typeof(SingleListSerializer), MaxVersion = 0x80000010)]
+        public List<Single> Controls;
+
+        /// <summary>
+        /// Upgrades old animations (GR2 files with header version v6) to the new CurveData format
+        /// </summary>
+        public void UpgradeToGr7()
+        {
+            // Skip if we've already upgraded
+            if (this.CurveData != null) return;
+
+            if (this.Degree == 0)
+            {
+                // Degree 0 curves are identities in all cases
+                var curve = new DaIdentity();
+                curve.CurveDataHeader_DaIdentity = new CurveDataHeader();
+                curve.CurveDataHeader_DaIdentity.Format = (byte)CurveFormat.DaIdentity;
+                curve.CurveDataHeader_DaIdentity.Degree = 0;
+                this.CurveData = curve;
+            }
+            else if (this.Degree == 2)
+            {
+                if (this.Knots == null || this.Controls == null)
+                {
+                    throw new InvalidOperationException("Could not upgrade animation curve: knots/controls unavailable");
+                }
+
+                // Degree 2 curves are stored in K32fC32f (v6 didn't support multiple curve formats)
+                var curve = new DaK32fC32f();
+                curve.CurveDataHeader_DaK32fC32f = new CurveDataHeader();
+                curve.CurveDataHeader_DaK32fC32f.Format = (byte)CurveFormat.DaK32fC32f;
+                curve.CurveDataHeader_DaK32fC32f.Degree = 2;
+                curve.Controls = Controls;
+                curve.Knots = Knots;
+                this.CurveData = curve;
+            }
+            else
+            {
+                throw new InvalidOperationException("Could not upgrade animation curve: Unsupported curve degree");
+            }
+        }
     }
 
     public class Keyframe
@@ -446,6 +491,7 @@ namespace LSLib.Granny.Model
     public class TransformTrack
     {
         public string Name;
+        [Serialization(MinVersion = 0x80000011)]
         public int Flags;
         [Serialization(Type = MemberType.Inline)]
         public AnimationCurve OrientationCurve;
@@ -596,12 +642,15 @@ namespace LSLib.Granny.Model
         public string Name;
         public float Duration;
         public float TimeStep;
+        [Serialization(MinVersion = 0x80000011)]
         public float Oversampling;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<TrackGroup> TrackGroups;
+        [Serialization(MinVersion = 0x80000011)]
         public Int32 DefaultLoopCount;
+        [Serialization(MinVersion = 0x80000011)]
         public Int32 Flags;
-        [Serialization(Type = MemberType.VariantReference)]
+        [Serialization(Type = MemberType.VariantReference, MinVersion = 0x80000011)]
         public object ExtendedData;
     }
 }
