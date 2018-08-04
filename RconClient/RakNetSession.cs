@@ -19,8 +19,7 @@ namespace LSLib.Rcon
         private IPEndPoint Address;
         private byte[] ClientId;
 
-        private UInt32 NextUnreliablePacketId = 0;
-        private UInt32 NextReliablePacketId = 0;
+        private UInt32 NextPacketId = 0;
         private UInt32 NextReliableId = 0;
         private UInt32 NextSequenceId = 0;
         private UInt32 NextOrderId = 0;
@@ -230,16 +229,7 @@ namespace LSLib.Rcon
         {
             var dataPkt = new DataPacket();
             dataPkt.Id = (byte)PacketId.EncapsulatedData;
-            if (reliability == EncapsulatedReliability.Unreliable
-                || reliability == EncapsulatedReliability.UnreliableAcked
-                || reliability == EncapsulatedReliability.UnreliableSequenced)
-            {
-                dataPkt.Sequence.Number = NextUnreliablePacketId++;
-            }
-            else
-            {
-                dataPkt.Sequence.Number = NextReliablePacketId++;
-            }
+            dataPkt.Sequence.Number = NextPacketId++;
 
             var encapPkt = new EncapsulatedPacket();
             encapPkt.Flags.Reliability = reliability;
