@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSLib", "LSLib\LSLib.csproj", "{46372C50-4288-4B8E-AF21-C934560600E0}"
 EndProject
@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterApp", "ConverterAp
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Divine", "Divine\Divine.csproj", "{CBFEE38F-5F12-4D6F-B4FB-267FB68A6BEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RconClient", "RconClient\RconClient.csproj", "{EF82C289-53D6-41C8-B5C3-72B37655C7F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -152,8 +154,35 @@ Global
 		{CBFEE38F-5F12-4D6F-B4FB-267FB68A6BEA}.RelWithDebInfo|Win32.Build.0 = Release|Any CPU
 		{CBFEE38F-5F12-4D6F-B4FB-267FB68A6BEA}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
 		{CBFEE38F-5F12-4D6F-B4FB-267FB68A6BEA}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|Win32.Build.0 = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|Win32.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|Win32.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.Release|x64.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|Mixed Platforms.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|Win32.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|Win32.Build.0 = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{EF82C289-53D6-41C8-B5C3-72B37655C7F3}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2CCBBA64-DB08-4DC9-B08A-2F13F0733AAC}
 	EndGlobalSection
 EndGlobal
