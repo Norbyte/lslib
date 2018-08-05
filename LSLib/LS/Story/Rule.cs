@@ -4,15 +4,15 @@ using System.IO;
 
 namespace LSLib.LS.Story
 {
+    public enum RuleType
+    {
+        Rule,
+        Proc,
+        Query
+    };
+
     public class RuleNode : RelNode
     {
-        public enum RuleType
-        {
-            Rule,
-            Proc,
-            Query
-        };
-
         public List<Call> Calls;
         public List<Variable> Variables;
         public UInt32 Line;

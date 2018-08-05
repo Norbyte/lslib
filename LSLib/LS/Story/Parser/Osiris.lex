@@ -1,4 +1,4 @@
-%namespace LSLib.LS.Story
+%namespace LSLib.LS.Story.Parser
 %visibility public
 %scannertype GoalScanner
 %scanbasetype GoalScanBase
@@ -47,14 +47,14 @@ hex [0-9a-fA-F]
 "."                return (int)'.';
 [ \t\v\r\n\f]      ;
 
-{letter}({letter}|{digit}|_)*   return (int)GoalTokens.IDENTIFIER;
+{letter}({letter}|{digit}|_)*   { yylval = MakeLiteral(yytext); return (int)GoalTokens.IDENTIFIER; }
 /* Special case for identifiers with a GUID string at the end */
-{letter}({letter}|{digit}|_)*({hex}{8})-({hex}{4})-({hex}{4})-({hex}{4})-({hex}{12}) return (int)GoalTokens.IDENTIFIER;
+{letter}({letter}|{digit}|_)*({hex}{8})-({hex}{4})-({hex}{4})-({hex}{4})-({hex}{12}) { yylval = MakeLiteral(yytext); return (int)GoalTokens.IDENTIFIER; }
 /* Variables with a leading underscore are local, and are handled differently */
-_({letter}|{digit}|_)*          return (int)GoalTokens.LOCAL_VAR;
-[+\-]?{digit}({digit})*         return (int)GoalTokens.INTEGER;
-[+\-]?{digit}+\.{digit}+        return (int)GoalTokens.FLOAT;
-L?\"(\\.|[^\\"])*\"             return (int)GoalTokens.STRING;
+_({letter}|{digit}|_)*          { yylval = MakeLiteral(yytext); return (int)GoalTokens.LOCAL_VAR; }
+[+\-]?{digit}({digit})*         { yylval = MakeLiteral(yytext); return (int)GoalTokens.INTEGER; }
+[+\-]?{digit}+\.{digit}+        { yylval = MakeLiteral(yytext); return (int)GoalTokens.FLOAT; }
+L?\"(\\.|[^\\"])*\"             { yylval = MakeString(yytext); return (int)GoalTokens.STRING; }
 
 /* Comments */
 [/][/][^\n]*\n                  ;

@@ -3,18 +3,18 @@ using System.IO;
 
 namespace LSLib.LS.Story
 {
+    public enum RelOpType : byte
+    {
+        Less = 0,
+        LessOrEqual = 1,
+        Greater = 2,
+        GreaterOrEqual = 3,
+        Equal = 4,
+        NotEqual = 5
+    };
+
     public class RelOpNode : RelNode
     {
-        public enum RelOpType : byte
-        {
-            Less = 0,
-            LessOrEqual = 1,
-            Greater = 2,
-            GreaterOrEqual = 3,
-            Equal = 4,
-            NotEqual = 5
-        };
-
         public sbyte LeftValueIndex;
         public sbyte RightValueIndex;
         public Value LeftValue;

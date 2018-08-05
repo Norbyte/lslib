@@ -71,8 +71,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LS\Story\Osiris.lex" />
-    <None Include="LS\Story\Osiris.yy" />
+    <None Include="LS\Story\Parser\Osiris.lex" />
+    <None Include="LS\Story\Parser\Osiris.yy" />
     <Compile Include="Granny\Collada.cs" />
     <Compile Include="Granny\ColladaAnimation.cs" />
     <Compile Include="Granny\ColladaSchema.cs" />
@@ -182,7 +182,8 @@
     <Compile Include="LS\Story\Goal.cs" />
     <Compile Include="LS\Story\Join.cs" />
     <Compile Include="LS\Story\Node.cs" />
-    <Compile Include="LS\Story\Osiris.cs" />
+    <Compile Include="LS\Story\Parser\Osiris.cs" />
+    <Compile Include="LS\Story\Parser\ASTNodes.cs" />
     <Compile Include="LS\Story\Proc.cs" />
     <Compile Include="LS\Story\Query.cs" />
     <Compile Include="LS\Story\Reference.cs" />
@@ -192,8 +193,8 @@
     <Compile Include="LS\Story\ShiftReduceParserCode.cs" />
     <Compile Include="LS\Story\Story.cs" />
     <Compile Include="LS\Story\Value.cs" />
-    <Compile Include="LS\Story\Osiris.lex.cs" />
-    <Compile Include="LS\Story\Osiris.yy.cs" />
+    <Compile Include="LS\Story\Parser\Osiris.lex.cs" />
+    <Compile Include="LS\Story\Parser\Osiris.yy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="packages.config" />
     <None Include="Stats\DOSStats.cs" />
@@ -218,8 +219,8 @@
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\Osiris.lex.cs" "$(ProjectDir)\LS\Story\Osiris.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\Osiris.yy.cs" "$(ProjectDir)\LS\Story\Osiris.yy"</PreBuildEvent>
+    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\Parser\Osiris.lex.cs" "$(ProjectDir)\LS\Story\Parser\Osiris.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\Parser\Osiris.yy.cs" "$(ProjectDir)\LS\Story\Parser\Osiris.yy"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
