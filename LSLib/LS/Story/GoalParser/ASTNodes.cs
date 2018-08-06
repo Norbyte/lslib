@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LSLib.LS.Story.Parser
+namespace LSLib.LS.Story.GoalParser
 {
     /// <summary>
     /// Base class for all AST nodes.

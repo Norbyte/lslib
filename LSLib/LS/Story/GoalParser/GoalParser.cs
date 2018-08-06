@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace LSLib.LS.Story.Parser
+namespace LSLib.LS.Story.GoalParser
 {
     public abstract class GoalScanBase : AbstractScanner<ASTNode, LexLocation>
     {

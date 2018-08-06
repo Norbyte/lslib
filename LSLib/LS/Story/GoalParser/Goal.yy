@@ -1,9 +1,9 @@
-%namespace LSLib.LS.Story.Parser
+%namespace LSLib.LS.Story.GoalParser
 %partial 
 %visibility public
 %parsertype GoalParser
 %tokentype GoalTokens
-%YYSTYPE LSLib.LS.Story.Parser.ASTNode
+%YYSTYPE LSLib.LS.Story.GoalParser.ASTNode
 
 %start GoalFile
 

@@ -1,4 +1,4 @@
-%namespace LSLib.LS.Story.Parser
+%namespace LSLib.LS.Story.GoalParser
 %visibility public
 %scannertype GoalScanner
 %scanbasetype GoalScanBase

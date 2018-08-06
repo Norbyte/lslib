@@ -71,8 +71,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LS\Story\Parser\Osiris.lex" />
-    <None Include="LS\Story\Parser\Osiris.yy" />
+    <None Include="LS\Story\GoalParser\Goal.lex" />
+    <None Include="LS\Story\GoalParser\Goal.yy" />
     <Compile Include="Granny\Collada.cs" />
     <Compile Include="Granny\ColladaAnimation.cs" />
     <Compile Include="Granny\ColladaSchema.cs" />
@@ -180,10 +180,16 @@
     <Compile Include="LS\Story\DebugExport.cs" />
     <Compile Include="LS\Story\Function.cs" />
     <Compile Include="LS\Story\Goal.cs" />
+    <Compile Include="LS\Story\GoalParser\Goal.lex.cs" />
+    <Compile Include="LS\Story\GoalParser\Goal.yy.cs" />
+    <Compile Include="LS\Story\HeaderParser\ASTNodes.cs" />
+    <Compile Include="LS\Story\HeaderParser\HeaderParser.cs" />
     <Compile Include="LS\Story\Join.cs" />
     <Compile Include="LS\Story\Node.cs" />
-    <Compile Include="LS\Story\Parser\Osiris.cs" />
-    <Compile Include="LS\Story\Parser\ASTNodes.cs" />
+    <Compile Include="LS\Story\GoalParser\GoalParser.cs" />
+    <Compile Include="LS\Story\GoalParser\ASTNodes.cs" />
+    <Compile Include="LS\Story\HeaderParser\StoryHeader.lex.cs" />
+    <Compile Include="LS\Story\HeaderParser\StoryHeader.yy.cs" />
     <Compile Include="LS\Story\Proc.cs" />
     <Compile Include="LS\Story\Query.cs" />
     <Compile Include="LS\Story\Reference.cs" />
@@ -193,9 +199,9 @@
     <Compile Include="LS\Story\ShiftReduceParserCode.cs" />
     <Compile Include="LS\Story\Story.cs" />
     <Compile Include="LS\Story\Value.cs" />
-    <Compile Include="LS\Story\Parser\Osiris.lex.cs" />
-    <Compile Include="LS\Story\Parser\Osiris.yy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="LS\Story\HeaderParser\StoryHeader.lex" />
+    <None Include="LS\Story\HeaderParser\StoryHeader.yy" />
     <None Include="packages.config" />
     <None Include="Stats\DOSStats.cs" />
     <None Include="Stats\PropertyDefinition.cs" />
@@ -219,8 +225,10 @@
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\Parser\Osiris.lex.cs" "$(ProjectDir)\LS\Story\Parser\Osiris.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\Parser\Osiris.yy.cs" "$(ProjectDir)\LS\Story\Parser\Osiris.yy"</PreBuildEvent>
+    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.yy.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.yy"
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
