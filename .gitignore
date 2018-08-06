@@ -55,5 +55,7 @@
 /packages
 LSTools.VC.db
 *.opendb
-LSLib/LS/Story/Osiris.lex.cs
-LSLib/LS/Story/Osiris.yy.cs
+
+# Generated GpLex/GpPg files
+*.lex.cs
+*.yy.cs
