@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace LSLib.Rcon.DosPackets
@@ -6,7 +7,7 @@ namespace LSLib.Rcon.DosPackets
     public enum DosPacketId : byte
     {
         DosUnknown87 = 0x87,
-        DosUnknown8B = 0x8B,
+        DosEnumerationList = 0x8B,
         DosDisconnectConsole = 0x89,
         DosConsoleResponse = 0x8A,
         DosSendConsoleCommand = 0x8B
@@ -24,10 +25,43 @@ namespace LSLib.Rcon.DosPackets
         }
     }
 
-    public class DosUnknown8B : Packet
+    public class DosEnumeration
     {
+        public String Name;
+        public Byte Type;
+        public List<String> Values;
+    }
+
+    public class DosEnumerationList : Packet
+    {
+        public List<DosEnumeration> Enumerations;
+
+        private static String ReadString(BinaryReaderBE Reader)
+        {
+            var length = Reader.ReadInt32();
+            var strBytes = Reader.ReadBytes(length);
+            return Encoding.UTF8.GetString(strBytes);
+        }
+
         public void Read(BinaryReaderBE Reader)
         {
+            Enumerations = new List<DosEnumeration>();
+            var numEnums = Reader.ReadUInt32();
+            for (var i = 0; i < numEnums; i++)
+            {
+                var enumeration = new DosEnumeration();
+                enumeration.Name = ReadString(Reader);
+                enumeration.Type = Reader.ReadByte();
+                enumeration.Values = new List<String>();
+
+                var numElems = Reader.ReadUInt32();
+                for (var j = 0; j < numElems; j++)
+                {
+                    enumeration.Values.Add(ReadString(Reader));
+                }
+
+                Enumerations.Add(enumeration);
+            }
         }
 
         public void Write(BinaryWriterBE Writer)

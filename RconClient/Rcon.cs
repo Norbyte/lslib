@@ -1,5 +1,6 @@
 ﻿using LSLib.Rcon.DosPackets;
 using System;
+using System.IO;
 using System.Net;
 using System.Timers;
 
@@ -71,7 +72,7 @@ namespace LSLib.Rcon
             switch ((DosPacketId)id)
             {
                 case DosPacketId.DosUnknown87: return new DosUnknown87();
-                case DosPacketId.DosUnknown8B: return new DosUnknown8B();
+                case DosPacketId.DosEnumerationList: return new DosEnumerationList();
                 case DosPacketId.DosConsoleResponse: return new DosConsoleResponse();
                 default: return null;
             }
@@ -108,7 +109,7 @@ namespace LSLib.Rcon
             {
                 // Unknown.
             }
-            else if (packet is DosUnknown8B)
+            else if (packet is DosEnumerationList)
             {
                 Console.WriteLine("Sending console command:");
                 Console.WriteLine("> " + Command + " " + String.Join(" ", Arguments));
