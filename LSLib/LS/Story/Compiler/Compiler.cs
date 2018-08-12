@@ -179,6 +179,16 @@ namespace LSLib.LS.Story.Compiler
         public const String LocalTypeMismatch = "11";
         public const String UnresolvedType = "12";
         public const String InvalidProcDefinition = "13";
+        public const String InvalidSymbolInFact = "14";
+        public const String InvalidSymbolInStatement = "15";
+        public const String CanOnlyDeleteFromDatabase = "16";
+        public const String InvalidSymbolInInitialCondition = "17";
+        public const String InvalidSymbolInCondition = "18";
+        public const String UnresolvedSymbol = "19";
+        public const String StringLtGtComparison = "20";
+        public const String GuidAliasMismatch = "21";
+        public const String GuidPrefixNotKnown = "22";
+        public const String RuleNamingStyle = "23";
     }
 
     public class Diagnostic
@@ -505,13 +515,23 @@ namespace LSLib.LS.Story.Compiler
             var references = CollectNameReferences();
         }
 
-        private void CheckUnresolvedReferences(IRFact fact)
+        private void VerifyIRFact(IRFact fact)
         {
             var db = Context.LookupSignature(fact.Database.Name);
             if (db == null)
             {
                 var message = String.Format("Database \"{0}\" could not be resolved", fact.Database.Name);
                 Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
+                return;
+            }
+
+            if (db.Type != FunctionType.Database
+                && db.Type != FunctionType.Call
+                && db.Type != FunctionType.SysCall
+                && db.Type != FunctionType.Proc)
+            {
+                var message = String.Format("Init/Exit actions can only reference databases, calls and PROCs; \"{0}\" is a {1}", fact.Database.Name, db.Type);
+                Context.Log.Error(null, DiagnosticCode.InvalidSymbolInFact, message);
                 return;
             }
 
@@ -532,8 +552,8 @@ namespace LSLib.LS.Story.Compiler
 
                 if (param.Type.IntrinsicTypeId != ele.Type.IntrinsicTypeId)
                 {
-                    var message = String.Format("Intrinsic type of column {0} of DB [TODO TYPE] {1} differs: {2} vs {3}", 
-                        index, db.Name, param.Type.IntrinsicTypeId, ele.Type.IntrinsicTypeId);
+                    var message = String.Format("Intrinsic type of column {0} of {1} \"{2}\" differs: {3} vs {4}", 
+                        index, db.Type, db.Name, param.Type.IntrinsicTypeId, ele.Type.IntrinsicTypeId);
                     // TODO separate code
                     Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
@@ -541,8 +561,8 @@ namespace LSLib.LS.Story.Compiler
 
                 if (IsGuidAliasToAliasCast(param.Type, ele.Type))
                 {
-                    var message = String.Format("GUID alias cast of column {0} of DB [TODO TYPE] {1} differs: {2} vs {3}",
-                        index, db.Name, param.Type.TypeId, ele.Type.TypeId);
+                    var message = String.Format("GUID alias cast of column {0} of {1} \"{2}\" differs: {3} vs {4}",
+                        index, db.Type, db.Name, param.Type.TypeId, ele.Type.TypeId);
                     // TODO separate code
                     Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
@@ -550,7 +570,7 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void CheckUnresolvedReferences(IRStatement statement)
+        private void VerifyIRStatement(IRRule rule, IRStatement statement)
         {
             if (statement.Func == null) return;
 
@@ -559,6 +579,26 @@ namespace LSLib.LS.Story.Compiler
             {
                 var message = String.Format("Symbol \"{0}\" could not be resolved", statement.Func.Name);
                 Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
+                return;
+            }
+
+            if (func.Type != FunctionType.Database
+                && func.Type != FunctionType.Call
+                && func.Type != FunctionType.SysCall
+                && func.Type != FunctionType.Proc)
+            {
+                var message = String.Format("KB rule actions can only reference databases, calls and PROCs; \"{0}\" is a {1}", 
+                    statement.Func.Name, func.Type);
+                Context.Log.Error(null, DiagnosticCode.InvalidSymbolInStatement, message);
+                return;
+            }
+
+            if (statement.Not
+                && func.Type != FunctionType.Database)
+            {
+                var message = String.Format("KB rule NOT actions can only reference databases; \"{0}\" is a {1}",
+                    statement.Func.Name, func.Type);
+                Context.Log.Error(null, DiagnosticCode.CanOnlyDeleteFromDatabase, message);
                 return;
             }
 
@@ -577,6 +617,8 @@ namespace LSLib.LS.Story.Compiler
                     Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
+                
+                VerifyIRValue(rule, ele);
 
                 if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
                 {
@@ -598,29 +640,147 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void CheckUnresolvedReferences(IRFuncCondition condition)
+        private void VerifyIRVariable(IRRule rule, IRVariable variable)
+        {
+            var ruleVar = rule.Variables[variable.Index];
+            if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
+            {
+                var message = String.Format("Rule variable {0} of type {1} cannot be casted to {2}",
+                    ruleVar.Name, ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId);
+                // TODO separate code
+                Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
+                return;
+            }
+
+            if (IsGuidAliasToAliasCast(ruleVar.Type, variable.Type))
+            {
+                var message = String.Format("GUID alias cast: Rule variable {0} of type {1} casted to {2}",
+                    ruleVar.Name, ruleVar.Type.TypeId, variable.Type.TypeId);
+                // TODO separate code
+                Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
+            }
+        }
+
+        private void VerifyIRConstant(IRConstant constant)
+        {
+            if (constant.Type.IntrinsicTypeId == Value.Type.GuidString
+                && constant.Type.TypeId > CompilationContext.MaxIntrinsicTypeId)
+            {
+                // Check if the value is prefixed by any of the known GUID subtypes.
+                // If a match is found, verify that the type of the constant matched the GUID subtype.
+                var underscore = constant.StringValue.IndexOf('_');
+                if (underscore != -1)
+                {
+                    var prefix = constant.StringValue.Substring(0, underscore);
+                    var type = Context.LookupType(prefix);
+                    if (type != null)
+                    {
+                        if (type.TypeId != constant.Type.TypeId)
+                        {
+                            var message = String.Format("GUID constant \"{0}\" has inferred type {1}",
+                                constant.StringValue, constant.Type.Name);
+                            Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
+                        }
+                    }
+                    else if (prefix.Contains("GUID"))
+                    {
+                        var message = String.Format("GUID constant \"{0}\" is prefixed with unknown type {1}",
+                            constant.StringValue, prefix);
+                        Context.Log.Warn(null, DiagnosticCode.GuidPrefixNotKnown, message);
+                    }
+                }
+            }
+        }
+
+        private void VerifyIRValue(IRRule rule, IRValue value)
+        {
+            if (value is IRConstant)
+            {
+                VerifyIRConstant(value as IRConstant);
+            }
+            else
+            {
+                VerifyIRVariable(rule, value as IRVariable);
+            }
+        }
+
+        private void VerifyIRFuncCondition(IRRule rule, IRFuncCondition condition, bool initialCondition)
         {
             // TODO - Merge FuncCondition and IRStatement base?
             // Base --> IRParameterizedCall --> FuncCond: has (NOT) field
             var func = Context.LookupSignature(condition.Func.Name);
             if (func == null)
             {
-                var message = String.Format("Name \"{0}\" could not be resolved", condition.Func.Name);
-                Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
+                var message = String.Format("Symbol \"{0}\" could not be resolved", condition.Func.Name);
+                Context.Log.Error(null, DiagnosticCode.UnresolvedSymbol, message);
                 return;
             }
 
             if (!func.FullyTyped)
             {
-                var message = String.Format("Tuple type of \"{0}\" could not be determined", condition.Func.Name);
+                var message = String.Format("Signature of \"{0}\" could not be determined", condition.Func.Name);
                 Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
                 return;
+            }
+
+            if (initialCondition)
+            {
+                switch (rule.Type)
+                {
+                    case RuleType.Proc:
+                        if (func.Type != FunctionType.Proc)
+                        {
+                            var message = String.Format("Initial proc condition can only be a PROC name; \"{0}\" is a {1}",
+                                condition.Func.Name, func.Type);
+                            Context.Log.Error(null, DiagnosticCode.InvalidSymbolInInitialCondition, message);
+                            return;
+                        }
+                        break;
+
+                    case RuleType.Query:
+                        if (func.Type != FunctionType.UserQuery)
+                        {
+                            var message = String.Format("Initial query condition can only be a user-defined QRY name; \"{0}\" is a {1}",
+                                condition.Func.Name, func.Type);
+                            Context.Log.Error(null, DiagnosticCode.InvalidSymbolInInitialCondition, message);
+                            return;
+                        }
+                        break;
+
+                    case RuleType.Rule:
+                        if (func.Type != FunctionType.Event
+                            && func.Type != FunctionType.Database)
+                        {
+                            var message = String.Format("Initial rule condition can only be an event or a DB; \"{0}\" is a {1}",
+                                condition.Func.Name, func.Type);
+                            Context.Log.Error(null, DiagnosticCode.InvalidSymbolInInitialCondition, message);
+                            return;
+                        }
+                        break;
+
+                    default:
+                        throw new Exception("Unknown rule type");
+                }
+            }
+            else
+            {
+                if (func.Type != FunctionType.SysQuery
+                    && func.Type != FunctionType.Query
+                    && func.Type != FunctionType.Database
+                    && func.Type != FunctionType.UserQuery)
+                {
+                    var message = String.Format("Subsequent rule conditions can only be queries or DBs; \"{0}\" is a {1}",
+                        condition.Func.Name, func.Type);
+                    Context.Log.Error(null, DiagnosticCode.InvalidSymbolInCondition, message);
+                    return;
+                }
             }
 
             int index = 0;
             foreach (var param in func.Params)
             {
-                ValueType type = condition.Params[index].Type;
+                var condParam = condition.Params[index];
+                ValueType type = condParam.Type;
                 index++;
 
                 if (type == null)
@@ -632,10 +792,12 @@ namespace LSLib.LS.Story.Compiler
                     continue;
                 }
 
+                VerifyIRValue(rule, condParam);
+
                 if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
                 {
-                    var message = String.Format("Intrinsic type of parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
-                        index, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
+                    var message = String.Format("Intrinsic type of parameter {0} of {1} \"{2}\" differs: {3} vs {4}",
+                        index, func.Type, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
                     // TODO separate code
                     Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
@@ -643,8 +805,8 @@ namespace LSLib.LS.Story.Compiler
 
                 if (IsGuidAliasToAliasCast(param.Type, type))
                 {
-                    var message = String.Format("GUID alias cast of parameter {0} of Func [TODO TYPE] {1}: {2} vs {3}",
-                        index, func.Name, param.Type.TypeId, type.TypeId);
+                    var message = String.Format("GUID alias cast of parameter {0} of {1} \"{2}\": {3} vs {4}",
+                        index, func.Type, func.Name, param.Type.TypeId, type.TypeId);
                     // TODO separate code
                     Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
@@ -689,7 +851,7 @@ namespace LSLib.LS.Story.Compiler
                 && type1.TypeId != type2.TypeId;
         }
 
-        private void CheckUnresolvedReferences(IRBinaryCondition condition)
+        private void VerifyIRBinaryCondition(IRRule rule, IRBinaryCondition condition)
         {
             ValueType lhs = condition.LValue.Type, 
                 rhs = condition.RValue.Type;
@@ -701,7 +863,9 @@ namespace LSLib.LS.Story.Compiler
             {
                 return;
             }
-            
+
+            VerifyIRValue(rule, condition.LValue);
+            VerifyIRValue(rule, condition.RValue);
 
             if (!AreIntrinsicTypesCompatible(lhs.IntrinsicTypeId, rhs.IntrinsicTypeId))
             {
@@ -720,25 +884,57 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
                 return;
             }
+
+            // Using greater than/less than operators for strings and GUIDs is probably a mistake.
+            if ((lhs.IntrinsicTypeId == Value.Type.String
+                || lhs.IntrinsicTypeId == Value.Type.GuidString)
+                && (condition.Op == RelOpType.Greater
+                || condition.Op == RelOpType.GreaterOrEqual
+                || condition.Op == RelOpType.Less
+                || condition.Op == RelOpType.LessOrEqual))
+            {
+                var message = String.Format("String comparison using operator {0} - probably a mistake?", condition.Op);
+                Context.Log.Warn(null, DiagnosticCode.StringLtGtComparison, message);
+                return;
+            }
         }
 
-        private void CheckUnresolvedReferences(IRRule rule)
+        private void VerifyIRRule(IRRule rule)
         {
+            if (rule.Type == RuleType.Proc || rule.Type == RuleType.Query)
+            {
+                var initialName = (rule.Conditions[0] as IRFuncCondition).Func.Name;
+                if (rule.Type == RuleType.Proc && initialName.Name.Substring(0, 4).ToUpper() != "PROC")
+                {
+                    var message = String.Format("Name of PROC \"{0}\" should start with the prefix \"PROC\"", initialName);
+                    Context.Log.Warn(null, DiagnosticCode.RuleNamingStyle, message);
+                }
+
+                if (rule.Type == RuleType.Query && initialName.Name.Substring(0, 3).ToUpper() != "QRY")
+                {
+                    var message = String.Format("Name of Query \"{0}\" should start with the prefix \"QRY\"", initialName);
+                    Context.Log.Warn(null, DiagnosticCode.RuleNamingStyle, message);
+                }
+            }
+
+            bool initialCondition = true;
             foreach (var condition in rule.Conditions)
             {
                 if (condition is IRBinaryCondition)
                 {
-                    CheckUnresolvedReferences(condition as IRBinaryCondition);
+                    VerifyIRBinaryCondition(rule, condition as IRBinaryCondition);
                 }
                 else
                 {
-                    CheckUnresolvedReferences(condition as IRFuncCondition);
+                    VerifyIRFuncCondition(rule, condition as IRFuncCondition, initialCondition);
                 }
+
+                initialCondition = false;
             }
 
             foreach (var action in rule.Actions)
             {
-                CheckUnresolvedReferences(action);
+                VerifyIRStatement(rule, action);
             }
 
             foreach (var variable in rule.Variables)
@@ -752,7 +948,7 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        public void CheckUnresolvedReferences()
+        public void VerifyIR()
         {
             foreach (var goal in Context.GoalsByName.Values)
             {
@@ -767,17 +963,17 @@ namespace LSLib.LS.Story.Compiler
 
                 foreach (var fact in goal.InitSection)
                 {
-                    CheckUnresolvedReferences(fact);
+                    VerifyIRFact(fact);
                 }
 
                 foreach (var rule in goal.KBSection)
                 {
-                    CheckUnresolvedReferences(rule);
+                    VerifyIRRule(rule);
                 }
 
                 foreach (var fact in goal.ExitSection)
                 {
-                    CheckUnresolvedReferences(fact);
+                    VerifyIRFact(fact);
                 }
             }
         }
