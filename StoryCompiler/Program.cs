@@ -54,6 +54,11 @@ namespace LSTools.StoryCompiler
         {
             var hdrLoader = new StoryHeaderLoader(Compiler.Context);
             var declarations = hdrLoader.ParseHeader(path);
+            if (declarations == null)
+            {
+                throw new Exception("Failed to parse story header file");
+            }
+
             hdrLoader.LoadHeader(declarations);
         }
 
@@ -62,7 +67,7 @@ namespace LSTools.StoryCompiler
             EnumerateScripts(ScriptPaths, path);
         }
 
-        public void Compile(string outputPath)
+        public bool Compile(string outputPath)
         {
             Stopwatch sw = new Stopwatch();
             var asts = new Dictionary<String, ASTGoal>();
@@ -105,10 +110,36 @@ namespace LSTools.StoryCompiler
 
             Console.Write("Checking for unresolved references ... ");
             sw.Restart();
-            Compiler.CheckUnresolvedReferences();
+            Compiler.VerifyIR();
             sw.Stop();
 
             Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+
+            bool hasErrors = false;
+            foreach (var message in Compiler.Context.Log.Log)
+            {
+                switch (message.Level)
+                {
+                    case MessageLevel.Error:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("ERR! ");
+                        hasErrors = true;
+                        break;
+
+                    case MessageLevel.Warning:
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.Write("WARN ");
+                        break;
+                }
+
+                Console.WriteLine("[{0}] {1}", message.Code, message.Message);
+                Console.ResetColor();
+            }
+
+            if (hasErrors)
+            {
+                return false;
+            }
 
             Console.Write("Generating story nodes ... ");
             sw.Restart();
@@ -126,6 +157,7 @@ namespace LSTools.StoryCompiler
             }
             sw.Stop();
             Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+            return true;
         }
     }
 
@@ -173,7 +205,10 @@ namespace LSTools.StoryCompiler
                 modCompiler.AddMod(modPath + @"\Story\RawFiles\Goals");
             }
 
-            modCompiler.Compile(args[0]);
+            if (!modCompiler.Compile(args[0]))
+            {
+                Environment.Exit(3);
+            }
         }
     }
 }
