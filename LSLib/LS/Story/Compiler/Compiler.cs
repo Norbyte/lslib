@@ -478,110 +478,44 @@ namespace LSLib.LS.Story.Compiler
             }
         }
     }
-
-
-
-    public class NameReferences
-    {
-        private CompilationContext Context;
-        public Dictionary<FunctionNameAndArity, HashSet<object>> References = new Dictionary<FunctionNameAndArity, HashSet<object>>();
-
-        public NameReferences(CompilationContext context)
-        {
-            Context = context;
-        }
-
-        public void Add(FunctionNameAndArity fun, object reference)
-        {
-            // We only track references to symbols that are not yet fully typed or declared.
-            var signature = Context.LookupSignature(fun);
-            if (signature != null && signature.FullyTyped)
-            {
-                return;
-            }
-
-            HashSet<object> references;
-            if (!References.TryGetValue(fun, out references))
-            {
-                references = new HashSet<object>();
-                References.Add(fun, references);
-            }
-
-            references.Add(reference);
-        }
-    }
+    
 
     public class Compiler
     {
         public CompilationContext Context = new CompilationContext();
 
-        private void CollectNameReferences(NameReferences references, IRFact fact)
+        private string TypeToName(uint typeId)
         {
-            references.Add(fact.Database.Name, fact);
+            var type = Context.TypesById[typeId];
+            return type.Name;
         }
 
-        private void CollectNameReferences(NameReferences references, IRRule rule, IRStatement statement)
+        private string TypeToName(Value.Type typeId)
         {
-            if (statement.Func != null)
-            {
-                references.Add(statement.Func.Name, rule);
-            }
+            return TypeToName((uint)typeId);
         }
 
-        private void CollectNameReferences(NameReferences references, IRRule rule, IRCondition condition)
+        private void VerifyParamCompatibility(FunctionSignature func, int paramIndex, FunctionParam param, IRValue value)
         {
-            if (condition is IRFuncCondition)
+            if (param.Type.IntrinsicTypeId != value.Type.IntrinsicTypeId)
             {
-                var funcCond = condition as IRFuncCondition;
-                references.Add(funcCond.Func.Name, rule);
-            }
-        }
-
-        private void CollectNameReferences(NameReferences references, IRRule rule)
-        {
-            foreach (var condition in rule.Conditions)
-            {
-                CollectNameReferences(references, rule, condition);
+                object paramName = (param.Name != null) ? (object)param.Name : paramIndex;
+                Context.Log.Error(value.Location,
+                    DiagnosticCode.LocalTypeMismatch,
+                    "Parameter {0} of {1} \"{2}\" expects {3}; {4} specified",
+                    paramName, func.Type, func.Name, TypeToName(param.Type.IntrinsicTypeId), TypeToName(value.Type.IntrinsicTypeId));
+                return;
             }
 
-            foreach (var action in rule.Actions)
+            if (IsGuidAliasToAliasCast(param.Type, value.Type))
             {
-                CollectNameReferences(references, rule, action);
+                object paramName = (param.Name != null) ? (object)param.Name : paramIndex;
+                Context.Log.Warn(value.Location,
+                    DiagnosticCode.GuidAliasMismatch,
+                    "Parameter {0} of {1} \"{2}\" has GUID type {3}; {4} specified",
+                    paramName, func.Type, func.Name, TypeToName(param.Type.TypeId), TypeToName(value.Type.TypeId));
+                return;
             }
-        }
-
-        private void CollectNameReferences(NameReferences references, IRGoal goal)
-        {
-            foreach (var fact in goal.InitSection)
-            {
-                CollectNameReferences(references, fact);
-            }
-
-            foreach (var rule in goal.KBSection)
-            {
-                CollectNameReferences(references, rule);
-            }
-
-            foreach (var fact in goal.ExitSection)
-            {
-                CollectNameReferences(references, fact);
-            }
-        }
-
-        private NameReferences CollectNameReferences()
-        {
-            var references = new NameReferences(Context);
-            foreach (var goal in Context.GoalsByName.Values)
-            {
-                CollectNameReferences(references, goal);
-            }
-
-            return references;
-        }
-
-        public void ResolveNames()
-        {
-            var references = CollectNameReferences();
         }
 
         private void VerifyIRFact(IRFact fact)
@@ -618,30 +552,13 @@ namespace LSLib.LS.Story.Compiler
 
                 if (ele.Type == null)
                 {
-                    // TODO - propagate types in binary LHS/RHS and FuncCondition parameters
                     Context.Log.Error(ele.Location, 
                         DiagnosticCode.InternalError, 
                         "No type information available for fact argument");
                     continue;
                 }
 
-                if (param.Type.IntrinsicTypeId != ele.Type.IntrinsicTypeId)
-                {
-                    Context.Log.Error(ele.Location, 
-                        DiagnosticCode.LocalTypeMismatch,
-                        "Intrinsic type of column {0} of {1} \"{2}\" differs: {3} vs {4}",
-                        index, db.Type, db.Name, param.Type.IntrinsicTypeId, ele.Type.IntrinsicTypeId);
-                    continue;
-                }
-
-                if (IsGuidAliasToAliasCast(param.Type, ele.Type))
-                {
-                    Context.Log.Warn(ele.Location, 
-                        DiagnosticCode.GuidAliasMismatch, 
-                        "GUID alias cast of column {0} of {1} \"{2}\" differs: {3} vs {4}",
-                        index, db.Type, db.Name, param.Type.TypeId, ele.Type.TypeId);
-                    continue;
-                }
+                VerifyParamCompatibility(db, index, param, ele);
             }
         }
 
@@ -708,24 +625,7 @@ namespace LSLib.LS.Story.Compiler
                 
                 VerifyIRValue(rule, ele);
                 VerifyIRValueCall(rule, ele, func, index, -1);
-
-                if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
-                {
-                    Context.Log.Error(ele.Location, 
-                        DiagnosticCode.LocalTypeMismatch,
-                        "Intrinsic type of parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
-                        index, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
-                    continue;
-                }
-
-                if (IsGuidAliasToAliasCast(param.Type, type))
-                {
-                    Context.Log.Warn(ele.Location, 
-                        DiagnosticCode.GuidAliasMismatch,
-                        "GUID alias cast: parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
-                        index, func.Name, param.Type.TypeId, type.TypeId);
-                    continue;
-                }
+                VerifyParamCompatibility(func, index, param, ele);
 
                 index++;
             }
@@ -738,8 +638,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Context.Log.Error(variable.Location, 
                     DiagnosticCode.LocalTypeMismatch,
-                    "Rule variable {0} of type {1} cannot be casted to {2}",
-                    ruleVar.Name, ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId);
+                    "Rule variable {0} of type {1} cannot be converted to {2}",
+                    ruleVar.Name, TypeToName(ruleVar.Type.IntrinsicTypeId), TypeToName(variable.Type.IntrinsicTypeId));
                 return;
             }
 
@@ -747,8 +647,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Context.Log.Warn(variable.Location, 
                     DiagnosticCode.GuidAliasMismatch,
-                    "GUID alias cast: Rule variable {0} of type {1} casted to {2}",
-                    ruleVar.Name, ruleVar.Type.TypeId, variable.Type.TypeId);
+                    "GUID alias cast: Rule variable {0} of type {1} converted to {2}",
+                    ruleVar.Name, TypeToName(ruleVar.Type.TypeId), TypeToName(variable.Type.TypeId));
             }
         }
 
@@ -832,7 +732,7 @@ namespace LSLib.LS.Story.Compiler
                     object paramName = (param.Name != null) ? (object)param.Name : parameterIndex;
                     Context.Log.Error(variable.Location, 
                         DiagnosticCode.ParamNotBound,
-                        "Variable {0} was not bound when used as parameter {1} in {2} \"{3}\"",
+                        "Variable {0} is not bound (when used as parameter {1} in {2} \"{3}\")",
                         ruleVar.Name, paramName, signature.Type, signature.GetNameAndArity());
                 }
             }
@@ -951,24 +851,7 @@ namespace LSLib.LS.Story.Compiler
 
                 VerifyIRValue(rule, condParam);
                 VerifyIRValueCall(rule, condParam, func, index, conditionIndex);
-
-                if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
-                {
-                    Context.Log.Error(condParam.Location, 
-                        DiagnosticCode.LocalTypeMismatch,
-                        "Intrinsic type of parameter {0} of {1} \"{2}\" differs: {3} vs {4}",
-                        index, func.Type, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
-                    continue;
-                }
-
-                if (IsGuidAliasToAliasCast(param.Type, type))
-                {
-                    Context.Log.Warn(condParam.Location, 
-                        DiagnosticCode.GuidAliasMismatch,
-                        "GUID alias cast of parameter {0} of {1} \"{2}\": {3} vs {4}",
-                        index, func.Type, func.Name, param.Type.TypeId, type.TypeId);
-                    continue;
-                }
+                VerifyParamCompatibility(func, index, param, condParam);
 
                 index++;
             }
@@ -1023,7 +906,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Context.Log.Error(variable.Location, 
                         DiagnosticCode.ParamNotBound,
-                        "Variable {0} was unbound when used in a binary expression", 
+                        "Variable {0} is not bound (when used in a binary expression)", 
                         ruleVar.Name);
                 }
             }
@@ -1049,8 +932,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Context.Log.Error(condition.Location, 
                     DiagnosticCode.LocalTypeMismatch,
-                    "Intrinsic type of LHS/RHS differs: {0} vs {1}",
-                    lhs.IntrinsicTypeId, rhs.IntrinsicTypeId);
+                    "Type of left expression ({0}) differs from type of right expression ({1})",
+                    TypeToName(lhs.IntrinsicTypeId), TypeToName(rhs.IntrinsicTypeId));
                 return;
             }
 
@@ -1058,8 +941,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Context.Log.Warn(condition.Location, 
                     DiagnosticCode.GuidAliasMismatch,
-                    "GUID alias cast - LHS/RHS differs: {0} vs {1}",
-                    lhs.TypeId, rhs.TypeId);
+                    "GUID alias type of left expression ({0}) differs from type of right expression ({1})",
+                    TypeToName(lhs.TypeId), TypeToName(rhs.TypeId));
                 return;
             }
 
