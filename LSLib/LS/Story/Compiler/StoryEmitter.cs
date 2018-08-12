@@ -358,7 +358,12 @@ namespace LSLib.LS.Story.Compiler
 
         private Call EmitCall(IRFact fact)
         {
-            EmitName(fact.Database.Name); // TODO - emit reference
+            var name = Context.LookupSignature(fact.Database.Name);
+            if (name.Type == FunctionType.Database)
+            {
+                EmitName(fact.Database.Name); // TODO - emit reference
+            }
+
             var osiCall = new Call
             {
                 Name = fact.Database.Name.Name,
@@ -391,7 +396,12 @@ namespace LSLib.LS.Story.Compiler
             }
             else
             {
-                EmitName(statement.Func.Name); // TODO - emit reference
+                var name = Context.LookupSignature(statement.Func.Name);
+                if (name.Type == FunctionType.Database)
+                {
+                    EmitName(statement.Func.Name); // TODO - emit reference
+                }
+                
                 var osiCall = new Call
                 {
                     Name = statement.Func.Name.Name,
