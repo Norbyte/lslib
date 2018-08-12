@@ -238,6 +238,12 @@ namespace LSLib.LS.Story.Compiler
         public Dictionary<FunctionNameAndArity, object> Functions = new Dictionary<FunctionNameAndArity, object>();
         public CompilationLog Log = new CompilationLog();
 
+        /// <summary>
+        /// Generate a warning if names defined in the code don't match expected naming rules.
+        /// This currently checks PROC/QRY/DB prefixes.
+        /// </summary>
+        public bool ReportNameStyleIssues = true;
+
         public CompilationContext()
         {
             RegisterIntrinsicTypes();
@@ -901,7 +907,7 @@ namespace LSLib.LS.Story.Compiler
 
         private void VerifyIRRule(IRRule rule)
         {
-            if (rule.Type == RuleType.Proc || rule.Type == RuleType.Query)
+            if (Context.ReportNameStyleIssues && (rule.Type == RuleType.Proc || rule.Type == RuleType.Query))
             {
                 var initialName = (rule.Conditions[0] as IRFuncCondition).Func.Name;
                 if (rule.Type == RuleType.Proc && initialName.Name.Substring(0, 4).ToUpper() != "PROC")
@@ -947,6 +953,19 @@ namespace LSLib.LS.Story.Compiler
                 }
             }
         }
+           
+        private void VerifyDatabases()
+        {
+            foreach (var signature in Context.Signatures)
+            {
+                if (signature.Value.Type == FunctionType.Database
+                    && signature.Key.Name.Substring(0, 2).ToUpper() != "DB")
+                {
+                    var message = String.Format("Name of database \"{0}\" should start with the prefix \"DB\"", signature.Key.Name);
+                    Context.Log.Warn(null, DiagnosticCode.RuleNamingStyle, message);
+                }
+            }
+        }
 
         public void VerifyIR()
         {
@@ -975,6 +994,14 @@ namespace LSLib.LS.Story.Compiler
                 {
                     VerifyIRFact(fact);
                 }
+            }
+
+            // Validate database names
+            // We do this here as there is no explicit declaration for databases,
+            // they are created implicitly on first use.
+            if (Context.ReportNameStyleIssues)
+            {
+                VerifyDatabases();
             }
         }
 

@@ -83,8 +83,8 @@ namespace LSTools.StoryCompiler
             }
             var orderedGoalAsts = asts.OrderBy(rule => rule.Key).ToList();
             sw.Stop();
-            Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
-            
+            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
+
             Console.Write("Generating IR ... ");
             sw.Restart();
             var irs = new List<IRGoal>();
@@ -96,7 +96,7 @@ namespace LSTools.StoryCompiler
                 Compiler.AddGoal(goalIr);
             }
             sw.Stop();
-            Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
 
 
             Console.Write("Propagating rule types ... ");
@@ -106,14 +106,14 @@ namespace LSTools.StoryCompiler
             Compiler.PropagateRuleTypes();
             Compiler.PropagateRuleTypes();
             sw.Stop();
-            Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
 
             Console.Write("Checking for unresolved references ... ");
             sw.Restart();
             Compiler.VerifyIR();
             sw.Stop();
 
-            Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
 
             bool hasErrors = false;
             foreach (var message in Compiler.Context.Log.Log)
@@ -146,7 +146,7 @@ namespace LSTools.StoryCompiler
             var emitter = new StoryEmitter(Compiler.Context);
             var story = emitter.EmitStory();
             sw.Stop();
-            Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
 
             Console.Write("Saving story binary ... ");
             sw.Restart();
@@ -156,7 +156,7 @@ namespace LSTools.StoryCompiler
                 writer.Write(file, story);
             }
             sw.Stop();
-            Console.WriteLine("{0} ms", sw.Elapsed.Milliseconds);
+            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
             return true;
         }
     }
@@ -190,6 +190,8 @@ namespace LSTools.StoryCompiler
                 return;
             }
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             var storyHeadersPath = args[1] + @"\Story\RawFiles\story_header.div";
             if (!File.Exists(storyHeadersPath))
             {
@@ -209,6 +211,8 @@ namespace LSTools.StoryCompiler
             {
                 Environment.Exit(3);
             }
+
+            Console.WriteLine("Compilation took {0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
         }
     }
 }
