@@ -18,6 +18,12 @@ namespace LSTools.StoryCompiler
         )]
         public string[] Warnings;
 
+        [SwitchArgument("json", false,
+            Description = "Output results in JSON format",
+            Optional = true
+        )]
+        public bool JsonOutput;
+
         [ValueArgument(typeof(string), "input",
             Description = "Input mod directories",
             AllowMultiple = true,

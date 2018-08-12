@@ -1,7 +1,6 @@
 ﻿using LSLib.LS.Story;
 using System;
 using System.IO;
-using System.Diagnostics;
 using CommandLineParser.Exceptions;
 
 namespace LSTools.StoryCompiler
@@ -28,8 +27,6 @@ namespace LSTools.StoryCompiler
 
         static void Run(CommandLineArguments args)
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
             var storyHeadersPath = args.InputPaths[0] + @"\Story\RawFiles\story_header.div";
             if (!File.Exists(storyHeadersPath))
             {
@@ -38,7 +35,17 @@ namespace LSTools.StoryCompiler
                 return;
             }
 
-            var modCompiler = new ModCompiler();
+            Logger logger;
+            if (args.JsonOutput)
+            {
+                logger = new JsonLogger();
+            }
+            else
+            {
+                logger = new ConsoleLogger();
+            }
+
+            var modCompiler = new ModCompiler(logger);
             modCompiler.SetWarningOptions(CommandLineArguments.GetWarningOptions(args.Warnings));
 
             modCompiler.LoadStoryHeaders(storyHeadersPath);
@@ -51,8 +58,6 @@ namespace LSTools.StoryCompiler
             {
                 Environment.Exit(3);
             }
-
-            Console.WriteLine("Compilation took {0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
         }
 
         static void Main(string[] args)

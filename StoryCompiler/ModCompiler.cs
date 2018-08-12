@@ -11,8 +11,14 @@ namespace LSTools.StoryCompiler
 {
     class ModCompiler
     {
+        private Logger Logger;
         private Compiler Compiler = new Compiler();
         private List<string> ScriptPaths = new List<string>();
+
+        public ModCompiler(Logger logger)
+        {
+            Logger = logger;
+        }
 
         private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string extension)
         {
@@ -74,12 +80,11 @@ namespace LSTools.StoryCompiler
 
         public bool Compile(string outputPath)
         {
-            Stopwatch sw = new Stopwatch();
+            Logger.CompilationStarted();
             var asts = new Dictionary<String, ASTGoal>();
             var goalLoader = new IRGenerator(Compiler.Context);
 
-            Console.Write("Generating AST ... ");
-            sw.Restart();
+            Logger.TaskStarted("Generating AST");
             foreach (var path in ScriptPaths)
             {
                 var goalName = Path.GetFileNameWithoutExtension(path);
@@ -87,11 +92,9 @@ namespace LSTools.StoryCompiler
                 asts.Add(goalName, goalAst);
             }
             var orderedGoalAsts = asts.OrderBy(rule => rule.Key).ToList();
-            sw.Stop();
-            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
+            Logger.TaskFinished();
 
-            Console.Write("Generating IR ... ");
-            sw.Restart();
+            Logger.TaskStarted("Generating IR");
             var irs = new List<IRGoal>();
             foreach (var ast in orderedGoalAsts)
             {
@@ -100,74 +103,48 @@ namespace LSTools.StoryCompiler
                 irs.Add(goalIr);
                 Compiler.AddGoal(goalIr);
             }
-            sw.Stop();
-            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
+            Logger.TaskFinished();
 
 
-            Console.Write("Propagating rule types ... ");
-            sw.Restart();
+            Logger.TaskStarted("Propagating rule types");
             // TODO - this should be changed to dynamic pass count detection
             Compiler.PropagateRuleTypes();
             Compiler.PropagateRuleTypes();
             Compiler.PropagateRuleTypes();
-            sw.Stop();
-            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
+            Logger.TaskFinished();
 
-            Console.Write("Checking for unresolved references ... ");
-            sw.Restart();
+            Logger.TaskStarted("Checking for unresolved references");
             Compiler.VerifyIR();
-            sw.Stop();
-
-            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
+            Logger.TaskFinished();
 
             bool hasErrors = false;
             foreach (var message in Compiler.Context.Log.Log)
             {
-                switch (message.Level)
+                Logger.CompilationDiagnostic(message);
+                if (message.Level == MessageLevel.Error)
                 {
-                    case MessageLevel.Error:
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write("ERR! ");
-                        hasErrors = true;
-                        break;
-
-                    case MessageLevel.Warning:
-                        Console.ForegroundColor = ConsoleColor.DarkYellow;
-                        Console.Write("WARN ");
-                        break;
+                    hasErrors = true;
                 }
+            }
 
-                if (message.Location != null)
+            if (!hasErrors)
+            {
+                Logger.TaskStarted("Generating story nodes");
+                var emitter = new StoryEmitter(Compiler.Context);
+                var story = emitter.EmitStory();
+                Logger.TaskFinished();
+
+                Logger.TaskStarted("Saving story binary");
+                using (var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
                 {
-                    Console.Write($"{message.Location.FileName}:{message.Location.StartLine}:{message.Location.StartColumn}: ");
+                    var writer = new StoryWriter();
+                    writer.Write(file, story);
                 }
-
-                Console.WriteLine("[{0}] {1}", message.Code, message.Message);
-                Console.ResetColor();
+                Logger.TaskFinished();
             }
 
-            if (hasErrors)
-            {
-                return false;
-            }
-
-            Console.Write("Generating story nodes ... ");
-            sw.Restart();
-            var emitter = new StoryEmitter(Compiler.Context);
-            var story = emitter.EmitStory();
-            sw.Stop();
-            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
-
-            Console.Write("Saving story binary ... ");
-            sw.Restart();
-            using (var file = new FileStream("StoryDebug.osi", FileMode.Create, FileAccess.Write))
-            {
-                var writer = new StoryWriter();
-                writer.Write(file, story);
-            }
-            sw.Stop();
-            Console.WriteLine("{0}s {1} ms", sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
-            return true;
+            Logger.CompilationFinished(!hasErrors);
+            return !hasErrors;
         }
     }
 }
