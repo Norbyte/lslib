@@ -2,6 +2,7 @@
 using LSLib.LS.Story.HeaderParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -189,6 +190,7 @@ namespace LSLib.LS.Story.Compiler
         public const String GuidAliasMismatch = "21";
         public const String GuidPrefixNotKnown = "22";
         public const String RuleNamingStyle = "23";
+        public const String ParamNotBound = "24";
     }
 
     public class Diagnostic
@@ -612,7 +614,6 @@ namespace LSLib.LS.Story.Compiler
             foreach (var param in func.Params)
             {
                 var ele = statement.Params[index];
-                index++;
 
                 ValueType type = ele.Type;
                 if (type == null)
@@ -625,6 +626,7 @@ namespace LSLib.LS.Story.Compiler
                 }
                 
                 VerifyIRValue(rule, ele);
+                VerifyIRValueCall(rule, ele, func, index, -1);
 
                 if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
                 {
@@ -643,6 +645,8 @@ namespace LSLib.LS.Story.Compiler
                     Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
+
+                index++;
             }
         }
 
@@ -710,7 +714,62 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void VerifyIRFuncCondition(IRRule rule, IRFuncCondition condition, bool initialCondition)
+        private void VerifyIRVariableCall(IRRule rule, IRVariable variable, FunctionSignature signature, Int32 parameterIndex, Int32 conditionIndex)
+        {
+            var ruleVar = rule.Variables[variable.Index];
+            var param = signature.Params[parameterIndex];
+
+            if (param.Direction == ParamDirection.Out)
+            {
+                Debug.Assert(conditionIndex != -1);
+                if (ruleVar.FirstBindingIndex == -1)
+                {
+                    ruleVar.FirstBindingIndex = conditionIndex;
+                }
+            }
+            else if (
+                // We're in the THEN section of a rule, so we cannot bind here
+                conditionIndex == -1 
+                || (
+                    // Databases and events always bind
+                    signature.Type != FunctionType.Database
+                    && signature.Type != FunctionType.Event
+                    // PROC/QRYs bind if they're the first condition in a rule
+                    && !(rule.Type == RuleType.Proc && conditionIndex == 0 && signature.Type == FunctionType.Proc)
+                    && !(rule.Type == RuleType.Query && conditionIndex == 0 && signature.Type == FunctionType.UserQuery)
+                )
+            ) {
+
+                if (
+                    // The variable was never bound
+                    ruleVar.FirstBindingIndex == -1
+                    // The variable was bound after this node (so it is still unbound here)
+                    || (conditionIndex != -1 && ruleVar.FirstBindingIndex >= conditionIndex)
+                ) {
+                    object paramName = (param.Name != null) ? (object)param.Name : parameterIndex;
+                    var message = String.Format("Variable {0} was not bound when used as parameter {1} in {2} \"{3}\"",
+                        ruleVar.Name, paramName, signature.Type, signature.GetNameAndArity());
+                    Context.Log.Error(null, DiagnosticCode.ParamNotBound, message);
+                }
+            }
+            else
+            {
+                if (conditionIndex != -1 && ruleVar.FirstBindingIndex == -1)
+                {
+                    ruleVar.FirstBindingIndex = conditionIndex;
+                }
+            }
+        }
+
+        private void VerifyIRValueCall(IRRule rule, IRValue value, FunctionSignature signature, Int32 parameterIndex, Int32 conditionIndex)
+        {
+            if (value is IRVariable)
+            {
+                VerifyIRVariableCall(rule, value as IRVariable, signature, parameterIndex, conditionIndex);
+            }
+        }
+
+        private void VerifyIRFuncCondition(IRRule rule, IRFuncCondition condition, int conditionIndex)
         {
             // TODO - Merge FuncCondition and IRStatement base?
             // Base --> IRParameterizedCall --> FuncCond: has (NOT) field
@@ -729,7 +788,7 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
-            if (initialCondition)
+            if (conditionIndex == 0)
             {
                 switch (rule.Type)
                 {
@@ -787,7 +846,6 @@ namespace LSLib.LS.Story.Compiler
             {
                 var condParam = condition.Params[index];
                 ValueType type = condParam.Type;
-                index++;
 
                 if (type == null)
                 {
@@ -799,6 +857,7 @@ namespace LSLib.LS.Story.Compiler
                 }
 
                 VerifyIRValue(rule, condParam);
+                VerifyIRValueCall(rule, condParam, func, index, conditionIndex);
 
                 if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
                 {
@@ -817,6 +876,8 @@ namespace LSLib.LS.Story.Compiler
                     Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
+
+                index++;
             }
         }
 
@@ -857,7 +918,23 @@ namespace LSLib.LS.Story.Compiler
                 && type1.TypeId != type2.TypeId;
         }
 
-        private void VerifyIRBinaryCondition(IRRule rule, IRBinaryCondition condition)
+        private void VerifyIRBinaryConditionValue(IRRule rule, IRValue value, Int32 conditionIndex)
+        {
+            VerifyIRValue(rule, value);
+
+            if (value is IRVariable)
+            {
+                var variable = value as IRVariable;
+                var ruleVar = rule.Variables[variable.Index];
+                if (ruleVar.FirstBindingIndex == -1 || ruleVar.FirstBindingIndex >= conditionIndex)
+                {
+                    var message = String.Format("Variable {0} was unbound when used in a binary expression", ruleVar.Name);
+                    Context.Log.Error(null, DiagnosticCode.ParamNotBound, message);
+                }
+            }
+        }
+
+        private void VerifyIRBinaryCondition(IRRule rule, IRBinaryCondition condition, Int32 conditionIndex)
         {
             ValueType lhs = condition.LValue.Type, 
                 rhs = condition.RValue.Type;
@@ -870,9 +947,9 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
-            VerifyIRValue(rule, condition.LValue);
-            VerifyIRValue(rule, condition.RValue);
-
+            VerifyIRBinaryConditionValue(rule, condition.LValue, conditionIndex);
+            VerifyIRBinaryConditionValue(rule, condition.RValue, conditionIndex);
+            
             if (!AreIntrinsicTypesCompatible(lhs.IntrinsicTypeId, rhs.IntrinsicTypeId))
             {
                 var message = String.Format("Intrinsic type of LHS/RHS differs: {0} vs {1}",
@@ -923,19 +1000,17 @@ namespace LSLib.LS.Story.Compiler
                 }
             }
 
-            bool initialCondition = true;
-            foreach (var condition in rule.Conditions)
+            for (var i = 0; i < rule.Conditions.Count; i++)
             {
+                var condition = rule.Conditions[i];
                 if (condition is IRBinaryCondition)
                 {
-                    VerifyIRBinaryCondition(rule, condition as IRBinaryCondition);
+                    VerifyIRBinaryCondition(rule, condition as IRBinaryCondition, i);
                 }
                 else
                 {
-                    VerifyIRFuncCondition(rule, condition as IRFuncCondition, initialCondition);
+                    VerifyIRFuncCondition(rule, condition as IRFuncCondition, i);
                 }
-
-                initialCondition = false;
             }
 
             foreach (var action in rule.Actions)

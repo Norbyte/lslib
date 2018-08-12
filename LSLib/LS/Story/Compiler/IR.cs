@@ -154,7 +154,8 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Index = Variables.Count,
                     Name = name,
-                    Type = type
+                    Type = type,
+                    FirstBindingIndex = -1
                 };
 
                 Variables.Add(v);
@@ -183,6 +184,8 @@ namespace LSLib.LS.Story.Compiler
         public String Name;
         // Type of the rule variable
         public ValueType Type;
+        // Index of condition that first bound this variable
+        public Int32 FirstBindingIndex;
         // TODO - add inferred type marker!
 
         public bool IsUnused()
@@ -289,6 +292,19 @@ namespace LSLib.LS.Story.Compiler
         public Single FloatValue;
         // Value of this constant if the type is String or Name.
         public String StringValue;
+
+        public override string ToString()
+        {
+            switch (ValueType)
+            {
+                case IRConstantType.Unknown: return "(unknown)";
+                case IRConstantType.Integer: return IntegerValue.ToString();
+                case IRConstantType.Float: return FloatValue.ToString();
+                case IRConstantType.String: return "\"" + StringValue + "\"";
+                case IRConstantType.Name: return StringValue;
+                default: return "(unknown type)";
+            }
+        }
     }
 
     /// <summary>
