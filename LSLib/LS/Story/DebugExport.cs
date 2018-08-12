@@ -309,12 +309,12 @@ namespace LSLib.LS.Story
             Visit(node.ParentRef);
             writer.WritePropertyName("adapter");
             Visit(node.AdapterRef);
-            writer.WritePropertyName("database");
-            Visit(node.RelDatabaseRef);
-            writer.WritePropertyName("db");
-            Visit(node.RelDatabase);
-            writer.WritePropertyName("dbFlag");
-            writer.WriteValue(node.RelDatabaseFlag);
+            writer.WritePropertyName("databaseNode");
+            Visit(node.RelDatabaseNodeRef);
+            writer.WritePropertyName("databaseJoin");
+            Visit(node.RelJoin);
+            writer.WritePropertyName("databaseIndirection");
+            writer.WriteValue(node.RelDatabaseIndirection);
         }
 
         public void Visit(TreeNode node)
@@ -351,12 +351,12 @@ namespace LSLib.LS.Story
             Visit(node.LeftParentRef);
             writer.WritePropertyName("adapter");
             Visit(node.LeftAdapterRef);
-            writer.WritePropertyName("databaseRef");
-            Visit(node.LeftDatabaseRef);
-            writer.WritePropertyName("database");
-            Visit(node.LeftDatabase);
-            writer.WritePropertyName("databaseFlag");
-            writer.WriteValue(node.LeftDatabaseFlag);
+            writer.WritePropertyName("databaseNode");
+            Visit(node.LeftDatabaseNodeRef);
+            writer.WritePropertyName("databaseJoin");
+            Visit(node.LeftDatabaseJoin);
+            writer.WritePropertyName("databaseIndirection");
+            writer.WriteValue(node.LeftDatabaseIndirection);
             writer.WriteEndObject();
 
             writer.WritePropertyName("right");
@@ -365,12 +365,12 @@ namespace LSLib.LS.Story
             Visit(node.RightParentRef);
             writer.WritePropertyName("adapter");
             Visit(node.RightAdapterRef);
-            writer.WritePropertyName("databaseRef");
-            Visit(node.RightDatabaseRef);
-            writer.WritePropertyName("database");
-            Visit(node.RightDatabase);
-            writer.WritePropertyName("databaseFlag");
-            writer.WriteValue(node.RightDatabaseFlag);
+            writer.WritePropertyName("databaseNode");
+            Visit(node.RightDatabaseNodeRef);
+            writer.WritePropertyName("databaseJoin");
+            Visit(node.RightDatabaseJoin);
+            writer.WritePropertyName("databaseIndirection");
+            writer.WriteValue(node.RightDatabaseIndirection);
             writer.WriteEndObject();
         }
 

@@ -94,27 +94,34 @@ namespace LSLib.LS.Story
         Database = 4,
         Proc = 5,
         SysQuery = 6,
-        SysCall = 7
+        SysCall = 7,
+        UserQuery = 8
     }
 
     public class Function : OsirisSerializable
     {
         public UInt32 Line;
-        public UInt32 Unknown1;
-        public UInt32 Unknown2;
+        public UInt32 ConditionReferences;
+        public UInt32 ActionReferences;
         public NodeReference NodeRef;
         public FunctionType Type;
-        public Guid GUID;
+        public UInt32 Meta1;
+        public UInt32 Meta2;
+        public UInt32 Meta3;
+        public UInt32 Meta4;
         public FunctionSignature Name;
 
         public void Read(OsiReader reader)
         {
             Line = reader.ReadUInt32();
-            Unknown1 = reader.ReadUInt32();
-            Unknown2 = reader.ReadUInt32();
+            ConditionReferences = reader.ReadUInt32();
+            ActionReferences = reader.ReadUInt32();
             NodeRef = reader.ReadNodeRef();
             Type = (FunctionType)reader.ReadByte();
-            GUID = reader.ReadGuid();
+            Meta1 = reader.ReadUInt32();
+            Meta2 = reader.ReadUInt32();
+            Meta3 = reader.ReadUInt32();
+            Meta4 = reader.ReadUInt32();
             Name = new FunctionSignature();
             Name.Read(reader);
         }
@@ -122,11 +129,14 @@ namespace LSLib.LS.Story
         public void Write(OsiWriter writer)
         {
             writer.Write(Line);
-            writer.Write(Unknown1);
-            writer.Write(Unknown2);
+            writer.Write(ConditionReferences);
+            writer.Write(ActionReferences);
             NodeRef.Write(writer);
             writer.Write((byte)Type);
-            writer.Write(GUID);
+            writer.Write(Meta1);
+            writer.Write(Meta2);
+            writer.Write(Meta3);
+            writer.Write(Meta4);
             Name.Write(writer);
         }
 
@@ -140,7 +150,8 @@ namespace LSLib.LS.Story
                 writer.Write(" @ {0}({1})", node.Name, node.NumParams);
             }
 
-            writer.WriteLine(" [{0}, {1}]", Unknown1, Unknown2);
+            writer.Write(" CondRefs {0}, ActRefs {1}", ConditionReferences, ActionReferences);
+            writer.WriteLine(" Meta ({0}, {1}, {2}, {3})", Meta1, Meta2, Meta3, Meta4);
         }
     }
 }

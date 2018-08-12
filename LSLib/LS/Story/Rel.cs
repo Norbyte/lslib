@@ -6,9 +6,9 @@ namespace LSLib.LS.Story
     {
         public NodeReference ParentRef;
         public AdapterReference AdapterRef;
-        public DatabaseReference RelDatabaseRef;
-        public NodeEntryItem RelDatabase;
-        public byte RelDatabaseFlag;
+        public NodeReference RelDatabaseNodeRef;
+        public NodeEntryItem RelJoin;
+        public byte RelDatabaseIndirection;
 
         public override void Read(OsiReader reader)
         {
@@ -16,10 +16,10 @@ namespace LSLib.LS.Story
             ParentRef = reader.ReadNodeRef();
             AdapterRef = reader.ReadAdapterRef();
 
-            RelDatabaseRef = reader.ReadDatabaseRef();
-            RelDatabase = new NodeEntryItem();
-            RelDatabase.Read(reader);
-            RelDatabaseFlag = reader.ReadByte();
+            RelDatabaseNodeRef = reader.ReadNodeRef();
+            RelJoin = new NodeEntryItem();
+            RelJoin.Read(reader);
+            RelDatabaseIndirection = reader.ReadByte();
         }
 
         public override void Write(OsiWriter writer)
@@ -28,9 +28,9 @@ namespace LSLib.LS.Story
             ParentRef.Write(writer);
             AdapterRef.Write(writer);
 
-            RelDatabaseRef.Write(writer);
-            RelDatabase.Write(writer);
-            writer.Write(RelDatabaseFlag);
+            RelDatabaseNodeRef.Write(writer);
+            RelJoin.Write(writer);
+            writer.Write(RelDatabaseIndirection);
         }
 
         public override void PostLoad(Story story)
@@ -66,13 +66,13 @@ namespace LSLib.LS.Story
                 AdapterRef.DebugDump(writer, story);
             }
 
-            if (RelDatabaseRef.IsValid)
+            if (RelDatabaseNodeRef.IsValid)
             {
-                writer.Write(" Database ");
-                RelDatabaseRef.DebugDump(writer, story);
-                writer.Write(" Flag {0}", RelDatabaseFlag);
-                writer.Write(" Entry ");
-                RelDatabase.DebugDump(writer, story);
+                writer.Write(" DbNode ");
+                RelDatabaseNodeRef.DebugDump(writer, story);
+                writer.Write(" Indirection {0}", RelDatabaseIndirection);
+                writer.Write(" Join ");
+                RelJoin.DebugDump(writer, story);
             }
 
             writer.WriteLine("");

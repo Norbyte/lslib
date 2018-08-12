@@ -8,12 +8,12 @@ namespace LSLib.LS.Story
         public NodeReference RightParentRef;
         public AdapterReference LeftAdapterRef;
         public AdapterReference RightAdapterRef;
-        public DatabaseReference LeftDatabaseRef;
-        public byte LeftDatabaseFlag;
-        public NodeEntryItem LeftDatabase;
-        public DatabaseReference RightDatabaseRef;
-        public byte RightDatabaseFlag;
-        public NodeEntryItem RightDatabase;
+        public NodeReference LeftDatabaseNodeRef;
+        public byte LeftDatabaseIndirection;
+        public NodeEntryItem LeftDatabaseJoin;
+        public NodeReference RightDatabaseNodeRef;
+        public byte RightDatabaseIndirection;
+        public NodeEntryItem RightDatabaseJoin;
 
         public override void Read(OsiReader reader)
         {
@@ -23,15 +23,15 @@ namespace LSLib.LS.Story
             LeftAdapterRef = reader.ReadAdapterRef();
             RightAdapterRef = reader.ReadAdapterRef();
 
-            LeftDatabaseRef = reader.ReadDatabaseRef();
-            LeftDatabase = new NodeEntryItem();
-            LeftDatabase.Read(reader);
-            LeftDatabaseFlag = reader.ReadByte();
+            LeftDatabaseNodeRef = reader.ReadNodeRef();
+            LeftDatabaseJoin = new NodeEntryItem();
+            LeftDatabaseJoin.Read(reader);
+            LeftDatabaseIndirection = reader.ReadByte();
 
-            RightDatabaseRef = reader.ReadDatabaseRef();
-            RightDatabase = new NodeEntryItem();
-            RightDatabase.Read(reader);
-            RightDatabaseFlag = reader.ReadByte();
+            RightDatabaseNodeRef = reader.ReadNodeRef();
+            RightDatabaseJoin = new NodeEntryItem();
+            RightDatabaseJoin.Read(reader);
+            RightDatabaseIndirection = reader.ReadByte();
         }
 
         public override void Write(OsiWriter writer)
@@ -42,13 +42,13 @@ namespace LSLib.LS.Story
             LeftAdapterRef.Write(writer);
             RightAdapterRef.Write(writer);
 
-            LeftDatabaseRef.Write(writer);
-            LeftDatabase.Write(writer);
-            writer.Write(LeftDatabaseFlag);
+            LeftDatabaseNodeRef.Write(writer);
+            LeftDatabaseJoin.Write(writer);
+            writer.Write(LeftDatabaseIndirection);
 
-            RightDatabaseRef.Write(writer);
-            RightDatabase.Write(writer);
-            writer.Write(RightDatabaseFlag);
+            RightDatabaseNodeRef.Write(writer);
+            RightDatabaseJoin.Write(writer);
+            writer.Write(RightDatabaseIndirection);
         }
 
         public override void PostLoad(Story story)
@@ -95,13 +95,13 @@ namespace LSLib.LS.Story
                 LeftAdapterRef.DebugDump(writer, story);
             }
 
-            if (LeftDatabaseRef.IsValid)
+            if (LeftDatabaseNodeRef.IsValid)
             {
-                writer.Write(" Database ");
-                LeftDatabaseRef.DebugDump(writer, story);
-                writer.Write(" Flag {0}", LeftDatabaseFlag);
-                writer.Write(" Entry ");
-                LeftDatabase.DebugDump(writer, story);
+                writer.Write(" DbNode ");
+                LeftDatabaseNodeRef.DebugDump(writer, story);
+                writer.Write(" Indirection {0}", LeftDatabaseIndirection);
+                writer.Write(" Join ");
+                LeftDatabaseJoin.DebugDump(writer, story);
             }
 
             writer.WriteLine("");
@@ -119,13 +119,13 @@ namespace LSLib.LS.Story
                 RightAdapterRef.DebugDump(writer, story);
             }
 
-            if (RightDatabaseRef.IsValid)
+            if (RightDatabaseNodeRef.IsValid)
             {
-                writer.Write(" Database ");
-                RightDatabaseRef.DebugDump(writer, story);
-                writer.Write(" Flag {0}", RightDatabaseFlag);
-                writer.Write(" Entry ");
-                RightDatabase.DebugDump(writer, story);
+                writer.Write(" DbNode ");
+                RightDatabaseNodeRef.DebugDump(writer, story);
+                writer.Write(" Indirection {0}", RightDatabaseIndirection);
+                writer.Write(" Join ");
+                RightDatabaseJoin.DebugDump(writer, story);
             }
 
             writer.WriteLine("");

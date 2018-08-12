@@ -256,7 +256,6 @@ namespace LSLib.LS.Story
         public byte MinorVersion;
         public bool BigEndian;
         public byte Unused;
-        public string StoryFileVersion;
         public UInt32 DebugFlags;
 
         public uint Ver
@@ -398,23 +397,33 @@ namespace LSLib.LS.Story
         }
     }
 
+    public enum EntryPoint : UInt32
+    {
+        // The next node is not an AND/NOT AND expression
+        None = 0,
+        // This node is on the left side of the next AND/NOT AND expression
+        Left = 1,
+        // This node is on the right side of the next AND/NOT AND expression
+        Right = 2
+    };
+
     public class NodeEntryItem : OsirisSerializable
     {
         public NodeReference NodeRef;
-        public UInt32 EntryPoint;
+        public EntryPoint EntryPoint;
         public GoalReference GoalRef;
 
         public void Read(OsiReader reader)
         {
             NodeRef = reader.ReadNodeRef();
-            EntryPoint = reader.ReadUInt32();
+            EntryPoint = (EntryPoint)reader.ReadUInt32();
             GoalRef = reader.ReadGoalRef();
         }
 
         public void Write(OsiWriter writer)
         {
             NodeRef.Write(writer);
-            writer.Write(EntryPoint);
+            writer.Write((UInt32)EntryPoint);
             GoalRef.Write(writer);
         }
 

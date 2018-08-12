@@ -11,7 +11,7 @@ namespace LSLib.LS.Story
         public byte SubGoalCombination;
         public List<GoalReference> ParentGoals;
         public List<GoalReference> SubGoals;
-        public byte Unknown; // 0x02 = Child goal
+        public byte Flags; // 0x02 = Child goal
         public List<Call> InitCalls;
         public List<Call> ExitCalls;
         public Story Story;
@@ -30,7 +30,7 @@ namespace LSLib.LS.Story
             ParentGoals = reader.ReadRefList<GoalReference, Goal>();
             SubGoals = reader.ReadRefList<GoalReference, Goal>();
 
-            Unknown = reader.ReadByte();
+            Flags = reader.ReadByte();
 
             if (reader.Ver >= OsiVersion.VerAddInitExitCalls)
             {
@@ -53,7 +53,7 @@ namespace LSLib.LS.Story
             writer.WriteList<GoalReference>(ParentGoals);
             writer.WriteList<GoalReference>(SubGoals);
 
-            writer.Write(Unknown);
+            writer.Write(Flags);
 
             if (writer.Ver >= OsiVersion.VerAddInitExitCalls)
             {
@@ -64,7 +64,7 @@ namespace LSLib.LS.Story
 
         public void DebugDump(TextWriter writer, Story story)
         {
-            writer.WriteLine("{0}: SGC {1}, Unknown {2}", Name, SubGoalCombination, Unknown);
+            writer.WriteLine("{0}: SGC {1}, Flags {2}", Name, SubGoalCombination, Flags);
 
             if (ParentGoals.Count > 0)
             {
