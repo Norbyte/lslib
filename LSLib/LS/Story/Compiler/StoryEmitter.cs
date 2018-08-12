@@ -722,7 +722,6 @@ namespace LSLib.LS.Story.Compiler
                 {
                     TypeId = (uint)Value.Type.Unknown
                 };
-                // TODO - FIX INDEX!
                 osiRelOp.LeftValueIndex = (sbyte)(condition.LValue as IRVariable).Index;
             }
 
@@ -737,7 +736,6 @@ namespace LSLib.LS.Story.Compiler
                 {
                     TypeId = (uint)Value.Type.Unknown
                 };
-                // TODO - FIX INDEX!
                 osiRelOp.RightValueIndex = (sbyte)(condition.RValue as IRVariable).Index;
             }
 
@@ -969,9 +967,7 @@ namespace LSLib.LS.Story.Compiler
                 Name = goal.Name,
                 InitCalls = new List<Call>(),
                 ExitCalls = new List<Call>(),
-                // TODO - save parent goals
                 ParentGoals = new List<GoalReference>(),
-                // TODO - save subgoals
                 SubGoals = new List<GoalReference>()
             };
 
@@ -986,8 +982,6 @@ namespace LSLib.LS.Story.Compiler
                 osiGoal.SubGoalCombination = 0;
                 osiGoal.Flags = 0;
             }
-
-            // TODO: Update parent-child mappings after a successful goal list generation
 
             return osiGoal;
         }
@@ -1011,10 +1005,30 @@ namespace LSLib.LS.Story.Compiler
             {
                 EmitGoalActions(goal.Key, goal.Value);
             }
-
+            
             foreach (var rule in Rules)
             {
                 EmitRuleActions(rule.Key, rule.Value);
+            }
+        }
+
+        /// <summary>
+        /// Add parent goal/subgoal mapping to the story.
+        /// This needs to be done after all goals were generated, as we need the Osiris goal
+        /// object ID-s to make goal references.
+        /// </summary>
+        private void EmitParentGoals()
+        {
+            foreach (var goal in Context.GoalsByName)
+            {
+                var osiGoal = Goals[goal.Value];
+                foreach (var parent in goal.Value.ParentTargetEdges)
+                {
+                    var parentGoal = Context.LookupGoal(parent.Name);
+                    var osiParentGoal = Goals[parentGoal];
+                    osiGoal.ParentGoals.Add(new GoalReference(Story, osiParentGoal));
+                    osiParentGoal.SubGoals.Add(new GoalReference(Story, osiGoal));
+                }
             }
         }
 
@@ -1048,6 +1062,7 @@ namespace LSLib.LS.Story.Compiler
 
             AddStoryTypes();
             EmitGoals();
+            EmitParentGoals();
 
             return Story;
         }
