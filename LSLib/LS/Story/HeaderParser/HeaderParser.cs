@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Story.Compiler;
+using System;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS.Story.HeaderParser
@@ -22,6 +23,11 @@ namespace LSLib.LS.Story.HeaderParser
     {
         public HeaderParser(HeaderScanner scnr) : base(scnr)
         {
+        }
+
+        public ASTDeclarations GetDeclarations()
+        {
+            return CurrentSemanticValue as ASTDeclarations;
         }
         
         private ASTDeclarations MakeDeclarationList() => new ASTDeclarations();
@@ -63,7 +69,7 @@ namespace LSLib.LS.Story.HeaderParser
             };
         }
 
-        private ASTFunctionTypeNode MakeFunctionType(ASTFunctionType type) => new ASTFunctionTypeNode()
+        private ASTFunctionTypeNode MakeFunctionType(Compiler.FunctionType type) => new ASTFunctionTypeNode()
         {
             Type = type
         };
@@ -96,10 +102,10 @@ namespace LSLib.LS.Story.HeaderParser
         {
             Name = (name as ASTLiteral).Literal,
             Type = (type as ASTLiteral).Literal,
-            Direction = ASTFunctionParamDirection.In
+            Direction = ParamDirection.In
         };
 
-        private ASTFunctionParam MakeParam(ASTFunctionParamDirection direction, ASTNode type, ASTNode name) => new ASTFunctionParam()
+        private ASTFunctionParam MakeParam(ParamDirection direction, ASTNode type, ASTNode name) => new ASTFunctionParam()
         {
             Name = (name as ASTLiteral).Literal,
             Type = (type as ASTLiteral).Literal,

@@ -1,8 +1,15 @@
-﻿using System;
+﻿using LSLib.LS.Story.Compiler;
+using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS.Story.GoalParser
 {
+    internal class ParserConstants
+    {
+        public static CultureInfo ParserCulture = new CultureInfo("en-US");
+    }
+
     public abstract class GoalScanBase : AbstractScanner<ASTNode, LexLocation>
     {
         protected virtual bool yywrap() { return true; }
@@ -22,6 +29,11 @@ namespace LSLib.LS.Story.GoalParser
     {
         public GoalParser(GoalScanner scnr) : base(scnr)
         {
+        }
+
+        public ASTGoal GetGoal()
+        {
+            return CurrentSemanticValue as ASTGoal;
         }
 
         private ASTGoal MakeGoal(ASTNode version, ASTNode subGoalCombiner, ASTNode initSection,
@@ -143,6 +155,23 @@ namespace LSLib.LS.Story.GoalParser
             };
         }
 
+        private ASTBinaryCondition MakeNegatedBinaryCondition(ASTNode lvalue, ASTNode op, ASTNode rvalue)
+        {
+            var cond = MakeBinaryCondition(lvalue, op, rvalue);
+            switch (cond.Op)
+            {
+                case RelOpType.Less: cond.Op = RelOpType.GreaterOrEqual; break;
+                case RelOpType.LessOrEqual: cond.Op = RelOpType.Greater; break;
+                case RelOpType.Greater: cond.Op = RelOpType.LessOrEqual; break;
+                case RelOpType.GreaterOrEqual: cond.Op = RelOpType.Less; break;
+                case RelOpType.Equal: cond.Op = RelOpType.NotEqual; break;
+                case RelOpType.NotEqual: cond.Op = RelOpType.Equal; break;
+                default: throw new InvalidOperationException("Cannot negate unknown binary operator");
+            }
+
+            return cond;
+        }
+
         private ASTBinaryCondition MakeBinaryCondition(ASTNode lvalue, ASTNode op, ASTNode rvalue) => new ASTBinaryCondition()
         {
             LValue = lvalue as ASTRValue,
@@ -246,26 +275,26 @@ namespace LSLib.LS.Story.GoalParser
 
         private ASTConstantValue MakeConstIdentifier(ASTNode val) => new ASTConstantValue()
         {
-            Type = ASTConstantType.Name,
+            Type = IRConstantType.Name,
             StringValue = (val as ASTLiteral).Literal
         };
 
         private ASTConstantValue MakeConstString(ASTNode val) => new ASTConstantValue()
         {
-            Type = ASTConstantType.String,
+            Type = IRConstantType.String,
             StringValue = (val as ASTLiteral).Literal
         };
 
         private ASTConstantValue MakeConstInteger(ASTNode val) => new ASTConstantValue()
         {
-            Type = ASTConstantType.Integer,
-            IntegerValue = Int64.Parse((val as ASTLiteral).Literal)
+            Type = IRConstantType.Integer,
+            IntegerValue = Int64.Parse((val as ASTLiteral).Literal, ParserConstants.ParserCulture.NumberFormat)
         };
 
         private ASTConstantValue MakeConstFloat(ASTNode val) => new ASTConstantValue()
         {
-            Type = ASTConstantType.Float,
-            FloatValue = Single.Parse((val as ASTLiteral).Literal)
+            Type = IRConstantType.Float,
+            FloatValue = Single.Parse((val as ASTLiteral).Literal, ParserConstants.ParserCulture.NumberFormat)
         };
     }
 }

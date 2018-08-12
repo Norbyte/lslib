@@ -81,7 +81,7 @@ Facts : /* empty */ { $$ = MakeFactList(); }
 	  ;
 	  
 Fact : FactStatement { $$ = $1; }
-     | NOT FactStatement { $$ = MakeNotFact($1); }
+     | NOT FactStatement { $$ = MakeNotFact($2); }
 	 ;
 
 FactStatement : IDENTIFIER '(' FactElementList ')' ';'
@@ -113,16 +113,28 @@ RuleType : IF { $$ = MakeRuleType(RuleType.Rule); }
 		 | QRY { $$ = MakeRuleType(RuleType.Query); }
 		 ;
 
-Conditions : Condition { $$ = MakeConditionList($1); }
+Conditions : InitialCondition { $$ = MakeConditionList($1); }
            | Conditions AND Condition { $$ = MakeConditionList($1, $3); }
 		   ;
 		   
-Condition  : IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition($1, $3, false); }
-           | TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition($1, $3, $5, false); }
-           | NOT IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition($2, $4, true); }
-           | NOT TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition($2, $4, $6, true); }
-           | ConditionParam Operator ConditionParam { $$ = MakeBinaryCondition($1, $2, $3); }
+InitialCondition : FuncCondition;
+		   
+Condition  : FuncCondition
+           | NotFuncCondition
+           | BinaryCondition
 		   ;
+
+FuncCondition : IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition($1, $3, false); }
+              | TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition($1, $3, $5, false); }
+		      ;
+
+NotFuncCondition : NOT IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition($2, $4, true); }
+                 | NOT TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition($2, $4, $6, true); }
+		         ;
+
+BinaryCondition : ConditionParam Operator ConditionParam { $$ = MakeBinaryCondition($1, $2, $3); }
+                | NOT ConditionParam Operator ConditionParam { $$ = MakeNegatedBinaryCondition($2, $3, $4); }
+		        ;
 
 ConditionParamList : /* Empty */ { $$ = MakeConditionParamList(); }
                    | ConditionParam { $$ = MakeConditionParamList($1); }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Story.Compiler;
+using System;
 using System.Collections.Generic;
 
 namespace LSLib.LS.Story.HeaderParser
@@ -25,15 +26,6 @@ namespace LSLib.LS.Story.HeaderParser
         public List<ASTFunction> Functions = new List<ASTFunction>();
     }
 
-    public enum ASTFunctionType
-    {
-        Event,
-        Query,
-        Call,
-        SysQuery,
-        SysCall
-    };
-
     /// <summary>
     /// Function type wrapper node
     /// This is discarded during parsing and does not appear in the final AST.
@@ -41,7 +33,7 @@ namespace LSLib.LS.Story.HeaderParser
     public class ASTFunctionTypeNode : ASTNode
     {
         // Type of function (SysQuery, SysCall, Event, etc.)
-        public ASTFunctionType Type;
+        public Compiler.FunctionType Type;
     }
 
     /// <summary>
@@ -62,7 +54,7 @@ namespace LSLib.LS.Story.HeaderParser
     public class ASTFunction : ASTNode
     {
         // Type of function (SysQuery, SysCall, Event, etc.)
-        public ASTFunctionType Type;
+        public Compiler.FunctionType Type;
         // Name of the function
         public String Name;
         // Function parameters
@@ -84,12 +76,6 @@ namespace LSLib.LS.Story.HeaderParser
         public List<ASTFunctionParam> Params = new List<ASTFunctionParam>();
     }
 
-    public enum ASTFunctionParamDirection
-    {
-        In,
-        Out
-    };
-
     /// <summary>
     /// Typed (and optionally direction marked) parameter of a function
     /// </summary>
@@ -101,7 +87,7 @@ namespace LSLib.LS.Story.HeaderParser
         public String Type;
         // Parameter direction (IN/OUT)
         // This is only meaningful for Query and SysQuery, for all other types direction is always "IN".
-        public ASTFunctionParamDirection Direction;
+        public ParamDirection Direction;
     }
     
     /// <summary>

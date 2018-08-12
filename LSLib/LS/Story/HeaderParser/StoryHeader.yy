@@ -1,4 +1,5 @@
 ﻿%namespace LSLib.LS.Story.HeaderParser
+%using LSLib.LS.Story.Compiler
 %partial 
 %visibility public
 %parsertype HeaderParser
@@ -54,13 +55,13 @@ Function : InOutFunctionType IDENTIFIER '(' InOutFunctionParams ')' FunctionMeta
 FunctionMetadata : '(' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ')'
                  { $$ = MakeFunctionMetadata($2, $4, $6, $8); };
 
-InOutFunctionType : SYSQUERY { $$ = MakeFunctionType(ASTFunctionType.SysQuery); }
-                  | QUERY { $$ = MakeFunctionType(ASTFunctionType.Query); }
+InOutFunctionType : SYSQUERY { $$ = MakeFunctionType(Compiler.FunctionType.SysQuery); }
+                  | QUERY { $$ = MakeFunctionType(Compiler.FunctionType.Query); }
                   ;
 
-InFunctionType : SYSCALL { $$ = MakeFunctionType(ASTFunctionType.SysCall); }
-               | CALL { $$ = MakeFunctionType(ASTFunctionType.Call); }
-               | EVENT { $$ = MakeFunctionType(ASTFunctionType.Event); }
+InFunctionType : SYSCALL { $$ = MakeFunctionType(Compiler.FunctionType.SysCall); }
+               | CALL { $$ = MakeFunctionType(Compiler.FunctionType.Call); }
+               | EVENT { $$ = MakeFunctionType(Compiler.FunctionType.Event); }
                ;
 
 InOutFunctionParams : /* empty */ { $$ = MakeFunctionParamList(); }
@@ -73,8 +74,8 @@ InFunctionParams : /* empty */ { $$ = MakeFunctionParamList(); }
                  | InFunctionParams ',' InFunctionParam { $$ = MakeFunctionParamList($1, $3); }
                  ;
 
-InOutFunctionParam : '[' IN ']' '(' IDENTIFIER ')' IDENTIFIER { $$ = MakeParam(ASTFunctionParamDirection.In, $5, $7); }
-                   | '[' OUT ']' '(' IDENTIFIER ')' IDENTIFIER { $$ = MakeParam(ASTFunctionParamDirection.Out, $5, $7); }
+InOutFunctionParam : '[' IN ']' '(' IDENTIFIER ')' IDENTIFIER { $$ = MakeParam(ParamDirection.In, $5, $7); }
+                   | '[' OUT ']' '(' IDENTIFIER ')' IDENTIFIER { $$ = MakeParam(ParamDirection.Out, $5, $7); }
                    ;
 
 InFunctionParam : '(' IDENTIFIER ')' IDENTIFIER { $$ = MakeParam($2, $4); };
