@@ -126,6 +126,10 @@ namespace LSLib.LS.Story.Compiler
         public List<FunctionParam> Params;
         // Indicates that we were able to infer the type of all parameters
         public Boolean FullyTyped;
+        // Indicates that the function is "written" in at least one place
+        public Boolean Written;
+        // Indicates that the function is "read" in at least one place
+        public Boolean Read;
 
         public FunctionNameAndArity GetNameAndArity() => new FunctionNameAndArity(Name, Params.Count);
     }
@@ -191,6 +195,7 @@ namespace LSLib.LS.Story.Compiler
         public const String GuidPrefixNotKnown = "22";
         public const String RuleNamingStyle = "23";
         public const String ParamNotBound = "24";
+        public const String UnusedDatabase = "25";
     }
 
     public class Diagnostic
@@ -245,6 +250,10 @@ namespace LSLib.LS.Story.Compiler
         /// This currently checks PROC/QRY/DB prefixes.
         /// </summary>
         public bool ReportNameStyleIssues = true;
+        /// <summary>
+        /// Generate a warning if a database is written but not read or vice versa.
+        /// </summary>
+        public bool ReportUnusedDatabases = true;
 
         public CompilationContext()
         {
@@ -543,6 +552,8 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
+            db.Written = true;
+
             int index = 0;
             foreach (var param in db.Params)
             {
@@ -586,6 +597,13 @@ namespace LSLib.LS.Story.Compiler
             if (func == null)
             {
                 var message = String.Format("Symbol \"{0}\" could not be resolved", statement.Func.Name);
+                Context.Log.Error(null, DiagnosticCode.UnresolvedSymbol, message);
+                return;
+            }
+
+            if (!func.FullyTyped)
+            {
+                var message = String.Format("Signature of \"{0}\" could not be determined", statement.Func.Name);
                 Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
                 return;
             }
@@ -609,6 +627,8 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(null, DiagnosticCode.CanOnlyDeleteFromDatabase, message);
                 return;
             }
+
+            func.Written = true;
 
             int index = 0;
             foreach (var param in func.Params)
@@ -787,6 +807,8 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
                 return;
             }
+
+            func.Read = true;
 
             if (conditionIndex == 0)
             {
@@ -1042,6 +1064,30 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
+        private void VerifyUnusedDatabases()
+        {
+            foreach (var signature in Context.Signatures)
+            {
+                if (signature.Value.Type == FunctionType.Database
+                    && (!signature.Value.Written || !signature.Value.Read))
+                {
+                    Debug.Assert(signature.Value.Written || signature.Value.Read);
+                    if (!signature.Value.Written)
+                    {
+                        var message = String.Format("{0} \"{1}\" is used in a rule, but is never written to",
+                            signature.Value.Type, signature.Key);
+                        Context.Log.Warn(null, DiagnosticCode.UnusedDatabase, message);
+                    }
+                    else
+                    {
+                        var message = String.Format("{0} \"{1}\" is written to, but is never used in a rule", 
+                            signature.Value.Type, signature.Key);
+                        Context.Log.Warn(null, DiagnosticCode.UnusedDatabase, message);
+                    }
+                }
+            }
+        }
+
         public void VerifyIR()
         {
             foreach (var goal in Context.GoalsByName.Values)
@@ -1077,6 +1123,11 @@ namespace LSLib.LS.Story.Compiler
             if (Context.ReportNameStyleIssues)
             {
                 VerifyDatabases();
+            }
+
+            if (Context.ReportUnusedDatabases)
+            {
+                VerifyUnusedDatabases();
             }
         }
 
@@ -1147,7 +1198,9 @@ namespace LSLib.LS.Story.Compiler
                 signature = new FunctionSignature
                 {
                     Name = name.Name,
-                    Type = (type == null) ? FunctionType.Database : (FunctionType)type
+                    Type = (type == null) ? FunctionType.Database : (FunctionType)type,
+                    Written = false,
+                    Read = false
                 };
             }
             else

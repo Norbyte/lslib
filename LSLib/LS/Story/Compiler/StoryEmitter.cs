@@ -877,7 +877,9 @@ namespace LSLib.LS.Story.Compiler
                 FullyTyped = signature.FullyTyped,
                 Name = signature.Name + "__DEF__",
                 Params = signature.Params,
-                Type = signature.Type
+                Type = signature.Type,
+                Written = signature.Written,
+                Read = signature.Read
             };
             EmitFunction(LS.Story.FunctionType.UserQuery, aliasedSignature, new NodeReference(Story, osiProc));
             return osiProc;

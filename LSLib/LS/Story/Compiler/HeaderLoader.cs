@@ -69,7 +69,9 @@ namespace LSLib.LS.Story.Compiler
                 Name = astFunction.Name,
                 Type = astFunction.Type,
                 Params = args,
-                FullyTyped = true
+                FullyTyped = true,
+                Written = false,
+                Read = false
             };
 
             var func = new BuiltinFunction
