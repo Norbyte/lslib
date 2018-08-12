@@ -169,6 +169,7 @@ namespace LSLib.LS.Story.Compiler
     /// </summary>
     public class DiagnosticCode
     {
+        public const String InternalError = "00";
         public const String TypeIdAlreadyDefined = "01";
         public const String TypeNameAlreadyDefined = "02";
         public const String TypeIdInvalid = "03";
@@ -196,6 +197,7 @@ namespace LSLib.LS.Story.Compiler
         public const String RuleNamingStyle = "23";
         public const String ParamNotBound = "24";
         public const String UnusedDatabase = "25";
+        public const String DbNamingStyle = "26";
     }
 
     public class Diagnostic
@@ -217,9 +219,16 @@ namespace LSLib.LS.Story.Compiler
     public class CompilationLog
     {
         public List<Diagnostic> Log = new List<Diagnostic>();
+        /// <summary>
+        /// Controls whether specific warnings are enabled or disabled.
+        /// All are enabled by default.
+        /// </summary>
+        public Dictionary<string, bool> WarningSwitches = new Dictionary<string, bool>();
 
         public void Warn(CodeLocation Location, String code, String message)
         {
+            if (WarningSwitches.TryGetValue(code, out bool enabled) && !enabled) return;
+
             var diag = new Diagnostic(Location, MessageLevel.Warning, code, message);
             Log.Add(diag);
         }
@@ -244,16 +253,6 @@ namespace LSLib.LS.Story.Compiler
         public Dictionary<FunctionNameAndArity, FunctionSignature> Signatures = new Dictionary<FunctionNameAndArity, FunctionSignature>();
         public Dictionary<FunctionNameAndArity, object> Functions = new Dictionary<FunctionNameAndArity, object>();
         public CompilationLog Log = new CompilationLog();
-
-        /// <summary>
-        /// Generate a warning if names defined in the code don't match expected naming rules.
-        /// This currently checks PROC/QRY/DB prefixes.
-        /// </summary>
-        public bool ReportNameStyleIssues = true;
-        /// <summary>
-        /// Generate a warning if a database is written but not read or vice versa.
-        /// </summary>
-        public bool ReportUnusedDatabases = true;
 
         public CompilationContext()
         {
@@ -564,8 +563,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     // TODO - propagate types in binary LHS/RHS and FuncCondition parameters
                     var message = String.Format("No type information available for fact arg");
-                    // TODO separate code
-                    Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
+                    Context.Log.Error(null, DiagnosticCode.InternalError, message);
                     continue;
                 }
 
@@ -573,7 +571,6 @@ namespace LSLib.LS.Story.Compiler
                 {
                     var message = String.Format("Intrinsic type of column {0} of {1} \"{2}\" differs: {3} vs {4}", 
                         index, db.Type, db.Name, param.Type.IntrinsicTypeId, ele.Type.IntrinsicTypeId);
-                    // TODO separate code
                     Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
@@ -582,8 +579,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     var message = String.Format("GUID alias cast of column {0} of {1} \"{2}\" differs: {3} vs {4}",
                         index, db.Type, db.Name, param.Type.TypeId, ele.Type.TypeId);
-                    // TODO separate code
-                    Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
+                    Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                     continue;
                 }
             }
@@ -640,8 +636,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     // TODO - propagate types in binary LHS/RHS and FuncCondition parameters
                     var message = String.Format("No type information available for statement arg");
-                    // TODO separate code
-                    Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
+                    Context.Log.Error(null, DiagnosticCode.InternalError, message);
                     continue;
                 }
                 
@@ -652,7 +647,6 @@ namespace LSLib.LS.Story.Compiler
                 {
                     var message = String.Format("Intrinsic type of parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
                         index, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
-                    // TODO separate code
                     Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
@@ -661,8 +655,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     var message = String.Format("GUID alias cast: parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
                         index, func.Name, param.Type.TypeId, type.TypeId);
-                    // TODO separate code
-                    Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
+                    Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                     continue;
                 }
 
@@ -677,7 +670,6 @@ namespace LSLib.LS.Story.Compiler
             {
                 var message = String.Format("Rule variable {0} of type {1} cannot be casted to {2}",
                     ruleVar.Name, ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId);
-                // TODO separate code
                 Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                 return;
             }
@@ -686,8 +678,7 @@ namespace LSLib.LS.Story.Compiler
             {
                 var message = String.Format("GUID alias cast: Rule variable {0} of type {1} casted to {2}",
                     ruleVar.Name, ruleVar.Type.TypeId, variable.Type.TypeId);
-                // TODO separate code
-                Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
+                Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
             }
         }
 
@@ -894,8 +885,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     var message = String.Format("GUID alias cast of parameter {0} of {1} \"{2}\": {3} vs {4}",
                         index, func.Type, func.Name, param.Type.TypeId, type.TypeId);
-                    // TODO separate code
-                    Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
+                    Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                     continue;
                 }
 
@@ -976,7 +966,6 @@ namespace LSLib.LS.Story.Compiler
             {
                 var message = String.Format("Intrinsic type of LHS/RHS differs: {0} vs {1}",
                     lhs.IntrinsicTypeId, rhs.IntrinsicTypeId);
-                // TODO separate code
                 Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                 return;
             }
@@ -985,8 +974,7 @@ namespace LSLib.LS.Story.Compiler
             {
                 var message = String.Format("GUID alias cast - LHS/RHS differs: {0} vs {1}",
                     lhs.TypeId, rhs.TypeId);
-                // TODO separate code
-                Context.Log.Warn(null, DiagnosticCode.LocalTypeMismatch, message);
+                Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                 return;
             }
 
@@ -1006,7 +994,7 @@ namespace LSLib.LS.Story.Compiler
 
         private void VerifyIRRule(IRRule rule)
         {
-            if (Context.ReportNameStyleIssues && (rule.Type == RuleType.Proc || rule.Type == RuleType.Query))
+            if (rule.Type == RuleType.Proc || rule.Type == RuleType.Query)
             {
                 var initialName = (rule.Conditions[0] as IRFuncCondition).Func.Name;
                 if (rule.Type == RuleType.Proc && initialName.Name.Substring(0, 4).ToUpper() != "PROC")
@@ -1059,7 +1047,7 @@ namespace LSLib.LS.Story.Compiler
                     && signature.Key.Name.Substring(0, 2).ToUpper() != "DB")
                 {
                     var message = String.Format("Name of database \"{0}\" should start with the prefix \"DB\"", signature.Key.Name);
-                    Context.Log.Warn(null, DiagnosticCode.RuleNamingStyle, message);
+                    Context.Log.Warn(null, DiagnosticCode.DbNamingStyle, message);
                 }
             }
         }
@@ -1120,15 +1108,8 @@ namespace LSLib.LS.Story.Compiler
             // Validate database names
             // We do this here as there is no explicit declaration for databases,
             // they are created implicitly on first use.
-            if (Context.ReportNameStyleIssues)
-            {
-                VerifyDatabases();
-            }
-
-            if (Context.ReportUnusedDatabases)
-            {
-                VerifyUnusedDatabases();
-            }
+            VerifyDatabases();
+            VerifyUnusedDatabases();
         }
 
         private ValueType ConstantTypeToValueType(IRConstantType type)
