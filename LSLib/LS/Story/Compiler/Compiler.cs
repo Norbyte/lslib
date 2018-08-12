@@ -1031,7 +1031,7 @@ namespace LSLib.LS.Story.Compiler
         }
 
 
-        private bool ApplySignature(FunctionNameAndArity name, FunctionType type, List<ValueType> paramTypes)
+        private bool ApplySignature(FunctionNameAndArity name, FunctionType? type, List<ValueType> paramTypes)
         {
             var registeredSignature = Context.LookupSignature(name);
             var signature = registeredSignature;
@@ -1045,12 +1045,12 @@ namespace LSLib.LS.Story.Compiler
                 signature = new FunctionSignature
                 {
                     Name = name.Name,
-                    Type = type
+                    Type = (type == null) ? FunctionType.Database : (FunctionType)type
                 };
             }
             else
             {
-                if (signature.Type != type)
+                if (type != null && signature.Type != type)
                 {
                     var message = String.Format("Auto-typing name {0}: first seen as {1}, now seen as {2}",
                         name, signature.Type, type);
@@ -1080,7 +1080,7 @@ namespace LSLib.LS.Story.Compiler
             return signature.FullyTyped;
         }
 
-        private bool TryPropagateSignature(IRRule rule, FunctionNameAndArity name, FunctionType type, List<IRValue> parameters, bool allowPartial)
+        private bool TryPropagateSignature(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, bool allowPartial)
         {
             // Build a signature with all parameters to make sure that all types can be resolved
             var sig = new List<ValueType>();
@@ -1108,7 +1108,7 @@ namespace LSLib.LS.Story.Compiler
             return ApplySignature(name, type, sig);
         }
 
-        private bool TryPropagateSignature(FunctionNameAndArity name, FunctionType type, List<IRConstant> parameters)
+        private bool TryPropagateSignature(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters)
         {
             // Build a signature with all parameters to make sure that all types can be resolved
             var sig = new List<ValueType>();
@@ -1124,7 +1124,7 @@ namespace LSLib.LS.Story.Compiler
             return true;
         }
 
-        private bool PropagateSignatureIfRequired(IRRule rule, FunctionNameAndArity name, FunctionType type, List<IRValue> parameters, bool allowPartial)
+        private bool PropagateSignatureIfRequired(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, bool allowPartial)
         {
             var signature = Context.LookupSignature(name);
             bool signatureOk = (signature != null && signature.FullyTyped);
@@ -1142,7 +1142,7 @@ namespace LSLib.LS.Story.Compiler
             return signatureOk;
         }
 
-        private bool PropagateSignatureIfRequired(FunctionNameAndArity name, FunctionType type, List<IRConstant> parameters)
+        private bool PropagateSignatureIfRequired(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters)
         {
             var signature = Context.LookupSignature(name);
             if (signature == null || !signature.FullyTyped)
@@ -1274,7 +1274,7 @@ namespace LSLib.LS.Story.Compiler
                 if (condition is IRFuncCondition)
                 {
                     var func = condition as IRFuncCondition;
-                    PropagateSignatureIfRequired(rule, func.Func.Name, FunctionType.Database, func.Params, false);
+                    PropagateSignatureIfRequired(rule, func.Func.Name, null, func.Params, false);
                     if (func.TupleSize == 0)
                     {
                         func.TupleSize = ComputeTupleSize(rule, func, lastTupleSize);
@@ -1297,7 +1297,7 @@ namespace LSLib.LS.Story.Compiler
             {
                 if (action.Func != null)
                 {
-                    PropagateSignatureIfRequired(rule, action.Func.Name, FunctionType.Database, action.Params, false);
+                    PropagateSignatureIfRequired(rule, action.Func.Name, null, action.Params, false);
                 }
             }
 
