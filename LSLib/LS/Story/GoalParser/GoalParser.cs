@@ -273,7 +273,7 @@ namespace LSLib.LS.Story.GoalParser
             };
         }
 
-        private ASTConstantValue MakeConstIdentifier(ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstGuidString(ASTNode val) => new ASTConstantValue()
         {
             Type = IRConstantType.Name,
             StringValue = (val as ASTLiteral).Literal

@@ -46,6 +46,8 @@
 %token FLOAT
 /* String literal */
 %token STRING
+/* GUID string literal */
+%token GUIDSTRING
 
 %%
 
@@ -95,7 +97,7 @@ FactElementList : /* empty */ { $$ = MakeFactElementList(); }
 FactElement : TypedConstant
 	{ $$ = $1; };
 			  
-Constant : IDENTIFIER { $$ = MakeConstIdentifier($1); }
+Constant : GUIDSTRING { $$ = MakeConstGuidString($1); }
          | STRING { $$ = MakeConstString($1); }
 		 | INTEGER { $$ = MakeConstInteger($1); }
 		 | FLOAT { $$ = MakeConstFloat($1); }
