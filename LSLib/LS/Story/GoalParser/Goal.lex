@@ -48,8 +48,10 @@ hex [0-9a-fA-F]
 [ \t\v\r\n\f]      ;
 
 {letter}({letter}|{digit}|_)*   { yylval = MakeLiteral(yytext); return (int)GoalTokens.IDENTIFIER; }
+/* GUID strings */
+({hex}{8})-({hex}{4})-({hex}{4})-({hex}{4})-({hex}{12}) { yylval = MakeLiteral(yytext); return (int)GoalTokens.IDENTIFIER; }
 /* Special case for identifiers with a GUID string at the end */
-{letter}({letter}|{digit}|_)*({hex}{8})-({hex}{4})-({hex}{4})-({hex}{4})-({hex}{12}) { yylval = MakeLiteral(yytext); return (int)GoalTokens.IDENTIFIER; }
+{letter}({letter}|{digit}|_|-)*({hex}{8})-({hex}{4})-({hex}{4})-({hex}{4})-({hex}{12}) { yylval = MakeLiteral(yytext); return (int)GoalTokens.IDENTIFIER; }
 /* Variables with a leading underscore are local, and are handled differently */
 _({letter}|{digit}|_)*          { yylval = MakeLiteral(yytext); return (int)GoalTokens.LOCAL_VAR; }
 [+\-]?{digit}({digit})*         { yylval = MakeLiteral(yytext); return (int)GoalTokens.INTEGER; }

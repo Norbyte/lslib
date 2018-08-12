@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Story.Compiler;
+using System;
 using System.Collections.Generic;
 
 namespace LSLib.LS.Story.GoalParser
@@ -216,15 +217,6 @@ namespace LSLib.LS.Story.GoalParser
     {
     }
 
-    public enum ASTConstantType
-    {
-        Unknown = 0,
-        Integer = 1,
-        Float = 2,
-        String = 3,
-        Name = 4
-    }
-
     /// <summary>
     /// Constant scalar value.
     /// </summary>
@@ -238,12 +230,12 @@ namespace LSLib.LS.Story.GoalParser
         // will be stored with a constant type of "Name". It also doesn't differentiate
         // between INT and INT64 as we don't know the exact Osiris type without contextual
         // type inference, which will happen in later stages.
-        public ASTConstantType Type;
-        // Value of this constant of the type is Integer.
+        public IRConstantType Type;
+        // Value of this constant if the type is Integer.
         public Int64 IntegerValue;
-        // Value of this constant of the type is Float.
+        // Value of this constant if the type is Float.
         public Single FloatValue;
-        // Value of this constant of the type is String or Name.
+        // Value of this constant if the type is String or Name.
         public String StringValue;
     }
 

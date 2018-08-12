@@ -59,7 +59,7 @@ namespace LSLib.LS.Story.HeaderParser
         public String Name;
         // Function parameters
         public List<ASTFunctionParam> Params;
-        // Function metadata - mostly unknown.
+        // Function metadata for Osiris internal use - mostly unknown.
         public UInt32 Meta1;
         public UInt32 Meta2;
         public UInt32 Meta3;
