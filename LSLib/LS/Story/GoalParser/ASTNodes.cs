@@ -25,7 +25,7 @@ namespace LSLib.LS.Story.GoalParser
         // Ffacts in the EXITSECTION part
         public List<ASTFact> ExitSection;
         // Names of parent goals (if any)
-        public List<String> ParentTargetEdges;
+        public List<ASTParentTargetEdge> ParentTargetEdges;
     }
 
     /// <summary>
@@ -34,7 +34,7 @@ namespace LSLib.LS.Story.GoalParser
     /// </summary>
     public class ASTParentTargetEdgeList : ASTNode
     {
-        public List<String> TargetEdges = new List<String>();
+        public List<ASTParentTargetEdge> TargetEdges = new List<ASTParentTargetEdge>();
     }
 
     /// <summary>
@@ -43,6 +43,9 @@ namespace LSLib.LS.Story.GoalParser
     /// </summary>
     public class ASTParentTargetEdge : ASTNode
     {
+        // Location of node in source code
+        public CodeLocation Location;
+        // Parent goal name
         public String Goal;
     }
 
@@ -60,6 +63,8 @@ namespace LSLib.LS.Story.GoalParser
     /// </summary>
     public class ASTFact : ASTNode
     {
+        // Location of fact in source code
+        public CodeLocation Location;
         // Name of database we're inserting into / deleting from
         public String Database;
         // Fact negation ("DB_Something(1)" vs. "NOT DB_Something(1)").
@@ -91,6 +96,8 @@ namespace LSLib.LS.Story.GoalParser
     /// </summary>
     public class ASTRule : ASTNode
     {
+        // Location of rule in source code
+        public CodeLocation Location;
         // Type of rule (if, proc or query)
         public RuleType Type;
         // Conditions/predicates
@@ -122,6 +129,8 @@ namespace LSLib.LS.Story.GoalParser
     /// </summary>
     public class ASTCondition : ASTNode
     {
+        // Location of condition in source code
+        public CodeLocation Location;
     }
 
     /// <summary>
@@ -182,6 +191,8 @@ namespace LSLib.LS.Story.GoalParser
 
     public class ASTAction : ASTNode
     {
+        // Location of action in source code
+        public CodeLocation Location;
     }
     
     public class ASTGoalCompletedAction : ASTAction
@@ -215,6 +226,8 @@ namespace LSLib.LS.Story.GoalParser
 
     public class ASTRValue : ASTNode
     {
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     /// <summary>

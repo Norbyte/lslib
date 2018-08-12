@@ -45,7 +45,3 @@ digit [0-9]
 <C_COMMENT>.            { }
 
 . return ((int)HeaderTokens.BAD);
-
-%{
-	yylloc = new LexLocation(tokLin, tokCol, tokELin, tokECol/*, tokPos, tokEPos, buffer*/);
-%}

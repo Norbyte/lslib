@@ -698,10 +698,7 @@ namespace LSLib.LS.Story {
         [SuppressMessage( "Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "yylloc" )]
         // Reason for FxCop message suppression -
         // This is a traditional name for YACC-like functionality
-        public virtual TSpan yylloc {
-            get { return default( TSpan ); }       // Empty implementation allowing
-            set { /* skip */ }                   // yylloc to be ignored entirely.
-        }
+        public TSpan yylloc { get; set; }
 
         /// <summary>
         /// Main call point for LEX-like scanners.  Returns an int

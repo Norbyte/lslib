@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Story.GoalParser;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -85,6 +86,17 @@ namespace LSLib.LS.Story.Compiler
     }
 
     /// <summary>
+    /// Goal dependency edge from subgial to parent
+    /// </summary>
+    public class IRTargetEdge
+    {
+        // Goal name
+        public IRGoalRef Goal;
+        // Location of code reference
+        public CodeLocation Location;
+    }
+
+    /// <summary>
     /// Goal node - contains everything from a goal file.
     /// </summary>
     public class IRGoal
@@ -98,7 +110,7 @@ namespace LSLib.LS.Story.Compiler
         // Ffacts in the EXITSECTION part
         public List<IRFact> ExitSection;
         // Parent goals (if any)
-        public List<IRGoalRef> ParentTargetEdges;
+        public List<IRTargetEdge> ParentTargetEdges;
     }
 
     /// <summary>
@@ -112,6 +124,8 @@ namespace LSLib.LS.Story.Compiler
         public bool Not;
         // List of values in the fact tuple
         public List<IRConstant> Elements;
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     /// <summary>
@@ -130,6 +144,8 @@ namespace LSLib.LS.Story.Compiler
         public List<IRRuleVariable> Variables;
         // Rule-local variables by name
         public Dictionary<String, IRRuleVariable> VariablesByName;
+        // Location of node in source code
+        public CodeLocation Location;
 
         public IRRuleVariable FindOrAddVariable(String name, ValueType type)
         {
@@ -201,6 +217,8 @@ namespace LSLib.LS.Story.Compiler
     {
         // Number of columns in the output tuple of this condition.
         public UInt32 TupleSize;
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     /// <summary>
@@ -250,6 +268,8 @@ namespace LSLib.LS.Story.Compiler
         public bool Not;
         // List of PROC parameters / database tuple columns
         public List<IRValue> Params;
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     public class IRValue
@@ -257,6 +277,8 @@ namespace LSLib.LS.Story.Compiler
         // Type of variable, if specified in the code.
         // (e.g. "(ITEMGUID)_Var")
         public ValueType Type;
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     /// <summary>

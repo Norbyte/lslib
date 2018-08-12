@@ -4,6 +4,7 @@
 %parsertype GoalParser
 %tokentype GoalTokens
 %YYSTYPE LSLib.LS.Story.GoalParser.ASTNode
+%YYLTYPE LSLib.LS.Story.GoalParser.CodeLocation
 
 %start GoalFile
 
@@ -76,18 +77,18 @@ TargetEdges : /* empty */ { $$ = MakeParentTargetEdgeList(); }
 			;
 
 TargetEdge : PARENT_TARGET_EDGE STRING
-	{ $$ = MakeParentTargetEdge($2); };
+	{ $$ = MakeParentTargetEdge(@$, $2); };
 
 Facts : /* empty */ { $$ = MakeFactList(); }
       | Facts Fact { $$ = MakeFactList($1, $2); }
 	  ;
 	  
 Fact : FactStatement { $$ = $1; }
-     | NOT FactStatement { $$ = MakeNotFact($2); }
+     | NOT FactStatement { $$ = MakeNotFact(@$, $2); }
 	 ;
 
 FactStatement : IDENTIFIER '(' FactElementList ')' ';'
-	{ $$ = MakeFactStatement($1, $3); };
+	{ $$ = MakeFactStatement(@$, $1, $3); };
 
 FactElementList : /* empty */ { $$ = MakeFactElementList(); }
                 | FactElement { $$ = MakeFactElementList($1); }
@@ -97,10 +98,10 @@ FactElementList : /* empty */ { $$ = MakeFactElementList(); }
 FactElement : TypedConstant
 	{ $$ = $1; };
 			  
-Constant : GUIDSTRING { $$ = MakeConstGuidString($1); }
-         | STRING { $$ = MakeConstString($1); }
-		 | INTEGER { $$ = MakeConstInteger($1); }
-		 | FLOAT { $$ = MakeConstFloat($1); }
+Constant : GUIDSTRING { $$ = MakeConstGuidString(@$, $1); }
+         | STRING { $$ = MakeConstString(@$, $1); }
+		 | INTEGER { $$ = MakeConstInteger(@$, $1); }
+		 | FLOAT { $$ = MakeConstFloat(@$, $1); }
 		 ;
 		
 Rules : /* empty */ { $$ = MakeRuleList(); }
@@ -108,7 +109,7 @@ Rules : /* empty */ { $$ = MakeRuleList(); }
 	  ;
 	  
 Rule : RuleType Conditions THEN ActionList
-	{ $$ = MakeRule($1, $2, $4); };
+	{ $$ = MakeRule(@$, $1, $2, $4); };
 
 RuleType : IF { $$ = MakeRuleType(RuleType.Rule); }
          | PROC { $$ = MakeRuleType(RuleType.Proc); }
@@ -126,16 +127,16 @@ Condition  : FuncCondition
            | BinaryCondition
 		   ;
 
-FuncCondition : IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition($1, $3, false); }
-              | TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition($1, $3, $5, false); }
+FuncCondition : IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition(@$, $1, $3, false); }
+              | TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition(@$, $1, $3, $5, false); }
 		      ;
 
-NotFuncCondition : NOT IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition($2, $4, true); }
-                 | NOT TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition($2, $4, $6, true); }
+NotFuncCondition : NOT IDENTIFIER '(' ConditionParamList ')' { $$ = MakeFuncCondition(@$, $2, $4, true); }
+                 | NOT TypedLocalVar '.' IDENTIFIER '(' ConditionParamList ')' { $$ = MakeObjectFuncCondition(@$, $2, $4, $6, true); }
 		         ;
 
-BinaryCondition : ConditionParam Operator ConditionParam { $$ = MakeBinaryCondition($1, $2, $3); }
-                | NOT ConditionParam Operator ConditionParam { $$ = MakeNegatedBinaryCondition($2, $3, $4); }
+BinaryCondition : ConditionParam Operator ConditionParam { $$ = MakeBinaryCondition(@$, $1, $2, $3); }
+                | NOT ConditionParam Operator ConditionParam { $$ = MakeNegatedBinaryCondition(@$, $2, $3, $4); }
 		        ;
 
 ConditionParamList : /* Empty */ { $$ = MakeConditionParamList(); }
@@ -160,13 +161,13 @@ ActionList : /* empty */ { $$ = MakeActionList(); }
 		   ;
 
 Action : ActionStatement { $$ = $1; }
-	   | GOAL_COMPLETED ';' { $$ = MakeGoalCompletedAction(); }
+	   | GOAL_COMPLETED ';' { $$ = MakeGoalCompletedAction(@$); }
 	   ;
 
-ActionStatement : IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement($1, $3, false); }
-                | TypedLocalVar '.' IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement($1, $3, $5, false); }
-				| NOT IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement($2, $4, true); }
-                | NOT TypedLocalVar '.' IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement($2, $4, $6, true); }
+ActionStatement : IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement(@$, $1, $3, false); }
+                | TypedLocalVar '.' IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement(@$, $1, $3, $5, false); }
+				| NOT IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement(@$, $2, $4, true); }
+                | NOT TypedLocalVar '.' IDENTIFIER '(' ActionParamList ')' ';' { $$ = MakeActionStatement(@$, $2, $4, $6, true); }
 				;
 
 ActionParamList : /* Empty */ { $$ = MakeActionParamList(); }
@@ -179,9 +180,9 @@ ActionParam : TypedConstant { $$ = $1; }
 			;
 
 TypedConstant : Constant { $$ = $1; }
-              | '(' IDENTIFIER ')' Constant { $$ = MakeTypedConstant($2, $4); }
+              | '(' IDENTIFIER ')' Constant { $$ = MakeTypedConstant(@$, $2, $4); }
 			  ;
 
-TypedLocalVar : LOCAL_VAR { $$ = MakeLocalVar($1); }
-              | '(' IDENTIFIER ')' LOCAL_VAR { $$ = MakeLocalVar($2, $4); }
+TypedLocalVar : LOCAL_VAR { $$ = MakeLocalVar(@$, $1); }
+              | '(' IDENTIFIER ')' LOCAL_VAR { $$ = MakeLocalVar(@$, $2, $4); }
               ;

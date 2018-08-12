@@ -1,6 +1,7 @@
 ﻿using LSLib.LS.Story.Compiler;
 using System;
 using System.Globalization;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS.Story.GoalParser
@@ -10,8 +11,77 @@ namespace LSLib.LS.Story.GoalParser
         public static CultureInfo ParserCulture = new CultureInfo("en-US");
     }
 
-    public abstract class GoalScanBase : AbstractScanner<ASTNode, LexLocation>
+    public class CodeLocation : IMerge<CodeLocation>
     {
+        private string fileName;
+        private int startLine;   // start line
+        private int startColumn; // start column
+        private int endLine;     // end line
+        private int endColumn;   // end column
+
+        /// <summary>
+        /// The line at which the text span starts.
+        /// </summary>
+        public string FileName { get { return fileName; } }
+
+        /// <summary>
+        /// The line at which the text span starts.
+        /// </summary>
+        public int StartLine { get { return startLine; } }
+
+        /// <summary>
+        /// The column at which the text span starts.
+        /// </summary>
+        public int StartColumn { get { return startColumn; } }
+
+        /// <summary>
+        /// The line on which the text span ends.
+        /// </summary>
+        public int EndLine { get { return endLine; } }
+
+        /// <summary>
+        /// The column of the first character
+        /// beyond the end of the text span.
+        /// </summary>
+        public int EndColumn { get { return endColumn; } }
+
+        /// <summary>
+        /// Default no-arg constructor.
+        /// </summary>
+        public CodeLocation() { }
+
+        /// <summary>
+        /// Constructor for text-span with given start and end.
+        /// </summary>
+        /// <param name="sl">start line</param>
+        /// <param name="sc">start column</param>
+        /// <param name="el">end line </param>
+        /// <param name="ec">end column</param>
+        public CodeLocation(string fl, int sl, int sc, int el, int ec)
+        {
+            fileName = fl;
+            startLine = sl;
+            startColumn = sc;
+            endLine = el;
+            endColumn = ec;
+        }
+
+        /// <summary>
+        /// Create a text location which spans from the
+        /// start of "this" to the end of the argument "last"
+        /// </summary>
+        /// <param name="last">The last location in the result span</param>
+        /// <returns>The merged span</returns>
+        public CodeLocation Merge(CodeLocation last)
+        {
+            return new CodeLocation(this.fileName, this.startLine, this.startColumn, last.endLine, last.endColumn);
+        }
+    }
+
+    public abstract class GoalScanBase : AbstractScanner<ASTNode, CodeLocation>
+    {
+        protected String fileName;
+
         protected virtual bool yywrap() { return true; }
 
         protected ASTLiteral MakeLiteral(string lit) => new ASTLiteral()
@@ -22,6 +92,14 @@ namespace LSLib.LS.Story.GoalParser
         protected ASTLiteral MakeString(string lit)
         {
             return MakeLiteral(Regex.Unescape(lit.Substring(1, lit.Length - 2)));
+        }
+    }
+
+    public sealed partial class GoalScanner : GoalScanBase
+    {
+        public GoalScanner(String fileName)
+        {
+            this.fileName = fileName;
         }
     }
 
@@ -51,12 +129,13 @@ namespace LSLib.LS.Story.GoalParser
         private ASTParentTargetEdgeList MakeParentTargetEdgeList(ASTNode parentTargetEdgeList, ASTNode edge)
         {
             var edges = parentTargetEdgeList as ASTParentTargetEdgeList;
-            edges.TargetEdges.Add((edge as ASTParentTargetEdge).Goal);
+            edges.TargetEdges.Add(edge as ASTParentTargetEdge);
             return edges;
         }
 
-        private ASTParentTargetEdge MakeParentTargetEdge(ASTNode goal) => new ASTParentTargetEdge()
+        private ASTParentTargetEdge MakeParentTargetEdge(CodeLocation location, ASTNode goal) => new ASTParentTargetEdge()
         {
+            Location = location,
             Goal = (goal as ASTLiteral).Literal
         };
 
@@ -69,15 +148,17 @@ namespace LSLib.LS.Story.GoalParser
             return facts;
         }
 
-        private ASTFact MakeNotFact(ASTNode fact)
+        private ASTFact MakeNotFact(CodeLocation location, ASTNode fact)
         {
             var factStmt = fact as ASTFact;
+            factStmt.Location = location;
             factStmt.Not = true;
             return factStmt;
         }
 
-        private ASTFact MakeFactStatement(ASTNode database, ASTNode elements) => new ASTFact()
+        private ASTFact MakeFactStatement(CodeLocation location, ASTNode database, ASTNode elements) => new ASTFact()
         {
+            Location = location,
             Database = (database as ASTLiteral).Literal,
             Not = false,
             Elements = (elements as ASTFactElementList).Elements
@@ -108,8 +189,9 @@ namespace LSLib.LS.Story.GoalParser
             return rules;
         }
 
-        private ASTRule MakeRule(ASTNode ruleType, ASTNode conditions, ASTNode actions) => new ASTRule()
+        private ASTRule MakeRule(CodeLocation location, ASTNode ruleType, ASTNode conditions, ASTNode actions) => new ASTRule()
         {
+            Location = location,
             Type = (ruleType as ASTRuleType).Type,
             Conditions = (conditions as ASTConditionList).Conditions,
             Actions = (actions as ASTActionList).Actions
@@ -136,28 +218,30 @@ namespace LSLib.LS.Story.GoalParser
             return conditions;
         }
 
-        private ASTFuncCondition MakeFuncCondition(ASTNode name, ASTNode paramList, bool not) => new ASTFuncCondition()
+        private ASTFuncCondition MakeFuncCondition(CodeLocation location, ASTNode name, ASTNode paramList, bool not) => new ASTFuncCondition()
         {
+            Location = location,
             Name = (name as ASTLiteral).Literal,
             Not = not,
             Params = (paramList as ASTConditionParamList).Params
         };
 
-        private ASTFuncCondition MakeObjectFuncCondition(ASTNode thisValue, ASTNode name, ASTNode paramList, bool not)
+        private ASTFuncCondition MakeObjectFuncCondition(CodeLocation location, ASTNode thisValue, ASTNode name, ASTNode paramList, bool not)
         {
             var condParams = paramList as ASTConditionParamList;
             condParams.Params.Insert(0, thisValue as ASTRValue);
             return new ASTFuncCondition()
             {
+                Location = location,
                 Name = (name as ASTLiteral).Literal,
                 Not = not,
                 Params = condParams.Params
             };
         }
 
-        private ASTBinaryCondition MakeNegatedBinaryCondition(ASTNode lvalue, ASTNode op, ASTNode rvalue)
+        private ASTBinaryCondition MakeNegatedBinaryCondition(CodeLocation location, ASTNode lvalue, ASTNode op, ASTNode rvalue)
         {
-            var cond = MakeBinaryCondition(lvalue, op, rvalue);
+            var cond = MakeBinaryCondition(location, lvalue, op, rvalue);
             switch (cond.Op)
             {
                 case RelOpType.Less: cond.Op = RelOpType.GreaterOrEqual; break;
@@ -172,8 +256,9 @@ namespace LSLib.LS.Story.GoalParser
             return cond;
         }
 
-        private ASTBinaryCondition MakeBinaryCondition(ASTNode lvalue, ASTNode op, ASTNode rvalue) => new ASTBinaryCondition()
+        private ASTBinaryCondition MakeBinaryCondition(CodeLocation location, ASTNode lvalue, ASTNode op, ASTNode rvalue) => new ASTBinaryCondition()
         {
+            Location = location,
             LValue = lvalue as ASTRValue,
             Op = (op as ASTOperator).Op,
             RValue = rvalue as ASTRValue
@@ -209,19 +294,24 @@ namespace LSLib.LS.Story.GoalParser
             return actions;
         }
 
-        private ASTAction MakeGoalCompletedAction() => new ASTGoalCompletedAction();
-
-        private ASTStatement MakeActionStatement(ASTNode name, ASTNode paramList, bool not) => new ASTStatement
+        private ASTAction MakeGoalCompletedAction(CodeLocation location) => new ASTGoalCompletedAction
         {
+            Location = location
+        };
+
+        private ASTStatement MakeActionStatement(CodeLocation location, ASTNode name, ASTNode paramList, bool not) => new ASTStatement
+        {
+            Location = location,
             Name = (name as ASTLiteral).Literal,
             Not = not,
             Params = (paramList as ASTStatementParamList).Params
         };
 
-        private ASTStatement MakeActionStatement(ASTNode thisValue, ASTNode name, ASTNode paramList, bool not)
+        private ASTStatement MakeActionStatement(CodeLocation location, ASTNode thisValue, ASTNode name, ASTNode paramList, bool not)
         {
             var stmt = new ASTStatement
             {
+                Location = location,
                 Name = (name as ASTLiteral).Literal,
                 Not = not,
                 Params = (paramList as ASTStatementParamList).Params
@@ -246,25 +336,25 @@ namespace LSLib.LS.Story.GoalParser
             return actionParamList;
         }
 
-        private ASTLocalVar MakeLocalVar(ASTNode varName) => new ASTLocalVar()
+        private ASTLocalVar MakeLocalVar(CodeLocation location, ASTNode varName) => new ASTLocalVar()
         {
+            Location = location,
             Name = (varName as ASTLiteral).Literal
         };
 
-        private ASTLocalVar MakeLocalVar(ASTNode typeName, ASTNode varName)
+        private ASTLocalVar MakeLocalVar(CodeLocation location, ASTNode typeName, ASTNode varName) => new ASTLocalVar()
         {
-            return new ASTLocalVar()
-            {
-                Type = (typeName as ASTLiteral).Literal,
-                Name = (varName as ASTLiteral).Literal
-            };
-        }
+            Location = location,
+            Type = (typeName as ASTLiteral).Literal,
+            Name = (varName as ASTLiteral).Literal
+        };
 
-        private ASTConstantValue MakeTypedConstant(ASTNode typeName, ASTNode constant)
+        private ASTConstantValue MakeTypedConstant(CodeLocation location, ASTNode typeName, ASTNode constant)
         {
             var c = constant as ASTConstantValue;
             return new ASTConstantValue()
             {
+                Location = location,
                 TypeName = (typeName as ASTLiteral).Literal,
                 Type = c.Type,
                 StringValue = c.StringValue,
@@ -273,26 +363,30 @@ namespace LSLib.LS.Story.GoalParser
             };
         }
 
-        private ASTConstantValue MakeConstGuidString(ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstGuidString(CodeLocation location, ASTNode val) => new ASTConstantValue()
         {
+            Location = location,
             Type = IRConstantType.Name,
             StringValue = (val as ASTLiteral).Literal
         };
 
-        private ASTConstantValue MakeConstString(ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstString(CodeLocation location, ASTNode val) => new ASTConstantValue()
         {
+            Location = location,
             Type = IRConstantType.String,
             StringValue = (val as ASTLiteral).Literal
         };
 
-        private ASTConstantValue MakeConstInteger(ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstInteger(CodeLocation location, ASTNode val) => new ASTConstantValue()
         {
+            Location = location,
             Type = IRConstantType.Integer,
             IntegerValue = Int64.Parse((val as ASTLiteral).Literal, ParserConstants.ParserCulture.NumberFormat)
         };
 
-        private ASTConstantValue MakeConstFloat(ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstFloat(CodeLocation location, ASTNode val) => new ASTConstantValue()
         {
+            Location = location,
             Type = IRConstantType.Float,
             FloatValue = Single.Parse((val as ASTLiteral).Literal, ParserConstants.ParserCulture.NumberFormat)
         };

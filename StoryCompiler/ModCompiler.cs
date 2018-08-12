@@ -137,6 +137,11 @@ namespace LSTools.StoryCompiler
                         break;
                 }
 
+                if (message.Location != null)
+                {
+                    Console.Write($"{message.Location.FileName}:{message.Location.StartLine}:{message.Location.StartColumn}: ");
+                }
+
                 Console.WriteLine("[{0}] {1}", message.Code, message.Message);
                 Console.ResetColor();
             }

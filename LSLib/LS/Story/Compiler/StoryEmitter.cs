@@ -1036,7 +1036,7 @@ namespace LSLib.LS.Story.Compiler
                 var osiGoal = Goals[goal.Value];
                 foreach (var parent in goal.Value.ParentTargetEdges)
                 {
-                    var parentGoal = Context.LookupGoal(parent.Name);
+                    var parentGoal = Context.LookupGoal(parent.Goal.Name);
                     var osiParentGoal = Goals[parentGoal];
                     osiGoal.ParentGoals.Add(new GoalReference(Story, osiParentGoal));
                     osiParentGoal.SubGoals.Add(new GoalReference(Story, osiGoal));

@@ -27,7 +27,7 @@ namespace LSLib.LS.Story.Compiler
                 InitSection = new List<IRFact>(),
                 KBSection = new List<IRRule>(),
                 ExitSection = new List<IRFact>(),
-                ParentTargetEdges = new List<IRGoalRef>()
+                ParentTargetEdges = new List<IRTargetEdge>()
             };
 
             foreach (var fact in astGoal.InitSection)
@@ -47,7 +47,10 @@ namespace LSLib.LS.Story.Compiler
 
             foreach (var refGoal in astGoal.ParentTargetEdges)
             {
-                goal.ParentTargetEdges.Add(new IRGoalRef(refGoal));
+                var edge = new IRTargetEdge();
+                edge.Goal = new IRGoalRef(refGoal.Goal);
+                edge.Location = refGoal.Location;
+                goal.ParentTargetEdges.Add(edge);
             }
 
             return goal;
@@ -62,7 +65,8 @@ namespace LSLib.LS.Story.Compiler
                 Conditions = new List<IRCondition>(),
                 Actions = new List<IRStatement>(),
                 Variables = new List<IRRuleVariable>(),
-                VariablesByName = new Dictionary<String, IRRuleVariable>()
+                VariablesByName = new Dictionary<String, IRRuleVariable>(),
+                Location = astRule.Location
             };
 
             foreach (var condition in astRule.Conditions)
@@ -88,7 +92,8 @@ namespace LSLib.LS.Story.Compiler
                     Func = null,
                     Goal = rule.Goal,
                     Not = false,
-                    Params = new List<IRValue>()
+                    Params = new List<IRValue>(),
+                    Location = astAction.Location
                 };
             }
             else if (astAction is ASTStatement)
@@ -99,7 +104,8 @@ namespace LSLib.LS.Story.Compiler
                     Func = new IRSymbolRef(new FunctionNameAndArity(astStmt.Name, astStmt.Params.Count)),
                     Goal = null,
                     Not = astStmt.Not,
-                    Params = new List<IRValue>()
+                    Params = new List<IRValue>(),
+                    Location = astAction.Location
                 };
 
                 foreach (var param in astStmt.Params)
@@ -124,7 +130,8 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Func = new IRSymbolRef(new FunctionNameAndArity(astFunc.Name, astFunc.Params.Count)),
                     Not = astFunc.Not,
-                    Params = new List<IRValue>()
+                    Params = new List<IRValue>(),
+                    Location = astCondition.Location
                 };
 
                 foreach (var param in astFunc.Params)
@@ -141,7 +148,8 @@ namespace LSLib.LS.Story.Compiler
                 {
                     LValue = ASTValueToIR(rule, astBin.LValue),
                     Op = astBin.Op,
-                    RValue = ASTValueToIR(rule, astBin.RValue)
+                    RValue = ASTValueToIR(rule, astBin.RValue),
+                    Location = astCondition.Location
                 };
             }
             else
@@ -166,7 +174,8 @@ namespace LSLib.LS.Story.Compiler
                 return new IRVariable
                 {
                     Index = ruleVar.Index,
-                    Type = type
+                    Type = type,
+                    Location = astValue.Location
                 };
             }
             else
@@ -181,7 +190,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Database = new IRSymbolRef(new FunctionNameAndArity(astFact.Database, astFact.Elements.Count)),
                 Not = astFact.Not,
-                Elements = new List<IRConstant>()
+                Elements = new List<IRConstant>(),
+                Location = astFact.Location
             };
 
             foreach (var element in astFact.Elements)
@@ -207,31 +217,32 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private IRConstant ASTConstantToIR(ASTConstantValue element)
+        private IRConstant ASTConstantToIR(ASTConstantValue astConstant)
         {
             ValueType type;
-            if (element.TypeName != null)
+            if (astConstant.TypeName != null)
             {
-                type = Context.LookupType(element.TypeName);
+                type = Context.LookupType(astConstant.TypeName);
                 if (type == null)
                 {
                     Context.Log.Error(null, DiagnosticCode.UnresolvedType,
-                        String.Format("Type \"{0}\" does not exist", element.TypeName));
+                        String.Format("Type \"{0}\" does not exist", astConstant.TypeName));
                 }
             }
             else
             {
-                type = ConstantTypeToValueType(element.Type);
+                type = ConstantTypeToValueType(astConstant.Type);
             }
 
             return new IRConstant
             {
-                ValueType = element.Type,
+                ValueType = astConstant.Type,
                 Type = type,
-                InferredType = element.TypeName != null,
-                IntegerValue = element.IntegerValue,
-                FloatValue = element.FloatValue,
-                StringValue = element.StringValue
+                InferredType = astConstant.TypeName != null,
+                IntegerValue = astConstant.IntegerValue,
+                FloatValue = astConstant.FloatValue,
+                StringValue = astConstant.StringValue,
+                Location = astConstant.Location
             };
         }
 
@@ -239,7 +250,7 @@ namespace LSLib.LS.Story.Compiler
         {
             using (var file = new FileStream(path, FileMode.Open))
             {
-                var scanner = new GoalScanner();
+                var scanner = new GoalScanner(path);
                 scanner.SetSource(file);
                 var parser = new GoalParser.GoalParser(scanner);
                 bool parsed = parser.Parse();

@@ -148,13 +148,6 @@ namespace LSLib.LS.Story.Compiler
         public UInt32 Meta4;
     }
 
-    public class CodeLocation
-    {
-        public String Path;
-        public int StartLine, EndLine;
-        public int StartColumn, EndColumn;
-    }
-
     /// <summary>
     /// Diagnostic message level
     /// </summary>
@@ -225,18 +218,78 @@ namespace LSLib.LS.Story.Compiler
         /// </summary>
         public Dictionary<string, bool> WarningSwitches = new Dictionary<string, bool>();
 
-        public void Warn(CodeLocation Location, String code, String message)
+        public void Warn(CodeLocation location, String code, String message)
         {
             if (WarningSwitches.TryGetValue(code, out bool enabled) && !enabled) return;
 
-            var diag = new Diagnostic(Location, MessageLevel.Warning, code, message);
+            var diag = new Diagnostic(location, MessageLevel.Warning, code, message);
             Log.Add(diag);
         }
 
-        public void Error(CodeLocation Location, String code, String message)
+        public void Warn(CodeLocation location, String code, String format, object arg1)
         {
-            var diag = new Diagnostic(Location, MessageLevel.Error, code, message);
+            var message = String.Format(format, arg1);
+            Warn(location, code, message);
+        }
+
+        public void Warn(CodeLocation location, String code, String format, object arg1, object arg2)
+        {
+            var message = String.Format(format, arg1, arg2);
+            Warn(location, code, message);
+        }
+
+        public void Warn(CodeLocation location, String code, String format, object arg1, object arg2, object arg3)
+        {
+            var message = String.Format(format, arg1, arg2, arg3);
+            Warn(location, code, message);
+        }
+
+        public void Warn(CodeLocation location, String code, String format, object arg1, object arg2, object arg3, object arg4)
+        {
+            var message = String.Format(format, arg1, arg2, arg3, arg4);
+            Warn(location, code, message);
+        }
+
+        public void Warn(CodeLocation location, String code, String format, object arg1, object arg2, object arg3, object arg4, object arg5)
+        {
+            var message = String.Format(format, arg1, arg2, arg3, arg4, arg5);
+            Warn(location, code, message);
+        }
+
+        public void Error(CodeLocation location, String code, String message)
+        {
+            var diag = new Diagnostic(location, MessageLevel.Error, code, message);
             Log.Add(diag);
+        }
+
+        public void Error(CodeLocation location, String code, String format, object arg1)
+        {
+            var message = String.Format(format, arg1);
+            Error(location, code, message);
+        }
+
+        public void Error(CodeLocation location, String code, String format, object arg1, object arg2)
+        {
+            var message = String.Format(format, arg1, arg2);
+            Error(location, code, message);
+        }
+
+        public void Error(CodeLocation location, String code, String format, object arg1, object arg2, object arg3)
+        {
+            var message = String.Format(format, arg1, arg2, arg3);
+            Error(location, code, message);
+        }
+
+        public void Error(CodeLocation location, String code, String format, object arg1, object arg2, object arg3, object arg4)
+        {
+            var message = String.Format(format, arg1, arg2, arg3, arg4);
+            Error(location, code, message);
+        }
+
+        public void Error(CodeLocation location, String code, String format, object arg1, object arg2, object arg3, object arg4, object arg5)
+        {
+            var message = String.Format(format, arg1, arg2, arg3, arg4, arg5);
+            Error(location, code, message);
         }
     }
 
@@ -536,8 +589,10 @@ namespace LSLib.LS.Story.Compiler
             var db = Context.LookupSignature(fact.Database.Name);
             if (db == null)
             {
-                var message = String.Format("Database \"{0}\" could not be resolved", fact.Database.Name);
-                Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
+                Context.Log.Error(fact.Location, 
+                    DiagnosticCode.UnresolvedSignature,
+                    "Database \"{0}\" could not be resolved",
+                    fact.Database.Name);
                 return;
             }
 
@@ -546,8 +601,10 @@ namespace LSLib.LS.Story.Compiler
                 && db.Type != FunctionType.SysCall
                 && db.Type != FunctionType.Proc)
             {
-                var message = String.Format("Init/Exit actions can only reference databases, calls and PROCs; \"{0}\" is a {1}", fact.Database.Name, db.Type);
-                Context.Log.Error(null, DiagnosticCode.InvalidSymbolInFact, message);
+                Context.Log.Error(fact.Location, 
+                    DiagnosticCode.InvalidSymbolInFact,
+                    "Init/Exit actions can only reference databases, calls and PROCs; \"{0}\" is a {1}",
+                    fact.Database.Name, db.Type);
                 return;
             }
 
@@ -562,24 +619,27 @@ namespace LSLib.LS.Story.Compiler
                 if (ele.Type == null)
                 {
                     // TODO - propagate types in binary LHS/RHS and FuncCondition parameters
-                    var message = String.Format("No type information available for fact arg");
-                    Context.Log.Error(null, DiagnosticCode.InternalError, message);
+                    Context.Log.Error(ele.Location, 
+                        DiagnosticCode.InternalError, 
+                        "No type information available for fact argument");
                     continue;
                 }
 
                 if (param.Type.IntrinsicTypeId != ele.Type.IntrinsicTypeId)
                 {
-                    var message = String.Format("Intrinsic type of column {0} of {1} \"{2}\" differs: {3} vs {4}", 
+                    Context.Log.Error(ele.Location, 
+                        DiagnosticCode.LocalTypeMismatch,
+                        "Intrinsic type of column {0} of {1} \"{2}\" differs: {3} vs {4}",
                         index, db.Type, db.Name, param.Type.IntrinsicTypeId, ele.Type.IntrinsicTypeId);
-                    Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
 
                 if (IsGuidAliasToAliasCast(param.Type, ele.Type))
                 {
-                    var message = String.Format("GUID alias cast of column {0} of {1} \"{2}\" differs: {3} vs {4}",
+                    Context.Log.Warn(ele.Location, 
+                        DiagnosticCode.GuidAliasMismatch, 
+                        "GUID alias cast of column {0} of {1} \"{2}\" differs: {3} vs {4}",
                         index, db.Type, db.Name, param.Type.TypeId, ele.Type.TypeId);
-                    Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                     continue;
                 }
             }
@@ -592,15 +652,19 @@ namespace LSLib.LS.Story.Compiler
             var func = Context.LookupSignature(statement.Func.Name);
             if (func == null)
             {
-                var message = String.Format("Symbol \"{0}\" could not be resolved", statement.Func.Name);
-                Context.Log.Error(null, DiagnosticCode.UnresolvedSymbol, message);
+                Context.Log.Error(statement.Location, 
+                    DiagnosticCode.UnresolvedSymbol,
+                    "Symbol \"{0}\" could not be resolved", 
+                    statement.Func.Name);
                 return;
             }
 
             if (!func.FullyTyped)
             {
-                var message = String.Format("Signature of \"{0}\" could not be determined", statement.Func.Name);
-                Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
+                Context.Log.Error(statement.Location, 
+                    DiagnosticCode.UnresolvedSignature,
+                    "Signature of \"{0}\" could not be determined", 
+                    statement.Func.Name);
                 return;
             }
 
@@ -609,18 +673,20 @@ namespace LSLib.LS.Story.Compiler
                 && func.Type != FunctionType.SysCall
                 && func.Type != FunctionType.Proc)
             {
-                var message = String.Format("KB rule actions can only reference databases, calls and PROCs; \"{0}\" is a {1}", 
+                Context.Log.Error(statement.Location, 
+                    DiagnosticCode.InvalidSymbolInStatement,
+                    "KB rule actions can only reference databases, calls and PROCs; \"{0}\" is a {1}",
                     statement.Func.Name, func.Type);
-                Context.Log.Error(null, DiagnosticCode.InvalidSymbolInStatement, message);
                 return;
             }
 
             if (statement.Not
                 && func.Type != FunctionType.Database)
             {
-                var message = String.Format("KB rule NOT actions can only reference databases; \"{0}\" is a {1}",
+                Context.Log.Error(statement.Location,
+                    DiagnosticCode.CanOnlyDeleteFromDatabase,
+                    "KB rule NOT actions can only reference databases; \"{0}\" is a {1}",
                     statement.Func.Name, func.Type);
-                Context.Log.Error(null, DiagnosticCode.CanOnlyDeleteFromDatabase, message);
                 return;
             }
 
@@ -634,9 +700,9 @@ namespace LSLib.LS.Story.Compiler
                 ValueType type = ele.Type;
                 if (type == null)
                 {
-                    // TODO - propagate types in binary LHS/RHS and FuncCondition parameters
-                    var message = String.Format("No type information available for statement arg");
-                    Context.Log.Error(null, DiagnosticCode.InternalError, message);
+                    Context.Log.Error(ele.Location, 
+                        DiagnosticCode.InternalError,
+                        "No type information available for statement argument");
                     continue;
                 }
                 
@@ -645,17 +711,19 @@ namespace LSLib.LS.Story.Compiler
 
                 if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
                 {
-                    var message = String.Format("Intrinsic type of parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
+                    Context.Log.Error(ele.Location, 
+                        DiagnosticCode.LocalTypeMismatch,
+                        "Intrinsic type of parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
                         index, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
-                    Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
 
                 if (IsGuidAliasToAliasCast(param.Type, type))
                 {
-                    var message = String.Format("GUID alias cast: parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
+                    Context.Log.Warn(ele.Location, 
+                        DiagnosticCode.GuidAliasMismatch,
+                        "GUID alias cast: parameter {0} of Func [TODO TYPE] {1} differs: {2} vs {3}",
                         index, func.Name, param.Type.TypeId, type.TypeId);
-                    Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                     continue;
                 }
 
@@ -668,17 +736,19 @@ namespace LSLib.LS.Story.Compiler
             var ruleVar = rule.Variables[variable.Index];
             if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
             {
-                var message = String.Format("Rule variable {0} of type {1} cannot be casted to {2}",
+                Context.Log.Error(variable.Location, 
+                    DiagnosticCode.LocalTypeMismatch,
+                    "Rule variable {0} of type {1} cannot be casted to {2}",
                     ruleVar.Name, ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId);
-                Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                 return;
             }
 
             if (IsGuidAliasToAliasCast(ruleVar.Type, variable.Type))
             {
-                var message = String.Format("GUID alias cast: Rule variable {0} of type {1} casted to {2}",
+                Context.Log.Warn(variable.Location, 
+                    DiagnosticCode.GuidAliasMismatch,
+                    "GUID alias cast: Rule variable {0} of type {1} casted to {2}",
                     ruleVar.Name, ruleVar.Type.TypeId, variable.Type.TypeId);
-                Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
             }
         }
 
@@ -698,16 +768,18 @@ namespace LSLib.LS.Story.Compiler
                     {
                         if (type.TypeId != constant.Type.TypeId)
                         {
-                            var message = String.Format("GUID constant \"{0}\" has inferred type {1}",
+                            Context.Log.Warn(constant.Location, 
+                                DiagnosticCode.GuidAliasMismatch,
+                                "GUID constant \"{0}\" has inferred type {1}",
                                 constant.StringValue, constant.Type.Name);
-                            Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                         }
                     }
                     else if (prefix.Contains("GUID"))
                     {
-                        var message = String.Format("GUID constant \"{0}\" is prefixed with unknown type {1}",
+                        Context.Log.Warn(constant.Location, 
+                            DiagnosticCode.GuidPrefixNotKnown,
+                            "GUID constant \"{0}\" is prefixed with unknown type {1}",
                             constant.StringValue, prefix);
-                        Context.Log.Warn(null, DiagnosticCode.GuidPrefixNotKnown, message);
                     }
                 }
             }
@@ -758,9 +830,10 @@ namespace LSLib.LS.Story.Compiler
                     || (conditionIndex != -1 && ruleVar.FirstBindingIndex >= conditionIndex)
                 ) {
                     object paramName = (param.Name != null) ? (object)param.Name : parameterIndex;
-                    var message = String.Format("Variable {0} was not bound when used as parameter {1} in {2} \"{3}\"",
+                    Context.Log.Error(variable.Location, 
+                        DiagnosticCode.ParamNotBound,
+                        "Variable {0} was not bound when used as parameter {1} in {2} \"{3}\"",
                         ruleVar.Name, paramName, signature.Type, signature.GetNameAndArity());
-                    Context.Log.Error(null, DiagnosticCode.ParamNotBound, message);
                 }
             }
             else
@@ -787,15 +860,19 @@ namespace LSLib.LS.Story.Compiler
             var func = Context.LookupSignature(condition.Func.Name);
             if (func == null)
             {
-                var message = String.Format("Symbol \"{0}\" could not be resolved", condition.Func.Name);
-                Context.Log.Error(null, DiagnosticCode.UnresolvedSymbol, message);
+                Context.Log.Error(condition.Location, 
+                    DiagnosticCode.UnresolvedSymbol, 
+                    "Symbol \"{0}\" could not be resolved", 
+                    condition.Func.Name);
                 return;
             }
 
             if (!func.FullyTyped)
             {
-                var message = String.Format("Signature of \"{0}\" could not be determined", condition.Func.Name);
-                Context.Log.Error(null, DiagnosticCode.UnresolvedSignature, message);
+                Context.Log.Error(condition.Location, 
+                    DiagnosticCode.UnresolvedSignature,
+                    "Signature of \"{0}\" could not be determined", 
+                    condition.Func.Name);
                 return;
             }
 
@@ -808,9 +885,10 @@ namespace LSLib.LS.Story.Compiler
                     case RuleType.Proc:
                         if (func.Type != FunctionType.Proc)
                         {
-                            var message = String.Format("Initial proc condition can only be a PROC name; \"{0}\" is a {1}",
+                            Context.Log.Error(condition.Location, 
+                                DiagnosticCode.InvalidSymbolInInitialCondition,
+                                "Initial proc condition can only be a PROC name; \"{0}\" is a {1}",
                                 condition.Func.Name, func.Type);
-                            Context.Log.Error(null, DiagnosticCode.InvalidSymbolInInitialCondition, message);
                             return;
                         }
                         break;
@@ -818,9 +896,10 @@ namespace LSLib.LS.Story.Compiler
                     case RuleType.Query:
                         if (func.Type != FunctionType.UserQuery)
                         {
-                            var message = String.Format("Initial query condition can only be a user-defined QRY name; \"{0}\" is a {1}",
+                            Context.Log.Error(condition.Location, 
+                                DiagnosticCode.InvalidSymbolInInitialCondition,
+                                "Initial query condition can only be a user-defined QRY name; \"{0}\" is a {1}",
                                 condition.Func.Name, func.Type);
-                            Context.Log.Error(null, DiagnosticCode.InvalidSymbolInInitialCondition, message);
                             return;
                         }
                         break;
@@ -829,9 +908,10 @@ namespace LSLib.LS.Story.Compiler
                         if (func.Type != FunctionType.Event
                             && func.Type != FunctionType.Database)
                         {
-                            var message = String.Format("Initial rule condition can only be an event or a DB; \"{0}\" is a {1}",
+                            Context.Log.Error(condition.Location, 
+                                DiagnosticCode.InvalidSymbolInInitialCondition,
+                                "Initial rule condition can only be an event or a DB; \"{0}\" is a {1}",
                                 condition.Func.Name, func.Type);
-                            Context.Log.Error(null, DiagnosticCode.InvalidSymbolInInitialCondition, message);
                             return;
                         }
                         break;
@@ -847,9 +927,10 @@ namespace LSLib.LS.Story.Compiler
                     && func.Type != FunctionType.Database
                     && func.Type != FunctionType.UserQuery)
                 {
-                    var message = String.Format("Subsequent rule conditions can only be queries or DBs; \"{0}\" is a {1}",
+                    Context.Log.Error(condition.Location, 
+                        DiagnosticCode.InvalidSymbolInCondition,
+                        "Subsequent rule conditions can only be queries or DBs; \"{0}\" is a {1}",
                         condition.Func.Name, func.Type);
-                    Context.Log.Error(null, DiagnosticCode.InvalidSymbolInCondition, message);
                     return;
                 }
             }
@@ -862,10 +943,9 @@ namespace LSLib.LS.Story.Compiler
 
                 if (type == null)
                 {
-                    // TODO - propagate types in binary LHS/RHS and FuncCondition parameters
-                    var message = String.Format("No type information available for func condition arg");
-                    // TODO separate code
-                    Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
+                    Context.Log.Error(condParam.Location, 
+                        DiagnosticCode.InternalError,
+                        "No type information available for func condition arg");
                     continue;
                 }
 
@@ -874,18 +954,19 @@ namespace LSLib.LS.Story.Compiler
 
                 if (param.Type.IntrinsicTypeId != type.IntrinsicTypeId)
                 {
-                    var message = String.Format("Intrinsic type of parameter {0} of {1} \"{2}\" differs: {3} vs {4}",
+                    Context.Log.Error(condParam.Location, 
+                        DiagnosticCode.LocalTypeMismatch,
+                        "Intrinsic type of parameter {0} of {1} \"{2}\" differs: {3} vs {4}",
                         index, func.Type, func.Name, param.Type.IntrinsicTypeId, type.IntrinsicTypeId);
-                    // TODO separate code
-                    Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                     continue;
                 }
 
                 if (IsGuidAliasToAliasCast(param.Type, type))
                 {
-                    var message = String.Format("GUID alias cast of parameter {0} of {1} \"{2}\": {3} vs {4}",
+                    Context.Log.Warn(condParam.Location, 
+                        DiagnosticCode.GuidAliasMismatch,
+                        "GUID alias cast of parameter {0} of {1} \"{2}\": {3} vs {4}",
                         index, func.Type, func.Name, param.Type.TypeId, type.TypeId);
-                    Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                     continue;
                 }
 
@@ -940,8 +1021,10 @@ namespace LSLib.LS.Story.Compiler
                 var ruleVar = rule.Variables[variable.Index];
                 if (ruleVar.FirstBindingIndex == -1 || ruleVar.FirstBindingIndex >= conditionIndex)
                 {
-                    var message = String.Format("Variable {0} was unbound when used in a binary expression", ruleVar.Name);
-                    Context.Log.Error(null, DiagnosticCode.ParamNotBound, message);
+                    Context.Log.Error(variable.Location, 
+                        DiagnosticCode.ParamNotBound,
+                        "Variable {0} was unbound when used in a binary expression", 
+                        ruleVar.Name);
                 }
             }
         }
@@ -964,17 +1047,19 @@ namespace LSLib.LS.Story.Compiler
             
             if (!AreIntrinsicTypesCompatible(lhs.IntrinsicTypeId, rhs.IntrinsicTypeId))
             {
-                var message = String.Format("Intrinsic type of LHS/RHS differs: {0} vs {1}",
+                Context.Log.Error(condition.Location, 
+                    DiagnosticCode.LocalTypeMismatch,
+                    "Intrinsic type of LHS/RHS differs: {0} vs {1}",
                     lhs.IntrinsicTypeId, rhs.IntrinsicTypeId);
-                Context.Log.Error(null, DiagnosticCode.LocalTypeMismatch, message);
                 return;
             }
 
             if (IsGuidAliasToAliasCast(lhs, rhs))
             {
-                var message = String.Format("GUID alias cast - LHS/RHS differs: {0} vs {1}",
+                Context.Log.Warn(condition.Location, 
+                    DiagnosticCode.GuidAliasMismatch,
+                    "GUID alias cast - LHS/RHS differs: {0} vs {1}",
                     lhs.TypeId, rhs.TypeId);
-                Context.Log.Warn(null, DiagnosticCode.GuidAliasMismatch, message);
                 return;
             }
 
@@ -986,8 +1071,10 @@ namespace LSLib.LS.Story.Compiler
                 || condition.Op == RelOpType.Less
                 || condition.Op == RelOpType.LessOrEqual))
             {
-                var message = String.Format("String comparison using operator {0} - probably a mistake?", condition.Op);
-                Context.Log.Warn(null, DiagnosticCode.StringLtGtComparison, message);
+                Context.Log.Warn(condition.Location, 
+                    DiagnosticCode.StringLtGtComparison,
+                    "String comparison using operator {0} - probably a mistake?", 
+                    condition.Op);
                 return;
             }
         }
@@ -999,14 +1086,18 @@ namespace LSLib.LS.Story.Compiler
                 var initialName = (rule.Conditions[0] as IRFuncCondition).Func.Name;
                 if (rule.Type == RuleType.Proc && initialName.Name.Substring(0, 4).ToUpper() != "PROC")
                 {
-                    var message = String.Format("Name of PROC \"{0}\" should start with the prefix \"PROC\"", initialName);
-                    Context.Log.Warn(null, DiagnosticCode.RuleNamingStyle, message);
+                    Context.Log.Warn(rule.Conditions[0].Location, 
+                        DiagnosticCode.RuleNamingStyle,
+                        "Name of PROC \"{0}\" should start with the prefix \"PROC\"", 
+                        initialName);
                 }
 
                 if (rule.Type == RuleType.Query && initialName.Name.Substring(0, 3).ToUpper() != "QRY")
                 {
-                    var message = String.Format("Name of Query \"{0}\" should start with the prefix \"QRY\"", initialName);
-                    Context.Log.Warn(null, DiagnosticCode.RuleNamingStyle, message);
+                    Context.Log.Warn(rule.Conditions[0].Location, 
+                        DiagnosticCode.RuleNamingStyle,
+                        "Name of Query \"{0}\" should start with the prefix \"QRY\"", 
+                        initialName);
                 }
             }
 
@@ -1032,9 +1123,11 @@ namespace LSLib.LS.Story.Compiler
             {
                 if (variable.Type == null)
                 {
-                    var message = String.Format("Variable \"{0}\" of rule could not be typed",
+                    // TODO - return location of first variable reference instead of rule
+                    Context.Log.Error(rule.Location, 
+                        DiagnosticCode.UnresolvedLocalType,
+                        "Variable \"{0}\" of rule could not be typed",
                         variable.Name);
-                    Context.Log.Error(null, DiagnosticCode.UnresolvedLocalType, message);
                 }
             }
         }
@@ -1046,8 +1139,11 @@ namespace LSLib.LS.Story.Compiler
                 if (signature.Value.Type == FunctionType.Database
                     && signature.Key.Name.Substring(0, 2).ToUpper() != "DB")
                 {
-                    var message = String.Format("Name of database \"{0}\" should start with the prefix \"DB\"", signature.Key.Name);
-                    Context.Log.Warn(null, DiagnosticCode.DbNamingStyle, message);
+                    // TODO - return location of declaration
+                    Context.Log.Warn(null, 
+                        DiagnosticCode.DbNamingStyle,
+                        "Name of database \"{0}\" should start with the prefix \"DB\"", 
+                        signature.Key.Name);
                 }
             }
         }
@@ -1062,15 +1158,19 @@ namespace LSLib.LS.Story.Compiler
                     Debug.Assert(signature.Value.Written || signature.Value.Read);
                     if (!signature.Value.Written)
                     {
-                        var message = String.Format("{0} \"{1}\" is used in a rule, but is never written to",
+                        // TODO - return location of declaration
+                        Context.Log.Warn(null, 
+                            DiagnosticCode.UnusedDatabase,
+                            "{0} \"{1}\" is used in a rule, but is never written to",
                             signature.Value.Type, signature.Key);
-                        Context.Log.Warn(null, DiagnosticCode.UnusedDatabase, message);
                     }
                     else
                     {
-                        var message = String.Format("{0} \"{1}\" is written to, but is never used in a rule", 
+                        // TODO - return location of declaration
+                        Context.Log.Warn(null, 
+                            DiagnosticCode.UnusedDatabase,
+                            "{0} \"{1}\" is written to, but is never used in a rule",
                             signature.Value.Type, signature.Key);
-                        Context.Log.Warn(null, DiagnosticCode.UnusedDatabase, message);
                     }
                 }
             }
@@ -1082,10 +1182,12 @@ namespace LSLib.LS.Story.Compiler
             {
                 foreach (var parentGoal in goal.ParentTargetEdges)
                 {
-                    if (Context.LookupGoal(parentGoal.Name) == null)
+                    if (Context.LookupGoal(parentGoal.Goal.Name) == null)
                     {
-                        var message = String.Format("Parent goal of \"{0}\" could not be resolved: \"{1}\"", goal.Name, parentGoal.Name);
-                        Context.Log.Error(null, DiagnosticCode.UnresolvedGoal, message);
+                        Context.Log.Error(parentGoal.Location, 
+                            DiagnosticCode.UnresolvedGoal,
+                            "Parent goal of \"{0}\" could not be resolved: \"{1}\"", 
+                            goal.Name, parentGoal.Goal.Name);
                     }
                 }
 
@@ -1188,10 +1290,12 @@ namespace LSLib.LS.Story.Compiler
             {
                 if (type != null && signature.Type != type)
                 {
-                    var message = String.Format("Auto-typing name {0}: first seen as {1}, now seen as {2}",
-                        name, signature.Type, type);
                     // TODO error code!
-                    Context.Log.Error(null, DiagnosticCode.InvalidProcDefinition, message);
+                    // TODO location of definition
+                    Context.Log.Error(null, 
+                        DiagnosticCode.InvalidProcDefinition,
+                        "Auto-typing name {0}: first seen as {1}, now seen as {2}",
+                        name, signature.Type, type);
                 }
             }
 
@@ -1479,15 +1583,18 @@ namespace LSLib.LS.Story.Compiler
                 if (!PropagateSignatureIfRequired(rule, def.Func.Name, type, def.Params, true))
                 {
                     // TODO - possibly a warning?
-                    //var message = String.Format("Signature must be completely typed in declaration of {0} {1}", 
-                    //    rule.Type, def.Func.Name);
-                    //Context.Log.Error(null, DiagnosticCode.InvalidProcDefinition, message);
+                    /*Context.Log.Error(procDefn.Location, 
+                        DiagnosticCode.InvalidProcDefinition,
+                        "Signature must be completely typed in declaration of {0} {1}",
+                        rule.Type, def.Func.Name);*/
                 }
             }
             else
             {
-                var message = String.Format("Declaration of a {0} must start with a {0} name and signature.", rule.Type);
-                Context.Log.Error(null, DiagnosticCode.InvalidProcDefinition, message);
+                Context.Log.Error(procDefn.Location, 
+                    DiagnosticCode.InvalidProcDefinition,
+                    "Declaration of a {0} must start with a {0} name and signature.", 
+                    rule.Type);
             }
         }
 
