@@ -2,10 +2,12 @@
 using LSLib.LS.Story.Compiler;
 using LSLib.LS.Story.GoalParser;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LSTools.StoryCompiler
 {
@@ -78,30 +80,57 @@ namespace LSTools.StoryCompiler
             }
         }
 
+        class IRBuildTasks
+        {
+            public ConcurrentQueue<string> InputPaths = new ConcurrentQueue<string>();
+            public ConcurrentQueue<IRGoal> IRs = new ConcurrentQueue<IRGoal>();
+        }
+
+        private void BuildIR(IRBuildTasks tasks)
+        {
+            var goalLoader = new IRGenerator(Compiler.Context);
+            while (tasks.InputPaths.TryDequeue(out string path))
+            {
+                var goalName = Path.GetFileNameWithoutExtension(path);
+                var ast = goalLoader.ParseGoal(path);
+
+                var ir = goalLoader.GenerateGoalIR(ast);
+                ir.Name = goalName;
+                tasks.IRs.Enqueue(ir);
+            }
+        }
+
+        private List<IRGoal> ParallelBuildIR()
+        {
+            var tasks = new IRBuildTasks();
+            foreach (var path in ScriptPaths)
+            {
+                tasks.InputPaths.Enqueue(path);
+            }
+
+            IRBuildTasks[] threadTasks = new[] { tasks, tasks, tasks, tasks };
+            Task.WhenAll(threadTasks.Select(task => Task.Run(() => { BuildIR(task); }))).Wait();
+
+            var sorted = new SortedDictionary<string, IRGoal>();
+            while (tasks.IRs.TryDequeue(out IRGoal goal))
+            {
+                sorted.Add(goal.Name, goal);
+            }
+
+            return sorted.Values.ToList();
+        }
+
         public bool Compile(string outputPath)
         {
             Logger.CompilationStarted();
             var asts = new Dictionary<String, ASTGoal>();
             var goalLoader = new IRGenerator(Compiler.Context);
 
-            Logger.TaskStarted("Generating AST");
-            foreach (var path in ScriptPaths)
-            {
-                var goalName = Path.GetFileNameWithoutExtension(path);
-                var goalAst = goalLoader.ParseGoal(path);
-                asts.Add(goalName, goalAst);
-            }
-            var orderedGoalAsts = asts.OrderBy(rule => rule.Key).ToList();
-            Logger.TaskFinished();
-
             Logger.TaskStarted("Generating IR");
-            var irs = new List<IRGoal>();
-            foreach (var ast in orderedGoalAsts)
+            var orderedGoalAsts = ParallelBuildIR();
+            foreach (var goal in orderedGoalAsts)
             {
-                var goalIr = goalLoader.GenerateGoalIR(ast.Value);
-                goalIr.Name = ast.Key;
-                irs.Add(goalIr);
-                Compiler.AddGoal(goalIr);
+                Compiler.AddGoal(goal);
             }
             Logger.TaskFinished();
 

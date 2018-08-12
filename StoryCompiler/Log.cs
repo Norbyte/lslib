@@ -32,7 +32,7 @@ namespace LSTools.StoryCompiler
         public void CompilationFinished(bool succeeded)
         {
             compilationTimer.Stop();
-            Console.WriteLine("Compilation took: {0} ms", compilationTimer.Elapsed.Seconds * 60 + compilationTimer.Elapsed.Milliseconds);
+            Console.WriteLine("Compilation took: {0} ms", compilationTimer.Elapsed.Seconds * 1000 + compilationTimer.Elapsed.Milliseconds);
         }
 
         public void TaskStarted(string name)
@@ -44,7 +44,7 @@ namespace LSTools.StoryCompiler
         public void TaskFinished()
         {
             taskTimer.Stop();
-            Console.WriteLine("{0} ms", taskTimer.Elapsed.Seconds * 60 + taskTimer.Elapsed.Milliseconds);
+            Console.WriteLine("{0} ms", taskTimer.Elapsed.Seconds * 1000 + taskTimer.Elapsed.Milliseconds);
         }
 
         public void CompilationDiagnostic(Diagnostic message)
