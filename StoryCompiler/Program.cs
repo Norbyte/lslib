@@ -52,10 +52,19 @@ namespace LSTools.StoryCompiler
 
         static void Main(string[] args)
         {
-            CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser
+            if (args.Length == 0)
             {
-                ShowUsageOnEmptyCommandline = true
-            };
+                Console.WriteLine("Usage: StoryCompiler <args>");
+                Console.WriteLine("    --game-data-path <path> - Location of the game Data folder");
+                Console.WriteLine("    --output <path>         - Compiled story output path");
+                Console.WriteLine("    --mod <name>            - Check and compile all goals from the specified mod");
+                Console.WriteLine("    --no-warn <code>        - Suppress warnings with diagnostic code <code>");
+                Console.WriteLine("    --check-only            - Only check scripts for errors, don't generate compiled story file");
+                Console.WriteLine("    --check-names           - Verify game object names (slow!)");
+                Environment.Exit(1);
+            }
+
+            CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser();
 
             var argv = new CommandLineArguments();
 
@@ -70,12 +79,14 @@ namespace LSTools.StoryCompiler
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Argument --{e.Argument}: {e.Message}");
                 Console.ResetColor();
+                Environment.Exit(1);
             }
             catch (CommandLineException e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(e.Message);
                 Console.ResetColor();
+                Environment.Exit(1);
             }
 
             if (parser.ParsingSucceeded)
