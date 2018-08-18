@@ -405,6 +405,24 @@ namespace LSLib.LS.Story.Compiler
                     func.ActionReferences++;
                     break;
             }
+
+            if (node is UserQueryNode)
+            {
+                // We need to add a reference to the user query definition entry as well
+                var defnName = new FunctionNameAndArity(name.Name + "__DEF__", name.Arity);
+                if (FuncEntries.TryGetValue(defnName, out Function defn))
+                {
+                    switch (refType)
+                    {
+                        case NameRefType.Condition:
+                            defn.ConditionReferences++;
+                            break;
+                        case NameRefType.Action:
+                            defn.ActionReferences++;
+                            break;
+                    }
+                }
+            }
             
             return node;
         }
@@ -907,7 +925,7 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private ProcNode EmitUserQueryDefinition(FunctionSignature signature)
+        private ProcNode EmitUserQueryDefinition(FunctionSignature signature, Function queryFunc)
         {
             var osiProc = new ProcNode
             {
@@ -927,7 +945,13 @@ namespace LSLib.LS.Story.Compiler
                 Written = signature.Written,
                 Read = signature.Read
             };
-            EmitFunction(LS.Story.FunctionType.UserQuery, aliasedSignature, new NodeReference(Story, osiProc));
+
+            var osiFunc = EmitFunction(LS.Story.FunctionType.UserQuery, aliasedSignature, new NodeReference(Story, osiProc));
+            if (queryFunc != null)
+            {
+                osiFunc.ConditionReferences = queryFunc.ConditionReferences;
+                osiFunc.ActionReferences = queryFunc.ActionReferences;
+            }
             return osiProc;
         }
 
@@ -937,7 +961,9 @@ namespace LSLib.LS.Story.Compiler
             var name = new FunctionNameAndArity(signature.Name + "__DEF__", signature.Params.Count);
             if (!Funcs.TryGetValue(name, out Node initialFunc))
             {
-                initialFunc = EmitUserQueryDefinition(signature);
+                Function osiUserQuery = null;
+                FuncEntries.TryGetValue(signature.GetNameAndArity(), out osiUserQuery);
+                initialFunc = EmitUserQueryDefinition(signature, osiUserQuery);
                 Funcs.Add(name, initialFunc);
             }
 
