@@ -48,6 +48,11 @@ namespace LSTools.StoryCompiler
             {
                 Environment.Exit(3);
             }
+
+            if (args.DebugOutputPath != null)
+            {
+                DebugDump(args.OutputPath, args.DebugOutputPath);
+            }
         }
 
         static void Main(string[] args)

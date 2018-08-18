@@ -7,6 +7,19 @@ using System.Threading.Tasks;
 
 namespace LSLib.LS.Story.Compiler
 {
+    /// <summary>
+    /// Type of reference being made to a named function.
+    /// </summary>
+    public enum NameRefType
+    {
+        // Function is not referenced, only emitted
+        None,
+        // Function is referenced in the IF part of a rule
+        Condition,
+        // Function referenced in the THEN part of a rule, or init/exit section of a goal
+        Action
+    };
+
     public class StoryEmitter
     {
         private CompilationContext Context;
@@ -14,6 +27,7 @@ namespace LSLib.LS.Story.Compiler
         private Dictionary<IRGoal, Goal> Goals = new Dictionary<IRGoal, Goal>();
         private Dictionary<FunctionNameAndArity, Database> Databases = new Dictionary<FunctionNameAndArity, Database>();
         private Dictionary<FunctionNameAndArity, Node> Funcs = new Dictionary<FunctionNameAndArity, Node>();
+        private Dictionary<FunctionNameAndArity, Function> FuncEntries = new Dictionary<FunctionNameAndArity, Function>();
         private Dictionary<IRRule, RuleNode> Rules = new Dictionary<IRRule, RuleNode>();
 
         public StoryEmitter(CompilationContext context)
@@ -154,6 +168,7 @@ namespace LSLib.LS.Story.Compiler
                 Name = EmitFunctionSignature(signature)
             };
 
+            FuncEntries.Add(signature.GetNameAndArity(), osiFunc);
             Story.Functions.Add(osiFunc);
 
             return osiFunc;
@@ -169,63 +184,85 @@ namespace LSLib.LS.Story.Compiler
             return osiFunc;
         }
 
-        private InternalQueryNode EmitSysQuery(FunctionSignature signature)
+        private InternalQueryNode EmitSysQuery(FunctionSignature signature, NameRefType refType)
         {
             var builtin = Context.LookupName(signature.GetNameAndArity()) as BuiltinFunction;
-            var osiQuery = new InternalQueryNode
+            InternalQueryNode osiQuery = null;
+            if (refType == NameRefType.Condition)
             {
-                DatabaseRef = new DatabaseReference(),
-                Name = signature.Name,
-                NumParams = (byte)signature.Params.Count
-            };
-            AddNode(osiQuery);
+                osiQuery = new InternalQueryNode
+                {
+                    DatabaseRef = new DatabaseReference(),
+                    Name = signature.Name,
+                    NumParams = (byte)signature.Params.Count
+                };
+                AddNode(osiQuery);
+            }
 
             EmitFunction(LS.Story.FunctionType.SysQuery, signature, new NodeReference(Story, osiQuery), builtin);
             return osiQuery;
         }
 
-        private ProcNode EmitEvent(FunctionSignature signature)
+        private void EmitSysCall(FunctionSignature signature)
         {
             var builtin = Context.LookupName(signature.GetNameAndArity()) as BuiltinFunction;
-            var osiProc = new ProcNode
+            EmitFunction(LS.Story.FunctionType.SysCall, signature, new NodeReference(), builtin);
+        }
+
+        private ProcNode EmitEvent(FunctionSignature signature, NameRefType refType)
+        {
+            var builtin = Context.LookupName(signature.GetNameAndArity()) as BuiltinFunction;
+            ProcNode osiProc = null;
+            if (refType == NameRefType.Condition)
             {
-                DatabaseRef = new DatabaseReference(),
-                Name = signature.Name,
-                NumParams = (byte)signature.Params.Count,
-                ReferencedBy = new List<NodeEntryItem>()
-            };
-            AddNode(osiProc);
+                osiProc = new ProcNode
+                {
+                    DatabaseRef = new DatabaseReference(),
+                    Name = signature.Name,
+                    NumParams = (byte)signature.Params.Count,
+                    ReferencedBy = new List<NodeEntryItem>()
+                };
+                AddNode(osiProc);
+            }
 
             EmitFunction(LS.Story.FunctionType.Event, signature, new NodeReference(Story, osiProc), builtin);
             return osiProc;
         }
 
-        private ProcNode EmitCall(FunctionSignature signature)
+        private ProcNode EmitCall(FunctionSignature signature, NameRefType refType)
         {
             var builtin = Context.LookupName(signature.GetNameAndArity()) as BuiltinFunction;
-            var osiProc = new ProcNode
+            ProcNode osiProc = null;
+            if (refType == NameRefType.Condition)
             {
-                DatabaseRef = new DatabaseReference(),
-                Name = signature.Name,
-                NumParams = (byte)signature.Params.Count,
-                ReferencedBy = new List<NodeEntryItem>()
-            };
-            AddNode(osiProc);
+                osiProc = new ProcNode
+                {
+                    DatabaseRef = new DatabaseReference(),
+                    Name = signature.Name,
+                    NumParams = (byte)signature.Params.Count,
+                    ReferencedBy = new List<NodeEntryItem>()
+                };
+                AddNode(osiProc);
+            }
 
             EmitFunction(LS.Story.FunctionType.Call, signature, new NodeReference(Story, osiProc), builtin);
             return osiProc;
         }
 
-        private DivQueryNode EmitQuery(FunctionSignature signature)
+        private DivQueryNode EmitQuery(FunctionSignature signature, NameRefType refType)
         {
             var builtin = Context.LookupName(signature.GetNameAndArity()) as BuiltinFunction;
-            var osiQuery = new DivQueryNode
+            DivQueryNode osiQuery = null;
+            if (refType == NameRefType.Condition)
             {
-                DatabaseRef = new DatabaseReference(),
-                Name = signature.Name,
-                NumParams = (byte)signature.Params.Count
-            };
-            AddNode(osiQuery);
+                osiQuery = new DivQueryNode
+                {
+                    DatabaseRef = new DatabaseReference(),
+                    Name = signature.Name,
+                    NumParams = (byte)signature.Params.Count
+                };
+                AddNode(osiQuery);
+            }
 
             EmitFunction(LS.Story.FunctionType.Query, signature, new NodeReference(Story, osiQuery), builtin);
             return osiQuery;
@@ -330,29 +367,45 @@ namespace LSLib.LS.Story.Compiler
             return osiDb;
         }
 
-        private Node EmitName(FunctionNameAndArity name)
+        private Node EmitName(FunctionNameAndArity name, NameRefType refType)
         {
-            Node node;
-            if (Funcs.TryGetValue(name, out node))
+            Node node = null;
+            if (!Funcs.TryGetValue(name, out node))
             {
-                return node;
-            }
-            
-            var signature = Context.LookupSignature(name);
-            switch (signature.Type)
-            {
-                case FunctionType.SysQuery: node = EmitSysQuery(signature); break;
-                case FunctionType.SysCall: node = null; break;
-                case FunctionType.Event: node = EmitEvent(signature); break;
-                case FunctionType.Query: node = EmitQuery(signature); break;
-                case FunctionType.Call: node = EmitCall(signature); break;
-                case FunctionType.Database: node = EmitDatabase(signature); break;
-                case FunctionType.Proc: node = EmitProc(signature); break;
-                case FunctionType.UserQuery: node = EmitUserQuery(signature); break;
-                default: throw new ArgumentException("Invalid function type");
+                var signature = Context.LookupSignature(name);
+                switch (signature.Type)
+                {
+                    case FunctionType.SysQuery: node = EmitSysQuery(signature, refType); break;
+                    case FunctionType.SysCall: EmitSysCall(signature); break;
+                    case FunctionType.Event: node = EmitEvent(signature, refType); break;
+                    case FunctionType.Query: node = EmitQuery(signature, refType); break;
+                    case FunctionType.Call: node = EmitCall(signature, refType); break;
+                    case FunctionType.Database: node = EmitDatabase(signature); break;
+                    case FunctionType.Proc: node = EmitProc(signature); break;
+                    case FunctionType.UserQuery: node = EmitUserQuery(signature); break;
+                    default: throw new ArgumentException("Invalid function type");
+                }
+
+                Funcs.Add(name, node);
             }
 
-            Funcs.Add(name, node);
+            var func = FuncEntries[name];
+            switch (refType)
+            {
+                case NameRefType.None:
+                    break;
+                case NameRefType.Condition:
+                    func.ConditionReferences++;
+                    if (node == null)
+                    {
+                        throw new InvalidOperationException("Tried to emit a condition reference after a node was already generated");
+                    }
+                    break;
+                case NameRefType.Action:
+                    func.ActionReferences++;
+                    break;
+            }
+            
             return node;
         }
 
@@ -361,7 +414,7 @@ namespace LSLib.LS.Story.Compiler
             var name = Context.LookupSignature(fact.Database.Name);
             if (name.Type == FunctionType.Database)
             {
-                EmitName(fact.Database.Name); // TODO - emit reference
+                EmitName(fact.Database.Name, NameRefType.Action);
             }
 
             var osiCall = new Call
@@ -399,7 +452,7 @@ namespace LSLib.LS.Story.Compiler
                 var name = Context.LookupSignature(statement.Func.Name);
                 if (name.Type == FunctionType.Database)
                 {
-                    EmitName(statement.Func.Name); // TODO - emit reference
+                    EmitName(statement.Func.Name, NameRefType.Action);
                 }
                 
                 var osiCall = new Call
@@ -575,7 +628,7 @@ namespace LSLib.LS.Story.Compiler
                 referencedDb.Indirection++;
             }
 
-            var right = EmitName(rightCondition.Func.Name); // TODO - emit reference
+            var right = EmitName(rightCondition.Func.Name, NameRefType.Condition);
             JoinNode osiCall;
             if (rightCondition.Not)
             {
@@ -856,7 +909,6 @@ namespace LSLib.LS.Story.Compiler
         {
             foreach (var action in rule.Actions)
             {
-                // TODO COMPAT - emit calls after condition generation!
                 osiRule.Calls.Add(EmitCall(action));
             }
         }
@@ -921,7 +973,7 @@ namespace LSLib.LS.Story.Compiler
             }
             else
             {
-                initialFunc  = EmitName(initialCall.Func.Name); // TODO - emit reference
+                initialFunc  = EmitName(initialCall.Func.Name, NameRefType.Condition);
                 if (initialFunc is DatabaseNode)
                 {
                     referencedDb.Indirection = 0;
@@ -1044,6 +1096,29 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
+        /// <summary>
+        /// Generates a function entry for each function in the story header that was not referenced
+        /// from the story scripts. The Osiris runtime crashes if some functions from the story
+        /// header are not included in the final story file.
+        /// </summary>
+        private void EmitHeaderFunctions()
+        {
+            foreach (var signature in Context.Signatures)
+            {
+                if (signature.Value.Type == FunctionType.SysCall
+                    || signature.Value.Type == FunctionType.SysQuery
+                    || signature.Value.Type == FunctionType.Call
+                    || signature.Value.Type == FunctionType.Query
+                    || signature.Value.Type == FunctionType.Event)
+                {
+                    if (!Funcs.TryGetValue(signature.Key, out Node funcNode))
+                    {
+                        EmitName(signature.Value.GetNameAndArity(), NameRefType.None);
+                    }
+                }
+            }
+        }
+
         public Story EmitStory()
         {
             Story = new Story
@@ -1074,6 +1149,7 @@ namespace LSLib.LS.Story.Compiler
 
             AddStoryTypes();
             EmitGoals();
+            EmitHeaderFunctions();
             EmitParentGoals();
 
             return Story;

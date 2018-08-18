@@ -66,7 +66,7 @@ namespace LSLib.LS.Story
         }
 
         public NodeReference(Story story, Node reference)
-            : base(story, reference.Index)
+            : base(story, reference == null ? NullReference : reference.Index)
         {
         }
 
