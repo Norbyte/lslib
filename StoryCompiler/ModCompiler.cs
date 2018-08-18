@@ -97,13 +97,65 @@ namespace LSTools.StoryCompiler
             return sorted.Values.ToList();
         }
 
-        private void LoadMod(string modName)
+        private void LoadGlobals(Resource resource)
         {
-            if (!Mods.Mods.TryGetValue(modName, out ModInfo mod))
+            if (!resource.Regions.TryGetValue("Templates", out Region templates))
             {
-                throw new Exception($"Mod not found: {modName}");
+                // TODO - log error
+                return;
             }
 
+            if (!templates.Children.TryGetValue("GameObjects", out List<LSLib.LS.Node> gameObjects))
+            {
+                // TODO - log error
+                return;
+            }
+
+            foreach (var gameObject in gameObjects)
+            {
+                if (gameObject.Attributes.TryGetValue("MapKey", out NodeAttribute objectGuid)
+                    && gameObject.Attributes.TryGetValue("Name", out NodeAttribute objectName)
+                    && gameObject.Attributes.TryGetValue("Type", out NodeAttribute objectType))
+                {
+                    LSLib.LS.Story.Compiler.ValueType type = null;
+                    switch ((string)objectType.Value)
+                    {
+                        case "item": type = Compiler.Context.LookupType("ITEMGUID"); break;
+                        case "character": type = Compiler.Context.LookupType("CHARACTERGUID"); break;
+                        case "trigger": type = Compiler.Context.LookupType("TRIGGERGUID"); break;
+                        default:
+                            // TODO - log unknown type
+                            break;
+                    }
+
+                    if (type != null)
+                    {
+                        var global = new GlobalInfo
+                        {
+                            Name = objectName.Value + "_" + objectGuid.Value,
+                            Type = type
+                        };
+                        Compiler.Context.Globals.Add((string)objectGuid.Value, global);
+                    }
+                }
+            }
+        }
+
+        private void LoadGlobals()
+        {
+            foreach (var global in Globals)
+            {
+                using (var stream = new MemoryStream(global))
+                using (var reader = new LSFReader(stream))
+                {
+                    var resource = reader.Read();
+                    LoadGlobals(resource);
+                }
+            }
+        }
+
+        private void LoadGoals(ModInfo mod)
+        {
             foreach (var file in mod.Scripts)
             {
                 var scriptStream = file.Value.MakeStream();
@@ -125,7 +177,10 @@ namespace LSTools.StoryCompiler
                     file.Value.ReleaseStream();
                 }
             }
+        }
 
+        private void LoadGlobals(ModInfo mod)
+        {
             foreach (var file in mod.Globals)
             {
                 var globalStream = file.Value.MakeStream();
@@ -144,6 +199,17 @@ namespace LSTools.StoryCompiler
             }
         }
 
+        private void LoadMod(string modName)
+        {
+            if (!Mods.Mods.TryGetValue(modName, out ModInfo mod))
+            {
+                throw new Exception($"Mod not found: {modName}");
+            }
+
+            LoadGoals(mod);
+            LoadGlobals(mod);
+        }
+
         public bool Compile(string outputPath, List<string> mods)
         {
             Logger.CompilationStarted();
@@ -154,6 +220,13 @@ namespace LSTools.StoryCompiler
                 Logger.TaskFinished();
 
                 Logger.TaskStarted("Loading module files");
+                var nullGlobal = new GlobalInfo
+                {
+                    Name = "NULL_00000000-0000-0000-0000-000000000000",
+                    Type = Compiler.Context.LookupType("GUIDSTRING")
+                };
+                Compiler.Context.Globals.Add("00000000-0000-0000-0000-000000000000", nullGlobal);
+
                 foreach (var modName in mods)
                 {
                     LoadMod(modName);
@@ -164,6 +237,10 @@ namespace LSTools.StoryCompiler
             var stream = Mods.StoryHeaderFile.MakeStream();
             LoadStoryHeaders(stream);
             Mods.StoryHeaderFile.ReleaseStream();
+
+            Logger.TaskStarted("Loading globals");
+            LoadGlobals();
+            Logger.TaskFinished();
 
             var asts = new Dictionary<String, ASTGoal>();
             var goalLoader = new IRGenerator(Compiler.Context);

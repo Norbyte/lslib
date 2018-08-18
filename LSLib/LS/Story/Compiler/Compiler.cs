@@ -193,6 +193,7 @@ namespace LSLib.LS.Story.Compiler
         public const String DbNamingStyle = "26";
         public const String UnresolvedGlobalName = "27";
         public const String GlobalTypeMismatch = "28";
+        public const String GlobalNameMismatch = "29";
     }
 
     public class Diagnostic
@@ -295,6 +296,12 @@ namespace LSLib.LS.Story.Compiler
         }
     }
 
+    public class GlobalInfo
+    {
+        public String Name;
+        public ValueType Type;
+    }
+
     /// <summary>
     /// Compilation context that holds input and intermediate data used during the compilation process.
     /// </summary>
@@ -307,7 +314,7 @@ namespace LSLib.LS.Story.Compiler
         public Dictionary<String, IRGoal> GoalsByName = new Dictionary<String, IRGoal>();
         public Dictionary<FunctionNameAndArity, FunctionSignature> Signatures = new Dictionary<FunctionNameAndArity, FunctionSignature>();
         public Dictionary<FunctionNameAndArity, object> Functions = new Dictionary<FunctionNameAndArity, object>();
-        public Dictionary<String, ValueType> Names = new Dictionary<String, ValueType>();
+        public Dictionary<String, GlobalInfo> Globals = new Dictionary<String, GlobalInfo>();
         public CompilationLog Log = new CompilationLog();
 
         public CompilationContext()
@@ -660,15 +667,19 @@ namespace LSLib.LS.Story.Compiler
             if (constant.Type.IntrinsicTypeId == Value.Type.GuidString
                 && constant.Type.TypeId > CompilationContext.MaxIntrinsicTypeId)
             {
+                var nameWithoutType = constant.StringValue;
+                ValueType type = null;
+
                 // Check if the value is prefixed by any of the known GUID subtypes.
                 // If a match is found, verify that the type of the constant matched the GUID subtype.
                 var underscore = constant.StringValue.IndexOf('_');
                 if (underscore != -1)
                 {
                     var prefix = constant.StringValue.Substring(0, underscore);
-                    var type = Context.LookupType(prefix);
+                    type = Context.LookupType(prefix);
                     if (type != null)
                     {
+                        nameWithoutType = constant.StringValue.Substring(underscore + 1);
                         if (type.TypeId != constant.Type.TypeId)
                         {
                             Context.Log.Warn(constant.Location, 
@@ -684,21 +695,34 @@ namespace LSLib.LS.Story.Compiler
                             "GUID constant \"{0}\" is prefixed with unknown type {1}",
                             constant.StringValue, prefix);
                     }
+                }
 
-                    var guid = constant.StringValue.Substring(constant.StringValue.Length - 36);
-                    if (!Context.Names.TryGetValue(guid, out ValueType globalType))
+                var guid = constant.StringValue.Substring(constant.StringValue.Length - 36);
+                if (!Context.Globals.TryGetValue(guid, out GlobalInfo globalInfo))
+                {
+                    Context.Log.Warn(constant.Location,
+                        DiagnosticCode.UnresolvedGlobalName,
+                        "Global \"{0}\" could not be resolved",
+                        constant.StringValue);
+                }
+                else
+                {
+                    if (globalInfo.Name != nameWithoutType)
                     {
                         Context.Log.Warn(constant.Location,
-                            DiagnosticCode.UnresolvedGlobalName,
-                            "Global \"{0}\" could not be resolved",
-                            constant.StringValue);
+                            DiagnosticCode.GlobalNameMismatch,
+                            "Constant \"{0}\" references global object with different name (\"{1}\")",
+                            constant.StringValue, globalInfo.Name);
                     }
-                    else if (type.TypeId != globalType.TypeId)
+
+                    if (constant.Type.TypeId != (uint)Value.Type.GuidString
+                        && globalInfo.Type.TypeId != (uint)Value.Type.GuidString
+                        && constant.Type.TypeId != globalInfo.Type.TypeId)
                     {
                         Context.Log.Warn(constant.Location,
                             DiagnosticCode.GlobalTypeMismatch,
                             "Constant \"{0}\" of type {1} references global name of type {2}",
-                            constant.StringValue, TypeToName(type.TypeId), TypeToName(globalType.TypeId));
+                            constant.StringValue, TypeToName(constant.Type.TypeId), TypeToName(globalInfo.Type.TypeId));
                     }
                 }
             }

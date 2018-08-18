@@ -121,9 +121,10 @@ namespace LSLib.LS
             var ms = new MemoryStream(uncompressedList);
             var msr = new BinaryReader(ms);
 
-            for (var i = 0; i < numFiles; i++)
+            var entries = new FileEntry13[numFiles];
+            BinUtils.ReadStructs(msr, entries);
+            foreach (var entry in entries)
             {
-                var entry = BinUtils.ReadStruct<FileEntry13>(msr);
                 package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
             }
 

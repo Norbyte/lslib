@@ -94,12 +94,15 @@ namespace LSTools.StoryCompiler
                         AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
                     }
 
-                    match = globalsRe.Match(file.Name);
+                }
+
+                if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
+                {
+                    var match = globalsRe.Match(file.Name);
                     if (match != null && match.Success)
                     {
                         AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
                     }
-
                 }
 
                 if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
