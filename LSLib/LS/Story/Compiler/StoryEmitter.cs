@@ -662,19 +662,6 @@ namespace LSLib.LS.Story.Compiler
                 if (db != null)
                 {
                     database = new DatabaseReference(Story, db);
-
-                    // TODO - set Dummy referencedDb
-                    referencedDb = new ReferencedDatabaseInfo
-                    {
-                        DbNodeRef = new NodeReference(),
-                        Indirection = 0,
-                        JoinRef = new NodeEntryItem
-                        {
-                            NodeRef = new NodeReference(),
-                            GoalRef = new GoalReference(),
-                            EntryPoint = EntryPoint.None
-                        }
-                    };
                 }
                 else
                 {
@@ -694,21 +681,50 @@ namespace LSLib.LS.Story.Compiler
             osiCall.RightParentRef = new NodeReference();
             osiCall.LeftAdapterRef = new AdapterReference(Story, leftAdapter);
             osiCall.RightAdapterRef = new AdapterReference(Story, rightAdapter);
-            osiCall.LeftDatabaseNodeRef = referencedDb.DbNodeRef;
-            osiCall.LeftDatabaseIndirection = referencedDb.Indirection;
-            osiCall.LeftDatabaseJoin = referencedDb.JoinRef;
+            if (db == null)
+            {
+                osiCall.LeftDatabaseNodeRef = referencedDb.DbNodeRef;
+                osiCall.LeftDatabaseIndirection = referencedDb.Indirection;
+                osiCall.LeftDatabaseJoin = referencedDb.JoinRef;
+            }
+            else
+            {
+                osiCall.LeftDatabaseNodeRef = new NodeReference();
+                osiCall.LeftDatabaseIndirection = 0;
+                osiCall.LeftDatabaseJoin = new NodeEntryItem
+                {
+                    NodeRef = new NodeReference(),
+                    EntryPoint = EntryPoint.None,
+                    GoalRef = new GoalReference()
+                };
+            }
 
             AddNode(osiCall);
 
-            if (referencedDb.DbNodeRef.IsValid
-                && !referencedDb.JoinRef.NodeRef.IsValid)
+            if (db != null)
             {
-                referencedDb.JoinRef.NodeRef = new NodeReference(Story, osiCall);
-                referencedDb.JoinRef.EntryPoint = EntryPoint.Left;
-                referencedDb.JoinRef.GoalRef = new GoalReference(Story, goal);
+                referencedDb.DbNodeRef = new NodeReference(Story, osiCall);
+                referencedDb.Indirection = 0;
+                referencedDb.JoinRef = new NodeEntryItem
+                {
+                    NodeRef = new NodeReference(Story, osiCall),
+                    GoalRef = new GoalReference(Story, goal),
+                    EntryPoint = EntryPoint.None
+                };
+            }
+            else if (referencedDb.DbNodeRef.IsValid
+                /*&& !referencedDb.JoinRef.NodeRef.IsValid*/)
+            {
+                referencedDb.JoinRef = new NodeEntryItem
+                {
+                    NodeRef = new NodeReference(Story, osiCall),
+                    GoalRef = new GoalReference(Story, goal),
+                    EntryPoint = EntryPoint.Left
+                };
+                osiCall.LeftDatabaseJoin = referencedDb.JoinRef;
             }
 
-            if (right is DatabaseNode)
+            if (right is DatabaseNode && db == null)
             {
                 osiCall.RightDatabaseNodeRef = new NodeReference(Story, right);
                 osiCall.RightDatabaseIndirection = 1;
@@ -914,6 +930,17 @@ namespace LSLib.LS.Story.Compiler
             }
 
             AddNode(osiRule);
+
+            if (referencedDb.DbNodeRef.IsValid && referencedDb.Indirection == 1)
+            {
+                osiRule.RelJoin = new NodeEntryItem
+                {
+                    NodeRef = new NodeReference(Story, osiRule),
+                    GoalRef = new GoalReference(Story, goal),
+                    EntryPoint = EntryPoint.None
+                };
+            }
+
             return osiRule;
         }
 

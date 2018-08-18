@@ -251,10 +251,10 @@ namespace LSLib.LS.Story
                     break;
 
                 case Type.String:
-                case Type.GuidString:
                     writer.Write("'{0}'", StringValue);
                     break;
 
+                case Type.GuidString:
                 default:
                     writer.Write(StringValue);
                     break;
