@@ -466,7 +466,8 @@ namespace LSLib.Granny.Model
                 var r0 = rotations[i - 1];
                 var r1 = rotations[i];
                 var dot = Vector3.Dot(r0.Xyz, r1.Xyz);
-                if (dot < 0.0f)
+                var ang = Math.Acos(dot);
+                if (dot < -0.0001f)
                 {
                     rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, -r1.W);
                 }

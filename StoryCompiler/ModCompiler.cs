@@ -236,6 +236,7 @@ namespace LSTools.StoryCompiler
             if (mods.Count > 0)
             {
                 Logger.TaskStarted("Discovering module files");
+                Mods.CollectNames = CheckGameObjects;
                 Mods.Discover(GameDataPath);
                 Logger.TaskFinished();
 

@@ -24,10 +24,10 @@ namespace LSLib.LS.Story.Compiler
         {
             var goal = new IRGoal
             {
-                InitSection = new List<IRFact>(),
-                KBSection = new List<IRRule>(),
-                ExitSection = new List<IRFact>(),
-                ParentTargetEdges = new List<IRTargetEdge>()
+                InitSection = new List<IRFact>(astGoal.InitSection.Count),
+                KBSection = new List<IRRule>(astGoal.KBSection.Count),
+                ExitSection = new List<IRFact>(astGoal.ExitSection.Count),
+                ParentTargetEdges = new List<IRTargetEdge>(astGoal.ParentTargetEdges.Count)
             };
 
             foreach (var fact in astGoal.InitSection)
@@ -62,8 +62,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Goal = goal,
                 Type = astRule.Type,
-                Conditions = new List<IRCondition>(),
-                Actions = new List<IRStatement>(),
+                Conditions = new List<IRCondition>(astRule.Conditions.Count),
+                Actions = new List<IRStatement>(astRule.Actions.Count),
                 Variables = new List<IRRuleVariable>(),
                 VariablesByName = new Dictionary<String, IRRuleVariable>(),
                 Location = astRule.Location
@@ -104,7 +104,7 @@ namespace LSLib.LS.Story.Compiler
                     Func = new IRSymbolRef(new FunctionNameAndArity(astStmt.Name, astStmt.Params.Count)),
                     Goal = null,
                     Not = astStmt.Not,
-                    Params = new List<IRValue>(),
+                    Params = new List<IRValue>(astStmt.Params.Count),
                     Location = astAction.Location
                 };
 
@@ -130,7 +130,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Func = new IRSymbolRef(new FunctionNameAndArity(astFunc.Name, astFunc.Params.Count)),
                     Not = astFunc.Not,
-                    Params = new List<IRValue>(),
+                    Params = new List<IRValue>(astFunc.Params.Count),
                     Location = astCondition.Location
                 };
 
@@ -190,7 +190,7 @@ namespace LSLib.LS.Story.Compiler
             {
                 Database = new IRSymbolRef(new FunctionNameAndArity(astFact.Database, astFact.Elements.Count)),
                 Not = astFact.Not,
-                Elements = new List<IRConstant>(),
+                Elements = new List<IRConstant>(astFact.Elements.Count),
                 Location = astFact.Location
             };
 

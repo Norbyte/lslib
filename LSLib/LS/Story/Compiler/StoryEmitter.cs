@@ -116,10 +116,10 @@ namespace LSLib.LS.Story.Compiler
             var osiSignature = new LS.Story.FunctionSignature
             {
                 Name = signature.Name,
-                OutParamMask = new List<byte>(),
+                OutParamMask = new List<byte>(signature.Params.Count / 8 + 1),
                 Parameters = new ParameterList
                 {
-                    Types = new List<uint>()
+                    Types = new List<uint>(signature.Params.Count)
                 }
             };
 
@@ -304,7 +304,7 @@ namespace LSLib.LS.Story.Compiler
                 Index = (uint)Story.Databases.Count + 1,
                 Parameters = new ParameterList
                 {
-                    Types = new List<uint>()
+                    Types = new List<uint>(signature.Params.Count)
                 },
                 OwnerNode = null,
                 FactsPosition = 0
@@ -335,7 +335,7 @@ namespace LSLib.LS.Story.Compiler
 
         private Database EmitIntermediateDatabase(IRRule rule, int tupleSize, Node ownerNode)
         {
-            var paramTypes = new List<uint>();
+            var paramTypes = new List<uint>(tupleSize);
             for (var i = 0; i < tupleSize; i++)
             {
                 var param = rule.Variables[i];
@@ -420,7 +420,7 @@ namespace LSLib.LS.Story.Compiler
             var osiCall = new Call
             {
                 Name = fact.Database.Name.Name,
-                Parameters = new List<TypedValue>(),
+                Parameters = new List<TypedValue>(fact.Elements.Count),
                 Negate = fact.Not,
                 // TODO const - InvalidGoalId?
                 GoalIdOrDebugHook = 0
@@ -442,7 +442,7 @@ namespace LSLib.LS.Story.Compiler
                 return new Call
                 {
                     Name = "",
-                    Parameters = new List<TypedValue>(),
+                    Parameters = new List<TypedValue>(statement.Params.Count),
                     Negate = false,
                     GoalIdOrDebugHook = (int)Goals[statement.Goal].Index
                 };
@@ -458,7 +458,7 @@ namespace LSLib.LS.Story.Compiler
                 var osiCall = new Call
                 {
                     Name = statement.Func.Name.Name,
-                    Parameters = new List<TypedValue>(),
+                    Parameters = new List<TypedValue>(statement.Params.Count),
                     Negate = statement.Not,
                     // TODO const - InvalidGoalId?
                     // TODO - use statement goal id if available?
@@ -590,7 +590,7 @@ namespace LSLib.LS.Story.Compiler
                 }
             }
 
-            var sortedMap = new Dictionary<byte, byte>();
+            var sortedMap = new Dictionary<byte, byte>(adapter.LogicalToPhysicalMap.Count);
             foreach (var mapping in adapter.LogicalToPhysicalMap.OrderBy(v => v.Key))
             {
                 sortedMap.Add(mapping.Key, mapping.Value);
@@ -884,8 +884,8 @@ namespace LSLib.LS.Story.Compiler
                 RelJoin = referencedDb.JoinRef,
                 RelDatabaseIndirection = referencedDb.Indirection,
 
-                Calls = new List<Call>(),
-                Variables = new List<Variable>(),
+                Calls = new List<Call>(rule.Actions.Count),
+                Variables = new List<Variable>(rule.Variables.Count),
                 Line = 0,
                 DerivedGoalRef = new GoalReference(Story, goal),
                 IsQuery = (rule.Type == RuleType.Query)
@@ -1029,8 +1029,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 Index = (uint)(Story.Goals.Count + 1),
                 Name = goal.Name,
-                InitCalls = new List<Call>(),
-                ExitCalls = new List<Call>(),
+                InitCalls = new List<Call>(goal.InitSection.Count),
+                ExitCalls = new List<Call>(goal.ExitSection.Count),
                 ParentGoals = new List<GoalReference>(),
                 SubGoals = new List<GoalReference>()
             };

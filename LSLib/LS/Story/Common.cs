@@ -223,7 +223,11 @@ namespace LSLib.LS.Story
 
         public override void Write(String s)
         {
-            var bytes = Encoding.UTF8.GetBytes(s).Select(b => (byte)(b ^ Scramble)).ToArray();
+            var bytes = Encoding.UTF8.GetBytes(s);
+            for (var i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] = (byte)(bytes[i] ^ Scramble);
+            }
             Write(bytes, 0, bytes.Length);
             Write(Scramble);
         }

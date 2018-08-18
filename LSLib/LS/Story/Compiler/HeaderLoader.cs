@@ -40,7 +40,7 @@ namespace LSLib.LS.Story.Compiler
         /// </summary>
         private bool LoadFunctionFromAST(ASTFunction astFunction)
         {
-            var args = new List<FunctionParam>();
+            var args = new List<FunctionParam>(astFunction.Params.Count);
             foreach (var astParam in astFunction.Params)
             {
                 var type = Context.LookupType(astParam.Type);

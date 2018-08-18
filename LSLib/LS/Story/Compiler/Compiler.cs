@@ -1227,7 +1227,7 @@ namespace LSLib.LS.Story.Compiler
             }
 
             signature.FullyTyped = !paramTypes.Any(ty => ty == null);
-            signature.Params = new List<FunctionParam>();
+            signature.Params = new List<FunctionParam>(paramTypes.Count);
             foreach (var paramType in paramTypes)
             {
                 var sigParam = new FunctionParam
@@ -1250,7 +1250,7 @@ namespace LSLib.LS.Story.Compiler
         private bool TryPropagateSignature(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, bool allowPartial)
         {
             // Build a signature with all parameters to make sure that all types can be resolved
-            var sig = new List<ValueType>();
+            var sig = new List<ValueType>(parameters.Count);
             foreach (var param in parameters)
             {
                 var paramSignature = DetermineSignature(rule, param);
@@ -1278,7 +1278,7 @@ namespace LSLib.LS.Story.Compiler
         private bool TryPropagateSignature(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters)
         {
             // Build a signature with all parameters to make sure that all types can be resolved
-            var sig = new List<ValueType>();
+            var sig = new List<ValueType>(parameters.Count);
             foreach (var param in parameters)
             {
                 var paramSignature = DetermineSignature(param);

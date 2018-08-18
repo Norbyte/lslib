@@ -21,8 +21,13 @@ namespace LSTools.StoryCompiler
 
     public class ModResources
     {
+        private static Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static Regex globalsRe = new Regex("^Mods/(.*)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static Regex levelObjectsRe = new Regex("^Mods/(.*)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        
         public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
         public AbstractFileInfo StoryHeaderFile;
+        public bool CollectNames = false;
 
         private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string pattern)
         {
@@ -81,10 +86,6 @@ namespace LSTools.StoryCompiler
 
         private void DiscoverPackage(string packagePath)
         {
-            var scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            var globalsRe = new Regex("^Mods/(.*)/Globals/.*/(.*)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            var levelObjectsRe = new Regex("^Mods/(.*)/Levels/(.*)/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
             var reader = new PackageReader(packagePath);
             var package = reader.Read();
 
@@ -99,21 +100,24 @@ namespace LSTools.StoryCompiler
                     }
                 }
 
-                if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
+                if (CollectNames)
                 {
-                    var match = globalsRe.Match(file.Name);
-                    if (match != null && match.Success)
+                    if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
                     {
-                        AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
+                        var match = globalsRe.Match(file.Name);
+                        if (match != null && match.Success)
+                        {
+                            AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
+                        }
                     }
-                }
 
-                if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Levels/"))
-                {
-                    var match = levelObjectsRe.Match(file.Name);
-                    if (match != null && match.Success)
+                    if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Levels/"))
                     {
-                        AddLevelObjectsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
+                        var match = levelObjectsRe.Match(file.Name);
+                        if (match != null && match.Success)
+                        {
+                            AddLevelObjectsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
+                        }
                     }
                 }
 
@@ -213,8 +217,11 @@ namespace LSTools.StoryCompiler
         private void DiscoverModDirectory(string modName, string modPath)
         {
             DiscoverModGoals(modName, modPath);
-            DiscoverModGlobals(modName, modPath);
-            DiscoverModLevelObjects(modName, modPath);
+            if (CollectNames)
+            {
+                DiscoverModGlobals(modName, modPath);
+                DiscoverModLevelObjects(modName, modPath);
+            }
         }
 
         private void DiscoverMods(string gameDataPath)
