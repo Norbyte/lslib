@@ -412,10 +412,7 @@ namespace LSLib.LS.Story.Compiler
         private Call EmitCall(IRFact fact)
         {
             var name = Context.LookupSignature(fact.Database.Name);
-            if (name.Type == FunctionType.Database)
-            {
-                EmitName(fact.Database.Name, NameRefType.Action);
-            }
+            EmitName(fact.Database.Name, NameRefType.Action);
 
             var osiCall = new Call
             {
@@ -450,10 +447,7 @@ namespace LSLib.LS.Story.Compiler
             else
             {
                 var name = Context.LookupSignature(statement.Func.Name);
-                if (name.Type == FunctionType.Database)
-                {
-                    EmitName(statement.Func.Name, NameRefType.Action);
-                }
+                EmitName(statement.Func.Name, NameRefType.Action);
                 
                 var osiCall = new Call
                 {
