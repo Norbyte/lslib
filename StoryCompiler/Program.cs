@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using CommandLineParser.Exceptions;
+using System.Collections.Generic;
 
 namespace LSTools.StoryCompiler
 {
@@ -27,14 +28,6 @@ namespace LSTools.StoryCompiler
 
         static void Run(CommandLineArguments args)
         {
-            var storyHeadersPath = args.InputPaths[0] + @"\Story\RawFiles\story_header.div";
-            if (!File.Exists(storyHeadersPath))
-            {
-                Console.WriteLine("Story header file not found: {0}", storyHeadersPath);
-                Environment.Exit(2);
-                return;
-            }
-
             Logger logger;
             if (args.JsonOutput)
             {
@@ -44,17 +37,12 @@ namespace LSTools.StoryCompiler
             {
                 logger = new ConsoleLogger();
             }
-
-            var modCompiler = new ModCompiler(logger);
+            
+            var modCompiler = new ModCompiler(logger, args.GameDataPath);
             modCompiler.SetWarningOptions(CommandLineArguments.GetWarningOptions(args.Warnings));
 
-            modCompiler.LoadStoryHeaders(storyHeadersPath);
-            foreach (var modPath in args.InputPaths)
-            {
-                modCompiler.AddMod(modPath + @"\Story\RawFiles\Goals");
-            }
-
-            if (!modCompiler.Compile(args.OutputPath))
+            var mods = new List<string>(args.Mods);
+            if (!modCompiler.Compile(args.OutputPath, mods))
             {
                 Environment.Exit(3);
             }

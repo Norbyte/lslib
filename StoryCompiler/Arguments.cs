@@ -24,13 +24,20 @@ namespace LSTools.StoryCompiler
         )]
         public bool JsonOutput;
 
-        [ValueArgument(typeof(string), "input",
-            Description = "Input mod directories",
+        [ValueArgument(typeof(string), "mod",
+            Description = "Mod to add",
             AllowMultiple = true,
             ValueOptional = false,
             Optional = false
         )]
-        public string[] InputPaths;
+        public string[] Mods;
+
+        [ValueArgument(typeof(string), "game-data-path",
+            Description = "Game data path",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string GameDataPath;
 
         [ValueArgument(typeof(string), "output",
             Description = "Output path",

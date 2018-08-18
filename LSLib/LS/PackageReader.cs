@@ -22,7 +22,7 @@ namespace LSLib.LS
         }
     }
 
-    public class PackageReader
+    public class PackageReader : IDisposable
     {
         private readonly String _path;
         private Stream[] _streams;

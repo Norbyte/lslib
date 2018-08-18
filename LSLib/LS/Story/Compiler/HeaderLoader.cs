@@ -89,23 +89,20 @@ namespace LSLib.LS.Story.Compiler
         /// <summary>
         /// Parses a story header file into an AST.
         /// </summary>
-        public ASTDeclarations ParseHeader(string path)
+        public ASTDeclarations ParseHeader(Stream stream)
         {
-            using (var file = new FileStream(path, FileMode.Open))
-            {
-                var scanner = new HeaderScanner();
-                scanner.SetSource(file);
-                var parser = new HeaderParser.HeaderParser(scanner);
-                bool parsed = parser.Parse();
+            var scanner = new HeaderScanner();
+            scanner.SetSource(stream);
+            var parser = new HeaderParser.HeaderParser(scanner);
+            bool parsed = parser.Parse();
 
-                if (parsed)
-                {
-                    return parser.GetDeclarations();
-                }
-                else
-                {
-                    return null;
-                }
+            if (parsed)
+            {
+                return parser.GetDeclarations();
+            }
+            else
+            {
+                return null;
             }
         }
 

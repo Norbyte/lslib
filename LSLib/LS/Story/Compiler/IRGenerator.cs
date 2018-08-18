@@ -246,23 +246,20 @@ namespace LSLib.LS.Story.Compiler
             };
         }
 
-        public ASTGoal ParseGoal(string path)
+        public ASTGoal ParseGoal(String path, Stream stream)
         {
-            using (var file = new FileStream(path, FileMode.Open))
-            {
-                var scanner = new GoalScanner(path);
-                scanner.SetSource(file);
-                var parser = new GoalParser.GoalParser(scanner);
-                bool parsed = parser.Parse();
+            var scanner = new GoalScanner(path);
+            scanner.SetSource(stream);
+            var parser = new GoalParser.GoalParser(scanner);
+            bool parsed = parser.Parse();
 
-                if (parsed)
-                {
-                    return parser.GetGoal();
-                }
-                else
-                {
-                    return null;
-                }
+            if (parsed)
+            {
+                return parser.GetGoal();
+            }
+            else
+            {
+                return null;
             }
         }
 
