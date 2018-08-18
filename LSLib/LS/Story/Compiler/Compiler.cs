@@ -191,6 +191,8 @@ namespace LSLib.LS.Story.Compiler
         public const String ParamNotBound = "24";
         public const String UnusedDatabase = "25";
         public const String DbNamingStyle = "26";
+        public const String UnresolvedGlobalName = "27";
+        public const String GlobalTypeMismatch = "28";
     }
 
     public class Diagnostic
@@ -305,6 +307,7 @@ namespace LSLib.LS.Story.Compiler
         public Dictionary<String, IRGoal> GoalsByName = new Dictionary<String, IRGoal>();
         public Dictionary<FunctionNameAndArity, FunctionSignature> Signatures = new Dictionary<FunctionNameAndArity, FunctionSignature>();
         public Dictionary<FunctionNameAndArity, object> Functions = new Dictionary<FunctionNameAndArity, object>();
+        public Dictionary<String, ValueType> Names = new Dictionary<String, ValueType>();
         public CompilationLog Log = new CompilationLog();
 
         public CompilationContext()
@@ -680,6 +683,22 @@ namespace LSLib.LS.Story.Compiler
                             DiagnosticCode.GuidPrefixNotKnown,
                             "GUID constant \"{0}\" is prefixed with unknown type {1}",
                             constant.StringValue, prefix);
+                    }
+
+                    var guid = constant.StringValue.Substring(constant.StringValue.Length - 36);
+                    if (!Context.Names.TryGetValue(guid, out ValueType globalType))
+                    {
+                        Context.Log.Warn(constant.Location,
+                            DiagnosticCode.UnresolvedGlobalName,
+                            "Global \"{0}\" could not be resolved",
+                            constant.StringValue);
+                    }
+                    else if (type.TypeId != globalType.TypeId)
+                    {
+                        Context.Log.Warn(constant.Location,
+                            DiagnosticCode.GlobalTypeMismatch,
+                            "Constant \"{0}\" of type {1} references global name of type {2}",
+                            constant.StringValue, TypeToName(type.TypeId), TypeToName(globalType.TypeId));
                     }
                 }
             }
