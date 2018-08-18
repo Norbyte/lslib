@@ -133,9 +133,9 @@ namespace LSLib.LS.Story.Compiler
                     {
                         outParamByte |= (byte)(0x80 >> (i & 7));
                     }
-
-                    osiSignature.OutParamMask.Add(outParamByte);
                 }
+
+                osiSignature.OutParamMask.Add(outParamByte);
             }
 
             foreach (var param in signature.Params)
