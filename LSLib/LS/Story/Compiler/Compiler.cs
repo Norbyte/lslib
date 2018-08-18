@@ -221,6 +221,11 @@ namespace LSLib.LS.Story.Compiler
         /// </summary>
         public Dictionary<string, bool> WarningSwitches = new Dictionary<string, bool>();
 
+        public CompilationLog()
+        {
+            WarningSwitches.Add(DiagnosticCode.RuleNamingStyle, false);
+        }
+
         public void Warn(CodeLocation location, String code, String message)
         {
             if (WarningSwitches.TryGetValue(code, out bool enabled) && !enabled) return;
@@ -712,7 +717,7 @@ namespace LSLib.LS.Story.Compiler
                         Context.Log.Warn(constant.Location,
                             DiagnosticCode.GlobalNameMismatch,
                             "Constant \"{0}\" references global object with different name (\"{1}\")",
-                            constant.StringValue, globalInfo.Name);
+                            nameWithoutType, globalInfo.Name);
                     }
 
                     if (constant.Type.TypeId != (uint)Value.Type.GuidString

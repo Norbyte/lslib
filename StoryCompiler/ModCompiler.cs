@@ -28,7 +28,7 @@ namespace LSTools.StoryCompiler
         private Compiler Compiler = new Compiler();
         private ModResources Mods = new ModResources();
         private List<GoalScript> GoalScripts = new List<GoalScript>();
-        private List<byte[]> Globals = new List<byte[]>();
+        private List<byte[]> GlobalLSFs = new List<byte[]>();
 
         public ModCompiler(Logger logger, String gameDataPath)
         {
@@ -135,7 +135,7 @@ namespace LSTools.StoryCompiler
                             Name = objectName.Value + "_" + objectGuid.Value,
                             Type = type
                         };
-                        Compiler.Context.Globals.Add((string)objectGuid.Value, global);
+                        Compiler.Context.Globals[(string)objectGuid.Value] = global;
                     }
                 }
             }
@@ -143,7 +143,7 @@ namespace LSTools.StoryCompiler
 
         private void LoadGlobals()
         {
-            foreach (var global in Globals)
+            foreach (var global in GlobalLSFs)
             {
                 using (var stream = new MemoryStream(global))
                 using (var reader = new LSFReader(stream))
@@ -189,7 +189,24 @@ namespace LSTools.StoryCompiler
                     using (var reader = new BinaryReader(globalStream))
                     {
                         var globalLsf = reader.ReadBytes((int)globalStream.Length);
-                        Globals.Add(globalLsf);
+                        GlobalLSFs.Add(globalLsf);
+                    }
+                }
+                finally
+                {
+                    file.Value.ReleaseStream();
+                }
+            }
+
+            foreach (var file in mod.LevelObjects)
+            {
+                var globalStream = file.Value.MakeStream();
+                try
+                {
+                    using (var reader = new BinaryReader(globalStream))
+                    {
+                        var globalLsf = reader.ReadBytes((int)globalStream.Length);
+                        GlobalLSFs.Add(globalLsf);
                     }
                 }
                 finally
@@ -238,9 +255,6 @@ namespace LSTools.StoryCompiler
             LoadStoryHeaders(stream);
             Mods.StoryHeaderFile.ReleaseStream();
 
-            Logger.TaskStarted("Loading globals");
-            LoadGlobals();
-            Logger.TaskFinished();
 
             var asts = new Dictionary<String, ASTGoal>();
             var goalLoader = new IRGenerator(Compiler.Context);
