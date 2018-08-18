@@ -8,7 +8,7 @@ using System.Text;
 
 namespace LSTools.StoryCompiler
 {
-    interface Logger
+    public interface Logger
     {
         void CompilationStarted();
         void CompilationFinished(bool succeeded);
@@ -19,7 +19,7 @@ namespace LSTools.StoryCompiler
         void CompilationDiagnostic(Diagnostic message);
     }
 
-    class ConsoleLogger : Logger
+    public class ConsoleLogger : Logger
     {
         private Stopwatch compilationTimer = new Stopwatch();
         private Stopwatch taskTimer = new Stopwatch();

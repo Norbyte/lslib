@@ -16,155 +16,24 @@ namespace LSTools.StoryCompiler
 {
     class ModCompiler
     {
+        class GoalScript
+        {
+            public string Name;
+            public string Path;
+            public byte[] ScriptBody;
+        }
+
         private Logger Logger;
         private String GameDataPath;
         private Compiler Compiler = new Compiler();
-
-        private Dictionary<string, Dictionary<string, AbstractFileInfo>> ModFiles = new Dictionary<string, Dictionary<string, AbstractFileInfo>>();
-        private AbstractFileInfo StoryHeaderFile;
-        private List<AbstractFileInfo> GoalPaths = new List<AbstractFileInfo>();
-        private Mutex FileReaderMutex = new Mutex();
+        private ModResources Mods = new ModResources();
+        private List<GoalScript> GoalScripts = new List<GoalScript>();
+        private List<byte[]> Globals = new List<byte[]>();
 
         public ModCompiler(Logger logger, String gameDataPath)
         {
             Logger = logger;
             GameDataPath = gameDataPath;
-        }
-
-        private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string pattern)
-        {
-            foreach (string filePath in Directory.GetFiles(currentPath, pattern))
-            {
-                var relativePath = filePath.Substring(rootPath.Length);
-                if (relativePath[0] == '/' || relativePath[0] == '\\')
-                {
-                    relativePath = relativePath.Substring(1);
-                }
-
-                paths.Add(relativePath);
-            }
-
-            foreach (string directoryPath in Directory.GetDirectories(currentPath))
-            {
-                EnumerateFiles(paths, rootPath, directoryPath, pattern);
-            }
-        }
-
-        private static void EnumerateScripts(List<string> paths, string rootPath)
-        {
-            var localPaths = new List<string>();
-            EnumerateFiles(localPaths, rootPath, rootPath, "*.txt");
-            foreach (var path in localPaths)
-            {
-                paths.Add(rootPath + "\\" + path);
-            }
-        }
-
-        private void AddScriptToMod(string modName, string scriptName, AbstractFileInfo file)
-        {
-            Dictionary<string, AbstractFileInfo> modFiles;
-            if (!ModFiles.TryGetValue(modName, out modFiles))
-            {
-                modFiles = new Dictionary<string, AbstractFileInfo>();
-                ModFiles.Add(modName, modFiles);
-            }
-
-            modFiles[scriptName] = file;
-        }
-
-        private void DiscoverPackage(string packagePath)
-        {
-            var packageRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-            var reader = new PackageReader(packagePath);
-            var package = reader.Read();
-                
-            foreach (var file in package.Files)
-            {
-                if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
-                {
-                    var match = packageRe.Match(file.Name);
-                    if (match != null && match.Success)
-                    {
-                        AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
-                    }
-                }
-
-                if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
-                {
-                    StoryHeaderFile = file;
-                }
-            }
-        }
-
-        private void DiscoverPackages(string gameDataPath)
-        {
-            // We load main packages first
-            List<string> packagePaths = new List<string>
-            {
-                "Arena.pak",
-                "GameMaster.pak",
-                "Origins.pak",
-                "Shared.pak"
-            };
-
-            // ... and add patch files later
-            foreach (var path in Directory.GetFiles(gameDataPath, "Patch*.pak"))
-            {
-                packagePaths.Add(Path.GetFileName(path));
-            }
-
-            foreach (var relativePath in packagePaths)
-            {
-                var baseName = Path.GetFileNameWithoutExtension(relativePath);
-                // Skip parts 2, 3, etc. of multi-part packages
-                if (baseName[baseName.Length - 2] == '_') continue;
-
-                var packagePath = gameDataPath + "\\" + relativePath;
-                DiscoverPackage(packagePath);
-            }
-        }
-
-        private void DiscoverModDirectory(string modName, string modPath)
-        {
-            List<string> goalFiles = new List<string>();
-            var goalPath = modPath + @"\Story\RawFiles\Goals";
-            EnumerateFiles(goalFiles, goalPath, goalPath, "*.txt");
-
-            foreach (var goalFile in goalFiles)
-            {
-                var fileInfo = new FilesystemFileInfo
-                {
-                    FilesystemPath = goalPath + "\\" + goalFile,
-                    Name = goalFile
-                };
-                AddScriptToMod(modName, goalFile, fileInfo);
-            }
-        }
-
-        private void DiscoverMods(string gameDataPath)
-        {
-            var modPaths = Directory.GetDirectories(gameDataPath + @"\\Mods");
-
-            foreach (var modPath in modPaths)
-            {
-                if (Directory.Exists(modPath + @"\Story\RawFiles\Goals"))
-                {
-                    var modName = Path.GetFileNameWithoutExtension(modPath);
-                    DiscoverModDirectory(modName, modPath);
-                }
-            }
-        }
-
-        private void DiscoverMods()
-        {
-            if (GameDataPath != null)
-            {
-                Logger.TaskStarted("Looking for goal files");
-                DiscoverPackages(GameDataPath);
-                DiscoverMods(GameDataPath);
-                Logger.TaskFinished();
-            }
         }
 
         private void LoadStoryHeaders(Stream stream)
@@ -189,38 +58,21 @@ namespace LSTools.StoryCompiler
 
         class IRBuildTasks
         {
-            public ConcurrentQueue<AbstractFileInfo> InputPaths = new ConcurrentQueue<AbstractFileInfo>();
+            public ConcurrentQueue<GoalScript> Inputs = new ConcurrentQueue<GoalScript>();
             public ConcurrentQueue<IRGoal> IRs = new ConcurrentQueue<IRGoal>();
         }
 
         private void BuildIR(IRBuildTasks tasks)
         {
             var goalLoader = new IRGenerator(Compiler.Context);
-            while (tasks.InputPaths.TryDequeue(out AbstractFileInfo path))
+            while (tasks.Inputs.TryDequeue(out GoalScript script))
             {
-                var goalName = Path.GetFileNameWithoutExtension(path.Name);
-                try
+                using (var stream = new MemoryStream(script.ScriptBody))
                 {
-                    FileReaderMutex.WaitOne();
-                    Stream stream;
-                    try
-                    {
-                        stream = path.MakeStream();
-                    }
-                    finally
-                    {
-                        FileReaderMutex.ReleaseMutex();
-                    }
-
-                    var ast = goalLoader.ParseGoal(path.Name, stream);
-
+                    var ast = goalLoader.ParseGoal(script.Path, stream);
                     var ir = goalLoader.GenerateGoalIR(ast);
-                    ir.Name = goalName;
+                    ir.Name = script.Name;
                     tasks.IRs.Enqueue(ir);
-                }
-                finally
-                {
-                    path.ReleaseStream();
                 }
             }
         }
@@ -228,9 +80,9 @@ namespace LSTools.StoryCompiler
         private List<IRGoal> ParallelBuildIR()
         {
             var tasks = new IRBuildTasks();
-            foreach (var path in GoalPaths)
+            foreach (var script in GoalScripts)
             {
-                tasks.InputPaths.Enqueue(path);
+                tasks.Inputs.Enqueue(script);
             }
 
             IRBuildTasks[] threadTasks = new[] { tasks, tasks, tasks, tasks };
@@ -245,33 +97,73 @@ namespace LSTools.StoryCompiler
             return sorted.Values.ToList();
         }
 
+        private void LoadMod(string modName)
+        {
+            if (!Mods.Mods.TryGetValue(modName, out ModInfo mod))
+            {
+                throw new Exception($"Mod not found: {modName}");
+            }
+
+            foreach (var file in mod.Scripts)
+            {
+                var scriptStream = file.Value.MakeStream();
+                try
+                {
+                    using (var reader = new BinaryReader(scriptStream))
+                    {
+                        var script = new GoalScript
+                        {
+                            Name = Path.GetFileNameWithoutExtension(file.Value.Name),
+                            Path = file.Key,
+                            ScriptBody = reader.ReadBytes((int)scriptStream.Length)
+                        };
+                        GoalScripts.Add(script);
+                    }
+                }
+                finally
+                {
+                    file.Value.ReleaseStream();
+                }
+            }
+
+            foreach (var file in mod.Globals)
+            {
+                var globalStream = file.Value.MakeStream();
+                try
+                {
+                    using (var reader = new BinaryReader(globalStream))
+                    {
+                        var globalLsf = reader.ReadBytes((int)globalStream.Length);
+                        Globals.Add(globalLsf);
+                    }
+                }
+                finally
+                {
+                    file.Value.ReleaseStream();
+                }
+            }
+        }
+
         public bool Compile(string outputPath, List<string> mods)
         {
             Logger.CompilationStarted();
             if (mods.Count > 0)
             {
-                DiscoverMods();
+                Logger.TaskStarted("Discovering module files");
+                Mods.Discover(GameDataPath);
+                Logger.TaskFinished();
 
+                Logger.TaskStarted("Loading module files");
                 foreach (var modName in mods)
                 {
-                    Dictionary<string, AbstractFileInfo> modFileList;
-                    if (ModFiles.TryGetValue(modName, out modFileList))
-                    {
-                        foreach (var file in modFileList)
-                        {
-                            GoalPaths.Add(file.Value);
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception($"Mod not found: {modName}");
-                    }
+                    LoadMod(modName);
                 }
+                Logger.TaskFinished();
             }
 
-            var stream = StoryHeaderFile.MakeStream();
+            var stream = Mods.StoryHeaderFile.MakeStream();
             LoadStoryHeaders(stream);
-            StoryHeaderFile.ReleaseStream();
+            Mods.StoryHeaderFile.ReleaseStream();
 
             var asts = new Dictionary<String, ASTGoal>();
             var goalLoader = new IRGenerator(Compiler.Context);

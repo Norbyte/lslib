@@ -71,6 +71,7 @@
     <Compile Include="Arguments.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="ModCompiler.cs" />
+    <Compile Include="ModResources.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
