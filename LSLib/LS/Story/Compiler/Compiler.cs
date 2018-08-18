@@ -1,12 +1,8 @@
 ﻿using LSLib.LS.Story.GoalParser;
-using LSLib.LS.Story.HeaderParser;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LSLib.LS.Story.Compiler
 {
@@ -191,9 +187,9 @@ namespace LSLib.LS.Story.Compiler
         public const String ParamNotBound = "24";
         public const String UnusedDatabase = "25";
         public const String DbNamingStyle = "26";
-        public const String UnresolvedGlobalName = "27";
-        public const String GlobalTypeMismatch = "28";
-        public const String GlobalNameMismatch = "29";
+        public const String UnresolvedGameObjectName = "27";
+        public const String GameObjectTypeMismatch = "28";
+        public const String GameObjectNameMismatch = "29";
     }
 
     public class Diagnostic
@@ -301,7 +297,7 @@ namespace LSLib.LS.Story.Compiler
         }
     }
 
-    public class GlobalInfo
+    public class GameObjectInfo
     {
         public String Name;
         public ValueType Type;
@@ -319,7 +315,7 @@ namespace LSLib.LS.Story.Compiler
         public Dictionary<String, IRGoal> GoalsByName = new Dictionary<String, IRGoal>();
         public Dictionary<FunctionNameAndArity, FunctionSignature> Signatures = new Dictionary<FunctionNameAndArity, FunctionSignature>();
         public Dictionary<FunctionNameAndArity, object> Functions = new Dictionary<FunctionNameAndArity, object>();
-        public Dictionary<String, GlobalInfo> Globals = new Dictionary<String, GlobalInfo>();
+        public Dictionary<String, GameObjectInfo> GameObjects = new Dictionary<String, GameObjectInfo>();
         public CompilationLog Log = new CompilationLog();
 
         public CompilationContext()
@@ -703,31 +699,31 @@ namespace LSLib.LS.Story.Compiler
                 }
 
                 var guid = constant.StringValue.Substring(constant.StringValue.Length - 36);
-                if (!Context.Globals.TryGetValue(guid, out GlobalInfo globalInfo))
+                if (!Context.GameObjects.TryGetValue(guid, out GameObjectInfo objectInfo))
                 {
                     Context.Log.Warn(constant.Location,
-                        DiagnosticCode.UnresolvedGlobalName,
-                        "Global \"{0}\" could not be resolved",
+                        DiagnosticCode.UnresolvedGameObjectName,
+                        "Object \"{0}\" could not be resolved",
                         constant.StringValue);
                 }
                 else
                 {
-                    if (globalInfo.Name != nameWithoutType)
+                    if (objectInfo.Name != nameWithoutType)
                     {
                         Context.Log.Warn(constant.Location,
-                            DiagnosticCode.GlobalNameMismatch,
-                            "Constant \"{0}\" references global object with different name (\"{1}\")",
-                            nameWithoutType, globalInfo.Name);
+                            DiagnosticCode.GameObjectNameMismatch,
+                            "Constant \"{0}\" references game object with different name (\"{1}\")",
+                            nameWithoutType, objectInfo.Name);
                     }
 
                     if (constant.Type.TypeId != (uint)Value.Type.GuidString
-                        && globalInfo.Type.TypeId != (uint)Value.Type.GuidString
-                        && constant.Type.TypeId != globalInfo.Type.TypeId)
+                        && objectInfo.Type.TypeId != (uint)Value.Type.GuidString
+                        && constant.Type.TypeId != objectInfo.Type.TypeId)
                     {
                         Context.Log.Warn(constant.Location,
-                            DiagnosticCode.GlobalTypeMismatch,
-                            "Constant \"{0}\" of type {1} references global name of type {2}",
-                            constant.StringValue, TypeToName(constant.Type.TypeId), TypeToName(globalInfo.Type.TypeId));
+                            DiagnosticCode.GameObjectTypeMismatch,
+                            "Constant \"{0}\" of type {1} references game object of type {2}",
+                            constant.StringValue, TypeToName(constant.Type.TypeId), TypeToName(objectInfo.Type.TypeId));
                     }
                 }
             }

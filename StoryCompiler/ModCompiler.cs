@@ -5,11 +5,8 @@ using LSLib.LS.Story.GoalParser;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LSTools.StoryCompiler
@@ -28,7 +25,10 @@ namespace LSTools.StoryCompiler
         private Compiler Compiler = new Compiler();
         private ModResources Mods = new ModResources();
         private List<GoalScript> GoalScripts = new List<GoalScript>();
-        private List<byte[]> GlobalLSFs = new List<byte[]>();
+        private List<byte[]> GameObjectLSFs = new List<byte[]>();
+
+        public bool CheckOnly = false;
+        public bool CheckGameObjects = false;
 
         public ModCompiler(Logger logger, String gameDataPath)
         {
@@ -97,7 +97,7 @@ namespace LSTools.StoryCompiler
             return sorted.Values.ToList();
         }
 
-        private void LoadGlobals(Resource resource)
+        private void LoadGameObjects(Resource resource)
         {
             if (!resource.Regions.TryGetValue("Templates", out Region templates))
             {
@@ -130,12 +130,12 @@ namespace LSTools.StoryCompiler
 
                     if (type != null)
                     {
-                        var global = new GlobalInfo
+                        var gameObjectInfo = new GameObjectInfo
                         {
                             Name = objectName.Value + "_" + objectGuid.Value,
                             Type = type
                         };
-                        Compiler.Context.Globals[(string)objectGuid.Value] = global;
+                        Compiler.Context.GameObjects[(string)objectGuid.Value] = gameObjectInfo;
                     }
                 }
             }
@@ -143,13 +143,13 @@ namespace LSTools.StoryCompiler
 
         private void LoadGlobals()
         {
-            foreach (var global in GlobalLSFs)
+            foreach (var lsf in GameObjectLSFs)
             {
-                using (var stream = new MemoryStream(global))
+                using (var stream = new MemoryStream(lsf))
                 using (var reader = new LSFReader(stream))
                 {
                     var resource = reader.Read();
-                    LoadGlobals(resource);
+                    LoadGameObjects(resource);
                 }
             }
         }
@@ -179,7 +179,7 @@ namespace LSTools.StoryCompiler
             }
         }
 
-        private void LoadGlobals(ModInfo mod)
+        private void LoadGameObjects(ModInfo mod)
         {
             foreach (var file in mod.Globals)
             {
@@ -189,7 +189,7 @@ namespace LSTools.StoryCompiler
                     using (var reader = new BinaryReader(globalStream))
                     {
                         var globalLsf = reader.ReadBytes((int)globalStream.Length);
-                        GlobalLSFs.Add(globalLsf);
+                        GameObjectLSFs.Add(globalLsf);
                     }
                 }
                 finally
@@ -200,13 +200,13 @@ namespace LSTools.StoryCompiler
 
             foreach (var file in mod.LevelObjects)
             {
-                var globalStream = file.Value.MakeStream();
+                var objectStream = file.Value.MakeStream();
                 try
                 {
-                    using (var reader = new BinaryReader(globalStream))
+                    using (var reader = new BinaryReader(objectStream))
                     {
-                        var globalLsf = reader.ReadBytes((int)globalStream.Length);
-                        GlobalLSFs.Add(globalLsf);
+                        var levelLsf = reader.ReadBytes((int)objectStream.Length);
+                        GameObjectLSFs.Add(levelLsf);
                     }
                 }
                 finally
@@ -224,7 +224,10 @@ namespace LSTools.StoryCompiler
             }
 
             LoadGoals(mod);
-            LoadGlobals(mod);
+            if (CheckGameObjects)
+            {
+                LoadGameObjects(mod);
+            }
         }
 
         public bool Compile(string outputPath, List<string> mods)
@@ -237,12 +240,15 @@ namespace LSTools.StoryCompiler
                 Logger.TaskFinished();
 
                 Logger.TaskStarted("Loading module files");
-                var nullGlobal = new GlobalInfo
+                if (CheckGameObjects)
                 {
-                    Name = "NULL_00000000-0000-0000-0000-000000000000",
-                    Type = Compiler.Context.LookupType("GUIDSTRING")
-                };
-                Compiler.Context.Globals.Add("00000000-0000-0000-0000-000000000000", nullGlobal);
+                    var nullGameObject = new GameObjectInfo
+                    {
+                        Name = "NULL_00000000-0000-0000-0000-000000000000",
+                        Type = Compiler.Context.LookupType("GUIDSTRING")
+                    };
+                    Compiler.Context.GameObjects.Add("00000000-0000-0000-0000-000000000000", nullGameObject);
+                }
 
                 foreach (var modName in mods)
                 {
@@ -255,6 +261,16 @@ namespace LSTools.StoryCompiler
             LoadStoryHeaders(stream);
             Mods.StoryHeaderFile.ReleaseStream();
 
+            if (CheckGameObjects)
+            {
+                Logger.TaskStarted("Loading game objects");
+                LoadGlobals();
+                Logger.TaskFinished();
+            }
+            else
+            {
+                Compiler.Context.Log.WarningSwitches[DiagnosticCode.UnresolvedGameObjectName] = false;
+            }
 
             var asts = new Dictionary<String, ASTGoal>();
             var goalLoader = new IRGenerator(Compiler.Context);
@@ -289,7 +305,7 @@ namespace LSTools.StoryCompiler
                 }
             }
 
-            if (!hasErrors)
+            if (!hasErrors && !CheckOnly)
             {
                 Logger.TaskStarted("Generating story nodes");
                 var emitter = new StoryEmitter(Compiler.Context);

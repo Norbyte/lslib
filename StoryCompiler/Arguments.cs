@@ -2,9 +2,6 @@
 using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LSTools.StoryCompiler
 {
@@ -23,6 +20,18 @@ namespace LSTools.StoryCompiler
             Optional = true
         )]
         public bool JsonOutput;
+
+        [SwitchArgument("check-only", false,
+            Description = "Validity check only, don't generate compiled story file",
+            Optional = true
+        )]
+        public bool CheckOnly;
+
+        [SwitchArgument("check-names", false,
+            Description = "Check validity of game object names (slow!)",
+            Optional = true
+        )]
+        public bool CheckGameObjects;
 
         [ValueArgument(typeof(string), "mod",
             Description = "Mod to add",
