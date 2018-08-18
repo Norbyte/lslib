@@ -72,7 +72,11 @@ namespace LSTools.StoryCompiler
                 { "string-lt", DiagnosticCode.StringLtGtComparison },
                 { "rule-naming", DiagnosticCode.RuleNamingStyle },
                 { "db-naming", DiagnosticCode.DbNamingStyle },
-                { "unused-db", DiagnosticCode.UnusedDatabase }
+                { "unused-db", DiagnosticCode.UnusedDatabase },
+                { "unresolved-object", DiagnosticCode.UnresolvedGameObjectName },
+                { "object-name", DiagnosticCode.GameObjectNameMismatch },
+                { "object-type", DiagnosticCode.GameObjectTypeMismatch }
+
             };
 
             var results = new Dictionary<string, bool>();

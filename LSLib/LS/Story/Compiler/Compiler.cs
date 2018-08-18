@@ -158,38 +158,136 @@ namespace LSLib.LS.Story.Compiler
     /// </summary>
     public class DiagnosticCode
     {
-        public const String InternalError = "00";
-        public const String TypeIdAlreadyDefined = "01";
-        public const String TypeNameAlreadyDefined = "02";
-        public const String TypeIdInvalid = "03";
-        public const String IntrinsicTypeIdInvalid = "04";
+        /// <summary>
+        /// Miscellaenous internal error - should not happen.
+        /// </summary>
+        public const String InternalError = "E00";
+        /// <summary>
+        /// A type ID was declared multiple times in the story definition file.
+        /// </summary>
+        public const String TypeIdAlreadyDefined = "E01";
+        /// <summary>
+        /// A type name (alias)  was declared multiple times in the story definition file.
+        /// </summary>
+        public const String TypeNameAlreadyDefined = "E02";
+        /// <summary>
+        /// The type ID is either an intrinsic ID or is outside the allowed range.
+        /// </summary>
+        public const String TypeIdInvalid = "E03";
+        /// <summary>
+        /// The alias type ID doesn't point to a valid intrinsic type ID
+        /// </summary>
+        public const String IntrinsicTypeIdInvalid = "E04";
 
-        public const String SignatureAlreadyDefined = "05";
-        public const String UnresolvedTypeInSignature = "06";
-        public const String GoalAlreadyDefined = "07";
-
-        public const String UnresolvedGoal = "08";
-        public const String UnresolvedLocalType = "09";
-        public const String UnresolvedSignature = "10";
-        public const String LocalTypeMismatch = "11";
-        public const String UnresolvedType = "12";
-        public const String InvalidProcDefinition = "13";
-        public const String InvalidSymbolInFact = "14";
-        public const String InvalidSymbolInStatement = "15";
-        public const String CanOnlyDeleteFromDatabase = "16";
-        public const String InvalidSymbolInInitialCondition = "17";
-        public const String InvalidSymbolInCondition = "18";
-        public const String UnresolvedSymbol = "19";
-        public const String StringLtGtComparison = "20";
-        public const String GuidAliasMismatch = "21";
-        public const String GuidPrefixNotKnown = "22";
-        public const String RuleNamingStyle = "23";
-        public const String ParamNotBound = "24";
-        public const String UnusedDatabase = "25";
-        public const String DbNamingStyle = "26";
-        public const String UnresolvedGameObjectName = "27";
-        public const String GameObjectTypeMismatch = "28";
-        public const String GameObjectNameMismatch = "29";
+        /// <summary>
+        /// A function with the same signature already exists.
+        /// </summary>
+        public const String SignatureAlreadyDefined = "E05";
+        /// <summary>
+        /// The type of an argument could not be resolved in a builtin function.
+        /// (This only occurs when parsing story headers, not in goal code)
+        /// </summary>
+        public const String UnresolvedTypeInSignature = "E06";
+        /// <summary>
+        /// A goal with the same name was seen earlier.
+        /// </summary>
+        public const String GoalAlreadyDefined = "E07";
+        /// <summary>
+        /// The parent goal specified in the goal script was not found.
+        /// </summary>
+        public const String UnresolvedGoal = "E08";
+        /// <summary>
+        /// Failed to infer the type of a rule-local variable.
+        /// </summary>
+        public const String UnresolvedVariableType = "E09";
+        /// <summary>
+        /// The function signature (full typed parameter list) of a function
+        /// could not be determined. This is likely the result of a failed type inference.
+        /// </summary>
+        public const String UnresolvedSignature = "E10";
+        /// <summary>
+        /// The intrinsic type of a function parameter does not match the expected type.
+        /// </summary>
+        public const String LocalTypeMismatch = "E11";
+        /// <summary>
+        /// Constant value with unknown type encountered during IR generation.
+        /// </summary>
+        public const String UnresolvedType = "E12";
+        /// <summary>
+        /// PROC/QRY declarations must start with a PROC/QRY name as the first condition.
+        /// </summary>
+        public const String InvalidProcDefinition = "E13";
+        /// <summary>
+        /// Fact contains a function that is not callable
+        /// (the function is not a call, database or proc).
+        /// </summary>
+        public const String InvalidSymbolInFact = "E14";
+        /// <summary>
+        /// Rule action contains a function that is not callable
+        /// (the function is not a call, database or proc).
+        /// </summary>
+        public const String InvalidSymbolInStatement = "E15";
+        /// <summary>
+        /// "NOT" action contains a non-database function.
+        /// </summary>
+        public const String CanOnlyDeleteFromDatabase = "E16";
+        /// <summary>
+        /// Initial PROC/QRY/IF function type differs from allowed type.
+        /// </summary>
+        public const String InvalidSymbolInInitialCondition = "E17";
+        /// <summary>
+        /// Condition contains a function that is not a query or database.
+        /// </summary>
+        public const String InvalidFunctionTypeInCondition = "E18";
+        /// <summary>
+        /// Function name could not be resolved.
+        /// </summary>
+        public const String UnresolvedSymbol = "E19";
+        /// <summary>
+        /// Use of less/greater operators on strings or guidstrings.
+        /// </summary>
+        public const String StringLtGtComparison = "W20";
+        /// <summary>
+        /// The alias type of a function parameter does not match the expected type.
+        /// </summary>
+        public const String GuidAliasMismatch = "W21";
+        /// <summary>
+        /// Object name GUID is prefixed with a type that is not known.
+        /// </summary>
+        public const String GuidPrefixNotKnown = "W22";
+        /// <summary>
+        /// PROC_/QRY_ naming style violation.
+        /// </summary>
+        public const String RuleNamingStyle = "W23";
+        /// <summary>
+        /// A rule variable was used in a read context, but was not yet bound.
+        /// </summary>
+        public const String ParamNotBound = "E24";
+        /// <summary>
+        /// The database is likely unused or unpopulated.
+        /// (Written but not read, or vice versa)
+        /// </summary>
+        public const String UnusedDatabase = "W25";
+        /// <summary>
+        /// Database "DB_" naming convention violation.
+        /// </summary>
+        public const String DbNamingStyle = "W26";
+        /// <summary>
+        /// Object name GUID could not be resolved to a game object.
+        /// </summary>
+        public const String UnresolvedGameObjectName = "W27";
+        /// <summary>
+        /// Type of name GUID differs from type of game object.
+        /// </summary>
+        public const String GameObjectTypeMismatch = "W28";
+        /// <summary>
+        /// Name part of name GUID differs from name of game object.
+        /// </summary>
+        public const String GameObjectNameMismatch = "W29";
+        /// <summary>
+        /// Multiple definitions seen for the same function with different signatures.
+        /// </summary>
+        public const String ProcTypeMismatch = "E30";
     }
 
     public class Diagnostic
@@ -535,7 +633,7 @@ namespace LSLib.LS.Story.Compiler
             if (db == null)
             {
                 Context.Log.Error(fact.Location, 
-                    DiagnosticCode.UnresolvedSignature,
+                    DiagnosticCode.UnresolvedSymbol,
                     "Database \"{0}\" could not be resolved",
                     fact.Database.Name);
                 return;
@@ -872,7 +970,7 @@ namespace LSLib.LS.Story.Compiler
                     && func.Type != FunctionType.UserQuery)
                 {
                     Context.Log.Error(condition.Location, 
-                        DiagnosticCode.InvalidSymbolInCondition,
+                        DiagnosticCode.InvalidFunctionTypeInCondition,
                         "Subsequent rule conditions can only be queries or DBs; \"{0}\" is a {1}",
                         condition.Func.Name, func.Type);
                     return;
@@ -1052,7 +1150,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     // TODO - return location of first variable reference instead of rule
                     Context.Log.Error(rule.Location, 
-                        DiagnosticCode.UnresolvedLocalType,
+                        DiagnosticCode.UnresolvedVariableType,
                         "Variable \"{0}\" of rule could not be typed",
                         variable.Name);
                 }
@@ -1220,7 +1318,7 @@ namespace LSLib.LS.Story.Compiler
                     // TODO error code!
                     // TODO location of definition
                     Context.Log.Error(null, 
-                        DiagnosticCode.InvalidProcDefinition,
+                        DiagnosticCode.ProcTypeMismatch,
                         "Auto-typing name {0}: first seen as {1}, now seen as {2}",
                         name, signature.Type, type);
                 }
