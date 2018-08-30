@@ -26,6 +26,8 @@ namespace LSLib.LS.Story.GoalParser
         public List<ASTFact> ExitSection;
         // Names of parent goals (if any)
         public List<ASTParentTargetEdge> ParentTargetEdges;
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     /// <summary>

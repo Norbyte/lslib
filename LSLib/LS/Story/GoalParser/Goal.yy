@@ -55,7 +55,7 @@
 GoalFile: Goal;
 
 Goal : Version SubGoalCombiner InitSection KBSection ExitSection TargetEdges 
-     { $$ = MakeGoal($1, $2, $3, $4, $5, $6); };
+     { $$ = MakeGoal(@$, $1, $2, $3, $4, $5, $6); };
 
 Version : VERSION INTEGER
 	{ $$ = $2; };

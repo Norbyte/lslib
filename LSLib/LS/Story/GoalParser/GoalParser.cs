@@ -114,14 +114,15 @@ namespace LSLib.LS.Story.GoalParser
             return CurrentSemanticValue as ASTGoal;
         }
 
-        private ASTGoal MakeGoal(ASTNode version, ASTNode subGoalCombiner, ASTNode initSection,
+        private ASTGoal MakeGoal(CodeLocation location, ASTNode version, ASTNode subGoalCombiner, ASTNode initSection,
             ASTNode kbSection, ASTNode exitSection, ASTNode parentTargetEdges) => new ASTGoal()
         {
             // TODO verison, SGC
             InitSection = (initSection as ASTFactList).Facts,
             KBSection = (kbSection as ASTRuleList).Rules,
             ExitSection = (exitSection as ASTFactList).Facts,
-            ParentTargetEdges = (parentTargetEdges as ASTParentTargetEdgeList).TargetEdges
+            ParentTargetEdges = (parentTargetEdges as ASTParentTargetEdgeList).TargetEdges,
+            Location = location
         };
 
         private ASTParentTargetEdgeList MakeParentTargetEdgeList() => new ASTParentTargetEdgeList();

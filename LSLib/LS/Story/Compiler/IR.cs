@@ -111,6 +111,8 @@ namespace LSLib.LS.Story.Compiler
         public List<IRFact> ExitSection;
         // Parent goals (if any)
         public List<IRTargetEdge> ParentTargetEdges;
+        // Location of node in source code
+        public CodeLocation Location;
     }
 
     /// <summary>

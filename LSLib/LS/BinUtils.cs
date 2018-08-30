@@ -7,7 +7,7 @@ using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
-    static class BinUtils
+    public static class BinUtils
     {
         public static T ReadStruct<T>(BinaryReader reader)
         {

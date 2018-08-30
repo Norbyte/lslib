@@ -44,14 +44,14 @@ namespace LSTools.StoryCompiler
             modCompiler.CheckOnly = args.CheckOnly;
 
             var mods = new List<string>(args.Mods);
-            if (!modCompiler.Compile(args.OutputPath, mods))
+            if (!modCompiler.Compile(args.OutputPath, args.DebugInfoOutputPath, mods))
             {
                 Environment.Exit(3);
             }
 
-            if (args.DebugOutputPath != null)
+            if (args.DebugLogOutputPath != null)
             {
-                DebugDump(args.OutputPath, args.DebugOutputPath);
+                DebugDump(args.OutputPath, args.DebugLogOutputPath);
             }
         }
 

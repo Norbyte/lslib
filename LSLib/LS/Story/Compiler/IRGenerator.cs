@@ -27,7 +27,8 @@ namespace LSLib.LS.Story.Compiler
                 InitSection = new List<IRFact>(astGoal.InitSection.Count),
                 KBSection = new List<IRRule>(astGoal.KBSection.Count),
                 ExitSection = new List<IRFact>(astGoal.ExitSection.Count),
-                ParentTargetEdges = new List<IRTargetEdge>(astGoal.ParentTargetEdges.Count)
+                ParentTargetEdges = new List<IRTargetEdge>(astGoal.ParentTargetEdges.Count),
+                Location = astGoal.Location
             };
 
             foreach (var fact in astGoal.InitSection)

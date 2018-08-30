@@ -34,6 +34,7 @@
 *.sdf
 *.psess
 *.opensdf
+*.vspx
 
 /.vs
 /ipch
@@ -49,6 +50,9 @@
 /External/gplex
 /External/gppg
 /External/bullet-2.77
+/External/protobuf-3.6.1
+/External/vcpkg-master
+/External/x64-windows
 /External/Glasses
 /External/*.zip
 /TestApp

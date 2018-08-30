@@ -230,7 +230,7 @@ namespace LSTools.StoryCompiler
             }
         }
 
-        public bool Compile(string outputPath, List<string> mods)
+        public bool Compile(string outputPath, string debugInfoPath, List<string> mods)
         {
             Logger.CompilationStarted();
             if (mods.Count > 0)
@@ -310,6 +310,11 @@ namespace LSTools.StoryCompiler
             {
                 Logger.TaskStarted("Generating story nodes");
                 var emitter = new StoryEmitter(Compiler.Context);
+                if (debugInfoPath != null)
+                {
+                    emitter.EnableDebugInfo();
+                }
+
                 var story = emitter.EmitStory();
                 Logger.TaskFinished();
 
@@ -320,6 +325,17 @@ namespace LSTools.StoryCompiler
                     writer.Write(file, story);
                 }
                 Logger.TaskFinished();
+
+                if (debugInfoPath != null)
+                {
+                    Logger.TaskStarted("Saving debug info");
+                    using (var file = new FileStream(debugInfoPath, FileMode.Create, FileAccess.Write))
+                    {
+                        var writer = new DebugInfoSaver();
+                        writer.Save(file, emitter.DebugInfo);
+                    }
+                    Logger.TaskFinished();
+                }
             }
 
             Logger.CompilationFinished(!hasErrors);
