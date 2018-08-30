@@ -56,12 +56,19 @@ namespace LSTools.StoryCompiler
         )]
         public string OutputPath;
 
-        [ValueArgument(typeof(string), "debug-output",
-            Description = "Debug output path",
+        [ValueArgument(typeof(string), "debug-info",
+            Description = "Debugging symbols output path",
             ValueOptional = false,
             Optional = true
         )]
-        public string DebugOutputPath;
+        public string DebugInfoOutputPath;
+
+        [ValueArgument(typeof(string), "debug-log",
+            Description = "Debug log output path",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string DebugLogOutputPath;
 
         public static Dictionary<string, bool> GetWarningOptions(string[] options)
         {

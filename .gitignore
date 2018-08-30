@@ -63,3 +63,9 @@ LSTools.VC.db
 # Generated GpLex/GpPg files
 *.lex.cs
 *.yy.cs
+
+# Generated Protobuf files
+DebuggerFrontend/osidebug.pb.h
+DebuggerFrontend/osidebug.pb.cc
+DebuggerFrontend/Osidebug.cs
+StoryCompiler/Debuginfo.cs

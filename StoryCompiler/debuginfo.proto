@@ -1,0 +1,43 @@
+﻿syntax = "proto3";
+
+package LSTools.StoryCompiler;
+
+option optimize_for = LITE_RUNTIME;
+
+message DatabaseDebugInfoMsg {
+  uint32 id = 1;
+  string name = 2;
+  repeated uint32 param_types = 3;
+}
+
+message GoalDebugInfoMsg {
+  uint32 id = 1;
+  string name = 2;
+  string path = 3;
+}
+
+message RuleVariableDebugInfoMsg {
+  uint32 index = 1;
+  uint32 type = 2;
+  string name = 3;
+}
+
+message RuleDebugInfoMsg {
+  uint32 id = 1;
+  uint32 goal_id = 2;
+  repeated RuleVariableDebugInfoMsg variables = 3;
+}
+
+message NodeDebugInfoMsg {
+  uint32 id = 1;
+  uint32 rule_id = 2;
+  uint32 line = 3;
+  map<uint32, uint32> column_maps = 4;
+}
+
+message StoryDebugInfoMsg {
+  repeated DatabaseDebugInfoMsg databases = 1;
+  repeated GoalDebugInfoMsg goals = 2;
+  repeated RuleDebugInfoMsg rules = 3;
+  repeated NodeDebugInfoMsg nodes = 4;
+}
