@@ -3,6 +3,7 @@ using Google.Protobuf;
 using System.IO;
 using LSLib.LS;
 using LSLib.LS.Story.Compiler;
+using System.Text;
 
 namespace LSTools.StoryCompiler
 {
@@ -66,7 +67,10 @@ namespace LSTools.StoryCompiler
             {
                 Id = debugInfo.Id,
                 RuleId = debugInfo.RuleId,
-                Line = (UInt32)debugInfo.Line
+                Line = (UInt32)debugInfo.Line,
+                DatabaseId = debugInfo.DatabaseId,
+                Name = debugInfo.Name,
+                Type = (NodeDebugInfoMsg.Types.NodeType)debugInfo.Type
             };
 
             foreach (var map in debugInfo.ColumnToVariableMaps)
@@ -114,10 +118,17 @@ namespace LSTools.StoryCompiler
             using (var codedStream = new CodedOutputStream(ms))
             {
                 msg.WriteTo(codedStream);
-                byte[] proto = ms.GetBuffer();
+                codedStream.Flush();
+
+                byte[] proto = ms.ToArray();
                 byte flags = BinUtils.MakeCompressionFlags(LSLib.LS.Enums.CompressionMethod.LZ4, LSLib.LS.Enums.CompressionLevel.FastCompression);
                 byte[] compressed = BinUtils.Compress(proto, flags);
                 stream.Write(compressed, 0, compressed.Length);
+
+                using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
+                {
+                    writer.Write((UInt32)proto.Length);
+                }
             }
         }
     }

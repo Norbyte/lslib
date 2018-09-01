@@ -29,10 +29,26 @@ message RuleDebugInfoMsg {
 }
 
 message NodeDebugInfoMsg {
+  enum NodeType {
+    UNUSED = 0;
+    DATABASE = 1;
+    PROC = 2;
+    DIV_QUERY = 3;
+    AND = 4;
+    NOT_AND = 5;
+    REL_OP = 6;
+    RULE = 7;
+    INTERNAL_QUERY = 8;
+    USER_QUERY = 9;
+  }
+
   uint32 id = 1;
   uint32 rule_id = 2;
   uint32 line = 3;
   map<uint32, uint32> column_maps = 4;
+  uint32 database_id = 5;
+  string name = 6;
+  NodeType type = 7;
 }
 
 message StoryDebugInfoMsg {

@@ -55,6 +55,9 @@ namespace LSLib.LS.Story.Compiler
         public UInt32 RuleId;
         public Int32 Line;
         public Dictionary<Int32, Int32> ColumnToVariableMaps;
+        public UInt32 DatabaseId;
+        public String Name;
+        public Node.Type Type;
     }
 
     public class StoryDebugInfo
@@ -202,19 +205,25 @@ namespace LSLib.LS.Story.Compiler
             node.Index = (uint)Story.Nodes.Count + 1;
             Story.Nodes.Add(node.Index, node);
 
-            if (DebugInfo != null && location != null)
+            if (DebugInfo != null)
             {
                 var nodeDebug = new NodeDebugInfo
                 {
                     Id = node.Index,
                     RuleId = 0,
-                    Line = location.StartLine,
-                    ColumnToVariableMaps = new Dictionary<Int32, Int32>()
+                    Line = location != null ? location.StartLine : 0,
+                    ColumnToVariableMaps = new Dictionary<Int32, Int32>(),
+                    DatabaseId = node.DatabaseRef.Index,
+                    Name = node.Name,
+                    Type = node.NodeType()
                 };
 
-                for (var i = 0; i < numColumns; i++)
+                if (location != null)
                 {
-                    nodeDebug.ColumnToVariableMaps.Add(i, i);
+                    for (var i = 0; i < numColumns; i++)
+                    {
+                        nodeDebug.ColumnToVariableMaps.Add(i, i);
+                    }
                 }
 
                 DebugInfo.Nodes.Add(nodeDebug.Id, nodeDebug);
@@ -449,7 +458,23 @@ namespace LSLib.LS.Story.Compiler
 
             osiDb.Facts = new FactCollection(osiDb, Story);
             Story.Databases.Add(osiDb.Index, osiDb);
-            
+
+            if (DebugInfo != null)
+            {
+                var dbDebug = new DatabaseDebugInfo
+                {
+                    Id = osiDb.Index,
+                    Name = "",
+                    ParamTypes = new List<uint>()
+                };
+                foreach (var paramType in paramTypes)
+                {
+                    dbDebug.ParamTypes.Add(paramType);
+                }
+
+                DebugInfo.Databases.Add(dbDebug.Id, dbDebug);
+            }
+
             return osiDb;
         }
 
@@ -1231,16 +1256,18 @@ namespace LSLib.LS.Story.Compiler
 
                 foreach (var rule in goal.Value.KBSection)
                 {
-                    var firstNodeIndex = (uint)Story.Goals.Count + 2;
+                    var firstNodeIndex = (uint)Story.Nodes.Count + 1;
                     var osiRule = EmitRule(rule, osiGoal);
 
                     if (DebugInfo != null)
                     {
-                        var lastNodeIndex = (uint)Story.Goals.Count;
+                        var lastNodeIndex = (uint)Story.Nodes.Count;
                         for (var i = firstNodeIndex; i <= lastNodeIndex; i++)
                         {
                             var osiNode = Story.Nodes[i];
-                            if (osiNode is TreeNode)
+                            if (osiNode is TreeNode 
+                                || osiNode is RelNode
+                                || i == lastNodeIndex)
                             {
                                 DebugInfo.Nodes[i].RuleId = osiRule.Index;
                             }
