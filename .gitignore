@@ -50,6 +50,7 @@
 /External/gplex
 /External/gppg
 /External/bullet-2.77
+/External/protoc
 /External/protobuf-3.6.1
 /External/vcpkg-master
 /External/x64-windows

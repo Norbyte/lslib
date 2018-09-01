@@ -105,6 +105,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)\External\x64-windows\tools\protobuf\protoc --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
+    <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
   </PropertyGroup>
 </Project>
