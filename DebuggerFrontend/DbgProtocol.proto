@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package LSTools.DebuggerFrontend;
+
+option optimize_for = LITE_RUNTIME;
+
+message MsgTypedValue {
+  uint32 type_id = 1;
+  oneof value {
+    int64 intval = 2;
+    float floatval = 3;
+    string stringval = 4;
+  }
+}
+
+message MsgTuple {
+  repeated MsgTypedValue column = 1;
+}
+
+message MsgFrame {
+  enum FrameType {
+    FRAME_IS_VALID = 0;
+    FRAME_PUSHDOWN = 1;
+	FRAME_INSERT = 2;
+	FRAME_DELETE = 3;
+	FRAME_PUSHDOWN_DELETE = 4;
+  };
+  
+  uint32 node_id = 1;
+  FrameType type = 2;
+  MsgTuple tuple = 3;
+}
+
+message DbgIdentifyRequest {
+}
+
+message BkVersionInfoResponse {
+  uint32 protocol_version = 1;
+  bool story_loaded = 2;
+  string story_version = 3;
+}
+
+message DbgSetGlobalBreakpoints {
+  uint32 breakpoint_mask = 1;
+}
+
+message MsgBreakpoint {
+  uint32 node_id = 1;
+  uint32 breakpoint_mask = 2;
+}
+
+message DbgSetBreakpoints {
+  repeated MsgBreakpoint breakpoint = 1;
+}
+
+message BkBreakpointTriggered {
+  repeated MsgFrame call_stack = 1;
+}
+
+message BkGlobalBreakpointTriggered {
+  enum Reason {
+	BREAKPOINT_STORY_LOADED = 0;
+  };
+  
+  Reason reason = 1;
+}
+
+message DbgContinue {
+  enum Action {
+    CONTINUE = 0;
+    STEP_OVER = 1;
+  };
+  Action action = 1;
+}
+
+message DbgGetDatabaseContents {
+  uint32 database_id = 1;
+}
+
+message BkDatabaseContents {
+  uint32 database_id = 1;
+  repeated MsgTuple rows = 2;
+}
+
+message BkResult {
+  enum StatusCode {
+    SUCCESS = 0;
+	UNSUPPORTED_BREAKPOINT_TYPE = 1;
+	INVALID_NODE_ID = 2;
+	NOT_IN_PAUSE = 3;
+	NO_DEBUGGEE = 4;
+  };
+
+  StatusCode status_code = 1;
+}
+
+message BkStoryLoaded {
+}
+
+message BkDebugSessionEnded {
+}
+
+message DebuggerToBackend {
+  oneof msg {
+    DbgIdentifyRequest identify = 1;
+    DbgSetGlobalBreakpoints setGlobalBreakpoints = 2;
+	DbgSetBreakpoints setBreakpoints = 3;
+	DbgContinue continue = 4;
+	DbgGetDatabaseContents getDatabaseContents = 5;
+  }
+  uint32 seq_no = 6;
+  uint32 reply_seq_no = 7;
+}
+
+message BackendToDebugger {
+  oneof msg {
+    BkVersionInfoResponse versionInfo = 1;
+    BkBreakpointTriggered breakpointTriggered = 2;
+	BkDatabaseContents databaseContents = 3;
+	BkResult results = 4;
+	BkStoryLoaded storyLoaded = 5;
+	BkDebugSessionEnded debugSessionEnded = 6;
+	BkGlobalBreakpointTriggered globalBreakpointTriggered = 7;
+  }
+  uint32 seq_no = 8;
+  uint32 reply_seq_no = 9;
+}

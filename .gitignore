@@ -70,3 +70,5 @@ DebuggerFrontend/osidebug.pb.h
 DebuggerFrontend/osidebug.pb.cc
 DebuggerFrontend/Osidebug.cs
 StoryCompiler/Debuginfo.cs
+DebuggerFrontend/Debuginfo.cs
+DebuggerFrontend/DbgProtocol.cs
