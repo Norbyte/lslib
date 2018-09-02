@@ -163,10 +163,22 @@ namespace LSTools.StoryCompiler
                 {
                     using (var reader = new BinaryReader(scriptStream))
                     {
+                        string path;
+                        if (file.Value is PackagedFileInfo)
+                        {
+                            var pkgd = file.Value as PackagedFileInfo;
+                            path = (pkgd.PackageStream as FileStream).Name + ":/" + pkgd.Name;
+                        }
+                        else
+                        {
+                            var fs = file.Value as FilesystemFileInfo;
+                            path = fs.FilesystemPath;
+                        }
+
                         var script = new GoalScript
                         {
                             Name = Path.GetFileNameWithoutExtension(file.Value.Name),
-                            Path = file.Key,
+                            Path = path,
                             ScriptBody = reader.ReadBytes((int)scriptStream.Length)
                         };
                         GoalScripts.Add(script);
