@@ -27,14 +27,36 @@ namespace LSTools.DebuggerFrontend
             return debugInfo;
         }
 
+        private ActionDebugInfo FromProtobuf(ActionDebugInfoMsg msg)
+        {
+            return new ActionDebugInfo
+            {
+                Line = msg.Line
+            };
+        }
+
         private GoalDebugInfo FromProtobuf(GoalDebugInfoMsg msg)
         {
-            return new GoalDebugInfo
+            var debugInfo = new GoalDebugInfo
             {
                 Id = msg.Id,
                 Name = msg.Name,
-                Path = msg.Path
+                Path = msg.Path,
+                InitActions = new List<ActionDebugInfo>(),
+                ExitActions = new List<ActionDebugInfo>()
             };
+
+            foreach (var action in msg.InitActions)
+            {
+                debugInfo.InitActions.Add(FromProtobuf(action));
+            }
+
+            foreach (var action in msg.ExitActions)
+            {
+                debugInfo.ExitActions.Add(FromProtobuf(action));
+            }
+
+            return debugInfo;
         }
 
         private RuleVariableDebugInfo FromProtobuf(RuleVariableDebugInfoMsg msg)
@@ -53,13 +75,24 @@ namespace LSTools.DebuggerFrontend
             {
                 Id = msg.Id,
                 GoalId = msg.GoalId,
-                Variables = new List<RuleVariableDebugInfo>()
+                Name = msg.Name,
+                Variables = new List<RuleVariableDebugInfo>(),
+                Actions = new List<ActionDebugInfo>(),
+                ConditionsStartLine = msg.ConditionsStartLine,
+                ConditionsEndLine = msg.ConditionsEndLine,
+                ActionsStartLine = msg.ActionsStartLine,
+                ActionsEndLine = msg.ActionsEndLine
             };
 
             foreach (var variableMsg in msg.Variables)
             {
                 var variable = FromProtobuf(variableMsg);
                 debugInfo.Variables.Add(variable);
+            }
+
+            foreach (var action in msg.Actions)
+            {
+                debugInfo.Actions.Add(FromProtobuf(action));
             }
 
             return debugInfo;

@@ -10,10 +10,16 @@ message DatabaseDebugInfoMsg {
   repeated uint32 param_types = 3;
 }
 
+message ActionDebugInfoMsg {
+  uint32 line = 1;
+}
+
 message GoalDebugInfoMsg {
   uint32 id = 1;
   string name = 2;
   string path = 3;
+  repeated ActionDebugInfoMsg init_actions = 4;
+  repeated ActionDebugInfoMsg exit_actions = 5;
 }
 
 message RuleVariableDebugInfoMsg {
@@ -26,6 +32,12 @@ message RuleDebugInfoMsg {
   uint32 id = 1;
   uint32 goal_id = 2;
   repeated RuleVariableDebugInfoMsg variables = 3;
+  string name = 4;
+  repeated ActionDebugInfoMsg actions = 5;
+  uint32 conditions_start_line = 6;
+  uint32 conditions_end_line = 7;
+  uint32 actions_start_line = 8;
+  uint32 actions_end_line = 9;
 }
 
 message NodeDebugInfoMsg {

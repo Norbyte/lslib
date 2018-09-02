@@ -21,53 +21,6 @@ namespace LSLib.LS.Story.Compiler
         Action
     }
 
-    public class DatabaseDebugInfo
-    {
-        public UInt32 Id;
-        public String Name;
-        public List<UInt32> ParamTypes;
-    }
-
-    public class GoalDebugInfo
-    {
-        public UInt32 Id;
-        public String Name;
-        public String Path;
-    }
-
-    public class RuleVariableDebugInfo
-    {
-        public UInt32 Index;
-        public String Name;
-        public UInt32 Type;
-    }
-
-    public class RuleDebugInfo
-    {
-        public UInt32 Id;
-        public UInt32 GoalId;
-        public List<RuleVariableDebugInfo> Variables;
-    }
-
-    public class NodeDebugInfo
-    {
-        public UInt32 Id;
-        public UInt32 RuleId;
-        public Int32 Line;
-        public Dictionary<Int32, Int32> ColumnToVariableMaps;
-        public UInt32 DatabaseId;
-        public String Name;
-        public Node.Type Type;
-    }
-
-    public class StoryDebugInfo
-    {
-        public Dictionary<UInt32, DatabaseDebugInfo> Databases = new Dictionary<UInt32, DatabaseDebugInfo>();
-        public Dictionary<UInt32, GoalDebugInfo> Goals = new Dictionary<UInt32, GoalDebugInfo>();
-        public Dictionary<UInt32, RuleDebugInfo> Rules = new Dictionary<UInt32, RuleDebugInfo>();
-        public Dictionary<UInt32, NodeDebugInfo> Nodes = new Dictionary<UInt32, NodeDebugInfo>();
-    }
-
     public class StoryEmitter
     {
         private CompilationContext Context;
@@ -1171,9 +1124,15 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Id = osiRule.Index,
                     GoalId = (UInt32)Story.Goals.Count,
-                    Variables = new List<RuleVariableDebugInfo>()
+                    Name = (rule.Conditions.First() as IRFuncCondition).Func.Name.ToString(),
+                    Variables = new List<RuleVariableDebugInfo>(),
+                    Actions = new List<ActionDebugInfo>(),
+                    ConditionsStartLine = (uint)rule.Location.StartLine,
+                    ConditionsEndLine = (uint)rule.Conditions.Last().Location.EndLine,
+                    ActionsStartLine = (uint)rule.Actions.First().Location.StartLine,
+                    ActionsEndLine = (uint)rule.Location.EndLine
                 };
-
+                
                 foreach (var variable in rule.Variables)
                 {
                     var varDebug = new RuleVariableDebugInfo
@@ -1183,6 +1142,14 @@ namespace LSLib.LS.Story.Compiler
                         Type = (UInt32)variable.Type.IntrinsicTypeId
                     };
                     ruleDebug.Variables.Add(varDebug);
+                }
+                
+                foreach (var action in rule.Actions)
+                {
+                    ruleDebug.Actions.Add(new ActionDebugInfo
+                    {
+                        Line = (uint)action.Location.StartLine
+                    });
                 }
 
                 DebugInfo.Rules.Add(ruleDebug.Id, ruleDebug);
@@ -1236,8 +1203,26 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Id = osiGoal.Index,
                     Name = goal.Name,
-                    Path = goal.Location.FileName
+                    Path = goal.Location.FileName,
+                    InitActions = new List<ActionDebugInfo>(),
+                    ExitActions = new List<ActionDebugInfo>()
                 };
+
+                foreach (var action in goal.InitSection)
+                {
+                    goalDebug.InitActions.Add(new ActionDebugInfo
+                    {
+                        Line = (uint)action.Location.StartLine
+                    });
+                }
+
+                foreach (var action in goal.ExitSection)
+                {
+                    goalDebug.ExitActions.Add(new ActionDebugInfo
+                    {
+                        Line = (uint)action.Location.StartLine
+                    });
+                }
 
                 DebugInfo.Goals.Add(goalDebug.Id, goalDebug);
             }

@@ -26,12 +26,26 @@ namespace LSTools.StoryCompiler
 
         private GoalDebugInfoMsg ToProtobuf(GoalDebugInfo debugInfo)
         {
-            return new GoalDebugInfoMsg
+            var msg = new GoalDebugInfoMsg
             {
                 Id = debugInfo.Id,
                 Name = debugInfo.Name,
                 Path = debugInfo.Path
             };
+
+            foreach (var action in debugInfo.InitActions)
+            {
+                var varAct = ToProtobuf(action);
+                msg.InitActions.Add(varAct);
+            }
+
+            foreach (var action in debugInfo.ExitActions)
+            {
+                var varAct = ToProtobuf(action);
+                msg.ExitActions.Add(varAct);
+            }
+
+            return msg;
         }
 
         private RuleVariableDebugInfoMsg ToProtobuf(RuleVariableDebugInfo debugInfo)
@@ -44,18 +58,37 @@ namespace LSTools.StoryCompiler
             };
         }
 
+        private ActionDebugInfoMsg ToProtobuf(ActionDebugInfo debugInfo)
+        {
+            return new ActionDebugInfoMsg
+            {
+                Line = debugInfo.Line
+            };
+        }
+
         private RuleDebugInfoMsg ToProtobuf(RuleDebugInfo debugInfo)
         {
             var msg = new RuleDebugInfoMsg
             {
                 Id = debugInfo.Id,
-                GoalId = debugInfo.GoalId
+                GoalId = debugInfo.GoalId,
+                Name = debugInfo.Name,
+                ConditionsStartLine = debugInfo.ConditionsStartLine,
+                ConditionsEndLine = debugInfo.ConditionsEndLine,
+                ActionsStartLine = debugInfo.ActionsStartLine,
+                ActionsEndLine = debugInfo.ActionsEndLine
             };
 
             foreach (var variable in debugInfo.Variables)
             {
                 var varMsg = ToProtobuf(variable);
                 msg.Variables.Add(varMsg);
+            }
+
+            foreach (var action in debugInfo.Actions)
+            {
+                var varAct = ToProtobuf(action);
+                msg.Actions.Add(varAct);
             }
 
             return msg;
