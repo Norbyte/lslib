@@ -230,46 +230,68 @@ namespace LSTools.DebuggerFrontend
             return valueStr;
         }
 
+        private String TupleVariableIndexToName(RuleDebugInfo rule, NodeDebugInfo node, int index)
+        {
+            if (rule == null)
+            {
+                return "#" + index.ToString();
+            }
+            else if (node != null)
+            {
+                if (index < node.ColumnToVariableMaps.Count)
+                {
+                    var mappedColumnIdx = node.ColumnToVariableMaps[index];
+                    if (mappedColumnIdx < rule.Variables.Count)
+                    {
+                        return rule.Variables[mappedColumnIdx].Name;
+                    }
+                    else
+                    {
+                        return String.Format("(Bad Variable Idx #{0})", index);
+                    }
+                }
+                else
+                {
+                    return String.Format("(Unknown #{0})", index);
+                }
+            }
+            else
+            {
+                if (index < rule.Variables.Count)
+                {
+                    return rule.Variables[index].Name;
+                }
+                else
+                {
+                    return String.Format("(Bad Variable Idx #{0})", index);
+                }
+            }
+        }
+
         private List<DebugVariable> TupleToVariables(MsgFrame frame)
         {
             var variables = new List<DebugVariable>();
-            var node = DebugInfo.Nodes[frame.NodeId];
+            NodeDebugInfo node = null;
             RuleDebugInfo rule = null;
-            if (node.RuleId != 0)
+            if (frame.NodeId != 0)
             {
-                rule = DebugInfo.Rules[node.RuleId];
+                node = DebugInfo.Nodes[frame.NodeId];
+                if (node.RuleId != 0)
+                {
+                    rule = DebugInfo.Rules[node.RuleId];
+                }
             }
 
             for (var i = 0; i < frame.Tuple.Column.Count; i++)
             {
                 var value = frame.Tuple.Column[i];
-                var variable = new DebugVariable();
-
-                if (rule == null)
+                var variable = new DebugVariable
                 {
-                    variable.Name = "#" + i.ToString();
-                }
-                else if (i < node.ColumnToVariableMaps.Count)
-                {
-                    var mappedColumnIdx = node.ColumnToVariableMaps[i];
-                    if (mappedColumnIdx < rule.Variables.Count)
-                    {
-                        var ruleVar = rule.Variables[mappedColumnIdx];
-                        variable.Name = ruleVar.Name;
-                    }
-                    else
-                    {
-                        variable.Name = String.Format("(Bad Variable Idx #{0})", i);
-                    }
-                }
-                else
-                {
-                    variable.Name = String.Format("(Unknown #{0})", i);
-                }
-
-                // TODO type!
-                variable.Type = value.TypeId.ToString();
-                variable.Value = ValueToString(value);
+                    Name = TupleVariableIndexToName(rule, node, i),
+                    // TODO type name!
+                    Type = value.TypeId.ToString(),
+                    Value = ValueToString(value)
+                };
 
                 variables.Add(variable);
             }
@@ -281,12 +303,23 @@ namespace LSTools.DebuggerFrontend
         {
             var frames = new List<MsgFrame>();
             var index = 0;
-            foreach (var frame in message.CallStack)
+            for (var i = 0; i < message.CallStack.Count; i++)
             {
+                var frame = message.CallStack[i];
+
+                // Copy rule-local variables from the join frame to the action frame
+                if (frame.Type == MsgFrame.Types.FrameType.FrameRuleAction
+                    && i > 0)
+                {
+                    var prevFrame = message.CallStack[i - 1];
+                    frame.Tuple = prevFrame.Tuple;
+                }
+
                 if (frame.Type == MsgFrame.Types.FrameType.FrameInsert
                     || frame.Type == MsgFrame.Types.FrameType.FrameDelete
-                    || (frame.Type == MsgFrame.Types.FrameType.FramePushdown
-                        && DebugInfo.Nodes[frame.NodeId].Type == Node.Type.Rule)
+                    || frame.Type == MsgFrame.Types.FrameType.FrameRuleAction
+                    || frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
+                    || frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction
                     || index == message.CallStack.Count - 1)
                 {
                     frames.Add(frame);
@@ -300,6 +333,22 @@ namespace LSTools.DebuggerFrontend
 
         private string GetFrameName(MsgFrame frame)
         {
+            if (frame.Type == MsgFrame.Types.FrameType.FrameIsValid
+                || frame.Type == MsgFrame.Types.FrameType.FramePushdown
+                || frame.Type == MsgFrame.Types.FrameType.FramePushdownDelete
+                || frame.Type == MsgFrame.Types.FrameType.FrameInsert
+                || frame.Type == MsgFrame.Types.FrameType.FrameDelete)
+            {
+                return GetNodeFrameName(frame);
+            }
+            else
+            {
+                return GetActionFrameName(frame);
+            }
+        }
+
+        private string GetNodeFrameName(MsgFrame frame)
+        {
             var node = DebugInfo.Nodes[frame.NodeId];
 
             string dbName = "";
@@ -308,9 +357,19 @@ namespace LSTools.DebuggerFrontend
                 var db = DebugInfo.Databases[node.DatabaseId];
                 dbName = db.Name;
             }
-            else
+            else if (node.Name != null && node.Name.Length > 0)
             {
                 dbName = node.Name;
+            }
+            else if (node.RuleId != 0)
+            {
+                var rule = DebugInfo.Rules[node.RuleId];
+                // TODOrule.
+                dbName = "(rule)";
+            }
+            else
+            {
+                dbName = "(unknown)";
             }
 
             switch (frame.Type)
@@ -370,8 +429,46 @@ namespace LSTools.DebuggerFrontend
                         throw new InvalidOperationException($"Delete operation not supported on node {node.Type}");
                     }
 
+                case MsgFrame.Types.FrameType.FrameRuleAction:
+                    if (node.Type == Node.Type.Rule)
+                    {
+                        return dbName + " (THEN part)";
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Delete operation not supported on node {node.Type}");
+                    }
+
                 default:
                     throw new InvalidOperationException($"Unsupported frame type: {frame.Type}");
+            }
+        }
+
+        private string GetActionFrameName(MsgFrame frame)
+        {
+            switch (frame.Type)
+            {
+                case MsgFrame.Types.FrameType.FrameGoalInitAction:
+                    {
+                        var goal = DebugInfo.Goals[frame.GoalId].Name;
+                        return goal + " (INIT)";
+                    }
+
+                case MsgFrame.Types.FrameType.FrameGoalExitAction:
+                    {
+                        var goal = DebugInfo.Goals[frame.GoalId].Name;
+                        return goal + " (EXIT)";
+                    }
+
+                case MsgFrame.Types.FrameType.FrameRuleAction:
+                    {
+                        var node = DebugInfo.Nodes[frame.NodeId];
+                        var rule = DebugInfo.Rules[node.RuleId];
+                        return rule.Name + " (THEN part)";
+                    }
+
+                default:
+                    throw new InvalidOperationException($"Unsupported action type: {frame.Type}");
             }
         }
 
@@ -380,13 +477,44 @@ namespace LSTools.DebuggerFrontend
             var outFrame = new CoalescedFrame();
             outFrame.Name = GetFrameName(frame);
 
-            var node = DebugInfo.Nodes[frame.NodeId];
-            if (node.RuleId != 0)
+
+            if (frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
+                || frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction)
             {
-                var rule = DebugInfo.Rules[node.RuleId];
-                var goal = DebugInfo.Goals[rule.GoalId];
+                var goal = DebugInfo.Goals[frame.GoalId];
                 outFrame.File = goal.Path;
-                outFrame.Line = node.Line;
+                if (frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction)
+                {
+                    outFrame.Line = (int)goal.InitActions[(int)frame.ActionIndex].Line;
+                }
+                else
+                {
+                    outFrame.Line = (int)goal.ExitActions[(int)frame.ActionIndex].Line;
+                }
+            }
+            else if (frame.NodeId != 0)
+            {
+                var node = DebugInfo.Nodes[frame.NodeId];
+                if (node.RuleId != 0)
+                {
+                    var rule = DebugInfo.Rules[node.RuleId];
+                    var goal = DebugInfo.Goals[rule.GoalId];
+                    outFrame.File = goal.Path;
+
+                    if (frame.Type == MsgFrame.Types.FrameType.FramePushdown
+                        && node.Type == Node.Type.Rule)
+                    {
+                        outFrame.Line = (int)rule.ActionsStartLine;
+                    }
+                    else if (frame.Type == MsgFrame.Types.FrameType.FrameRuleAction)
+                    {
+                        outFrame.Line = (int)rule.Actions[(int)frame.ActionIndex].Line;
+                    }
+                    else
+                    {
+                        outFrame.Line = node.Line;
+                    }
+                }
             }
 
             outFrame.Variables = TupleToVariables(frame);
@@ -404,6 +532,7 @@ namespace LSTools.DebuggerFrontend
                 // DumpFrame(frame);
             }
 
+            stack.Reverse();
             return stack;
         }
     }

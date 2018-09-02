@@ -24,11 +24,16 @@ message MsgFrame {
 	FRAME_INSERT = 2;
 	FRAME_DELETE = 3;
 	FRAME_PUSHDOWN_DELETE = 4;
+	FRAME_RULE_ACTION = 5;
+	FRAME_GOAL_INIT_ACTION = 6;
+	FRAME_GOAL_EXIT_ACTION = 7;
   };
   
   uint32 node_id = 1;
   FrameType type = 2;
   MsgTuple tuple = 3;
+  uint32 goal_id = 4;
+  uint32 action_index = 5;
 }
 
 message DbgIdentifyRequest {

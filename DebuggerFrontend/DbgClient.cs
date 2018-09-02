@@ -379,7 +379,7 @@ namespace LSTools.DebuggerFrontend
                         {
                             var msg = new DebuggerToBackend();
                             msg.SetGlobalBreakpoints = new DbgSetGlobalBreakpoints();
-                            msg.SetGlobalBreakpoints.BreakpointMask = 15;
+                            msg.SetGlobalBreakpoints.BreakpointMask = 0x3f;
                             Send(msg);
                         }
 
@@ -396,7 +396,7 @@ namespace LSTools.DebuggerFrontend
                         Console.WriteLine("StoryLoaded");
                         var msg = new DebuggerToBackend();
                         msg.SetGlobalBreakpoints = new DbgSetGlobalBreakpoints();
-                        msg.SetGlobalBreakpoints.BreakpointMask = 15;
+                        msg.SetGlobalBreakpoints.BreakpointMask = 0x3f;
                         Send(msg);
 
                         OnStoryLoaded();

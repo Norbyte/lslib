@@ -140,6 +140,8 @@ namespace LSTools.DebuggerFrontend
                     writer.Write(e.ToString());
                     Console.WriteLine(e.ToString());
                 }
+
+                Environment.Exit(2);
             }
         }
 
