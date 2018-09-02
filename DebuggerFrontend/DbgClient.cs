@@ -152,6 +152,53 @@ namespace LSTools.DebuggerFrontend
             Send(msg);
         }
 
+        private MsgBreakpoint BreakpointToMsg(Breakpoint breakpoint)
+        {
+            var msgBp = new MsgBreakpoint();
+            if (breakpoint.LineInfo.Node != null)
+            {
+                msgBp.NodeId = breakpoint.LineInfo.Node.Id;
+            }
+            else
+            {
+                msgBp.GoalId = breakpoint.LineInfo.Goal.Id;
+            }
+
+            msgBp.IsInitAction = breakpoint.LineInfo.Type == LineType.GoalInitActionLine;
+            if (breakpoint.LineInfo.Type == LineType.GoalInitActionLine
+                || breakpoint.LineInfo.Type == LineType.GoalExitActionLine
+                || breakpoint.LineInfo.Type == LineType.RuleActionLine)
+            {
+                msgBp.ActionIndex = (Int32)breakpoint.LineInfo.ActionIndex;
+            }
+            else
+            {
+                msgBp.ActionIndex = -1;
+            }
+
+            msgBp.BreakpointMask = 0x3f; // TODO const
+            return msgBp;
+        }
+
+        public void SendSetBreakpoints(List<Breakpoint> breakpoints)
+        {
+            var setBps = new DbgSetBreakpoints();
+            foreach (var breakpoint in breakpoints)
+            {
+                if (breakpoint.Verified)
+                {
+                    var msgBp = BreakpointToMsg(breakpoint);
+                    setBps.Breakpoint.Add(msgBp);
+                }
+            }
+
+            var msg = new DebuggerToBackend
+            {
+                SetBreakpoints = setBps
+            };
+            Send(msg);
+        }
+
         public void SendSetGlobalBreakpoints(UInt32 breakpointMask)
         {
             var msg = new DebuggerToBackend

@@ -77,26 +77,7 @@ namespace LSTools.DebuggerFrontend
             }
 
             IncomingSeq++;
-
-            try
-            {
-                MessageReceived(message);
-            }
-            catch (DAPUnknownMessageException e)
-            {
-                if (LogStream != null)
-                {
-                    using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
-                    {
-                        writer.WriteLine(e.ToString());
-                    }
-                }
-
-                if (e.Type == "request")
-                {
-                    SendErrorReply(e.Seq, e.MessageType, e.ToString());
-                }
-            }
+            MessageReceived(message);
         }
 
         public void RunLoop()

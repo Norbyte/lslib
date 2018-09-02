@@ -281,7 +281,7 @@ namespace LSTools.DebuggerFrontend
         /**
          * An optional source column of the breakpoint.
          */
-        public int column { get; set; }
+        public int? column { get; set; }
 
         /**
          * An optional expression for conditional breakpoints.
@@ -322,6 +322,64 @@ namespace LSTools.DebuggerFrontend
         public bool sourceModified { get; set; }
     }
 
+    public class DAPBreakpoint
+    {
+        /**
+         * An optional unique identifier for the breakpoint.
+         */
+        public int? id { get; set; }
+
+        /**
+         * If true breakpoint could be set (but not necessarily at the desired location).
+         */
+        public bool verified { get; set; }
+
+        /**
+         * An optional message about the state of the breakpoint. This is shown to the user and can be used to explain why a breakpoint could not be verified.
+         */
+        public string message { get; set; }
+
+        /**
+         * The source where the breakpoint is located.
+         */
+        public DAPSource source { get; set; }
+
+        /**
+         * The start line of the actual range covered by the breakpoint.
+         */
+        public int? line { get; set; }
+
+        /**
+         * An optional start column of the actual range covered by the breakpoint.
+         */
+        public int? column { get; set; }
+
+        /**
+         * An optional end line of the actual range covered by the breakpoint.
+         */
+        public int? endLine { get; set; }
+
+        /**
+         * An optional end column of the actual range covered by the breakpoint. If no end line is given, then the end column is assumed to be in the start line.
+         */
+        public int? endColumn { get; set; }
+    }
+
+    /**
+     * Response to ‘setBreakpoints’ request.
+     * Returned is information about each breakpoint created by this request.
+     * This includes the actual code location and whether the breakpoint could be verified.
+     * The breakpoints returned are in the same order as the elements of the ‘breakpoints’
+     * (or the deprecated ‘lines’) array in the arguments.
+     */
+    public class DAPSetBreakpointsResponse : IDAPMessagePayload
+    {
+        /**
+         * Information about the breakpoints. The array elements are in the same order as the elements of the 'breakpoints' (or the deprecated 'lines') array in the arguments.
+         */
+        public IList<DAPBreakpoint> breakpoints { get; set; }
+    }
+
     public class DAPEmptyPayload : IDAPMessagePayload
     {
     }
@@ -331,7 +389,7 @@ namespace LSTools.DebuggerFrontend
         /**
          * Unique identifier for the thread.
          */
-         public int id { get; set; }
+        public int id { get; set; }
 
         /**
          * A name of the thread.

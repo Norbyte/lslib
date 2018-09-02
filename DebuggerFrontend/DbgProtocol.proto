@@ -52,6 +52,9 @@ message DbgSetGlobalBreakpoints {
 message MsgBreakpoint {
   uint32 node_id = 1;
   uint32 breakpoint_mask = 2;
+  uint32 goal_id = 3;
+  bool is_init_action = 4;
+  int32 action_index = 5;
 }
 
 message DbgSetBreakpoints {
@@ -99,6 +102,8 @@ message BkResult {
 	NOT_IN_PAUSE = 3;
 	NO_DEBUGGEE = 4;
 	INVALID_CONTINUE_ACTION = 5;
+	IN_PAUSE = 6;
+	INVALID_GOAL_ID = 7;
   };
 
   StatusCode status_code = 1;

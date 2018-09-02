@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace LSTools.DebuggerFrontend
 {
+
     public class DAPMessageHandler
     {
         private DAPStream Stream;
@@ -20,7 +21,8 @@ namespace LSTools.DebuggerFrontend
         private AsyncProtobufClient DbgClient;
         private DebuggerClient DbgCli;
         private StackTracePrinter TracePrinter;
-        public List<CoalescedFrame> Stack;
+        private BreakpointManager Breakpoints;
+        private List<CoalescedFrame> Stack;
         private bool Stopped;
 
 
@@ -79,7 +81,25 @@ namespace LSTools.DebuggerFrontend
         {
             if (message is DAPRequest)
             {
-                HandleRequest(message as DAPRequest);
+                try
+                {
+                    HandleRequest(message as DAPRequest);
+                }
+                catch (Exception e)
+                {
+                    if (LogStream != null)
+                    {
+                        using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
+                        {
+                            writer.WriteLine(e.ToString());
+                        }
+                    }
+
+                    if (message.type == "request")
+                    {
+                        SendReply(message as DAPRequest, e.ToString());
+                    }
+                }
             }
             else if (message is DAPEvent)
             {
@@ -105,6 +125,7 @@ namespace LSTools.DebuggerFrontend
             var loader = new DebugInfoLoader();
             DebugInfo = loader.Load(debugPayload);
             TracePrinter = new StackTracePrinter(DebugInfo);
+            Breakpoints = new BreakpointManager(DbgCli, DebugInfo);
             Stack = null;
             Stopped = false;
         }
@@ -208,10 +229,43 @@ namespace LSTools.DebuggerFrontend
 
         private void HandleSetBreakpointsRequest(DAPRequest request, DAPSetBreakpointsRequest breakpoints)
         {
+            if (Breakpoints != null)
+            {
+                var goalName = Path.GetFileNameWithoutExtension(breakpoints.source.name);
+                Breakpoints.ClearGoalBreakpoints(goalName);
+
+                var reply = new DAPSetBreakpointsResponse
+                {
+                    breakpoints = new List<DAPBreakpoint>()
+                };
+
+                foreach (var breakpoint in breakpoints.breakpoints)
+                {
+                    var bp = Breakpoints.SetGoalBreakpoint(goalName, breakpoint);
+                    var processedBp = new DAPBreakpoint
+                    {
+                        id = (int)bp.Id,
+                        verified = bp.Verified,
+                        message = bp.ErrorReason,
+                        source = breakpoints.source,
+                        line = breakpoint.line
+                    };
+                    reply.breakpoints.Add(processedBp);
+                }
+
+                Breakpoints.UpdateBreakpoints();
+
+                SendReply(request, reply);
+            }
+            else
+            {
+                SendReply(request, "Cannot add breakpoint - story not loaded");
+            }
         }
 
         private void HandleConfigurationDoneRequest(DAPRequest request, DAPEmptyPayload msg)
         {
+            SendReply(request, new DAPEmptyPayload());
         }
 
         private void HandleThreadsRequest(DAPRequest request, DAPEmptyPayload msg)
