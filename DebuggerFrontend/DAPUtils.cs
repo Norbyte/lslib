@@ -136,6 +136,10 @@ namespace LSTools.DebuggerFrontend
                     case "variables": return serializer.Deserialize<DAPVariablesRequest>(reader);
                     case "scopes": return serializer.Deserialize<DAPScopesRequest>(reader);
                     case "continue": return serializer.Deserialize<DAPContinueRequest>(reader);
+                    case "next": return serializer.Deserialize<DAPContinueRequest>(reader);
+                    case "stepIn": return serializer.Deserialize<DAPContinueRequest>(reader);
+                    case "stepOut": return serializer.Deserialize<DAPContinueRequest>(reader);
+                    case "pause": return serializer.Deserialize<DAPContinueRequest>(reader);
                     default: throw new DAPUnknownMessageException(TypeHint.type, TypeHint.message, TypeHint.seq);
                 }
             }

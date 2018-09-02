@@ -96,10 +96,18 @@ namespace LSTools.DebuggerFrontend
 
         public delegate void BackendInfoDelegate(BkVersionInfoResponse response);
         public BackendInfoDelegate OnBackendInfo = delegate { };
+
         public delegate void StoryLoadedDelegate();
         public StoryLoadedDelegate OnStoryLoaded = delegate { };
+
+        public delegate void DebugSessionEndedDelegate();
+        public DebugSessionEndedDelegate OnDebugSessionEnded = delegate { };
+
         public delegate void BreakpointTriggeredDelegate(BkBreakpointTriggered bp);
         public BreakpointTriggeredDelegate OnBreakpointTriggered = delegate { };
+
+        public delegate void GlobalBreakpointTriggeredDelegate(BkGlobalBreakpointTriggered bp);
+        public GlobalBreakpointTriggeredDelegate OnGlobalBreakpointTriggered = delegate { };
 
         public DebuggerClient(AsyncProtobufClient client, StoryDebugInfo debugInfo)
         {
@@ -135,227 +143,47 @@ namespace LSTools.DebuggerFrontend
             Client.Send(message);
         }
 
-        private string TupleToString(MsgFrame frame)
+        public void SendIdentify()
         {
-            string tuple = "";
-            var node = DebugInfo.Nodes[frame.NodeId];
-            RuleDebugInfo rule = null;
-            if (node.RuleId != 0)
+            var msg = new DebuggerToBackend
             {
-                rule = DebugInfo.Rules[node.RuleId];
-            }
-
-            for (var i = 0; i < frame.Tuple.Column.Count; i++)
-            {
-                var value = frame.Tuple.Column[i];
-                string columnName;
-                if (rule == null)
-                {
-                    columnName = "";
-                }
-                else if (i < node.ColumnToVariableMaps.Count)
-                {
-                    var mappedColumnIdx = node.ColumnToVariableMaps[i];
-                    if (mappedColumnIdx < rule.Variables.Count)
-                    {
-                        var variable = rule.Variables[mappedColumnIdx];
-                        columnName = variable.Name;
-                    }
-                    else
-                    {
-                        columnName = "(Bad Variable Idx)";
-                    }
-                }
-                else
-                {
-                    columnName = "(Unknown)";
-                }
-
-                string valueStr;
-                switch ((Value.Type)value.TypeId)
-                {
-                    case Value.Type.Unknown:
-                        valueStr = "(None)";
-                        break;
-
-                    case Value.Type.Integer:
-                    case Value.Type.Integer64:
-                        valueStr = value.Intval.ToString();
-                        break;
-
-                    case Value.Type.Float:
-                        valueStr = value.Floatval.ToString();
-                        break;
-
-                    case Value.Type.String:
-                    case Value.Type.GuidString:
-                    default:
-                        valueStr = value.Stringval;
-                        break;
-
-                }
-
-                if (columnName.Length > 0)
-                {
-                    tuple += String.Format("{0}={1}, ", columnName, valueStr);
-                }
-                else
-                {
-                    tuple += String.Format("{0}, ", valueStr);
-                }
-            }
-
-            return tuple;
+                Identify = new DbgIdentifyRequest()
+            };
+            Send(msg);
         }
 
-        private void DumpFrame(MsgFrame frame)
+        public void SendSetGlobalBreakpoints(UInt32 breakpointMask)
         {
-            var node = DebugInfo.Nodes[frame.NodeId];
-
-            string codeLocation = "";
-            if (node.RuleId != 0)
+            var msg = new DebuggerToBackend
             {
-                var rule = DebugInfo.Rules[node.RuleId];
-                var goal = DebugInfo.Goals[rule.GoalId];
-                codeLocation = "@ " + goal.Name + ":" + node.Line.ToString() + " ";
-            }
-
-            string dbName = "";
-            if (node.DatabaseId != 0)
-            {
-                var db = DebugInfo.Databases[node.DatabaseId];
-                dbName = db.Name;
-            }
-            else
-            {
-                dbName = node.Name;
-            }
-
-            string tupleStr = TupleToString(frame);
-
-            switch (frame.Type)
-            {
-                case MsgFrame.Types.FrameType.FrameIsValid:
-                    if (node.Type == Node.Type.DivQuery || node.Type == Node.Type.InternalQuery || node.Type == Node.Type.UserQuery)
-                    {
-                        Console.WriteLine("    Query {0} ({1})", dbName, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Database)
-                    {
-                        Console.WriteLine("    Database {0} ({1})", dbName, tupleStr);
-                    }
-                    else
-                    {
-                        Console.WriteLine("    IsValid {0} {1} ({2})", node.Type, dbName, tupleStr);
-                    }
-                    break;
-
-                case MsgFrame.Types.FrameType.FramePushdown:
-                    if (node.Type == Node.Type.And || node.Type == Node.Type.NotAnd || node.Type == Node.Type.RelOp)
-                    {
-                        Console.WriteLine("    PushDown {0}({1})", codeLocation, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Rule)
-                    {
-                        Console.WriteLine("    Rule THEN part {0}({1})", codeLocation, tupleStr);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Pushdown operation not supported on this node");
-                    }
-                    break;
-
-                case MsgFrame.Types.FrameType.FramePushdownDelete:
-                    Console.WriteLine("    PushDownDelete {0} {1}({2})", node.Type, codeLocation, tupleStr);
-                    break;
-
-                case MsgFrame.Types.FrameType.FrameInsert:
-                    if (node.Type == Node.Type.UserQuery)
-                    {
-                        Console.WriteLine("    User Query {0} ({1})", dbName, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Proc)
-                    {
-                        Console.WriteLine("    Call Proc {0} ({1})", dbName, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Database)
-                    {
-                        Console.WriteLine("    Insert Into {0} ({1})", dbName, tupleStr);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Insert operation not supported on this node");
-                    }
-                    break;
-
-                case MsgFrame.Types.FrameType.FrameDelete:
-                    if (node.Type == Node.Type.Database)
-                    {
-                        Console.WriteLine("    Delete from {0} ({1})", dbName, tupleStr);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Delete operation not supported on this node");
-                    }
-                    break;
-
-                default:
-                    throw new InvalidOperationException("Unsupported frame type");
-            }
+                SetGlobalBreakpoints = new DbgSetGlobalBreakpoints
+                {
+                    BreakpointMask = breakpointMask
+                }
+            };
+            Send(msg);
         }
 
-        private List<MsgFrame> CoalesceCallStack(BkBreakpointTriggered message)
+        public void SendContinue(DbgContinue.Types.Action action)
         {
-            var frames = new List<MsgFrame>();
-            var index = 0;
-            foreach (var frame in message.CallStack)
+            var msg = new DebuggerToBackend
             {
-                if (frame.Type == MsgFrame.Types.FrameType.FrameInsert
-                    || frame.Type == MsgFrame.Types.FrameType.FrameDelete
-                    || (frame.Type == MsgFrame.Types.FrameType.FramePushdown
-                        && DebugInfo.Nodes[frame.NodeId].Type == Node.Type.Rule)
-                    || index == message.CallStack.Count - 1)
+                Continue = new DbgContinue
                 {
-                    frames.Add(frame);
+                    Action = action
                 }
-
-                index++;
-            }
-
-            return frames;
+            };
+            Send(msg);
         }
 
         private void BreakpointTriggered(BkBreakpointTriggered message)
         {
-            /*var msg = new DebuggerToBackend();
-            msg.Continue = new DbgContinue();
-            msg.Continue.Action = DbgContinue.Types.Action.Continue;
-            Send(msg);
-            
-            Console.WriteLine("Breakpoint triggered!");
-            foreach (var frame in message.CallStack)
-            {
-                DumpFrame(frame);
-            }
-
-            Console.WriteLine("Coalesced stack:");
-            var cs = CoalesceCallStack(message);
-            foreach (var frame in cs)
-            {
-                DumpFrame(frame);
-            }*/
-
             OnBreakpointTriggered(message);
         }
 
         private void GlobalBreakpointTriggered(BkGlobalBreakpointTriggered message)
         {
-            var msg = new DebuggerToBackend();
-            msg.Continue = new DbgContinue();
-            msg.Continue.Action = DbgContinue.Types.Action.Continue;
-            Send(msg);
-            
-            Console.WriteLine("Global {0}", message.Reason);
+            OnGlobalBreakpointTriggered(message);
         }
 
         private void MessageReceived(BackendToDebugger message)
@@ -373,35 +201,20 @@ namespace LSTools.DebuggerFrontend
             switch (message.MsgCase)
             {
                 case BackendToDebugger.MsgOneofCase.VersionInfo:
-                    {
-                        Console.WriteLine("Got version info from backend");
-                        if (message.VersionInfo.StoryLoaded)
-                        {
-                            var msg = new DebuggerToBackend();
-                            msg.SetGlobalBreakpoints = new DbgSetGlobalBreakpoints();
-                            msg.SetGlobalBreakpoints.BreakpointMask = 0x3f;
-                            Send(msg);
-                        }
-
-                        OnBackendInfo(message.VersionInfo);
-                        break;
-                    }
+                    OnBackendInfo(message.VersionInfo);
+                    break;
 
                 case BackendToDebugger.MsgOneofCase.Results:
                     Console.WriteLine("RC {0}", message.Results.StatusCode);
                     break;
 
                 case BackendToDebugger.MsgOneofCase.StoryLoaded:
-                    {
-                        Console.WriteLine("StoryLoaded");
-                        var msg = new DebuggerToBackend();
-                        msg.SetGlobalBreakpoints = new DbgSetGlobalBreakpoints();
-                        msg.SetGlobalBreakpoints.BreakpointMask = 0x3f;
-                        Send(msg);
+                    OnStoryLoaded();
+                    break;
 
-                        OnStoryLoaded();
-                        break;
-                    }
+                case BackendToDebugger.MsgOneofCase.DebugSessionEnded:
+                    OnDebugSessionEnded();
+                    break;
 
                 case BackendToDebugger.MsgOneofCase.BreakpointTriggered:
                     BreakpointTriggered(message.BreakpointTriggered);
@@ -412,8 +225,7 @@ namespace LSTools.DebuggerFrontend
                     break;
 
                 default:
-                    Console.WriteLine("Got unknown msg!");
-                    break;
+                    throw new InvalidOperationException($"Unknown message from DBG: {message.MsgCase}");
             }
         }
     }

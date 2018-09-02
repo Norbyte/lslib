@@ -106,102 +106,6 @@ namespace LSTools.DebuggerFrontend
             return tuple;
         }
 
-        private void DumpFrame(MsgFrame frame)
-        {
-            var node = DebugInfo.Nodes[frame.NodeId];
-
-            string codeLocation = "";
-            if (node.RuleId != 0)
-            {
-                var rule = DebugInfo.Rules[node.RuleId];
-                var goal = DebugInfo.Goals[rule.GoalId];
-                codeLocation = "@ " + goal.Name + ":" + node.Line.ToString() + " ";
-            }
-
-            string dbName = "";
-            if (node.DatabaseId != 0)
-            {
-                var db = DebugInfo.Databases[node.DatabaseId];
-                dbName = db.Name;
-            }
-            else
-            {
-                dbName = node.Name;
-            }
-
-            string tupleStr = TupleToString(frame);
-
-            switch (frame.Type)
-            {
-                case MsgFrame.Types.FrameType.FrameIsValid:
-                    if (node.Type == Node.Type.DivQuery || node.Type == Node.Type.InternalQuery || node.Type == Node.Type.UserQuery)
-                    {
-                        Console.WriteLine("    Query {0} ({1})", dbName, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Database)
-                    {
-                        Console.WriteLine("    Database {0} ({1})", dbName, tupleStr);
-                    }
-                    else
-                    {
-                        Console.WriteLine("    IsValid {0} {1} ({2})", node.Type, dbName, tupleStr);
-                    }
-                    break;
-
-                case MsgFrame.Types.FrameType.FramePushdown:
-                    if (node.Type == Node.Type.And || node.Type == Node.Type.NotAnd || node.Type == Node.Type.RelOp)
-                    {
-                        Console.WriteLine("    PushDown {0}({1})", codeLocation, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Rule)
-                    {
-                        Console.WriteLine("    Rule THEN part {0}({1})", codeLocation, tupleStr);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Pushdown operation not supported on this node");
-                    }
-                    break;
-
-                case MsgFrame.Types.FrameType.FramePushdownDelete:
-                    Console.WriteLine("    PushDownDelete {0} {1}({2})", node.Type, codeLocation, tupleStr);
-                    break;
-
-                case MsgFrame.Types.FrameType.FrameInsert:
-                    if (node.Type == Node.Type.UserQuery)
-                    {
-                        Console.WriteLine("    User Query {0} ({1})", dbName, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Proc)
-                    {
-                        Console.WriteLine("    Call Proc {0} ({1})", dbName, tupleStr);
-                    }
-                    else if (node.Type == Node.Type.Database)
-                    {
-                        Console.WriteLine("    Insert Into {0} ({1})", dbName, tupleStr);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Insert operation not supported on this node");
-                    }
-                    break;
-
-                case MsgFrame.Types.FrameType.FrameDelete:
-                    if (node.Type == Node.Type.Database)
-                    {
-                        Console.WriteLine("    Delete from {0} ({1})", dbName, tupleStr);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Delete operation not supported on this node");
-                    }
-                    break;
-
-                default:
-                    throw new InvalidOperationException("Unsupported frame type");
-            }
-        }
-
         private string ValueToString(MsgTypedValue value)
         {
             string valueStr;
@@ -529,7 +433,6 @@ namespace LSTools.DebuggerFrontend
             foreach (var frame in coalesced)
             {
                 stack.Add(MsgFrameToLocal(frame));
-                // DumpFrame(frame);
             }
 
             stack.Reverse();

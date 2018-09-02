@@ -120,6 +120,24 @@ namespace LSTools.DebuggerFrontend
             SendEvent("stopped", stopped);
         }
 
+        private void OnGlobalBreakpointTriggered(BkGlobalBreakpointTriggered message)
+        {
+            if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointStoryLoaded)
+            {
+                DbgCli.SendSetGlobalBreakpoints(0x01); // TODO const
+                // Break on next node
+                DbgCli.SendContinue(DbgContinue.Types.Action.StepInto);
+            }
+            else if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointGameInit)
+            {
+                DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Global breakpoint type not supported: {message.Reason}");
+            }
+        }
+
         private void HandleInitializeRequest(DAPRequest request, DAPInitializeRequest init)
         {
             var reply = new DAPCapabilities();
@@ -170,14 +188,13 @@ namespace LSTools.DebuggerFrontend
             DbgCli.OnStoryLoaded = this.OnStoryLoaded;
             DbgCli.OnBackendInfo = this.OnBackendInfo;
             DbgCli.OnBreakpointTriggered = this.OnBreakpointTriggered;
+            DbgCli.OnGlobalBreakpointTriggered = this.OnGlobalBreakpointTriggered;
             if (LogStream != null)
             {
                 DbgCli.EnableLogging(LogStream);
             }
-
-            var msg = new DebuggerToBackend();
-            msg.Identify = new DbgIdentifyRequest();
-            DbgCli.Send(msg);
+            
+            DbgCli.SendIdentify();
 
             DbgThread = new Thread(new ThreadStart(DebugThreadMain));
             DbgThread.Start();
@@ -332,7 +349,7 @@ namespace LSTools.DebuggerFrontend
             SendReply(request, reply);
         }
 
-        private void HandleContinueRequest(DAPRequest request, DAPContinueRequest msg)
+        private void HandleContinueRequest(DAPRequest request, DAPContinueRequest msg, DbgContinue.Types.Action action)
         {
             if (!Stopped)
             {
@@ -345,11 +362,8 @@ namespace LSTools.DebuggerFrontend
                 SendReply(request, "Requested continue for unknown thread");
                 return;
             }
-
-            var dbgMsg = new DebuggerToBackend();
-            dbgMsg.Continue = new DbgContinue();
-            dbgMsg.Continue.Action = DbgContinue.Types.Action.Continue;
-            DbgCli.Send(dbgMsg);
+            
+            DbgCli.SendContinue(action);
 
             var reply = new DAPContinueResponse
             {
@@ -402,7 +416,28 @@ namespace LSTools.DebuggerFrontend
                     break;
 
                 case "continue":
-                    HandleContinueRequest(request, request.arguments as DAPContinueRequest);
+                    HandleContinueRequest(request, request.arguments as DAPContinueRequest,
+                        DbgContinue.Types.Action.Continue);
+                    break;
+
+                case "next":
+                    HandleContinueRequest(request, request.arguments as DAPContinueRequest,
+                        DbgContinue.Types.Action.StepOver);
+                    break;
+
+                case "stepIn":
+                    HandleContinueRequest(request, request.arguments as DAPContinueRequest,
+                        DbgContinue.Types.Action.StepInto);
+                    break;
+
+                case "stepOut":
+                    HandleContinueRequest(request, request.arguments as DAPContinueRequest,
+                        DbgContinue.Types.Action.StepOut);
+                    break;
+
+                case "pause":
+                    HandleContinueRequest(request, request.arguments as DAPContinueRequest,
+                        DbgContinue.Types.Action.Pause);
                     break;
 
                 case "disconnect":

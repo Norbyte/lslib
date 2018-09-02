@@ -65,6 +65,7 @@ message BkBreakpointTriggered {
 message BkGlobalBreakpointTriggered {
   enum Reason {
 	BREAKPOINT_STORY_LOADED = 0;
+	BREAKPOINT_GAME_INIT = 1;
   };
   
   Reason reason = 1;
@@ -74,6 +75,9 @@ message DbgContinue {
   enum Action {
     CONTINUE = 0;
     STEP_OVER = 1;
+    STEP_INTO = 2;
+    STEP_OUT = 3;
+    PAUSE = 4;
   };
   Action action = 1;
 }
@@ -94,6 +98,7 @@ message BkResult {
 	INVALID_NODE_ID = 2;
 	NOT_IN_PAUSE = 3;
 	NO_DEBUGGEE = 4;
+	INVALID_CONTINUE_ACTION = 5;
   };
 
   StatusCode status_code = 1;
