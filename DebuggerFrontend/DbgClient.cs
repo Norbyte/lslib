@@ -21,7 +21,7 @@ namespace LSTools.DebuggerFrontend
 
         public AsyncProtobufClient(string host, int port)
         {
-            MessageBuffer = new byte[0x10000];
+            MessageBuffer = new byte[0x100000];
             BufferPos = 0;
 
             Socket = new TcpClient();
@@ -48,6 +48,12 @@ namespace LSTools.DebuggerFrontend
                         | (MessageBuffer[1] << 8)
                         | (MessageBuffer[2] << 16)
                         | (MessageBuffer[3] << 24);
+
+                    if (length >= 0x100000)
+                    {
+                        throw new InvalidDataException($"Message too long ({length} bytes)");
+                    }
+
                     if (BufferPos >= length)
                     {
                         using (var stream = new CodedInputStream(MessageBuffer, 4, length - 4))
