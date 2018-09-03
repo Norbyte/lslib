@@ -80,7 +80,6 @@
             // extractPackageFileDlg
             // 
             this.extractPackageFileDlg.Filter = "LS package / savegame files|*.pak;*.lsv";
-            this.extractPackageFileDlg.ShowReadOnly = true;
             // 
             // packageProgressLabel
             // 
