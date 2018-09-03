@@ -831,4 +831,21 @@ namespace LSTools.DebuggerFrontend
          */
         public bool allThreadsContinued { get; set; }
     }
+
+    /**
+     * The event indicates that the target has produced some output.
+     */
+    public class DAPOutputMessage : IDAPMessagePayload
+    {
+        /**
+         * The output category. If not specified, 'console' is assumed.
+         * Values: 'console', 'stdout', 'stderr', 'telemetry', etc.
+         */
+        public string category { get; set; }
+
+        /**
+         * The output to report.
+         */
+        public string output { get; set; }
+    }
 }

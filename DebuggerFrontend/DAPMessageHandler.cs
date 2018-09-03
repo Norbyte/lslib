@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,6 +78,25 @@ namespace LSTools.DebuggerFrontend
             Stream.Send(reply);
         }
 
+        private void LogError(String message)
+        {
+            var outputMsg = new DAPOutputMessage
+            {
+                category = "stderr",
+                output = message
+            };
+            SendEvent("output", outputMsg);
+
+            if (LogStream != null)
+            {
+                using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
+                {
+                    writer.WriteLine(message);
+                    Console.WriteLine(message);
+                }
+            }
+        }
+
         private void MessageReceived(DAPMessage message)
         {
             if (message is DAPRequest)
@@ -87,13 +107,7 @@ namespace LSTools.DebuggerFrontend
                 }
                 catch (Exception e)
                 {
-                    if (LogStream != null)
-                    {
-                        using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
-                        {
-                            writer.WriteLine(e.ToString());
-                        }
-                    }
+                    LogError(e.ToString());
 
                     if (message.type == "request")
                     {
@@ -172,7 +186,10 @@ namespace LSTools.DebuggerFrontend
 
             if (!DebugInfoSync.Matches)
             {
-                throw new InvalidDataException($"Debug info mismatch. Reasons:\r\n{reasons}");
+                var reasons = DebugInfoSync.Reasons.Aggregate((a, b) => a + "\r\n" + b);
+                var msg = $"Could not attach to backend: Debug info does not match loaded story.\r\nMismatches:\r\n{reasons}";
+                LogError(msg);
+                throw new SystemException(msg);
             }
 
             DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
@@ -193,12 +210,7 @@ namespace LSTools.DebuggerFrontend
             }
             catch (Exception e)
             {
-                using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
-                {
-                    writer.Write(e.ToString());
-                    Console.WriteLine(e.ToString());
-                }
-
+                LogError(e.ToString());
                 Environment.Exit(2);
             }
         }
@@ -218,19 +230,21 @@ namespace LSTools.DebuggerFrontend
             {
                 DbgClient = new AsyncProtobufClient(launch.backendHost, launch.backendPort);
             }
-            catch (Exception e)
+            catch (SocketException e)
             {
                 SendReply(request, "Could not connect to Osiris backend server: " + e.Message);
                 return;
             }
 
-            DbgCli = new DebuggerClient(DbgClient, DebugInfo);
-            DbgCli.OnStoryLoaded = this.OnStoryLoaded;
-            DbgCli.OnBackendInfo = this.OnBackendInfo;
-            DbgCli.OnBreakpointTriggered = this.OnBreakpointTriggered;
-            DbgCli.OnGlobalBreakpointTriggered = this.OnGlobalBreakpointTriggered;
-            DbgCli.OnStorySyncData = this.OnStorySyncData;
-            DbgCli.OnStorySyncFinished = this.OnStorySyncFinished;
+            DbgCli = new DebuggerClient(DbgClient, DebugInfo)
+            {
+                OnStoryLoaded = this.OnStoryLoaded,
+                OnBackendInfo = this.OnBackendInfo,
+                OnBreakpointTriggered = this.OnBreakpointTriggered,
+                OnGlobalBreakpointTriggered = this.OnGlobalBreakpointTriggered,
+                OnStorySyncData = this.OnStorySyncData,
+                OnStorySyncFinished = this.OnStorySyncFinished
+            };
             if (LogStream != null)
             {
                 DbgCli.EnableLogging(LogStream);
