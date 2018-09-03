@@ -25,7 +25,7 @@ namespace Divine.CLI
             {
                 string extractionPath = GetExtractionPath(CommandLineActions.SourcePath, CommandLineActions.DestinationPath);
 
-                CommandLineLogger.LogDebug($"Extracting package: {CommandLineActions.SourcePath}");
+                CommandLineLogger.LogInfo($"Extracting package: {CommandLineActions.SourcePath}");
 
                 ExtractPackageResource(CommandLineActions.SourcePath, extractionPath);
             }
@@ -39,7 +39,7 @@ namespace Divine.CLI
             {
                 string extractionPath = GetExtractionPath(file, CommandLineActions.DestinationPath);
 
-                CommandLineLogger.LogDebug($"Extracting package: {file}");
+                CommandLineLogger.LogInfo($"Extracting package: {file}");
 
                 ExtractPackageResource(file, extractionPath);
             }
@@ -95,7 +95,7 @@ namespace Divine.CLI
             }
             catch (NotAPackageException)
             {
-                CommandLineLogger.LogFatal("Failed to extract package because the package is not an Original Sin package or savegame archive", 1);
+                CommandLineLogger.LogError("Failed to extract package because the package is not an Original Sin package or savegame archive");
             }
             catch (Exception e)
             {
