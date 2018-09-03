@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace LSTools.DebuggerFrontend
 {
-
     public class DAPMessageHandler
     {
         private DAPStream Stream;
@@ -17,6 +16,7 @@ namespace LSTools.DebuggerFrontend
 
         private StoryDebugInfo DebugInfo;
         private String DebugInfoPath;
+        private DebugInfoSync DebugInfoSync;
         private Thread DbgThread;
         private AsyncProtobufClient DbgClient;
         private DebuggerClient DbgCli;
@@ -145,18 +145,37 @@ namespace LSTools.DebuggerFrontend
         {
             if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointStoryLoaded)
             {
-                DbgCli.SendSetGlobalBreakpoints(0x01); // TODO const
+                DbgCli.SendSetGlobalBreakpoints(0x80); // TODO const
                 // Break on next node
                 DbgCli.SendContinue(DbgContinue.Types.Action.StepInto);
             }
             else if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointGameInit)
             {
-                DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+                // DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+                DebugInfoSync = new DebugInfoSync(DebugInfo);
+                DbgCli.SendSyncStory();
             }
             else
             {
                 throw new InvalidOperationException($"Global breakpoint type not supported: {message.Reason}");
             }
+        }
+
+        private void OnStorySyncData(BkSyncStoryData data)
+        {
+            DebugInfoSync.AddData(data);
+        }
+
+        private void OnStorySyncFinished()
+        {
+            DebugInfoSync.Finish();
+
+            if (!DebugInfoSync.Matches)
+            {
+                throw new InvalidDataException($"Debug info mismatch. Reasons:\r\n{reasons}");
+            }
+
+            DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
         }
 
         private void HandleInitializeRequest(DAPRequest request, DAPInitializeRequest init)
@@ -210,6 +229,8 @@ namespace LSTools.DebuggerFrontend
             DbgCli.OnBackendInfo = this.OnBackendInfo;
             DbgCli.OnBreakpointTriggered = this.OnBreakpointTriggered;
             DbgCli.OnGlobalBreakpointTriggered = this.OnGlobalBreakpointTriggered;
+            DbgCli.OnStorySyncData = this.OnStorySyncData;
+            DbgCli.OnStorySyncFinished = this.OnStorySyncFinished;
             if (LogStream != null)
             {
                 DbgCli.EnableLogging(LogStream);

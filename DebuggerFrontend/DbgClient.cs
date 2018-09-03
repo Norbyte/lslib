@@ -109,6 +109,12 @@ namespace LSTools.DebuggerFrontend
         public delegate void GlobalBreakpointTriggeredDelegate(BkGlobalBreakpointTriggered bp);
         public GlobalBreakpointTriggeredDelegate OnGlobalBreakpointTriggered = delegate { };
 
+        public delegate void StorySyncDataDelegate(BkSyncStoryData data);
+        public StorySyncDataDelegate OnStorySyncData = delegate { };
+
+        public delegate void StorySyncFinishedDelegate();
+        public StorySyncFinishedDelegate OnStorySyncFinished = delegate { };
+
         public DebuggerClient(AsyncProtobufClient client, StoryDebugInfo debugInfo)
         {
             Client = client;
@@ -223,6 +229,15 @@ namespace LSTools.DebuggerFrontend
             Send(msg);
         }
 
+        public void SendSyncStory()
+        {
+            var msg = new DebuggerToBackend
+            {
+                SyncStory = new DbgSyncStory()
+            };
+            Send(msg);
+        }
+
         private void BreakpointTriggered(BkBreakpointTriggered message)
         {
             OnBreakpointTriggered(message);
@@ -269,6 +284,14 @@ namespace LSTools.DebuggerFrontend
 
                 case BackendToDebugger.MsgOneofCase.GlobalBreakpointTriggered:
                     GlobalBreakpointTriggered(message.GlobalBreakpointTriggered);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.SyncStoryData:
+                    OnStorySyncData(message.SyncStoryData);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.SyncStoryFinished:
+                    OnStorySyncFinished();
                     break;
 
                 default:
