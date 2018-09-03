@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -1199,11 +1200,21 @@ namespace LSLib.LS.Story.Compiler
 
             if (DebugInfo != null)
             {
+                string canonicalizedPath;
+                if (File.Exists(goal.Location.FileName))
+                {
+                    canonicalizedPath = Path.GetFullPath(goal.Location.FileName);
+                }
+                else
+                {
+                    canonicalizedPath = goal.Location.FileName;
+                }
+
                 var goalDebug = new GoalDebugInfo
                 {
                     Id = osiGoal.Index,
                     Name = goal.Name,
-                    Path = goal.Location.FileName,
+                    Path = canonicalizedPath,
                     InitActions = new List<ActionDebugInfo>(),
                     ExitActions = new List<ActionDebugInfo>()
                 };
