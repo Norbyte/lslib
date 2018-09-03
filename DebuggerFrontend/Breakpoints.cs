@@ -150,7 +150,7 @@ namespace LSTools.DebuggerFrontend
                 ActionIndex = index,
                 Line = line
             };
-            goalMap.LineMap.Add(line, mapping);
+            goalMap.LineMap[line] = mapping;
         }
 
         private void BuildLineMap(GoalDebugInfo goal)
