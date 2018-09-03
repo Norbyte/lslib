@@ -463,9 +463,15 @@ namespace LSTools.DebuggerFrontend
 
         private void HandleContinueRequest(DAPRequest request, DAPContinueRequest msg, DbgContinue.Types.Action action)
         {
-            if (!Stopped)
+            if (action != DbgContinue.Types.Action.Pause && !Stopped)
             {
                 SendReply(request, "Already running");
+                return;
+            }
+
+            if (action == DbgContinue.Types.Action.Pause && Stopped)
+            {
+                SendReply(request, "Already stopped");
                 return;
             }
 
@@ -474,7 +480,12 @@ namespace LSTools.DebuggerFrontend
                 SendReply(request, "Requested continue for unknown thread");
                 return;
             }
-            
+
+            if (action != DbgContinue.Types.Action.Pause)
+            {
+                Stopped = false;
+            }
+
             DbgCli.SendContinue(action);
 
             var reply = new DAPContinueResponse
