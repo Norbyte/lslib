@@ -25,6 +25,9 @@ namespace LSTools.DebuggerFrontend
         private BreakpointManager Breakpoints;
         private List<CoalescedFrame> Stack;
         private bool Stopped;
+        // Should we send a continue message after story synchronization is done?
+        // This is needed if the sync was triggered by a global breakpoint.
+        private bool ContinueAfterSync;
 
 
         public DAPMessageHandler(DAPStream stream)
@@ -125,15 +128,7 @@ namespace LSTools.DebuggerFrontend
             }
         }
 
-        private void OnBackendInfo(BkVersionInfoResponse response)
-        {
-            if (response.StoryLoaded)
-            {
-                OnStoryLoaded();
-            }
-        }
-
-        private void OnStoryLoaded()
+        private void InitDebugger()
         {
             var debugPayload = File.ReadAllBytes(DebugInfoPath);
             var loader = new DebugInfoLoader();
@@ -142,6 +137,31 @@ namespace LSTools.DebuggerFrontend
             Breakpoints = new BreakpointManager(DbgCli, DebugInfo);
             Stack = null;
             Stopped = false;
+        }
+
+        private void SynchronizeStoryWithBackend(bool continueAfterSync)
+        {
+            DebugInfoSync = new DebugInfoSync(DebugInfo);
+            ContinueAfterSync = continueAfterSync;
+            DbgCli.SendSyncStory();
+        }
+
+        private void OnBackendInfo(BkVersionInfoResponse response)
+        {
+            if (response.StoryLoaded)
+            {
+                InitDebugger();
+            }
+
+            if (response.StoryInitialized)
+            {
+                SynchronizeStoryWithBackend(false);
+            }
+        }
+
+        private void OnStoryLoaded()
+        {
+            InitDebugger();
         }
 
         private void OnBreakpointTriggered(BkBreakpointTriggered bp)
@@ -165,9 +185,7 @@ namespace LSTools.DebuggerFrontend
             }
             else if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointGameInit)
             {
-                // DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
-                DebugInfoSync = new DebugInfoSync(DebugInfo);
-                DbgCli.SendSyncStory();
+                SynchronizeStoryWithBackend(true);
             }
             else
             {
@@ -192,7 +210,12 @@ namespace LSTools.DebuggerFrontend
                 throw new SystemException(msg);
             }
 
-            DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+            DebugInfoSync = null;
+
+            if (ContinueAfterSync)
+            {
+                DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+            }
         }
 
         private void HandleInitializeRequest(DAPRequest request, DAPInitializeRequest init)

@@ -42,7 +42,7 @@ message DbgIdentifyRequest {
 message BkVersionInfoResponse {
   uint32 protocol_version = 1;
   bool story_loaded = 2;
-  string story_version = 3;
+  bool story_initialized = 4;
 }
 
 message DbgSetGlobalBreakpoints {
