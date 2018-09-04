@@ -29,6 +29,7 @@ namespace LSTools.StoryCompiler
 
         public bool CheckOnly = false;
         public bool CheckGameObjects = false;
+        public bool LoadPackages = true;
 
         public ModCompiler(Logger logger, String gameDataPath)
         {
@@ -249,6 +250,7 @@ namespace LSTools.StoryCompiler
             {
                 Logger.TaskStarted("Discovering module files");
                 Mods.CollectNames = CheckGameObjects;
+                Mods.LoadPackages = LoadPackages;
                 Mods.Discover(GameDataPath);
                 Logger.TaskFinished();
 

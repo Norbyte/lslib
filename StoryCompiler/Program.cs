@@ -42,6 +42,7 @@ namespace LSTools.StoryCompiler
             modCompiler.SetWarningOptions(CommandLineArguments.GetWarningOptions(args.Warnings));
             modCompiler.CheckGameObjects = args.CheckGameObjects;
             modCompiler.CheckOnly = args.CheckOnly;
+            modCompiler.LoadPackages = !args.NoPackages;
 
             var mods = new List<string>(args.Mods);
             if (!modCompiler.Compile(args.OutputPath, args.DebugInfoOutputPath, mods))

@@ -33,6 +33,12 @@ namespace LSTools.StoryCompiler
         )]
         public bool CheckGameObjects;
 
+        [SwitchArgument("no-packages", false,
+            Description = "Don't look for story files and headers inside packages",
+            Optional = true
+        )]
+        public bool NoPackages;
+
         [ValueArgument(typeof(string), "mod",
             Description = "Mod to add",
             AllowMultiple = true,

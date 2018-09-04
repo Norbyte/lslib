@@ -28,6 +28,7 @@ namespace LSTools.StoryCompiler
         public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
         public AbstractFileInfo StoryHeaderFile;
         public bool CollectNames = false;
+        public bool LoadPackages = true;
 
         private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string pattern)
         {
@@ -222,6 +223,20 @@ namespace LSTools.StoryCompiler
                 DiscoverModGlobals(modName, modPath);
                 DiscoverModLevelObjects(modName, modPath);
             }
+
+            if (!LoadPackages)
+            {
+                var headerPath = modPath + @"\Story\RawFiles\story_header.div";
+                if (File.Exists(headerPath))
+                {
+                    var fileInfo = new FilesystemFileInfo
+                    {
+                        FilesystemPath = headerPath,
+                        Name = headerPath
+                    };
+                    StoryHeaderFile = fileInfo;
+                }
+            }
         }
 
         private void DiscoverMods(string gameDataPath)
@@ -240,7 +255,11 @@ namespace LSTools.StoryCompiler
 
         public void Discover(String gameDataPath)
         {
-            DiscoverPackages(gameDataPath);
+            if (LoadPackages)
+            {
+                DiscoverPackages(gameDataPath);
+            }
+
             DiscoverMods(gameDataPath);
         }
     }
