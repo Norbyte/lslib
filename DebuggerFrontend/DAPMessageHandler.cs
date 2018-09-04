@@ -164,6 +164,21 @@ namespace LSTools.DebuggerFrontend
             InitDebugger();
         }
 
+        private void OnDebugSessionEnded()
+        {
+            Stopped = false;
+            DebugInfo = null;
+            TracePrinter = null;
+            Breakpoints = null;
+
+            var outputMsg = new DAPOutputMessage
+            {
+                category = "console",
+                output = "Story unloaded - debug session terminated"
+            };
+            SendEvent("output", outputMsg);
+        }
+
         private void OnBreakpointTriggered(BkBreakpointTriggered bp)
         {
             Stack = TracePrinter.BreakpointToStack(bp);
@@ -262,6 +277,7 @@ namespace LSTools.DebuggerFrontend
             DbgCli = new DebuggerClient(DbgClient, DebugInfo)
             {
                 OnStoryLoaded = this.OnStoryLoaded,
+                OnDebugSessionEnded = this.OnDebugSessionEnded,
                 OnBackendInfo = this.OnBackendInfo,
                 OnBreakpointTriggered = this.OnBreakpointTriggered,
                 OnGlobalBreakpointTriggered = this.OnGlobalBreakpointTriggered,

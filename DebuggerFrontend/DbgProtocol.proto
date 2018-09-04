@@ -69,6 +69,7 @@ message BkGlobalBreakpointTriggered {
   enum Reason {
 	BREAKPOINT_STORY_LOADED = 0;
 	BREAKPOINT_GAME_INIT = 1;
+	BREAKPOINT_GAME_EXIT = 2;
   };
   
   Reason reason = 1;
@@ -118,6 +119,7 @@ message BkResult {
 message BkStoryLoaded {
 }
 
+// Notifies the frontend that the story was unloaded
 message BkDebugSessionEnded {
 }
 
@@ -163,6 +165,7 @@ message BkSyncStoryData {
 // Indicates that all story nodes were sent to the frontend.
 message BkSyncStoryFinished {
 }
+
 
 message DebuggerToBackend {
   oneof msg {
