@@ -28,6 +28,8 @@ namespace LSTools.DebuggerFrontend
         // Should we send a continue message after story synchronization is done?
         // This is needed if the sync was triggered by a global breakpoint.
         private bool ContinueAfterSync;
+        // Should we pause on the next instruction?
+        private bool PauseRequested;
 
 
         public DAPMessageHandler(DAPStream stream)
@@ -183,10 +185,13 @@ namespace LSTools.DebuggerFrontend
         {
             Stack = TracePrinter.BreakpointToStack(bp);
             Stopped = true;
+            PauseRequested = false;
 
-            var stopped = new DAPStoppedEvent();
-            stopped.reason = "breakpoint";
-            stopped.threadId = 1;
+            var stopped = new DAPStoppedEvent
+            {
+                reason = "breakpoint",
+                threadId = 1
+            };
             SendEvent("stopped", stopped);
         }
 
@@ -229,7 +234,14 @@ namespace LSTools.DebuggerFrontend
 
             if (ContinueAfterSync)
             {
-                DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+                if (PauseRequested)
+                {
+                    DbgCli.SendContinue(DbgContinue.Types.Action.StepInto);
+                }
+                else
+                {
+                    DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+                }
             }
         }
 
@@ -479,29 +491,33 @@ namespace LSTools.DebuggerFrontend
 
         private void HandleContinueRequest(DAPRequest request, DAPContinueRequest msg, DbgContinue.Types.Action action)
         {
-            if (action != DbgContinue.Types.Action.Pause && !Stopped)
-            {
-                SendReply(request, "Already running");
-                return;
-            }
-
-            if (action == DbgContinue.Types.Action.Pause && Stopped)
-            {
-                SendReply(request, "Already stopped");
-                return;
-            }
-
             if (msg.threadId != 1)
             {
                 SendReply(request, "Requested continue for unknown thread");
                 return;
             }
 
-            if (action != DbgContinue.Types.Action.Pause)
+            if (action == DbgContinue.Types.Action.Pause)
             {
+                if (Stopped)
+                {
+                    SendReply(request, "Already stopped");
+                    return;
+                }
+
+                PauseRequested = true;
+            }
+            else
+            {
+                if (!Stopped)
+                {
+                    SendReply(request, "Already running");
+                    return;
+                }
+
                 Stopped = false;
             }
-
+            
             DbgCli.SendContinue(action);
 
             var reply = new DAPContinueResponse
