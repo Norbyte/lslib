@@ -56,17 +56,17 @@ namespace LSTools.DebuggerFrontend
 
             if (Databases.Count != DebugInfo.Databases.Count)
             {
-                Reasons.Add($"Goal count mismatch; local {DebugInfo.Goals.Count}, remote {Goals.Count}");
+                Reasons.Add($"Database count mismatch; local {DebugInfo.Databases.Count}, remote {Databases.Count}");
             }
 
             if (Nodes.Count != DebugInfo.Nodes.Count)
             {
-                Reasons.Add($"Goal count mismatch; local {DebugInfo.Goals.Count}, remote {Goals.Count}");
+                Reasons.Add($"Node count mismatch; local {DebugInfo.Nodes.Count}, remote {Nodes.Count}");
             }
 
             if (Rules.Count != DebugInfo.Rules.Count)
             {
-                Reasons.Add($"Goal count mismatch; local {DebugInfo.Goals.Count}, remote {Goals.Count}");
+                Reasons.Add($"Rule count mismatch; local {DebugInfo.Rules.Count}, remote {Rules.Count}");
             }
 
             if (Reasons.Count > 0)

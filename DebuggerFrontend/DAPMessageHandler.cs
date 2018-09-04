@@ -100,7 +100,7 @@ namespace LSTools.DebuggerFrontend
             var outputMsg = new DAPOutputMessage
             {
                 category = "stderr",
-                output = message
+                output = message + "\r\n"
             };
             SendEvent("output", outputMsg);
 

@@ -26,6 +26,7 @@ message RuleVariableDebugInfoMsg {
   uint32 index = 1;
   uint32 type = 2;
   string name = 3;
+  bool unused = 4;
 }
 
 message RuleDebugInfoMsg {

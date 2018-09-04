@@ -54,7 +54,8 @@ namespace LSTools.StoryCompiler
             {
                 Index = debugInfo.Index,
                 Name = debugInfo.Name,
-                Type = debugInfo.Type
+                Type = debugInfo.Type,
+                Unused = debugInfo.Unused
             };
         }
 

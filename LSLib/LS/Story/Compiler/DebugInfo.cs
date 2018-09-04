@@ -42,6 +42,8 @@ namespace LSLib.LS.Story.Compiler
         public String Name;
         // Type ID of rule variable
         public UInt32 Type;
+        // Is the variable slot unused? (i.e. not bound to a physical column)
+        public bool Unused;
     }
 
     public class RuleDebugInfo

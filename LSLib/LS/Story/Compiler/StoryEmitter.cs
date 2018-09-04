@@ -154,11 +154,8 @@ namespace LSLib.LS.Story.Compiler
             return osiSignature;
         }
 
-        private void AddNode(Node node, CodeLocation location, Int32 numColumns)
+        private void AddNodeDebugInfo(Node node, CodeLocation location, Int32 numColumns, IRRule rule)
         {
-            node.Index = (uint)Story.Nodes.Count + 1;
-            Story.Nodes.Add(node.Index, node);
-
             if (DebugInfo != null)
             {
                 var nodeDebug = new NodeDebugInfo
@@ -174,14 +171,40 @@ namespace LSLib.LS.Story.Compiler
 
                 if (location != null)
                 {
-                    for (var i = 0; i < numColumns; i++)
+                    var columnIndex = 0;
+                    var variableIndex = 0;
+                    while (columnIndex < numColumns)
                     {
-                        nodeDebug.ColumnToVariableMaps.Add(i, i);
+                        if (!rule.Variables[variableIndex].IsUnused())
+                        {
+                            nodeDebug.ColumnToVariableMaps.Add(columnIndex, variableIndex);
+                            columnIndex++;
+                        }
+
+                        variableIndex++;
                     }
                 }
 
                 DebugInfo.Nodes.Add(nodeDebug.Id, nodeDebug);
             }
+        }
+
+        private void AddNodeInternal(Node node)
+        {
+            node.Index = (uint)Story.Nodes.Count + 1;
+            Story.Nodes.Add(node.Index, node);
+        }
+
+        private void AddNode(Node node)
+        {
+            AddNodeInternal(node);
+            AddNodeDebugInfo(node, null, 0, null);
+        }
+
+        private void AddNodeWithDebugInfo(Node node, CodeLocation location, Int32 numColumns, IRRule rule)
+        {
+            AddNodeInternal(node);
+            AddNodeDebugInfo(node, location, numColumns, rule);
         }
 
         private Function EmitFunction(LS.Story.FunctionType type, FunctionSignature signature, NodeReference nodeRef)
@@ -228,7 +251,7 @@ namespace LSLib.LS.Story.Compiler
                     Name = signature.Name,
                     NumParams = (byte)signature.Params.Count
                 };
-                AddNode(osiQuery, null, 0);
+                AddNode(osiQuery);
             }
 
             EmitFunction(LS.Story.FunctionType.SysQuery, signature, new NodeReference(Story, osiQuery), builtin);
@@ -254,7 +277,7 @@ namespace LSLib.LS.Story.Compiler
                     NumParams = (byte)signature.Params.Count,
                     ReferencedBy = new List<NodeEntryItem>()
                 };
-                AddNode(osiProc, null, 0);
+                AddNode(osiProc);
             }
 
             EmitFunction(LS.Story.FunctionType.Event, signature, new NodeReference(Story, osiProc), builtin);
@@ -274,7 +297,7 @@ namespace LSLib.LS.Story.Compiler
                     NumParams = (byte)signature.Params.Count,
                     ReferencedBy = new List<NodeEntryItem>()
                 };
-                AddNode(osiProc, null, 0);
+                AddNode(osiProc);
             }
 
             EmitFunction(LS.Story.FunctionType.Call, signature, new NodeReference(Story, osiProc), builtin);
@@ -293,7 +316,7 @@ namespace LSLib.LS.Story.Compiler
                     Name = signature.Name,
                     NumParams = (byte)signature.Params.Count
                 };
-                AddNode(osiQuery, null, 0);
+                AddNode(osiQuery);
             }
 
             EmitFunction(LS.Story.FunctionType.Query, signature, new NodeReference(Story, osiQuery), builtin);
@@ -309,7 +332,7 @@ namespace LSLib.LS.Story.Compiler
                 NumParams = (byte)signature.Params.Count,
                 ReferencedBy = new List<NodeEntryItem>()
             };
-            AddNode(osiProc, null, 0);
+            AddNode(osiProc);
 
             EmitFunction(LS.Story.FunctionType.Proc, signature, new NodeReference(Story, osiProc));
             return osiProc;
@@ -323,7 +346,7 @@ namespace LSLib.LS.Story.Compiler
                 Name = signature.Name,
                 NumParams = (byte)signature.Params.Count
             };
-            AddNode(osiQuery, null, 0);
+            AddNode(osiQuery);
 
             EmitFunction(LS.Story.FunctionType.Database, signature, new NodeReference(Story, osiQuery));
             return osiQuery;
@@ -357,7 +380,7 @@ namespace LSLib.LS.Story.Compiler
                 NumParams = (byte)signature.Params.Count,
                 ReferencedBy = new List<NodeEntryItem>()
             };
-            AddNode(osiDbNode, null, 0);
+            AddNode(osiDbNode);
 
             osiDb.OwnerNode = osiDbNode;
 
@@ -764,8 +787,18 @@ namespace LSLib.LS.Story.Compiler
                 };
             }
 
-            var numColumns = Math.Max(leftAdapter.LogicalIndices.Count, rightAdapter.LogicalIndices.Count);
-            AddNode(osiCall, rightCondition.Location, numColumns);
+            SortedSet<byte> uniqueLogicalIndices = new SortedSet<byte>();
+            foreach (var columnIndex in leftAdapter.LogicalToPhysicalMap.Keys)
+            {
+                uniqueLogicalIndices.Add(columnIndex);
+            }
+
+            foreach (var columnIndex in rightAdapter.LogicalToPhysicalMap.Keys)
+            {
+                uniqueLogicalIndices.Add(columnIndex);
+            }
+            
+            AddNodeWithDebugInfo(osiCall, rightCondition.Location, uniqueLogicalIndices.Count, rule);
 
             if (db != null)
             {
@@ -900,8 +933,8 @@ namespace LSLib.LS.Story.Compiler
             {
                 db.OwnerNode = osiRelOp;
             }
-            
-            AddNode(osiRelOp, condition.Location, adapter.LogicalIndices.Count);
+
+            AddNodeWithDebugInfo(osiRelOp, condition.Location, adapter.LogicalToPhysicalMap.Count, rule);
             return osiRelOp;
         }
 
@@ -995,7 +1028,8 @@ namespace LSLib.LS.Story.Compiler
                 db.OwnerNode = osiRule;
             }
 
-            AddNode(osiRule, rule.Location, rule.Variables.Count);
+            var validVariables = rule.Variables.Where(v => !v.IsUnused()).Count();
+            AddNodeWithDebugInfo(osiRule, rule.Location, validVariables, rule);
 
             if (referencedDb.DbNodeRef.IsValid && referencedDb.Indirection == 1)
             {
@@ -1027,7 +1061,7 @@ namespace LSLib.LS.Story.Compiler
                 NumParams = (byte)signature.Params.Count,
                 ReferencedBy = new List<NodeEntryItem>()
             };
-            AddNode(osiProc, null, 0);
+            AddNode(osiProc);
 
             var aliasedSignature = new FunctionSignature
             {
@@ -1140,7 +1174,8 @@ namespace LSLib.LS.Story.Compiler
                     {
                         Index = (UInt32)variable.Index,
                         Name = variable.Name,
-                        Type = (UInt32)variable.Type.IntrinsicTypeId
+                        Type = (UInt32)variable.Type.IntrinsicTypeId,
+                        Unused = variable.IsUnused()
                     };
                     ruleDebug.Variables.Add(varDebug);
                 }
