@@ -1,6 +1,7 @@
 ﻿using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,78 +42,20 @@ namespace LSTools.DebuggerFrontend
         public Dictionary<UInt32, LineDebugInfo> LineMap;
     }
 
-    public class Breakpoint
+    public class CodeLocationTranslator
     {
-        public UInt32 Id;
-        public String GoalName;
-        public UInt32 Line;
-        public LineDebugInfo LineInfo;
-        public bool Verified;
-        public String ErrorReason;
-    }
-
-    public class BreakpointManager
-    {
-        private DebuggerClient DbgCli;
         private StoryDebugInfo DebugInfo;
-        private Dictionary<UInt32, Breakpoint> Breakpoints;
-        private UInt32 NextBreakpointId = 1;
         // Goal name => Goal mappings
         private Dictionary<String, GoalLineMap> GoalMap;
 
-        public BreakpointManager(DebuggerClient client, StoryDebugInfo debugInfo)
+        public CodeLocationTranslator(StoryDebugInfo debugInfo)
         {
             DebugInfo = debugInfo;
-            DbgCli = client;
-            Breakpoints = new Dictionary<uint, Breakpoint>();
             GoalMap = new Dictionary<string, GoalLineMap>();
             BuildLineMap();
         }
 
-        public void ClearGoalBreakpoints(String goalName)
-        {
-            Breakpoints = Breakpoints
-                .Where(kv => kv.Value.GoalName != goalName)
-                .Select(kv => kv.Value)
-                .ToDictionary(kv => kv.Id);
-        }
-
-        public Breakpoint SetGoalBreakpoint(String goalName, DAPSourceBreakpoint breakpoint)
-        {
-            var bp = new Breakpoint
-            {
-                Id = NextBreakpointId++,
-                GoalName = goalName,
-                Line = (UInt32)breakpoint.line,
-                LineInfo = FindLocation(goalName, (UInt32)breakpoint.line)
-            };
-
-            if (bp.LineInfo == null)
-            {
-                bp.Verified = false;
-                bp.ErrorReason = $"Could not map {goalName}:{breakpoint.line} to a story node";
-            }
-            else if (breakpoint.condition != null || breakpoint.hitCondition != null)
-            {
-                bp.Verified = false;
-                bp.ErrorReason = "Conditional breakpoints are not supported";
-            }
-            else
-            {
-                bp.Verified = true;
-            }
-
-            Breakpoints.Add(bp.Id, bp);
-            return bp;
-        }
-
-        public void UpdateBreakpoints()
-        {
-            var breakpoints = Breakpoints.Values.Where(bp => bp.Verified).ToList();
-            DbgCli.SendSetBreakpoints(breakpoints);
-        }
-
-        private LineDebugInfo FindLocation(String goalName, UInt32 line)
+        public LineDebugInfo LocationToNode(String goalName, UInt32 line)
         {
             GoalLineMap goalMap;
             if (!GoalMap.TryGetValue(goalName, out goalMap))
@@ -199,6 +142,173 @@ namespace LSTools.DebuggerFrontend
             foreach (var node in DebugInfo.Nodes)
             {
                 BuildLineMap(node.Value);
+            }
+        }
+    }
+
+    public class Breakpoint
+    {
+        // Unique breakpoint ID on frontend
+        public UInt32 Id;
+        // Source code location reference
+        public DAPSource Source;
+        // Story goal name
+        public String GoalName;
+        // 1-based line number on goal file
+        public UInt32 Line;
+        // Line to node mapping (if the line could be mapped to a valid location)
+        public LineDebugInfo LineInfo;
+        // Is the node permanently invalidated?
+        // (ie. an unsupported feature was requested when adding the breakpoint, like conditional breaks)
+        public bool PermanentlyInvalid;
+        // Was the breakpoint correct and could it be mapped to a node?
+        // This is updated each time the debug info is reloaded.
+        public bool Verified;
+        // Reason for verification error
+        public String ErrorReason;
+
+        public DAPBreakpoint ToDAP()
+        {
+            return new DAPBreakpoint
+            {
+                id = (int)Id,
+                verified = Verified,
+                message = ErrorReason,
+                source = Source,
+                line = (int)Line
+            };
+        }
+    }
+
+    public class BreakpointManager
+    {
+        private DebuggerClient DbgCli;
+        private CodeLocationTranslator LocationTranslator;
+        private Dictionary<UInt32, Breakpoint> Breakpoints;
+        private UInt32 NextBreakpointId = 1;
+
+        public BreakpointManager(DebuggerClient client)
+        {
+            DbgCli = client;
+            Breakpoints = new Dictionary<uint, Breakpoint>();
+        }
+
+        public List<Breakpoint> DebugInfoLoaded(StoryDebugInfo debugInfo)
+        {
+            LocationTranslator = new CodeLocationTranslator(debugInfo);
+            var changes = RevalidateBreakpoints();
+            // Sync breakpoint list to backend as the current debugger instance doesn't have
+            // any of our breakpoints yet
+            UpdateBreakpointsOnBackend();
+            return changes;
+        }
+
+        public List<Breakpoint> DebugInfoUnloaded()
+        {
+            LocationTranslator = null;
+            var changes = RevalidateBreakpoints();
+            return changes;
+        }
+
+        public void ClearGoalBreakpoints(String goalName)
+        {
+            Breakpoints = Breakpoints
+                .Where(kv => kv.Value.GoalName != goalName)
+                .Select(kv => kv.Value)
+                .ToDictionary(kv => kv.Id);
+        }
+
+        public Breakpoint AddBreakpoint(DAPSource source, DAPSourceBreakpoint breakpoint)
+        {
+            var bp = new Breakpoint
+            {
+                Id = NextBreakpointId++,
+                Source = source,
+                GoalName = Path.GetFileNameWithoutExtension(source.name),
+                Line = (UInt32)breakpoint.line,
+                PermanentlyInvalid = false
+            };
+            Breakpoints.Add(bp.Id, bp);
+
+            if (breakpoint.condition != null || breakpoint.hitCondition != null)
+            {
+                bp.PermanentlyInvalid = true;
+                bp.ErrorReason = "Conditional breakpoints are not supported";
+            }
+
+            ValidateBreakpoint(bp);
+
+            return bp;
+        }
+
+        /// <summary>
+        /// Transmits the list of active breakpoints to the debugger backend.
+        /// </summary>
+        public void UpdateBreakpointsOnBackend()
+        {
+            var breakpoints = Breakpoints.Values.Where(bp => bp.Verified).ToList();
+            DbgCli.SendSetBreakpoints(breakpoints);
+        }
+
+        /// <summary>
+        /// Rechecks the code -> node mapping of each breakpoint.
+        /// This is required after each story reload/recompilation to make sure
+        /// that we don't use stale node ID-s from the previous compilation.
+        /// </summary>
+        List<Breakpoint> RevalidateBreakpoints()
+        {
+            var changes = new List<Breakpoint>();
+            foreach (var bp in Breakpoints)
+            {
+                bool changed = ValidateBreakpoint(bp.Value);
+                if (changed)
+                {
+                    changes.Add(bp.Value);
+                }
+            }
+
+            return changes;
+        }
+
+        private bool ValidateBreakpoint(Breakpoint bp)
+        {
+            if (bp.PermanentlyInvalid)
+            {
+                bp.Verified = false;
+                // Don't touch the error message here, as it was already updated when the 
+                // PermanentlyInvalid flag was set.
+                return false;
+            }
+
+            var oldVerified = bp.Verified;
+            var oldReason = bp.ErrorReason;
+
+            bp.LineInfo = LocationToNode(bp.GoalName, bp.Line);
+
+            if (bp.LineInfo == null)
+            {
+                bp.Verified = false;
+                bp.ErrorReason = $"Could not map {bp.GoalName}:{bp.Line} to a story node";
+            }
+            else
+            {
+                bp.Verified = true;
+                bp.ErrorReason = null;
+            }
+
+            var changed = (bp.Verified != oldVerified || bp.ErrorReason != oldReason);
+            return changed;
+        }
+
+        private LineDebugInfo LocationToNode(String goalName, UInt32 line)
+        {
+            if (LocationTranslator == null)
+            {
+                return null;
+            }
+            else
+            {
+                return LocationTranslator.LocationToNode(goalName, line);
             }
         }
     }

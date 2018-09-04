@@ -83,6 +83,16 @@ namespace LSTools.DebuggerFrontend
             Stream.Send(reply);
         }
 
+        private void SendBreakpoint(string eventType, Breakpoint bp)
+        {
+            var bpMsg = new DAPBreakpointEvent
+            {
+                reason = eventType,
+                breakpoint = bp.ToDAP()
+            };
+            SendEvent("breakpoint", bpMsg);
+        }
+
         private void LogError(String message)
         {
             var outputMsg = new DAPOutputMessage
@@ -136,9 +146,12 @@ namespace LSTools.DebuggerFrontend
             var loader = new DebugInfoLoader();
             DebugInfo = loader.Load(debugPayload);
             TracePrinter = new StackTracePrinter(DebugInfo);
-            Breakpoints = new BreakpointManager(DbgCli, DebugInfo);
             Stack = null;
             Stopped = false;
+
+            var changedBps = Breakpoints.DebugInfoLoaded(DebugInfo);
+            // Notify the debugger that the status of breakpoints changed
+            changedBps.ForEach(bp => SendBreakpoint("changed", bp));
         }
 
         private void SynchronizeStoryWithBackend(bool continueAfterSync)
@@ -171,12 +184,15 @@ namespace LSTools.DebuggerFrontend
             Stopped = false;
             DebugInfo = null;
             TracePrinter = null;
-            Breakpoints = null;
+
+            var changedBps = Breakpoints.DebugInfoUnloaded();
+            // Notify the debugger that the status of breakpoints changed
+            changedBps.ForEach(bp => SendBreakpoint("changed", bp));
 
             var outputMsg = new DAPOutputMessage
             {
                 category = "console",
-                output = "Story unloaded - debug session terminated"
+                output = "Story unloaded - debug session terminated\r\n"
             };
             SendEvent("output", outputMsg);
         }
@@ -306,6 +322,8 @@ namespace LSTools.DebuggerFrontend
             DbgThread = new Thread(new ThreadStart(DebugThreadMain));
             DbgThread.Start();
 
+            Breakpoints = new BreakpointManager(DbgCli);
+
             var reply = new DAPLaunchResponse();
             SendReply(request, reply);
 
@@ -327,25 +345,17 @@ namespace LSTools.DebuggerFrontend
 
                 foreach (var breakpoint in breakpoints.breakpoints)
                 {
-                    var bp = Breakpoints.SetGoalBreakpoint(goalName, breakpoint);
-                    var processedBp = new DAPBreakpoint
-                    {
-                        id = (int)bp.Id,
-                        verified = bp.Verified,
-                        message = bp.ErrorReason,
-                        source = breakpoints.source,
-                        line = breakpoint.line
-                    };
-                    reply.breakpoints.Add(processedBp);
+                    var bp = Breakpoints.AddBreakpoint(breakpoints.source, breakpoint);
+                    reply.breakpoints.Add(bp.ToDAP());
                 }
 
-                Breakpoints.UpdateBreakpoints();
+                Breakpoints.UpdateBreakpointsOnBackend();
 
                 SendReply(request, reply);
             }
             else
             {
-                SendReply(request, "Cannot add breakpoint - story not loaded");
+                SendReply(request, "Cannot add breakpoint - breakpoint manager not yet initialized");
             }
         }
 

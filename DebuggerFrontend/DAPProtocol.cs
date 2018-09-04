@@ -861,4 +861,21 @@ namespace LSTools.DebuggerFrontend
          */
         // public object restart { get; set; };
     }
+
+    /**
+     * The event indicates that some information about a breakpoint has changed.
+     */
+    public class DAPBreakpointEvent : IDAPMessagePayload
+    {
+        /**
+         * The reason for the event.
+         * Values: 'changed', 'new', 'removed', etc.
+         */
+        public String reason { get; set; }
+
+        /**
+         * The breakpoint.
+         */
+        public DAPBreakpoint breakpoint;
+    }
 }
