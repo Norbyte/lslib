@@ -37,6 +37,7 @@ message MsgFrame {
 }
 
 message DbgIdentifyRequest {
+  uint32 protocol_version = 1;
 }
 
 message BkVersionInfoResponse {

@@ -12,6 +12,8 @@ namespace LSTools.DebuggerFrontend
 {
     public class DAPMessageHandler
     {
+        private const UInt32 ProtocolVersion = 2;
+
         private DAPStream Stream;
         private Stream LogStream;
 
@@ -163,6 +165,11 @@ namespace LSTools.DebuggerFrontend
 
         private void OnBackendInfo(BkVersionInfoResponse response)
         {
+            if (response.ProtocolVersion != ProtocolVersion)
+            {
+                throw new InvalidDataException($"Backend sent unsupported protocol version; got {response.ProtocolVersion}, we only support {ProtocolVersion}");
+            }
+
             if (response.StoryLoaded)
             {
                 InitDebugger();
@@ -317,7 +324,7 @@ namespace LSTools.DebuggerFrontend
                 DbgCli.EnableLogging(LogStream);
             }
             
-            DbgCli.SendIdentify();
+            DbgCli.SendIdentify(ProtocolVersion);
 
             DbgThread = new Thread(new ThreadStart(DebugThreadMain));
             DbgThread.Start();

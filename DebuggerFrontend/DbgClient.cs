@@ -155,11 +155,14 @@ namespace LSTools.DebuggerFrontend
             Client.Send(message);
         }
 
-        public void SendIdentify()
+        public void SendIdentify(UInt32 protocolVersion)
         {
             var msg = new DebuggerToBackend
             {
-                Identify = new DbgIdentifyRequest()
+                Identify = new DbgIdentifyRequest
+                {
+                    ProtocolVersion = protocolVersion
+                }
             };
             Send(msg);
         }
