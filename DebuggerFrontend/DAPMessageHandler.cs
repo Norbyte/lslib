@@ -12,7 +12,7 @@ namespace LSTools.DebuggerFrontend
 {
     public class DAPMessageHandler
     {
-        private const UInt32 ProtocolVersion = 2;
+        private const UInt32 ProtocolVersion = 3;
 
         private DAPStream Stream;
         private Stream LogStream;
@@ -227,13 +227,13 @@ namespace LSTools.DebuggerFrontend
 
         private void OnGlobalBreakpointTriggered(BkGlobalBreakpointTriggered message)
         {
-            if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointStoryLoaded)
+            if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.StoryLoaded)
             {
                 DbgCli.SendSetGlobalBreakpoints(0x80); // TODO const
                 // Break on next node
-                DbgCli.SendContinue(DbgContinue.Types.Action.StepInto);
+                SendContinue(DbgContinue.Types.Action.StepInto);
             }
-            else if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.BreakpointGameInit)
+            else if (message.Reason == BkGlobalBreakpointTriggered.Types.Reason.GameInit)
             {
                 SynchronizeStoryWithBackend(true);
             }
@@ -266,11 +266,11 @@ namespace LSTools.DebuggerFrontend
             {
                 if (PauseRequested)
                 {
-                    DbgCli.SendContinue(DbgContinue.Types.Action.StepInto);
+                    SendContinue(DbgContinue.Types.Action.StepInto);
                 }
                 else
                 {
-                    DbgCli.SendContinue(DbgContinue.Types.Action.Continue);
+                    SendContinue(DbgContinue.Types.Action.Continue);
                 }
             }
         }
@@ -515,6 +515,54 @@ namespace LSTools.DebuggerFrontend
             SendReply(request, reply);
         }
 
+        private UInt32 GetContinueBreakpointMask()
+        {
+            if (Config != null && Config.stopOnAllFrames)
+            {
+                return
+                    // Break on all possible node events
+                    (UInt32)MsgBreakpoint.Types.BreakpointType.Valid
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.Pushdown
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.Insert
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.RuleAction
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.InitCall
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.ExitCall
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.Delete;
+            }
+            else
+            {
+                return
+                    // Break on Pushdown for rule "AND/NOT AND" nodes
+                    (UInt32)MsgBreakpoint.Types.BreakpointType.Pushdown
+                    // Break on rule THEN part actions
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.RuleAction
+                    // Break on goal Init/Exit calls
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.InitCall
+                    | (UInt32)MsgBreakpoint.Types.BreakpointType.ExitCall;
+            }
+        }
+
+        private UInt32 GetContinueFlags()
+        {
+            UInt32 flags = 0;
+            if (Config == null || !Config.stopOnAllFrames)
+            {
+                flags |= (UInt32)DbgContinue.Types.Flags.SkipRulePushdown;
+            }
+
+            if (Config == null || !Config.stopOnDbPropagation)
+            {
+                flags |= (UInt32)DbgContinue.Types.Flags.SkipDbPropagation;
+            }
+
+            return flags;
+        }
+
+        private void SendContinue(DbgContinue.Types.Action action)
+        {
+            DbgCli.SendContinue(action, GetContinueBreakpointMask(), GetContinueFlags());
+        }
+
         private void HandleContinueRequest(DAPRequest request, DAPContinueRequest msg, DbgContinue.Types.Action action)
         {
             if (msg.threadId != 1)
@@ -544,7 +592,7 @@ namespace LSTools.DebuggerFrontend
                 Stopped = false;
             }
             
-            DbgCli.SendContinue(action);
+            SendContinue(action);
 
             var reply = new DAPContinueResponse
             {

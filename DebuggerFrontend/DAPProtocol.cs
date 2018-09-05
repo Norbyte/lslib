@@ -192,6 +192,16 @@ namespace LSTools.DebuggerFrontend
          * merging and pretty printing the frames.
          */
         public bool rawFrames { get; set; }
+
+        /**
+         * Stop on all frames during single-stepping instead of meaningful frames.
+         */
+        public bool stopOnAllFrames { get; set; }
+
+        /**
+         * Stop inside database propagation calls during single-stepping.
+         */
+        public bool stopOnDbPropagation { get; set; }
     }
 
     /**

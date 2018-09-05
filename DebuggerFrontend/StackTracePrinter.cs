@@ -209,14 +209,14 @@ namespace LSTools.DebuggerFrontend
             string frameType;
             switch (frame.Type)
             {
-                case MsgFrame.Types.FrameType.FrameIsValid: frameType = "IsValid"; break;
-                case MsgFrame.Types.FrameType.FramePushdown: frameType = "Pushdown"; break;
-                case MsgFrame.Types.FrameType.FramePushdownDelete: frameType = "PushdownDelete"; break;
-                case MsgFrame.Types.FrameType.FrameInsert: frameType = "Insert"; break;
-                case MsgFrame.Types.FrameType.FrameDelete: frameType = "Delete"; break;
-                case MsgFrame.Types.FrameType.FrameRuleAction: frameType = "RuleAction"; break;
-                case MsgFrame.Types.FrameType.FrameGoalInitAction: frameType = "GoalInitAction"; break;
-                case MsgFrame.Types.FrameType.FrameGoalExitAction: frameType = "GoalExitAction"; break;
+                case MsgFrame.Types.FrameType.IsValid: frameType = "IsValid"; break;
+                case MsgFrame.Types.FrameType.Pushdown: frameType = "Pushdown"; break;
+                case MsgFrame.Types.FrameType.PushdownDelete: frameType = "PushdownDelete"; break;
+                case MsgFrame.Types.FrameType.Insert: frameType = "Insert"; break;
+                case MsgFrame.Types.FrameType.Delete: frameType = "Delete"; break;
+                case MsgFrame.Types.FrameType.RuleAction: frameType = "RuleAction"; break;
+                case MsgFrame.Types.FrameType.GoalInitAction: frameType = "GoalInitAction"; break;
+                case MsgFrame.Types.FrameType.GoalExitAction: frameType = "GoalExitAction"; break;
 
                 default:
                     throw new InvalidOperationException($"Unsupported frame type: {frame.Type}");
@@ -256,19 +256,19 @@ namespace LSTools.DebuggerFrontend
         {
             switch (frame.Type)
             {
-                case MsgFrame.Types.FrameType.FrameGoalInitAction:
+                case MsgFrame.Types.FrameType.GoalInitAction:
                     {
                         var goal = DebugInfo.Goals[frame.GoalId].Name;
                         return goal + " (INIT)";
                     }
 
-                case MsgFrame.Types.FrameType.FrameGoalExitAction:
+                case MsgFrame.Types.FrameType.GoalExitAction:
                     {
                         var goal = DebugInfo.Goals[frame.GoalId].Name;
                         return goal + " (EXIT)";
                     }
 
-                case MsgFrame.Types.FrameType.FrameInsert:
+                case MsgFrame.Types.FrameType.Insert:
                     {
                         var node = DebugInfo.Nodes[frame.NodeId];
                         if (node.Type == Node.Type.Database)
@@ -282,7 +282,7 @@ namespace LSTools.DebuggerFrontend
                         }
                     }
 
-                case MsgFrame.Types.FrameType.FrameDelete:
+                case MsgFrame.Types.FrameType.Delete:
                     {
                         var node = DebugInfo.Nodes[frame.NodeId];
                         var db = DebugInfo.Databases[node.DatabaseId];
@@ -299,12 +299,12 @@ namespace LSTools.DebuggerFrontend
             var outFrame = new CoalescedFrame();
             outFrame.Name = GetFrameDebugName(frame);
             
-            if (frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
-                || frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction)
+            if (frame.Type == MsgFrame.Types.FrameType.GoalInitAction
+                || frame.Type == MsgFrame.Types.FrameType.GoalExitAction)
             {
                 var goal = DebugInfo.Goals[frame.GoalId];
                 outFrame.File = goal.Path;
-                if (frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction)
+                if (frame.Type == MsgFrame.Types.FrameType.GoalInitAction)
                 {
                     outFrame.Line = (int)goal.InitActions[(int)frame.ActionIndex].Line;
                 }
@@ -322,12 +322,12 @@ namespace LSTools.DebuggerFrontend
                     var goal = DebugInfo.Goals[rule.GoalId];
                     outFrame.File = goal.Path;
 
-                    if (frame.Type == MsgFrame.Types.FrameType.FramePushdown
+                    if (frame.Type == MsgFrame.Types.FrameType.Pushdown
                         && node.Type == Node.Type.Rule)
                     {
                         outFrame.Line = (int)rule.ActionsStartLine;
                     }
-                    else if (frame.Type == MsgFrame.Types.FrameType.FrameRuleAction)
+                    else if (frame.Type == MsgFrame.Types.FrameType.RuleAction)
                     {
                         outFrame.Line = (int)rule.Actions[(int)frame.ActionIndex].Line;
                     }
@@ -353,8 +353,8 @@ namespace LSTools.DebuggerFrontend
             List<CoalescedFrame> currentFrames = new List<CoalescedFrame>();
             foreach (var frame in frames)
             {
-                if (frame.Frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
-                    || frame.Frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction)
+                if (frame.Frame.Type == MsgFrame.Types.FrameType.GoalInitAction
+                    || frame.Frame.Type == MsgFrame.Types.FrameType.GoalExitAction)
                 {
                     // Goal INIT/EXIT frames don't have parent frames, so we'll add them as separate frames
                     if (currentFrames.Count > 0)
@@ -370,8 +370,8 @@ namespace LSTools.DebuggerFrontend
                 else
                 {
                     // Embedded PROC/QRY frames start with Insert/Delete frames
-                    if (frame.Frame.Type == MsgFrame.Types.FrameType.FrameInsert
-                        || frame.Frame.Type == MsgFrame.Types.FrameType.FrameInsert)
+                    if (frame.Frame.Type == MsgFrame.Types.FrameType.Insert
+                        || frame.Frame.Type == MsgFrame.Types.FrameType.Insert)
                     {
                         if (currentFrames.Count > 0)
                         {
@@ -383,7 +383,7 @@ namespace LSTools.DebuggerFrontend
                     currentFrames.Add(frame);
 
                     // Rule frames are terminated by RuleAction (THEN part) frames
-                    if (frame.Frame.Type == MsgFrame.Types.FrameType.FrameRuleAction)
+                    if (frame.Frame.Type == MsgFrame.Types.FrameType.RuleAction)
                     {
                         ranges.Add(currentFrames);
                         currentFrames = new List<CoalescedFrame>();
@@ -417,9 +417,9 @@ namespace LSTools.DebuggerFrontend
                     frame.Line = node.Line;
                 }
 
-                if (node.Frame.Type == MsgFrame.Types.FrameType.FramePushdown
-                    || node.Frame.Type == MsgFrame.Types.FrameType.FrameInsert
-                    || node.Frame.Type == MsgFrame.Types.FrameType.FrameDelete)
+                if (node.Frame.Type == MsgFrame.Types.FrameType.Pushdown
+                    || node.Frame.Type == MsgFrame.Types.FrameType.Insert
+                    || node.Frame.Type == MsgFrame.Types.FrameType.Delete)
                 {
                     // Rule variable info is only propagated through Pushdown nodes.
                     // All other nodes either have no variable info at all, or contain
@@ -440,10 +440,10 @@ namespace LSTools.DebuggerFrontend
 
             // Special indicator for backward propagation of database inserts/deletes
             if (range.Count >= 2
-                && (range[0].Frame.Type == MsgFrame.Types.FrameType.FrameInsert
-                    || range[0].Frame.Type == MsgFrame.Types.FrameType.FrameDelete)
-                && (range[1].Frame.Type == MsgFrame.Types.FrameType.FramePushdown
-                    || range[1].Frame.Type == MsgFrame.Types.FrameType.FramePushdownDelete))
+                && (range[0].Frame.Type == MsgFrame.Types.FrameType.Insert
+                    || range[0].Frame.Type == MsgFrame.Types.FrameType.Delete)
+                && (range[1].Frame.Type == MsgFrame.Types.FrameType.Pushdown
+                    || range[1].Frame.Type == MsgFrame.Types.FrameType.PushdownDelete))
             {
                 var pushdownNode = DebugInfo.Nodes[range[1].Frame.NodeId];
                 if (range[0].Frame.NodeId != pushdownNode.ParentNodeId)

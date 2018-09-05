@@ -226,13 +226,15 @@ namespace LSTools.DebuggerFrontend
             Send(msg);
         }
 
-        public void SendContinue(DbgContinue.Types.Action action)
+        public void SendContinue(DbgContinue.Types.Action action, UInt32 breakpointMask, UInt32 flags)
         {
             var msg = new DebuggerToBackend
             {
                 Continue = new DbgContinue
                 {
-                    Action = action
+                    Action = action,
+                    BreakpointMask = breakpointMask,
+                    Flags = flags
                 }
             };
             Send(msg);

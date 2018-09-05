@@ -19,14 +19,14 @@ message MsgTuple {
 
 message MsgFrame {
   enum FrameType {
-    FRAME_IS_VALID = 0;
-    FRAME_PUSHDOWN = 1;
-	FRAME_INSERT = 2;
-	FRAME_DELETE = 3;
-	FRAME_PUSHDOWN_DELETE = 4;
-	FRAME_RULE_ACTION = 5;
-	FRAME_GOAL_INIT_ACTION = 6;
-	FRAME_GOAL_EXIT_ACTION = 7;
+    IS_VALID = 0;
+    PUSHDOWN = 1;
+    INSERT = 2;
+    DELETE_ = 3;
+    PUSHDOWN_DELETE = 4;
+    RULE_ACTION = 5;
+    GOAL_INIT_ACTION = 6;
+    GOAL_EXIT_ACTION = 7;
   };
   
   uint32 node_id = 1;
@@ -47,10 +47,35 @@ message BkVersionInfoResponse {
 }
 
 message DbgSetGlobalBreakpoints {
+  enum GlobalBreakpointType {
+    NONE = 0;
+    STORY_LOADED = 1;
+    VALID = 2;
+    PUSHDOWN = 4;
+    INSERT = 8;
+    RULE_ACTION = 16;
+    INIT_CALL = 32;
+    EXIT_CALL = 64;
+    GAME_INIT = 128;
+    GAME_EXIT = 256;
+    DELETE_ = 512;
+  };
+
   uint32 breakpoint_mask = 1;
 }
 
 message MsgBreakpoint {
+  enum BreakpointType {
+    NONE = 0;
+    VALID = 1;
+    PUSHDOWN = 2;
+    INSERT = 4;
+    RULE_ACTION = 8;
+    INIT_CALL = 16;
+    EXIT_CALL = 32;
+    DELETE_ = 64;
+  };
+
   uint32 node_id = 1;
   uint32 breakpoint_mask = 2;
   uint32 goal_id = 3;
@@ -68,9 +93,9 @@ message BkBreakpointTriggered {
 
 message BkGlobalBreakpointTriggered {
   enum Reason {
-	BREAKPOINT_STORY_LOADED = 0;
-	BREAKPOINT_GAME_INIT = 1;
-	BREAKPOINT_GAME_EXIT = 2;
+    STORY_LOADED = 0;
+    GAME_INIT = 1;
+    GAME_EXIT = 2;
   };
   
   Reason reason = 1;
@@ -84,7 +109,19 @@ message DbgContinue {
     STEP_OUT = 3;
     PAUSE = 4;
   };
+
+  enum Flags {
+    NONE = 0;
+    // Don't break on Pushdown events if the node is a rule node
+    SKIP_RULE_PUSHDOWN = 1;
+    // Don't break inside database propagation chains
+    SKIP_DB_PROPAGATION = 2;
+  };
+
   Action action = 1;
+  // Same as MsgBreakpoint::BreakpointType
+  uint32 breakpoint_mask = 2;
+  uint32 flags = 3;
 }
 
 message DbgGetDatabaseContents {
@@ -105,13 +142,13 @@ message BkDatabaseContents {
 message BkResult {
   enum StatusCode {
     SUCCESS = 0;
-	UNSUPPORTED_BREAKPOINT_TYPE = 1;
-	INVALID_NODE_ID = 2;
-	NOT_IN_PAUSE = 3;
-	NO_DEBUGGEE = 4;
-	INVALID_CONTINUE_ACTION = 5;
-	IN_PAUSE = 6;
-	INVALID_GOAL_ID = 7;
+    UNSUPPORTED_BREAKPOINT_TYPE = 1;
+    INVALID_NODE_ID = 2;
+    NOT_IN_PAUSE = 3;
+    NO_DEBUGGEE = 4;
+    INVALID_CONTINUE_ACTION = 5;
+    IN_PAUSE = 6;
+    INVALID_GOAL_ID = 7;
   };
 
   StatusCode status_code = 1;
@@ -172,10 +209,10 @@ message DebuggerToBackend {
   oneof msg {
     DbgIdentifyRequest identify = 1;
     DbgSetGlobalBreakpoints setGlobalBreakpoints = 2;
-	DbgSetBreakpoints setBreakpoints = 3;
-	DbgContinue continue = 4;
-	DbgGetDatabaseContents getDatabaseContents = 5;
-	DbgSyncStory syncStory = 8;
+    DbgSetBreakpoints setBreakpoints = 3;
+    DbgContinue continue = 4;
+    DbgGetDatabaseContents getDatabaseContents = 5;
+    DbgSyncStory syncStory = 8;
   }
   uint32 seq_no = 6;
   uint32 reply_seq_no = 7;
@@ -185,13 +222,13 @@ message BackendToDebugger {
   oneof msg {
     BkVersionInfoResponse versionInfo = 1;
     BkBreakpointTriggered breakpointTriggered = 2;
-	BkDatabaseContents databaseContents = 3;
-	BkResult results = 4;
-	BkStoryLoaded storyLoaded = 5;
-	BkDebugSessionEnded debugSessionEnded = 6;
-	BkGlobalBreakpointTriggered globalBreakpointTriggered = 7;
-	BkSyncStoryData syncStoryData = 10;
-	BkSyncStoryFinished syncStoryFinished = 11;
+    BkDatabaseContents databaseContents = 3;
+    BkResult results = 4;
+    BkStoryLoaded storyLoaded = 5;
+    BkDebugSessionEnded debugSessionEnded = 6;
+    BkGlobalBreakpointTriggered globalBreakpointTriggered = 7;
+    BkSyncStoryData syncStoryData = 10;
+    BkSyncStoryFinished syncStoryFinished = 11;
   }
   uint32 seq_no = 8;
   uint32 reply_seq_no = 9;
