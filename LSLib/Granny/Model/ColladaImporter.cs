@@ -500,10 +500,15 @@ namespace LSLib.Granny.Model
                     var weightIndex = influences[offset + weightInputIndex];
                     var joint = joints[jointIndex];
                     var weight = weights[weightIndex];
-                    foreach (var consolidatedIndex in mesh.OriginalToConsolidatedVertexIndexMap[vertexIndex])
+                    // Not all vertices are actually used in triangles, we may have unused verts in the
+                    // source list (though this is rare) which won't show up in the consolidated vertex map.
+                    if (mesh.OriginalToConsolidatedVertexIndexMap.TryGetValue(vertexIndex, out List<int> consolidatedIndices))
                     {
-                        var vertex = mesh.PrimaryVertexData.Vertices[consolidatedIndex];
-                        vertex.AddInfluence((byte)boneToIndexMaps[joint], weight);
+                        foreach (var consolidatedIndex in consolidatedIndices)
+                        {
+                            var vertex = mesh.PrimaryVertexData.Vertices[consolidatedIndex];
+                            vertex.AddInfluence((byte)boneToIndexMaps[joint], weight);
+                        }
                     }
 
                     offset += stride;
