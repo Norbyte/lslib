@@ -62,6 +62,7 @@ message NodeDebugInfoMsg {
   uint32 database_id = 5;
   string name = 6;
   NodeType type = 7;
+  uint32 parent_node_id = 8;
 }
 
 message StoryDebugInfoMsg {

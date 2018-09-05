@@ -26,6 +26,7 @@ namespace LSTools.DebuggerFrontend
         private StackTracePrinter TracePrinter;
         private BreakpointManager Breakpoints;
         private List<CoalescedFrame> Stack;
+        private DAPCustomConfiguration Config;
         private bool Stopped;
         // Should we send a continue message after story synchronization is done?
         // This is needed if the sync was triggered by a global breakpoint.
@@ -147,7 +148,13 @@ namespace LSTools.DebuggerFrontend
             var debugPayload = File.ReadAllBytes(DebugInfoPath);
             var loader = new DebugInfoLoader();
             DebugInfo = loader.Load(debugPayload);
+
             TracePrinter = new StackTracePrinter(DebugInfo);
+            if (Config != null)
+            {
+                TracePrinter.MergeFrames = !Config.rawFrames;
+            }
+
             Stack = null;
             Stopped = false;
 
@@ -290,6 +297,8 @@ namespace LSTools.DebuggerFrontend
 
         private void HandleLaunchRequest(DAPRequest request, DAPLaunchRequest launch)
         {
+            Config = launch.dbgOptions;
+
             if (!File.Exists(launch.debugInfoPath))
             {
                 DebugInfoPath = launch.debugInfoPath;

@@ -166,8 +166,18 @@ namespace LSLib.LS.Story.Compiler
                     ColumnToVariableMaps = new Dictionary<Int32, Int32>(),
                     DatabaseId = node.DatabaseRef.Index,
                     Name = node.Name,
-                    Type = node.NodeType()
+                    Type = node.NodeType(),
+                    ParentNodeId = 0
                 };
+
+                if (node is JoinNode)
+                {
+                    nodeDebug.ParentNodeId = (node as JoinNode).LeftParentRef.Index;
+                }
+                else if (node is RelNode)
+                {
+                    nodeDebug.ParentNodeId = (node as RelNode).ParentRef.Index;
+                }
 
                 if (location != null)
                 {
@@ -189,7 +199,7 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void AddNodeInternal(Node node)
+        private void AddNodeWithoutDebugInfo(Node node)
         {
             node.Index = (uint)Story.Nodes.Count + 1;
             Story.Nodes.Add(node.Index, node);
@@ -197,14 +207,8 @@ namespace LSLib.LS.Story.Compiler
 
         private void AddNode(Node node)
         {
-            AddNodeInternal(node);
+            AddNodeWithoutDebugInfo(node);
             AddNodeDebugInfo(node, null, 0, null);
-        }
-
-        private void AddNodeWithDebugInfo(Node node, CodeLocation location, Int32 numColumns, IRRule rule)
-        {
-            AddNodeInternal(node);
-            AddNodeDebugInfo(node, location, numColumns, rule);
         }
 
         private Function EmitFunction(LS.Story.FunctionType type, FunctionSignature signature, NodeReference nodeRef)
@@ -798,7 +802,7 @@ namespace LSLib.LS.Story.Compiler
                 uniqueLogicalIndices.Add(columnIndex);
             }
             
-            AddNodeWithDebugInfo(osiCall, rightCondition.Location, uniqueLogicalIndices.Count, rule);
+            AddNodeWithoutDebugInfo(osiCall);
 
             if (db != null)
             {
@@ -848,6 +852,8 @@ namespace LSLib.LS.Story.Compiler
 
             AddJoinTarget(left, osiCall, EntryPoint.Left, goal);
             AddJoinTarget(right, osiCall, EntryPoint.Right, goal);
+            
+            AddNodeDebugInfo(osiCall, rightCondition.Location, uniqueLogicalIndices.Count, rule);
 
             return osiCall;
         }
@@ -934,7 +940,7 @@ namespace LSLib.LS.Story.Compiler
                 db.OwnerNode = osiRelOp;
             }
 
-            AddNodeWithDebugInfo(osiRelOp, condition.Location, adapter.LogicalToPhysicalMap.Count, rule);
+            AddNodeWithoutDebugInfo(osiRelOp);
             return osiRelOp;
         }
 
@@ -1028,8 +1034,7 @@ namespace LSLib.LS.Story.Compiler
                 db.OwnerNode = osiRule;
             }
 
-            var validVariables = rule.Variables.Where(v => !v.IsUnused()).Count();
-            AddNodeWithDebugInfo(osiRule, rule.Location, validVariables, rule);
+            AddNodeWithoutDebugInfo(osiRule);
 
             if (referencedDb.DbNodeRef.IsValid && referencedDb.Indirection == 1)
             {
@@ -1137,6 +1142,7 @@ namespace LSLib.LS.Story.Compiler
                 {
                     var relOp = EmitRelOp(rule, condition as IRBinaryCondition, referencedDb, lastCondition, lastConditionNode);
                     AddJoinTarget(lastConditionNode, relOp, EntryPoint.None, goal);
+                    AddNodeDebugInfo(relOp, condition.Location, relOp.AdapterRef.Resolve().LogicalToPhysicalMap.Count, rule);
                     lastConditionNode = relOp;
                 }
                 else
@@ -1152,6 +1158,9 @@ namespace LSLib.LS.Story.Compiler
             var osiRule = EmitRuleNode(rule, goal, referencedDb, lastCondition, lastConditionNode);
             AddJoinTarget(lastConditionNode, osiRule, EntryPoint.None, goal);
             Rules.Add(rule, osiRule);
+
+            var validVariables = rule.Variables.Where(v => !v.IsUnused()).Count();
+            AddNodeDebugInfo(osiRule, rule.Location, validVariables, rule);
 
             if (DebugInfo != null)
             {

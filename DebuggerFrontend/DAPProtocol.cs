@@ -183,6 +183,18 @@ namespace LSTools.DebuggerFrontend
     }
 
     /**
+     * Custom configuration class 
+     */
+    public class DAPCustomConfiguration
+    {
+        /**
+         * Requests the debugger to return raw call frames from the backend instead of
+         * merging and pretty printing the frames.
+         */
+        public bool rawFrames { get; set; }
+    }
+
+    /**
      * Arguments for ‘launch’ request. Additional attributes are implementation specific.
      */
     public class DAPLaunchRequest : IDAPMessagePayload
@@ -213,6 +225,11 @@ namespace LSTools.DebuggerFrontend
          * Port of debugger backend server
          */
         public int backendPort { get; set; }
+
+        /**
+         * Additional debugger configuration
+         */
+        public DAPCustomConfiguration dbgOptions { get; set; }
     }
 
     /**

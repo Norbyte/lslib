@@ -27,6 +27,7 @@ namespace LSTools.DebuggerFrontend
     public class StackTracePrinter
     {
         private StoryDebugInfo DebugInfo;
+        public bool MergeFrames = true;
 
         public StackTracePrinter(StoryDebugInfo debugInfo)
         {
@@ -203,152 +204,55 @@ namespace LSTools.DebuggerFrontend
             return variables;
         }
 
-        private List<MsgFrame> CoalesceCallStack(BkBreakpointTriggered message)
+        private string GetFrameDebugName(MsgFrame frame)
         {
-            var frames = new List<MsgFrame>();
-            var index = 0;
-            for (var i = 0; i < message.CallStack.Count; i++)
-            {
-                var frame = message.CallStack[i];
-
-                // Copy rule-local variables from the join frame to the action frame
-                if (frame.Type == MsgFrame.Types.FrameType.FrameRuleAction
-                    && i > 0)
-                {
-                    var prevFrame = message.CallStack[i - 1];
-                    frame.Tuple = prevFrame.Tuple;
-                }
-
-                if (frame.Type == MsgFrame.Types.FrameType.FrameInsert
-                    || frame.Type == MsgFrame.Types.FrameType.FrameDelete
-                    || frame.Type == MsgFrame.Types.FrameType.FrameRuleAction
-                    || frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
-                    || frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction
-                    || index == message.CallStack.Count - 1)
-                {
-                    frames.Add(frame);
-                }
-
-                index++;
-            }
-
-            return frames;
-        }
-
-        private string GetFrameName(MsgFrame frame)
-        {
-            if (frame.Type == MsgFrame.Types.FrameType.FrameIsValid
-                || frame.Type == MsgFrame.Types.FrameType.FramePushdown
-                || frame.Type == MsgFrame.Types.FrameType.FramePushdownDelete
-                || frame.Type == MsgFrame.Types.FrameType.FrameInsert
-                || frame.Type == MsgFrame.Types.FrameType.FrameDelete)
-            {
-                return GetNodeFrameName(frame);
-            }
-            else
-            {
-                return GetActionFrameName(frame);
-            }
-        }
-
-        private string GetNodeFrameName(MsgFrame frame)
-        {
-            var node = DebugInfo.Nodes[frame.NodeId];
-
-            string dbName = "";
-            if (node.DatabaseId != 0)
-            {
-                var db = DebugInfo.Databases[node.DatabaseId];
-                dbName = db.Name;
-            }
-            else if (node.Name != null && node.Name.Length > 0)
-            {
-                dbName = node.Name;
-            }
-            else if (node.RuleId != 0)
-            {
-                var rule = DebugInfo.Rules[node.RuleId];
-                // TODOrule.
-                dbName = "(rule)";
-            }
-            else
-            {
-                dbName = "(unknown)";
-            }
-
+            string frameType;
             switch (frame.Type)
             {
-                case MsgFrame.Types.FrameType.FrameIsValid:
-                    if (node.Type == Node.Type.DivQuery || node.Type == Node.Type.InternalQuery || node.Type == Node.Type.UserQuery)
-                    {
-                        return dbName;
-                    }
-                    else if (node.Type == Node.Type.Database)
-                    {
-                        return dbName + " (Query)";
-                    }
-                    else
-                    {
-                        return String.Format("IsValid({0}, {1})", node.Type, dbName);
-                    }
-
-                case MsgFrame.Types.FrameType.FramePushdown:
-                    if (node.Type == Node.Type.And || node.Type == Node.Type.NotAnd || node.Type == Node.Type.RelOp)
-                    {
-                        return "PushDown";
-                    }
-                    else if (node.Type == Node.Type.Rule)
-                    {
-                        return "Rule THEN part";
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Pushdown operation not supported on node {node.Type}");
-                    }
-
-                case MsgFrame.Types.FrameType.FramePushdownDelete:
-                    return String.Format("    PushDownDelete {0}", node.Type);
-
-                case MsgFrame.Types.FrameType.FrameInsert:
-                    if (node.Type == Node.Type.UserQuery || node.Type == Node.Type.Proc)
-                    {
-                        return dbName;
-                    }
-                    else if (node.Type == Node.Type.Database)
-                    {
-                        return dbName + " (Insert)";
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Insert operation not supported on node {node.Type}");
-                    }
-
-                case MsgFrame.Types.FrameType.FrameDelete:
-                    if (node.Type == Node.Type.Database)
-                    {
-                        return dbName + " (Delete)";
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Delete operation not supported on node {node.Type}");
-                    }
-
-                case MsgFrame.Types.FrameType.FrameRuleAction:
-                    if (node.Type == Node.Type.Rule)
-                    {
-                        return dbName + " (THEN part)";
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Delete operation not supported on node {node.Type}");
-                    }
+                case MsgFrame.Types.FrameType.FrameIsValid: frameType = "IsValid"; break;
+                case MsgFrame.Types.FrameType.FramePushdown: frameType = "Pushdown"; break;
+                case MsgFrame.Types.FrameType.FramePushdownDelete: frameType = "PushdownDelete"; break;
+                case MsgFrame.Types.FrameType.FrameInsert: frameType = "Insert"; break;
+                case MsgFrame.Types.FrameType.FrameDelete: frameType = "Delete"; break;
+                case MsgFrame.Types.FrameType.FrameRuleAction: frameType = "RuleAction"; break;
+                case MsgFrame.Types.FrameType.FrameGoalInitAction: frameType = "GoalInitAction"; break;
+                case MsgFrame.Types.FrameType.FrameGoalExitAction: frameType = "GoalExitAction"; break;
 
                 default:
                     throw new InvalidOperationException($"Unsupported frame type: {frame.Type}");
             }
+
+            if (frame.NodeId != 0)
+            {
+                string dbName = "";
+                var node = DebugInfo.Nodes[frame.NodeId];
+                if (node.DatabaseId != 0)
+                {
+                    var db = DebugInfo.Databases[node.DatabaseId];
+                    dbName = db.Name;
+                }
+                else if (node.Name != null && node.Name.Length > 0)
+                {
+                    dbName = node.Name;
+                }
+
+                if (dbName != "")
+                {
+                    return $"{frameType} @ {node.Type} (DB {dbName})";
+                }
+                else
+                {
+                    return $"{frameType} @ {node.Type}";
+                }
+            }
+            else
+            {
+                var goal = DebugInfo.Goals[frame.GoalId];
+                return $"{frameType} @ {goal.Name}";
+            }
         }
 
-        private string GetActionFrameName(MsgFrame frame)
+        private string GetFrameName(MsgFrame frame)
         {
             switch (frame.Type)
             {
@@ -364,24 +268,37 @@ namespace LSTools.DebuggerFrontend
                         return goal + " (EXIT)";
                     }
 
-                case MsgFrame.Types.FrameType.FrameRuleAction:
+                case MsgFrame.Types.FrameType.FrameInsert:
                     {
                         var node = DebugInfo.Nodes[frame.NodeId];
-                        var rule = DebugInfo.Rules[node.RuleId];
-                        return rule.Name + " (THEN part)";
+                        if (node.Type == Node.Type.Database)
+                        {
+                            var db = DebugInfo.Databases[node.DatabaseId];
+                            return db.Name + " (INSERT)";
+                        }
+                        else
+                        {
+                            return node.Name;
+                        }
+                    }
+
+                case MsgFrame.Types.FrameType.FrameDelete:
+                    {
+                        var node = DebugInfo.Nodes[frame.NodeId];
+                        var db = DebugInfo.Databases[node.DatabaseId];
+                        return db.Name + " (DELETE)";
                     }
 
                 default:
-                    throw new InvalidOperationException($"Unsupported action type: {frame.Type}");
+                    throw new InvalidOperationException($"Unsupported root frame type: {frame.Type}");
             }
         }
 
         private CoalescedFrame MsgFrameToLocal(MsgFrame frame)
         {
             var outFrame = new CoalescedFrame();
-            outFrame.Name = GetFrameName(frame);
-
-
+            outFrame.Name = GetFrameDebugName(frame);
+            
             if (frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
                 || frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction)
             {
@@ -426,17 +343,140 @@ namespace LSTools.DebuggerFrontend
             return outFrame;
         }
 
-        public List<CoalescedFrame> BreakpointToStack(BkBreakpointTriggered message)
+        /// <summary>
+        /// Maps node calls to ranges. Each range represents one output frame in the final call stack.
+        /// </summary>
+        private List<List<CoalescedFrame>> DetermineFrameRanges(List<CoalescedFrame> frames)
         {
-            var coalesced = CoalesceCallStack(message);
-            var stack = new List<CoalescedFrame>();
-            foreach (var frame in coalesced)
+            var ranges = new List<List<CoalescedFrame>>();
+
+            List<CoalescedFrame> currentFrames = new List<CoalescedFrame>();
+            foreach (var frame in frames)
             {
-                stack.Add(MsgFrameToLocal(frame));
+                if (frame.Frame.Type == MsgFrame.Types.FrameType.FrameGoalInitAction
+                    || frame.Frame.Type == MsgFrame.Types.FrameType.FrameGoalExitAction)
+                {
+                    // Goal INIT/EXIT frames don't have parent frames, so we'll add them as separate frames
+                    if (currentFrames.Count > 0)
+                    {
+                        ranges.Add(currentFrames);
+                        currentFrames = new List<CoalescedFrame>();
+                    }
+
+                    currentFrames.Add(frame);
+                    ranges.Add(currentFrames);
+                    currentFrames = new List<CoalescedFrame>();
+                }
+                else
+                {
+                    // Embedded PROC/QRY frames start with Insert/Delete frames
+                    if (frame.Frame.Type == MsgFrame.Types.FrameType.FrameInsert
+                        || frame.Frame.Type == MsgFrame.Types.FrameType.FrameInsert)
+                    {
+                        if (currentFrames.Count > 0)
+                        {
+                            ranges.Add(currentFrames);
+                            currentFrames = new List<CoalescedFrame>();
+                        }
+                    }
+
+                    currentFrames.Add(frame);
+
+                    // Rule frames are terminated by RuleAction (THEN part) frames
+                    if (frame.Frame.Type == MsgFrame.Types.FrameType.FrameRuleAction)
+                    {
+                        ranges.Add(currentFrames);
+                        currentFrames = new List<CoalescedFrame>();
+                    }
+                }
             }
 
-            stack.Reverse();
-            return stack;
+
+            if (currentFrames.Count > 0)
+            {
+                ranges.Add(currentFrames);
+            }
+
+            return ranges;
+        }
+
+        /// <summary>
+        /// Merges a node call range into an output stack frame.
+        /// </summary>
+        private CoalescedFrame MergeFrame(List<CoalescedFrame> range)
+        {
+            var frame = new CoalescedFrame();
+            frame.Frame = range[0].Frame;
+
+            foreach (var node in range)
+            {
+                // Use last available location/variable data in the range
+                if (node.Line != 0)
+                {
+                    frame.File = node.File;
+                    frame.Line = node.Line;
+                }
+
+                if (node.Frame.Type == MsgFrame.Types.FrameType.FramePushdown
+                    || node.Frame.Type == MsgFrame.Types.FrameType.FrameInsert
+                    || node.Frame.Type == MsgFrame.Types.FrameType.FrameDelete)
+                {
+                    // Rule variable info is only propagated through Pushdown nodes.
+                    // All other nodes either have no variable info at all, or contain
+                    // local tuples used for DB insert/delete/query.
+
+                    // We'll keep the variables from Insert/Delete nodes if there are 
+                    // no better rule candidates, as they show the PROC/DB input tuple.
+                    frame.Variables = node.Variables;
+                }
+            }
+
+            if (frame.Variables == null)
+            {
+                frame.Variables = new List<DebugVariable>();
+            }
+
+            frame.Name = GetFrameName(frame.Frame);
+
+            // Special indicator for backward propagation of database inserts/deletes
+            if (range.Count >= 2
+                && (range[0].Frame.Type == MsgFrame.Types.FrameType.FrameInsert
+                    || range[0].Frame.Type == MsgFrame.Types.FrameType.FrameDelete)
+                && (range[1].Frame.Type == MsgFrame.Types.FrameType.FramePushdown
+                    || range[1].Frame.Type == MsgFrame.Types.FrameType.FramePushdownDelete))
+            {
+                var pushdownNode = DebugInfo.Nodes[range[1].Frame.NodeId];
+                if (range[0].Frame.NodeId != pushdownNode.ParentNodeId)
+                {
+                    frame.Name = "(Database Propagation) " + frame.Name;
+                }
+            }
+            
+            return frame;
+        }
+
+        private List<CoalescedFrame> MergeCallStack(List<CoalescedFrame> nodes)
+        {
+            var frameRanges = DetermineFrameRanges(nodes);
+            var frames = frameRanges.Select(range => MergeFrame(range)).ToList();
+            return frames;
+        }
+
+        public List<CoalescedFrame> BreakpointToStack(BkBreakpointTriggered message)
+        {
+            var rawFrames = message.CallStack.Select(frame => MsgFrameToLocal(frame)).ToList();
+            List<CoalescedFrame> mergedFrames;
+            if (MergeFrames)
+            {
+                mergedFrames = MergeCallStack(rawFrames);
+            }
+            else
+            {
+                mergedFrames = rawFrames;
+            }
+
+            mergedFrames.Reverse();
+            return mergedFrames;
         }
     }
 }

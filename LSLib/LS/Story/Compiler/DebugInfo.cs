@@ -85,6 +85,8 @@ namespace LSLib.LS.Story.Compiler
         public String Name;
         // Type of node
         public Node.Type Type;
+        // ID of left parent node
+        public UInt32 ParentNodeId;
     }
 
     public class StoryDebugInfo

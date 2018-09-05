@@ -104,7 +104,8 @@ namespace LSTools.StoryCompiler
                 Line = (UInt32)debugInfo.Line,
                 DatabaseId = debugInfo.DatabaseId,
                 Name = debugInfo.Name,
-                Type = (NodeDebugInfoMsg.Types.NodeType)debugInfo.Type
+                Type = (NodeDebugInfoMsg.Types.NodeType)debugInfo.Type,
+                ParentNodeId = debugInfo.ParentNodeId
             };
 
             foreach (var map in debugInfo.ColumnToVariableMaps)

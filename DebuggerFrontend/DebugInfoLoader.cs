@@ -108,7 +108,8 @@ namespace LSTools.DebuggerFrontend
                 ColumnToVariableMaps = new Dictionary<int, int>(),
                 DatabaseId = msg.DatabaseId,
                 Name = msg.Name,
-                Type = (LSLib.LS.Story.Node.Type)msg.Type
+                Type = (LSLib.LS.Story.Node.Type)msg.Type,
+                ParentNodeId = msg.ParentNodeId
             };
 
             foreach (var map in msg.ColumnMaps)
