@@ -288,6 +288,24 @@ namespace LSLib.LS.Story.Compiler
         /// Multiple definitions seen for the same function with different signatures.
         /// </summary>
         public const String ProcTypeMismatch = "E30";
+        /// <summary>
+        /// Attempted to cast a type to an unrelated/incompatible type (i.e. STRING to INTEGER)
+        /// </summary>
+        public const String CastToUnrelatedType = "E31";
+        /// <summary>
+        /// Attempted to cast an alias to an unrelated alias (i.e. CHARACTERGUID to ITEMGUID)
+        /// </summary>
+        public const String CastToUnrelatedGuidAlias = "W32";
+        /// <summary>
+        /// Left-hand side and right-hand side variables are the same in a binary operation.
+        /// This will result in an "invalid compare" error in runtime.
+        /// </summary>
+        public const String BinaryOperationSameRhsLhs = "E33";
+        /// <summary>
+        /// comparison on types that have known bugs or side effects
+        /// (currently this only triggers on GUIDSTRING - STRING comparison)
+        /// </summary>
+        public const String RiskyComparison = "E34";
     }
 
     public class Diagnostic
@@ -746,8 +764,17 @@ namespace LSLib.LS.Story.Compiler
             if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
             {
                 Context.Log.Error(variable.Location, 
-                    DiagnosticCode.LocalTypeMismatch,
-                    "Rule variable {0} of type {1} cannot be converted to {2}",
+                    DiagnosticCode.CastToUnrelatedType,
+                    "Cannot cast {1} variable {0} to unrelated type {2}",
+                    ruleVar.Name, TypeToName(ruleVar.Type.IntrinsicTypeId), TypeToName(variable.Type.IntrinsicTypeId));
+                return;
+            }
+
+            if (IsRiskyComparison(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
+            {
+                Context.Log.Error(variable.Location,
+                    DiagnosticCode.RiskyComparison,
+                    "Coercion of {1} variable {0} to {2} may trigger incorrect behavior",
                     ruleVar.Name, TypeToName(ruleVar.Type.IntrinsicTypeId), TypeToName(variable.Type.IntrinsicTypeId));
                 return;
             }
@@ -755,8 +782,8 @@ namespace LSLib.LS.Story.Compiler
             if (IsGuidAliasToAliasCast(ruleVar.Type, variable.Type))
             {
                 Context.Log.Warn(variable.Location, 
-                    DiagnosticCode.GuidAliasMismatch,
-                    "GUID alias cast: Rule variable {0} of type {1} converted to {2}",
+                    DiagnosticCode.CastToUnrelatedGuidAlias,
+                    "{1} variable {0} converted to unrelated type {2}",
                     ruleVar.Name, TypeToName(ruleVar.Type.TypeId), TypeToName(variable.Type.TypeId));
             }
         }
@@ -1009,10 +1036,8 @@ namespace LSLib.LS.Story.Compiler
                     return Value.Type.Integer;
 
                 case Value.Type.String:
-                    return Value.Type.String;
-
                 case Value.Type.GuidString:
-                    return Value.Type.GuidString;
+                    return Value.Type.String;
 
                 default:
                     throw new ArgumentException("Cannot check compatibility of unknown types");
@@ -1024,6 +1049,16 @@ namespace LSLib.LS.Story.Compiler
             Value.Type translatedType1 = IntrinsicTypeToCompatibilityType(type1),
                 translatedType2 = IntrinsicTypeToCompatibilityType(type2);
             return translatedType1 == translatedType2;
+        }
+
+        /// <summary>
+        /// Returns whether comparing the specified types is "risky",
+        /// i.e. if there is unexpected behavior or side effects.
+        /// </summary>
+        private bool IsRiskyComparison(Value.Type type1, Value.Type type2)
+        {
+            return (type1 == Value.Type.String && type2 == Value.Type.GuidString)
+                || (type1 == Value.Type.GuidString && type2 == Value.Type.String);
         }
 
         private bool IsGuidAliasToAliasCast(ValueType type1, ValueType type2)
@@ -1067,6 +1102,18 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
+            if (condition.LValue is IRVariable
+                && condition.RValue is IRVariable
+                && (condition.LValue as IRVariable).Index == (condition.RValue as IRVariable).Index
+                // There is a known bug in the main campaign that we have to ignore
+                && rule.Goal.Name != "EndGame_PrisonersDilemma")
+            {
+                Context.Log.Error(condition.Location,
+                    DiagnosticCode.BinaryOperationSameRhsLhs,
+                    "Same variable used on both sides of a binary expression; this will result in an invalid compare in runtime");
+                return;
+            }
+
             VerifyIRBinaryConditionValue(rule, condition.LValue, conditionIndex);
             VerifyIRBinaryConditionValue(rule, condition.RValue, conditionIndex);
             
@@ -1075,6 +1122,15 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(condition.Location, 
                     DiagnosticCode.LocalTypeMismatch,
                     "Type of left expression ({0}) differs from type of right expression ({1})",
+                    TypeToName(lhs.IntrinsicTypeId), TypeToName(rhs.IntrinsicTypeId));
+                return;
+            }
+
+            if (IsRiskyComparison(lhs.IntrinsicTypeId, rhs.IntrinsicTypeId))
+            {
+                Context.Log.Error(condition.Location,
+                    DiagnosticCode.RiskyComparison,
+                    "Comparison between {0} and {1} may trigger incorrect behavior",
                     TypeToName(lhs.IntrinsicTypeId), TypeToName(rhs.IntrinsicTypeId));
                 return;
             }
