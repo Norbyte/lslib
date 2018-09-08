@@ -12,7 +12,7 @@ namespace LSTools.DebuggerFrontend
 {
     public class DAPMessageHandler
     {
-        private const UInt32 ProtocolVersion = 3;
+        private const UInt32 ProtocolVersion = 4;
 
         private DAPStream Stream;
         private Stream LogStream;
@@ -278,6 +278,16 @@ namespace LSTools.DebuggerFrontend
             }
         }
 
+        private void OnDebugOutput(BkDebugOutput msg)
+        {
+            var outputMsg = new DAPOutputMessage
+            {
+                category = "stdout",
+                output = "DebugBreak: " + msg.Message + "\r\n"
+            };
+            SendEvent("output", outputMsg);
+        }
+
         private void HandleInitializeRequest(DAPRequest request, DAPInitializeRequest init)
         {
             var reply = new DAPCapabilities();
@@ -330,7 +340,8 @@ namespace LSTools.DebuggerFrontend
                 OnBreakpointTriggered = this.OnBreakpointTriggered,
                 OnGlobalBreakpointTriggered = this.OnGlobalBreakpointTriggered,
                 OnStorySyncData = this.OnStorySyncData,
-                OnStorySyncFinished = this.OnStorySyncFinished
+                OnStorySyncFinished = this.OnStorySyncFinished,
+                OnDebugOutput = this.OnDebugOutput
             };
             if (LogStream != null)
             {

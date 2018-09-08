@@ -204,6 +204,11 @@ message BkSyncStoryData {
 message BkSyncStoryFinished {
 }
 
+// Debug output text (DebugBreak) from the story script
+message BkDebugOutput {
+  string message = 1;
+}
+
 
 message DebuggerToBackend {
   oneof msg {
@@ -229,6 +234,7 @@ message BackendToDebugger {
     BkGlobalBreakpointTriggered globalBreakpointTriggered = 7;
     BkSyncStoryData syncStoryData = 10;
     BkSyncStoryFinished syncStoryFinished = 11;
+	BkDebugOutput debugOutput = 12;
   }
   uint32 seq_no = 8;
   uint32 reply_seq_no = 9;

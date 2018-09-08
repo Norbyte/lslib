@@ -121,6 +121,9 @@ namespace LSTools.DebuggerFrontend
         public delegate void StorySyncFinishedDelegate();
         public StorySyncFinishedDelegate OnStorySyncFinished = delegate { };
 
+        public delegate void DebugOutputDelegate(BkDebugOutput msg);
+        public DebugOutputDelegate OnDebugOutput = delegate { };
+
         public DebuggerClient(AsyncProtobufClient client, StoryDebugInfo debugInfo)
         {
             Client = client;
@@ -303,6 +306,10 @@ namespace LSTools.DebuggerFrontend
 
                 case BackendToDebugger.MsgOneofCase.SyncStoryFinished:
                     OnStorySyncFinished();
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.DebugOutput:
+                    OnDebugOutput(message.DebugOutput);
                     break;
 
                 default:
