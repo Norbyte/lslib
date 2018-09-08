@@ -1095,7 +1095,8 @@ namespace LSLib.LS.Story.Compiler
                 Name = signature.Name + "__DEF__",
                 Params = signature.Params,
                 Type = signature.Type,
-                Written = signature.Written,
+                Inserted = signature.Inserted,
+                Deleted = signature.Deleted,
                 Read = signature.Read
             };
 

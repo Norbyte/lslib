@@ -122,8 +122,10 @@ namespace LSLib.LS.Story.Compiler
         public List<FunctionParam> Params;
         // Indicates that we were able to infer the type of all parameters
         public Boolean FullyTyped;
-        // Indicates that the function is "written" in at least one place
-        public Boolean Written;
+        // Indicates that the database is "inserted into" in at least one place
+        public Boolean Inserted;
+        // Indicates that the database is "deleted from" in at least one place
+        public Boolean Deleted;
         // Indicates that the function is "read" in at least one place
         public Boolean Read;
 
@@ -669,7 +671,14 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
-            db.Written = true;
+            if (fact.Not)
+            {
+                db.Deleted = true;
+            }
+            else
+            {
+                db.Inserted = true;
+            }
 
             int index = 0;
             foreach (var param in db.Params)
@@ -734,7 +743,14 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
-            func.Written = true;
+            if (statement.Not)
+            {
+                func.Deleted = true;
+            }
+            else
+            {
+                func.Inserted = true;
+            }
 
             int index = 0;
             foreach (var param in func.Params)
@@ -1233,24 +1249,40 @@ namespace LSLib.LS.Story.Compiler
         {
             foreach (var signature in Context.Signatures)
             {
-                if (signature.Value.Type == FunctionType.Database
-                    && (!signature.Value.Written || !signature.Value.Read))
+                if (signature.Value.Type == FunctionType.Database)
                 {
-                    Debug.Assert(signature.Value.Written || signature.Value.Read);
-                    if (!signature.Value.Written)
+                    Debug.Assert(signature.Value.Inserted
+                        || signature.Value.Deleted
+                        || signature.Value.Read);
+
+                    if (!signature.Value.Read)
                     {
                         // TODO - return location of declaration
-                        Context.Log.Warn(null, 
+                        Context.Log.Warn(null,
                             DiagnosticCode.UnusedDatabase,
-                            "{0} \"{1}\" is used in a rule, but is never written to",
+                            "{0} \"{1}\" is written to, but is never read",
                             signature.Value.Type, signature.Key);
                     }
-                    else
+                    
+                    if (!signature.Value.Inserted
+                        && !signature.Value.Deleted
+                        && signature.Value.Read)
                     {
                         // TODO - return location of declaration
-                        Context.Log.Warn(null, 
+                        Context.Log.Warn(null,
                             DiagnosticCode.UnusedDatabase,
-                            "{0} \"{1}\" is written to, but is never used in a rule",
+                            "{0} \"{1}\" is read, but is never written to",
+                            signature.Value.Type, signature.Key);
+                    }
+
+                    if (!signature.Value.Inserted
+                        && signature.Value.Deleted
+                        && signature.Value.Read)
+                    {
+                        // TODO - return location of declaration
+                        Context.Log.Warn(null,
+                            DiagnosticCode.UnusedDatabase,
+                            "{0} \"{1}\" is read and deleted, but is never inserted into",
                             signature.Value.Type, signature.Key);
                     }
                 }
@@ -1363,7 +1395,8 @@ namespace LSLib.LS.Story.Compiler
                 {
                     Name = name.Name,
                     Type = (type == null) ? FunctionType.Database : (FunctionType)type,
-                    Written = false,
+                    Inserted = false,
+                    Deleted = false,
                     Read = false
                 };
             }

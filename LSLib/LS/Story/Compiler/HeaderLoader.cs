@@ -70,7 +70,8 @@ namespace LSLib.LS.Story.Compiler
                 Type = astFunction.Type,
                 Params = args,
                 FullyTyped = true,
-                Written = false,
+                Inserted = false,
+                Deleted = false,
                 Read = false
             };
 
