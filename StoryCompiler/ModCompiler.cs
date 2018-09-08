@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LSTools.StoryCompiler
@@ -30,6 +31,7 @@ namespace LSTools.StoryCompiler
         public bool CheckOnly = false;
         public bool CheckGameObjects = false;
         public bool LoadPackages = true;
+        public TargetGame Game = TargetGame.DOS2;
 
         public ModCompiler(Logger logger, String gameDataPath)
         {
@@ -192,6 +194,36 @@ namespace LSTools.StoryCompiler
             }
         }
 
+        private void LoadOrphanQueryIgnores(ModInfo mod)
+        {
+            if (mod.OrphanQueryIgnoreList == null) return;
+            
+            var ignoreStream = mod.OrphanQueryIgnoreList.MakeStream();
+            try
+            {
+                using (var reader = new StreamReader(ignoreStream))
+                {
+                    var ignoreRe = new Regex("^([a-zA-Z0-9_]+)\\s+([0-9]+)$");
+
+                    while (!reader.EndOfStream)
+                    {
+                        string ignoreLine = reader.ReadLine();
+                        var match = ignoreRe.Match(ignoreLine);
+                        if (match.Success)
+                        {
+                            var signature = new FunctionNameAndArity(
+                                match.Groups[1].Value, Int32.Parse(match.Groups[2].Value));
+                            Compiler.IgnoreUnusedDatabases.Add(signature);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                mod.OrphanQueryIgnoreList.ReleaseStream();
+            }
+        }
+
         private void LoadGameObjects(ModInfo mod)
         {
             foreach (var file in mod.Globals)
@@ -237,6 +269,8 @@ namespace LSTools.StoryCompiler
             }
 
             LoadGoals(mod);
+            LoadOrphanQueryIgnores(mod);
+
             if (CheckGameObjects)
             {
                 LoadGameObjects(mod);
@@ -246,6 +280,8 @@ namespace LSTools.StoryCompiler
         public bool Compile(string outputPath, string debugInfoPath, List<string> mods)
         {
             Logger.CompilationStarted();
+            Compiler.Game = Game;
+
             if (mods.Count > 0)
             {
                 Logger.TaskStarted("Discovering module files");

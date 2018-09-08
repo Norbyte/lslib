@@ -39,6 +39,13 @@ namespace LSTools.StoryCompiler
         )]
         public bool NoPackages;
 
+        [EnumeratedValueArgument(typeof(string), "game",
+            AllowedValues = "dos2;dos2de",
+            Description = "Which game is the story targeting?",
+            Optional = true
+        )]
+        public string Game;
+
         [ValueArgument(typeof(string), "mod",
             Description = "Mod to add",
             AllowMultiple = true,
@@ -85,7 +92,8 @@ namespace LSTools.StoryCompiler
                 { "string-lt", DiagnosticCode.StringLtGtComparison },
                 { "rule-naming", DiagnosticCode.RuleNamingStyle },
                 { "db-naming", DiagnosticCode.DbNamingStyle },
-                { "unused-db", DiagnosticCode.UnusedDatabase },
+                { "unused-db", DiagnosticCode.UnusedDatabaseWarning },
+                { "unwritten-db", DiagnosticCode.UnwrittenDatabase },
                 { "unresolved-object", DiagnosticCode.UnresolvedGameObjectName },
                 { "object-name", DiagnosticCode.GameObjectNameMismatch },
                 { "object-type", DiagnosticCode.GameObjectTypeMismatch }

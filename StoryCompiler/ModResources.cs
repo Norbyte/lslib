@@ -12,6 +12,7 @@ namespace LSTools.StoryCompiler
         public Dictionary<string, AbstractFileInfo> Scripts = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> Globals = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> LevelObjects = new Dictionary<string, AbstractFileInfo>();
+        public AbstractFileInfo OrphanQueryIgnoreList;
 
         public ModInfo(String name)
         {
@@ -22,6 +23,7 @@ namespace LSTools.StoryCompiler
     public class ModResources
     {
         private static Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static Regex orphanQueryIgnoresRe = new Regex("^Mods/(.*)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static Regex globalsRe = new Regex("^Mods/(.*)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static Regex levelObjectsRe = new Regex("^Mods/(.*)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         
@@ -98,6 +100,15 @@ namespace LSTools.StoryCompiler
                     if (match != null && match.Success)
                     {
                         AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                    }
+                }
+
+                if (file.Name.EndsWith("/Story/story_orphanqueries_ignore_local.txt", StringComparison.Ordinal))
+                {
+                    var match = orphanQueryIgnoresRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        GetMod(match.Groups[1].Value).OrphanQueryIgnoreList = file;
                     }
                 }
 
@@ -236,6 +247,17 @@ namespace LSTools.StoryCompiler
                     };
                     StoryHeaderFile = fileInfo;
                 }
+            }
+
+            var orphanQueryIgnoresPath = modPath + @"\Story\story_orphanqueries_ignore_local.txt";
+            if (File.Exists(orphanQueryIgnoresPath))
+            {
+                var fileInfo = new FilesystemFileInfo
+                {
+                    FilesystemPath = orphanQueryIgnoresPath,
+                    Name = orphanQueryIgnoresPath
+                };
+                GetMod(modName).OrphanQueryIgnoreList = fileInfo;
             }
         }
 

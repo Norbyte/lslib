@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using CommandLineParser.Exceptions;
 using System.Collections.Generic;
+using LSLib.LS.Story.Compiler;
 
 namespace LSTools.StoryCompiler
 {
@@ -43,6 +44,14 @@ namespace LSTools.StoryCompiler
             modCompiler.CheckGameObjects = args.CheckGameObjects;
             modCompiler.CheckOnly = args.CheckOnly;
             modCompiler.LoadPackages = !args.NoPackages;
+            if (args.Game == "dos2")
+            {
+                modCompiler.Game = TargetGame.DOS2;
+            }
+            else if (args.Game == "dos2")
+            {
+                modCompiler.Game = TargetGame.DOS2DE;
+            }
 
             var mods = new List<string>(args.Mods);
             if (!modCompiler.Compile(args.OutputPath, args.DebugInfoOutputPath, mods))
