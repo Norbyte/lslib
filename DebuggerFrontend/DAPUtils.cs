@@ -140,6 +140,7 @@ namespace LSTools.DebuggerFrontend
                     case "stepIn": return serializer.Deserialize<DAPContinueRequest>(reader);
                     case "stepOut": return serializer.Deserialize<DAPContinueRequest>(reader);
                     case "pause": return serializer.Deserialize<DAPContinueRequest>(reader);
+                    case "evaluate": return serializer.Deserialize<DAPEvaulateRequest>(reader);
                     default: throw new DAPUnknownMessageException(TypeHint.type, TypeHint.message, TypeHint.seq);
                 }
             }

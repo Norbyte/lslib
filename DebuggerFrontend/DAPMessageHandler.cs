@@ -12,7 +12,7 @@ namespace LSTools.DebuggerFrontend
 {
     public class DAPMessageHandler
     {
-        private const UInt32 ProtocolVersion = 4;
+        private const UInt32 ProtocolVersion = 5;
 
         private DAPStream Stream;
         private Stream LogStream;
@@ -25,6 +25,7 @@ namespace LSTools.DebuggerFrontend
         private DebuggerClient DbgCli;
         private StackTracePrinter TracePrinter;
         private BreakpointManager Breakpoints;
+        private DatabaseEnumerator DatabaseDumper;
         private List<CoalescedFrame> Stack;
         private DAPCustomConfiguration Config;
         private bool Stopped;
@@ -48,46 +49,6 @@ namespace LSTools.DebuggerFrontend
             LogStream = logStream;
         }
 
-        private void SendEvent(string command, IDAPMessagePayload body)
-        {
-            var reply = new DAPEvent
-            {
-                type = "event",
-                @event = command,
-                body = body
-            };
-
-            Stream.Send(reply);
-        }
-
-        private void SendReply(DAPRequest request, IDAPMessagePayload response)
-        {
-            var reply = new DAPResponse
-            {
-                type = "response",
-                request_seq = request.seq,
-                success = true,
-                command = request.command,
-                body = response
-            };
-
-            Stream.Send(reply);
-        }
-
-        private void SendReply(DAPRequest request, string errorText)
-        {
-            var reply = new DAPResponse
-            {
-                type = "response",
-                request_seq = request.seq,
-                success = false,
-                command = request.command,
-                message = errorText
-            };
-
-            Stream.Send(reply);
-        }
-
         private void SendBreakpoint(string eventType, Breakpoint bp)
         {
             var bpMsg = new DAPBreakpointEvent
@@ -95,7 +56,7 @@ namespace LSTools.DebuggerFrontend
                 reason = eventType,
                 breakpoint = bp.ToDAP()
             };
-            SendEvent("breakpoint", bpMsg);
+            Stream.SendEvent("breakpoint", bpMsg);
         }
 
         private void LogError(String message)
@@ -105,7 +66,7 @@ namespace LSTools.DebuggerFrontend
                 category = "stderr",
                 output = message + "\r\n"
             };
-            SendEvent("output", outputMsg);
+            Stream.SendEvent("output", outputMsg);
 
             if (LogStream != null)
             {
@@ -125,14 +86,14 @@ namespace LSTools.DebuggerFrontend
                 {
                     HandleRequest(message as DAPRequest);
                 }
+                catch (RequestFailedException e)
+                {
+                    Stream.SendReply(message as DAPRequest, e.ToString());
+                }
                 catch (Exception e)
                 {
                     LogError(e.ToString());
-
-                    if (message.type == "request")
-                    {
-                        SendReply(message as DAPRequest, e.ToString());
-                    }
+                    Stream.SendReply(message as DAPRequest, e.ToString());
                 }
             }
             else if (message is DAPEvent)
@@ -160,6 +121,8 @@ namespace LSTools.DebuggerFrontend
 
             Stack = null;
             Stopped = false;
+
+            DatabaseDumper = new DatabaseEnumerator(DbgCli, Stream, DebugInfo);
 
             var changedBps = Breakpoints.DebugInfoLoaded(DebugInfo);
             // Notify the debugger that the status of breakpoints changed
@@ -211,7 +174,7 @@ namespace LSTools.DebuggerFrontend
                 category = "console",
                 output = "Story unloaded - debug session terminated\r\n"
             };
-            SendEvent("output", outputMsg);
+            Stream.SendEvent("output", outputMsg);
         }
 
         private void OnBreakpointTriggered(BkBreakpointTriggered bp)
@@ -225,7 +188,7 @@ namespace LSTools.DebuggerFrontend
                 reason = "breakpoint",
                 threadId = 1
             };
-            SendEvent("stopped", stopped);
+            Stream.SendEvent("stopped", stopped);
         }
 
         private void OnGlobalBreakpointTriggered(BkGlobalBreakpointTriggered message)
@@ -285,14 +248,17 @@ namespace LSTools.DebuggerFrontend
                 category = "stdout",
                 output = "DebugBreak: " + msg.Message + "\r\n"
             };
-            SendEvent("output", outputMsg);
+            Stream.SendEvent("output", outputMsg);
         }
 
         private void HandleInitializeRequest(DAPRequest request, DAPInitializeRequest init)
         {
-            var reply = new DAPCapabilities();
-            reply.supportsConfigurationDoneRequest = true;
-            SendReply(request, reply);
+            var reply = new DAPCapabilities
+            {
+                supportsConfigurationDoneRequest = true,
+                supportsEvaluateForHovers = true
+            };
+            Stream.SendReply(request, reply);
         }
 
         private void DebugThreadMain()
@@ -315,9 +281,7 @@ namespace LSTools.DebuggerFrontend
 
             if (!File.Exists(launch.debugInfoPath))
             {
-                DebugInfoPath = launch.debugInfoPath;
-                SendReply(request, "Story debug file does not exist: " + launch.debugInfoPath);
-                return;
+                throw new RequestFailedException("Story debug file does not exist: " + launch.debugInfoPath);
             }
 
             DebugInfoPath = launch.debugInfoPath;
@@ -328,8 +292,7 @@ namespace LSTools.DebuggerFrontend
             }
             catch (SocketException e)
             {
-                SendReply(request, "Could not connect to Osiris backend server: " + e.Message);
-                return;
+                throw new RequestFailedException("Could not connect to Osiris backend server: " + e.Message);
             }
 
             DbgCli = new DebuggerClient(DbgClient, DebugInfo)
@@ -356,10 +319,10 @@ namespace LSTools.DebuggerFrontend
             Breakpoints = new BreakpointManager(DbgCli);
 
             var reply = new DAPLaunchResponse();
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
 
             var initializedEvt = new DAPInitializedEvent();
-            SendEvent("initialized", initializedEvt);
+            Stream.SendEvent("initialized", initializedEvt);
         }
 
         private void HandleSetBreakpointsRequest(DAPRequest request, DAPSetBreakpointsRequest breakpoints)
@@ -382,17 +345,17 @@ namespace LSTools.DebuggerFrontend
 
                 Breakpoints.UpdateBreakpointsOnBackend();
 
-                SendReply(request, reply);
+                Stream.SendReply(request, reply);
             }
             else
             {
-                SendReply(request, "Cannot add breakpoint - breakpoint manager not yet initialized");
+                throw new RequestFailedException("Cannot add breakpoint - breakpoint manager not yet initialized");
             }
         }
 
         private void HandleConfigurationDoneRequest(DAPRequest request, DAPEmptyPayload msg)
         {
-            SendReply(request, new DAPEmptyPayload());
+            Stream.SendReply(request, new DAPEmptyPayload());
         }
 
         private void HandleThreadsRequest(DAPRequest request, DAPEmptyPayload msg)
@@ -407,21 +370,19 @@ namespace LSTools.DebuggerFrontend
                     }
                 }
             };
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
         }
 
         private void HandleStackTraceRequest(DAPRequest request, DAPStackFramesRequest msg)
         {
             if (!Stopped)
             {
-                SendReply(request, "Cannot get stack when story is running");
-                return;
+                throw new RequestFailedException("Cannot get stack when story is running");
             }
 
             if (msg.threadId != 1)
             {
-                SendReply(request, "Requested stack trace for unknown thread");
-                return;
+                throw new RequestFailedException("Requested stack trace for unknown thread");
             }
 
             int startFrame = msg.startFrame == null ? 0 : (int)msg.startFrame;
@@ -456,21 +417,19 @@ namespace LSTools.DebuggerFrontend
                 stackFrames = frames,
                 totalFrames = Stack.Count
             };
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
         }
 
         private void HandleScopesRequest(DAPRequest request, DAPScopesRequest msg)
         {
             if (!Stopped)
             {
-                SendReply(request, "Cannot get scopes when story is running");
-                return;
+                throw new RequestFailedException("Cannot get scopes when story is running");
             }
 
             if (msg.frameId < 0 || msg.frameId >= Stack.Count)
             {
-                SendReply(request, "Requested scopes for unknown frame");
-                return;
+                throw new RequestFailedException("Requested scopes for unknown frame");
             }
 
             var frame = Stack[msg.frameId];
@@ -489,24 +448,17 @@ namespace LSTools.DebuggerFrontend
                     }
                 }
             };
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
         }
 
-        private void HandleVariablesRequest(DAPRequest request, DAPVariablesRequest msg)
+        private List<DAPVariable> GetStackVariables(DAPVariablesRequest msg, int frameIndex)
         {
-            if (!Stopped)
+            if (frameIndex < 0 || frameIndex >= Stack.Count)
             {
-                SendReply(request, "Cannot get variables when story is running");
-                return;
+                throw new RequestFailedException($"Requested variables for unknown frame {frameIndex}");
             }
 
-            if (msg.variablesReference < 1 || msg.variablesReference > Stack.Count)
-            {
-                SendReply(request, "Requested variables for unknown frame");
-                return;
-            }
-
-            var frame = Stack[msg.variablesReference - 1];
+            var frame = Stack[frameIndex];
             int startIndex = msg.start == null ? 0 : (int)msg.start;
             int numVars = (msg.count == null || msg.count == 0) ? frame.Variables.Count : (int)msg.count;
             int lastIndex = Math.Min(startIndex + numVars, frame.Variables.Count);
@@ -523,11 +475,37 @@ namespace LSTools.DebuggerFrontend
                 variables.Add(dapVar);
             }
 
+            return variables;
+        }
+
+        private void HandleVariablesRequest(DAPRequest request, DAPVariablesRequest msg)
+        {
+            if (!Stopped)
+            {
+                throw new RequestFailedException("Cannot get variables when story is running");
+            }
+
+            long variableType = (msg.variablesReference >> 48);
+            List<DAPVariable> variables;
+            if (variableType == 0)
+            {
+                int frameIndex = (int)msg.variablesReference - 1;
+                variables = GetStackVariables(msg, frameIndex);
+            }
+            else if (variableType == 1 || variableType == 2)
+            {
+                variables = DatabaseDumper.GetVariables(msg, msg.variablesReference);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unknown variables reference type: {msg.variablesReference}");
+            }
+
             var reply = new DAPVariablesResponse
             {
                 variables = variables
             };
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
         }
 
         private UInt32 GetContinueBreakpointMask()
@@ -582,16 +560,14 @@ namespace LSTools.DebuggerFrontend
         {
             if (msg.threadId != 1)
             {
-                SendReply(request, "Requested continue for unknown thread");
-                return;
+                throw new RequestFailedException("Requested continue for unknown thread");
             }
 
             if (action == DbgContinue.Types.Action.Pause)
             {
                 if (Stopped)
                 {
-                    SendReply(request, "Already stopped");
-                    return;
+                    throw new RequestFailedException("Already stopped");
                 }
 
                 PauseRequested = true;
@@ -600,8 +576,7 @@ namespace LSTools.DebuggerFrontend
             {
                 if (!Stopped)
                 {
-                    SendReply(request, "Already running");
-                    return;
+                    throw new RequestFailedException("Already running");
                 }
 
                 Stopped = false;
@@ -613,13 +588,30 @@ namespace LSTools.DebuggerFrontend
             {
                 allThreadsContinued = false
             };
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
+        }
+
+        private void HandleEvaluateRequest(DAPRequest request, DAPEvaulateRequest req)
+        {
+            if (!Stopped)
+            {
+                throw new RequestFailedException("Can only evaluate expressions when stopped");
+            }
+
+            // TODO - this is bad for performance!
+            var db = DebugInfo.Databases.Values.FirstOrDefault(r => r.Name == req.expression);
+            if (db == null)
+            {
+                throw new RequestFailedException($"Database does not exist: \"{req.expression}\"");
+            }
+
+            DatabaseDumper.RequestDatabaseEvaluation(request, db.Id);
         }
 
         private void HandleDisconnectRequest(DAPRequest request, DAPDisconnectRequest msg)
         {
             var reply = new DAPEmptyPayload();
-            SendReply(request, reply);
+            Stream.SendReply(request, reply);
             // TODO - close session
         }
 
@@ -682,6 +674,10 @@ namespace LSTools.DebuggerFrontend
                 case "pause":
                     HandleContinueRequest(request, request.arguments as DAPContinueRequest,
                         DbgContinue.Types.Action.Pause);
+                    break;
+
+                case "evaluate":
+                    HandleEvaluateRequest(request, request.arguments as DAPEvaulateRequest);
                     break;
 
                 case "disconnect":

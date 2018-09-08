@@ -124,6 +124,15 @@ namespace LSTools.DebuggerFrontend
         public delegate void DebugOutputDelegate(BkDebugOutput msg);
         public DebugOutputDelegate OnDebugOutput = delegate { };
 
+        public delegate void BeginDatabaseContentsDelegate(BkBeginDatabaseContents msg);
+        public BeginDatabaseContentsDelegate OnBeginDatabaseContents = delegate { };
+
+        public delegate void DatabaseRowDelegate(BkDatabaseRow msg);
+        public DatabaseRowDelegate OnDatabaseRow = delegate { };
+
+        public delegate void EndDatabaseContentsDelegate(BkEndDatabaseContents msg);
+        public EndDatabaseContentsDelegate OnEndDatabaseContents = delegate { };
+
         public DebuggerClient(AsyncProtobufClient client, StoryDebugInfo debugInfo)
         {
             Client = client;
@@ -213,6 +222,18 @@ namespace LSTools.DebuggerFrontend
             var msg = new DebuggerToBackend
             {
                 SetBreakpoints = setBps
+            };
+            Send(msg);
+        }
+
+        public void SendGetDatabaseContents(UInt32 databaseId)
+        {
+            var msg = new DebuggerToBackend
+            {
+                GetDatabaseContents = new DbgGetDatabaseContents
+                {
+                    DatabaseId = databaseId
+                }
             };
             Send(msg);
         }
@@ -310,6 +331,18 @@ namespace LSTools.DebuggerFrontend
 
                 case BackendToDebugger.MsgOneofCase.DebugOutput:
                     OnDebugOutput(message.DebugOutput);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.BeginDatabaseContents:
+                    OnBeginDatabaseContents(message.BeginDatabaseContents);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.DatabaseRow:
+                    OnDatabaseRow(message.DatabaseRow);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.EndDatabaseContents:
+                    OnEndDatabaseContents(message.EndDatabaseContents);
                     break;
 
                 default:

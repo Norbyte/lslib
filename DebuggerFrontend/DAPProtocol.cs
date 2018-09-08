@@ -164,7 +164,7 @@ namespace LSTools.DebuggerFrontend
         /**
          * The debug adapter supports a (side effect free) evaluate request for data hovers.
          */
-        // TODO - public bool supportsEvaluateForHovers { get; set; }
+        public bool supportsEvaluateForHovers { get; set; }
 
         /**
          * The debug adapter supports setting a variable to a value.
@@ -633,7 +633,7 @@ namespace LSTools.DebuggerFrontend
         /**
          * The variables of this scope can be retrieved by passing the value of variablesReference to the VariablesRequest.
          */
-        public int variablesReference { get; set; }
+        public long variablesReference { get; set; }
 
         /**
          * The number of named variables in this scope.
@@ -707,7 +707,7 @@ namespace LSTools.DebuggerFrontend
         /**
          * The Variable reference.
          */
-        public int variablesReference { get; set; }
+        public long variablesReference { get; set; }
 
         /**
          * Optional filter to limit the child variables to either named or indexed. If ommited, both types are fetched.
@@ -807,17 +807,17 @@ namespace LSTools.DebuggerFrontend
         /**
          * Properties of a variable that can be used to determine how to render the variable in the UI.
          */
-        public DAPVariablePresentationHint presentationHint { get; set; }
+        // public DAPVariablePresentationHint presentationHint { get; set; }
 
         /**
          * Optional evaluatable name of this variable which can be passed to the 'EvaluateRequest' to fetch the variable's value.
          */
-        public string evaluateName { get; set; }
+        // public string evaluateName { get; set; }
 
         /**
          * If variablesReference is > 0, the variable is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
          */
-        public int variablesReference { get; set; }
+        public long variablesReference { get; set; }
 
         /**
          * The number of named child variables.
@@ -909,5 +909,75 @@ namespace LSTools.DebuggerFrontend
          * The breakpoint.
          */
         public DAPBreakpoint breakpoint;
+    }
+
+    /**
+     * Evaluates the given expression in the context of the top most stack frame.
+     * The expression has access to any variables and arguments that are in scope.
+     */
+    public class DAPEvaulateRequest : IDAPMessagePayload
+    {
+        /**
+         * The expression to evaluate.
+         */
+        public string expression { get; set; }
+
+        /**
+         * Evaluate the expression in the scope of this stack frame. If not specified, the expression is evaluated in the global scope.
+         */
+        public int? frameId { get; set; }
+        
+        /**
+         * The context in which the evaluate request is run.
+         * Values: 
+         * 'watch': evaluate is run in a watch.
+         * 'repl': evaluate is run from REPL console.
+         * 'hover': evaluate is run from a data hover.
+         * etc.
+         */
+        public string context { get; set; }
+        
+        /**
+         * Specifies details on how to format the Evaluate result.
+         */
+        public DAPValueFormat format { get; set; }
+    }
+
+    /**
+     * Response to ‘evaluate’ request.
+     */
+    public class DAPEvaluateResponse : IDAPMessagePayload
+    {
+        /**
+         * The result of the evaluate request.
+         */
+        public string result { get; set; }
+        
+        /**
+         * The optional type of the evaluate result.
+         */
+        public string type { get; set; }
+        
+        /**
+         * Properties of a evaluate result that can be used to determine how to render the result in the UI.
+         */
+        public DAPVariablePresentationHint presentationHint { get; set; }
+        
+        /**
+         * If variablesReference is > 0, the evaluate result is structured and its children can be retrieved by passing variablesReference to the VariablesRequest.
+         */
+        public long variablesReference { get; set; }
+        
+        /**
+         * The number of named child variables.
+         * The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+         */
+        public int? namedVariables { get; set; }
+        
+        /**
+         * The number of indexed child variables.
+         * The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
+         */
+        public int? indexedVariables { get; set; }
     }
 }

@@ -61,6 +61,7 @@
     <Compile Include="DAPProtocol.cs" />
     <Compile Include="DAPStream.cs" />
     <Compile Include="DAPUtils.cs" />
+    <Compile Include="DatabaseEnumerator.cs" />
     <Compile Include="DbgClient.cs" />
     <Compile Include="DbgProtocol.cs" />
     <Compile Include="Debuginfo.cs" />

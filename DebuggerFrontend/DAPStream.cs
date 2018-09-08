@@ -159,5 +159,45 @@ namespace LSTools.DebuggerFrontend
 
             Send(reply);
         }
+
+        public void SendEvent(string command, IDAPMessagePayload body)
+        {
+            var reply = new DAPEvent
+            {
+                type = "event",
+                @event = command,
+                body = body
+            };
+
+            Send(reply);
+        }
+
+        public void SendReply(DAPRequest request, IDAPMessagePayload response)
+        {
+            var reply = new DAPResponse
+            {
+                type = "response",
+                request_seq = request.seq,
+                success = true,
+                command = request.command,
+                body = response
+            };
+
+            Send(reply);
+        }
+
+        public void SendReply(DAPRequest request, string errorText)
+        {
+            var reply = new DAPResponse
+            {
+                type = "response",
+                request_seq = request.seq,
+                success = false,
+                command = request.command,
+                message = errorText
+            };
+
+            Send(reply);
+        }
     }
 }

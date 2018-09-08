@@ -110,7 +110,12 @@ namespace LSTools.DebuggerFrontend
             return tuple;
         }
 
-        private string ValueToString(MsgTypedValue value)
+        public static string TupleToString(MsgTuple tuple)
+        {
+            return String.Join(", ", tuple.Column.Select(val => ValueToString(val)));
+        }
+
+        public static string ValueToString(MsgTypedValue value)
         {
             string valueStr;
             switch ((Value.Type)value.TypeId)

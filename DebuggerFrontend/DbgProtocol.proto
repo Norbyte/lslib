@@ -134,11 +134,6 @@ message DbgGetDatabaseContents {
 message DbgSyncStory {
 }
 
-message BkDatabaseContents {
-  uint32 database_id = 1;
-  repeated MsgTuple rows = 2;
-}
-
 message BkResult {
   enum StatusCode {
     SUCCESS = 0;
@@ -209,6 +204,21 @@ message BkDebugOutput {
   string message = 1;
 }
 
+// Indicates the start of a database dump
+message BkBeginDatabaseContents {
+  uint32 database_id = 1;
+}
+
+// Adds row(s) to a database that is currently being dumped
+message BkDatabaseRow {
+  uint32 database_id = 1;
+  repeated MsgTuple row = 2;
+}
+
+// Indicates the end of a database dump
+message BkEndDatabaseContents {
+  uint32 database_id = 1;
+}
 
 message DebuggerToBackend {
   oneof msg {
@@ -227,7 +237,6 @@ message BackendToDebugger {
   oneof msg {
     BkVersionInfoResponse versionInfo = 1;
     BkBreakpointTriggered breakpointTriggered = 2;
-    BkDatabaseContents databaseContents = 3;
     BkResult results = 4;
     BkStoryLoaded storyLoaded = 5;
     BkDebugSessionEnded debugSessionEnded = 6;
@@ -235,6 +244,9 @@ message BackendToDebugger {
     BkSyncStoryData syncStoryData = 10;
     BkSyncStoryFinished syncStoryFinished = 11;
 	BkDebugOutput debugOutput = 12;
+	BkBeginDatabaseContents beginDatabaseContents = 13;
+	BkDatabaseRow databaseRow = 14;
+	BkEndDatabaseContents endDatabaseContents = 15;
   }
   uint32 seq_no = 8;
   uint32 reply_seq_no = 9;
