@@ -48,9 +48,13 @@ namespace LSTools.StoryCompiler
             {
                 modCompiler.Game = TargetGame.DOS2;
             }
-            else if (args.Game == "dos2")
+            else if (args.Game == "dos2de")
             {
                 modCompiler.Game = TargetGame.DOS2DE;
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported game type");
             }
 
             var mods = new List<string>(args.Mods);

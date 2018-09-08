@@ -1,4 +1,5 @@
 ﻿using LSLib.LS;
+using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,6 +30,7 @@ namespace LSTools.StoryCompiler
         
         public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
         public AbstractFileInfo StoryHeaderFile;
+        public TargetGame Game = TargetGame.DOS2;
         public bool CollectNames = false;
         public bool LoadPackages = true;
 
@@ -150,6 +152,11 @@ namespace LSTools.StoryCompiler
                 "Origins.pak",
                 "Shared.pak"
             };
+
+            if (Game == TargetGame.DOS2DE)
+            {
+                packagePaths.Add("SharedDOS.pak");
+            }
 
             // ... and add patch files later
             foreach (var path in Directory.GetFiles(gameDataPath, "Patch*.pak"))

@@ -281,6 +281,7 @@ namespace LSTools.StoryCompiler
         {
             Logger.CompilationStarted();
             Compiler.Game = Game;
+            Mods.Game = Game;
 
             if (mods.Count > 0)
             {
