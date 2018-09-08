@@ -237,6 +237,11 @@ namespace LSTools.DebuggerFrontend
         public int backendPort { get; set; }
 
         /**
+         * UUID of the mod we're debugging
+         */
+        public string modUuid { get; set; }
+
+        /**
          * Additional debugger configuration
          */
         public DAPCustomConfiguration dbgOptions { get; set; }

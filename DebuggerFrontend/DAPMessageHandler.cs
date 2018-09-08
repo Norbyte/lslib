@@ -33,6 +33,8 @@ namespace LSTools.DebuggerFrontend
         private bool ContinueAfterSync;
         // Should we pause on the next instruction?
         private bool PauseRequested;
+        // Mod/project UUID we'll send to the debugger instead of the packaged path
+        public string ModUuid;
 
 
         public DAPMessageHandler(DAPStream stream)
@@ -150,6 +152,7 @@ namespace LSTools.DebuggerFrontend
             DebugInfo = loader.Load(debugPayload);
 
             TracePrinter = new StackTracePrinter(DebugInfo);
+            TracePrinter.ModUuid = ModUuid;
             if (Config != null)
             {
                 TracePrinter.MergeFrames = !Config.rawFrames;
@@ -298,6 +301,7 @@ namespace LSTools.DebuggerFrontend
         private void HandleLaunchRequest(DAPRequest request, DAPLaunchRequest launch)
         {
             Config = launch.dbgOptions;
+            ModUuid = launch.modUuid;
 
             if (!File.Exists(launch.debugInfoPath))
             {

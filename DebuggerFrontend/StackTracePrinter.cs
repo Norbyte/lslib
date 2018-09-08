@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LSTools.DebuggerFrontend
@@ -28,6 +29,8 @@ namespace LSTools.DebuggerFrontend
     {
         private StoryDebugInfo DebugInfo;
         public bool MergeFrames = true;
+        // Mod/project UUID we'll send to the debugger instead of the packaged path
+        public string ModUuid;
 
         public StackTracePrinter(StoryDebugInfo debugInfo)
         {
@@ -340,6 +343,18 @@ namespace LSTools.DebuggerFrontend
 
             outFrame.Variables = TupleToVariables(frame);
             outFrame.Frame = frame;
+
+            if (outFrame.File != null
+                && ModUuid != null)
+            {
+                var modRe = new Regex(".*\\.pak:/Mods/.*/Story/RawFiles/Goals/(.*)\\.txt");
+                var match = modRe.Match(outFrame.File);
+                if (match.Success)
+                {
+                    outFrame.File = "divinity:/" + ModUuid + "/" + match.Groups[1].Value + ".divgoal";
+                }
+            }
+
             return outFrame;
         }
 
