@@ -89,7 +89,7 @@ namespace LSTools.DebuggerFrontend
                 }
                 catch (RequestFailedException e)
                 {
-                    Stream.SendReply(message as DAPRequest, e.ToString());
+                    Stream.SendReply(message as DAPRequest, e.Message);
                 }
                 catch (Exception e)
                 {
