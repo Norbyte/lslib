@@ -213,6 +213,8 @@ namespace LSLib.Granny.Model
 
         private void ConformAnimationBindPoses(Skeleton skeleton, Skeleton conformToSkeleton)
         {
+            if (Root.TrackGroups == null) return;
+
             foreach (var trackGroup in Root.TrackGroups)
             {
                 for (var i = 0; i < trackGroup.TransformTracks.Count; i++)
@@ -310,6 +312,8 @@ namespace LSLib.Granny.Model
 
         private void ConformSkeletonAnimations(Skeleton skeleton)
         {
+            if (Root.TrackGroups == null) return;
+
             foreach (var trackGroup in Root.TrackGroups)
             {
                 foreach (var track in trackGroup.TransformTracks)
