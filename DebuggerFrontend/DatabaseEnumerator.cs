@@ -19,16 +19,18 @@ namespace LSTools.DebuggerFrontend
         private StoryDebugInfo DebugInfo;
         DAPStream DAP;
         private DebuggerClient DbgClient;
+        private ValueFormatter Formatter;
         // Databases that we'll have to send to the debugger after receipt
         private Dictionary<UInt32, List<DAPRequest>> PendingDatabaseRequests = new Dictionary<UInt32, List<DAPRequest>>();
         // Database contents that we're receiving from the backend
         private Dictionary<UInt32, List<MsgTuple>> DatabaseContents = new Dictionary<UInt32, List<MsgTuple>>();
 
-        public DatabaseEnumerator(DebuggerClient dbgClient, DAPStream dap, StoryDebugInfo debugInfo)
+        public DatabaseEnumerator(DebuggerClient dbgClient, DAPStream dap, StoryDebugInfo debugInfo, ValueFormatter formatter)
         {
             DebugInfo = debugInfo;
             DAP = dap;
             DbgClient = dbgClient;
+            Formatter = formatter;
 
             DbgClient.OnBeginDatabaseContents = this.OnBeginDatabaseContents;
             DbgClient.OnDatabaseRow = this.OnDatabaseRow;
@@ -96,7 +98,7 @@ namespace LSTools.DebuggerFrontend
                 var dapVar = new DAPVariable
                 {
                     name = i.ToString(),
-                    value = "(" + StackTracePrinter.TupleToString(row) + ")",
+                    value = "(" + Formatter.TupleToString(row) + ")",
 #pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
                     variablesReference = ((long)2 << 48) | (i << 24) | databaseId,
 #pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
@@ -135,7 +137,7 @@ namespace LSTools.DebuggerFrontend
                 var dapVar = new DAPVariable
                 {
                     name = i.ToString(),
-                    value = StackTracePrinter.ValueToString(row.Column[i])
+                    value = Formatter.ValueToString(row.Column[i])
                 };
                 variables.Add(dapVar);
             }

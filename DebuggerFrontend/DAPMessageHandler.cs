@@ -23,6 +23,7 @@ namespace LSTools.DebuggerFrontend
         private Thread DbgThread;
         private AsyncProtobufClient DbgClient;
         private DebuggerClient DbgCli;
+        private ValueFormatter Formatter;
         private StackTracePrinter TracePrinter;
         private BreakpointManager Breakpoints;
         private DatabaseEnumerator DatabaseDumper;
@@ -112,7 +113,8 @@ namespace LSTools.DebuggerFrontend
             var loader = new DebugInfoLoader();
             DebugInfo = loader.Load(debugPayload);
 
-            TracePrinter = new StackTracePrinter(DebugInfo);
+            Formatter = new ValueFormatter(DebugInfo);
+            TracePrinter = new StackTracePrinter(DebugInfo, Formatter);
             TracePrinter.ModUuid = ModUuid;
             if (Config != null)
             {
@@ -122,7 +124,7 @@ namespace LSTools.DebuggerFrontend
             Stack = null;
             Stopped = false;
 
-            DatabaseDumper = new DatabaseEnumerator(DbgCli, Stream, DebugInfo);
+            DatabaseDumper = new DatabaseEnumerator(DbgCli, Stream, DebugInfo, Formatter);
 
             var changedBps = Breakpoints.DebugInfoLoaded(DebugInfo);
             // Notify the debugger that the status of breakpoints changed
@@ -163,7 +165,9 @@ namespace LSTools.DebuggerFrontend
         {
             Stopped = false;
             DebugInfo = null;
+            DatabaseDumper = null;
             TracePrinter = null;
+            Formatter = null;
 
             var changedBps = Breakpoints.DebugInfoUnloaded();
             // Notify the debugger that the status of breakpoints changed
