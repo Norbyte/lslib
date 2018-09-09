@@ -35,6 +35,8 @@ namespace LSTools.DebuggerFrontend
         private bool ContinueAfterSync;
         // Should we pause on the next instruction?
         private bool PauseRequested;
+        // Are we currently debugging a story?
+        private bool DebuggingStory;
         // Mod/project UUID we'll send to the debugger instead of the packaged path
         public string ModUuid;
 
@@ -121,12 +123,50 @@ namespace LSTools.DebuggerFrontend
                 TracePrinter.MergeFrames = !Config.rawFrames;
             }
 
-            Stack = null;
-            Stopped = false;
-
             DatabaseDumper = new DatabaseEnumerator(DbgCli, Stream, DebugInfo, Formatter);
 
+            Stack = null;
+            Stopped = false;
+            // We're not in debug mode yet. We'll enable debugging when the story is fully synced
+            DebuggingStory = false;
+        }
+
+        private void StartDebugSession()
+        {
+            DebuggingStory = true;
+
             var changedBps = Breakpoints.DebugInfoLoaded(DebugInfo);
+            // Notify the debugger that the status of breakpoints changed
+            changedBps.ForEach(bp => SendBreakpoint("changed", bp));
+
+            var outputMsg = new DAPOutputMessage
+            {
+                category = "console",
+                output = "Debug session started\r\n"
+            };
+            Stream.SendEvent("output", outputMsg);
+        }
+
+        private void OnDebugSessionEnded()
+        {
+            if (DebuggingStory)
+            {
+                var outputMsg = new DAPOutputMessage
+                {
+                    category = "console",
+                    output = "Story unloaded - debug session terminated\r\n"
+                };
+                Stream.SendEvent("output", outputMsg);
+            }
+
+            DebuggingStory = false;
+            Stopped = false;
+            DebugInfo = null;
+            DatabaseDumper = null;
+            TracePrinter = null;
+            Formatter = null;
+
+            var changedBps = Breakpoints.DebugInfoUnloaded();
             // Notify the debugger that the status of breakpoints changed
             changedBps.ForEach(bp => SendBreakpoint("changed", bp));
         }
@@ -159,26 +199,6 @@ namespace LSTools.DebuggerFrontend
         private void OnStoryLoaded()
         {
             InitDebugger();
-        }
-
-        private void OnDebugSessionEnded()
-        {
-            Stopped = false;
-            DebugInfo = null;
-            DatabaseDumper = null;
-            TracePrinter = null;
-            Formatter = null;
-
-            var changedBps = Breakpoints.DebugInfoUnloaded();
-            // Notify the debugger that the status of breakpoints changed
-            changedBps.ForEach(bp => SendBreakpoint("changed", bp));
-
-            var outputMsg = new DAPOutputMessage
-            {
-                category = "console",
-                output = "Story unloaded - debug session terminated\r\n"
-            };
-            Stream.SendEvent("output", outputMsg);
         }
 
         private void OnBreakpointTriggered(BkBreakpointTriggered bp)
@@ -222,19 +242,35 @@ namespace LSTools.DebuggerFrontend
         {
             DebugInfoSync.Finish();
 
-            if (!DebugInfoSync.Matches)
+            if (DebugInfoSync.Matches)
             {
-                var reasons = DebugInfoSync.Reasons.Aggregate((a, b) => a + "\r\n" + b);
-                var msg = $"Could not attach to backend: Debug info does not match loaded story.\r\nMismatches:\r\n{reasons}";
-                LogError(msg);
-                throw new SystemException(msg);
+                StartDebugSession();
             }
+            else
+            {
+                OnDebugSessionEnded();
 
+                var outputMsg = new DAPOutputMessage
+                {
+                    category = "stderr",
+                    output = $"Could not start debugging session - debug info does not match loaded story.\r\n"
+                };
+                Stream.SendEvent("output", outputMsg);
+
+                var reasons = "   " + DebugInfoSync.Reasons.Aggregate((a, b) => a + "\r\n   " + b);
+                var reasonsMsg = new DAPOutputMessage
+                {
+                    category = "console",
+                    output = $"Mismatches:\r\n{reasons}\r\n"
+                };
+                Stream.SendEvent("output", reasonsMsg);
+            }
+            
             DebugInfoSync = null;
 
             if (ContinueAfterSync)
             {
-                if (PauseRequested)
+                if (PauseRequested && DebuggingStory)
                 {
                     SendContinue(DbgContinue.Types.Action.StepInto);
                 }
@@ -463,7 +499,7 @@ namespace LSTools.DebuggerFrontend
                 scope.endLine = (int)frame.Rule.ActionsEndLine + 1;
                 scope.endColumn = 1;
             }
-
+            
             var reply = new DAPScopesResponse
             {
                 scopes = new List<DAPScope>{ scope }
@@ -601,8 +637,11 @@ namespace LSTools.DebuggerFrontend
 
                 Stopped = false;
             }
-            
-            SendContinue(action);
+
+            if (DebuggingStory)
+            {
+                SendContinue(action);
+            }
 
             var reply = new DAPContinueResponse
             {
