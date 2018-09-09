@@ -27,6 +27,9 @@ namespace LSTools.DebuggerFrontend
         // Arguments that the PROC/QRY was called with
         // If the frame is not a call, this will be null.
         public MsgTuple CallArguments;
+        // Rule that this frame belongs to.
+        // We use this info to restrict the scope of a frame (to source lines) in VS
+        public RuleDebugInfo Rule;
     }
 
     public class StackTracePrinter
@@ -207,6 +210,16 @@ namespace LSTools.DebuggerFrontend
                 {
                     frame.File = node.File;
                     frame.Line = node.Line;
+                }
+
+                if (frame.Rule == null && node.Frame.NodeId != 0)
+                {
+                    var storyNode = DebugInfo.Nodes[node.Frame.NodeId];
+                    if (storyNode.RuleId != 0)
+                    {
+                        var rule = DebugInfo.Rules[storyNode.RuleId];
+                        frame.Rule = rule;
+                    }
                 }
 
                 if (node.Frame.Type == MsgFrame.Types.FrameType.Pushdown

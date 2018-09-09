@@ -437,20 +437,36 @@ namespace LSTools.DebuggerFrontend
             }
 
             var frame = Stack[msg.frameId];
+            var scope = new DAPScope
+            {
+                // TODO DB insert args?
+                name = "Locals",
+                variablesReference = msg.frameId + 1,
+                namedVariables = frame.Variables.Count,
+                indexedVariables = 0,
+                expensive = false
+            };
+
+            // Send location information for rule-local scopes.
+            // If the scope location is missing, the value of local variables will be displayed in 
+            // every rule that has variables with the same name.
+            // This restricts them so they're only displayed in the rule that the stack frame belongs to.
+            if (frame.Rule != null)
+            {
+                scope.source = new DAPSource
+                {
+                    name = Path.GetFileNameWithoutExtension(frame.File),
+                    path = frame.File
+                };
+                scope.line = (int)frame.Rule.ConditionsStartLine;
+                scope.column = 1;
+                scope.endLine = (int)frame.Rule.ActionsEndLine + 1;
+                scope.endColumn = 1;
+            }
+
             var reply = new DAPScopesResponse
             {
-                scopes = new List<DAPScope>
-                {
-                    new DAPScope
-                    {
-                        // TODO DB insert args?
-                        name = "Locals",
-                        variablesReference = msg.frameId + 1,
-                        namedVariables = frame.Variables.Count,
-                        indexedVariables = 0,
-                        expensive = false
-                    }
-                }
+                scopes = new List<DAPScope>{ scope }
             };
             Stream.SendReply(request, reply);
         }
