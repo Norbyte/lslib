@@ -380,6 +380,7 @@ namespace LSLib.Granny.Model
             Register(typeof(PWNGT34332));
             Register(typeof(PWNT3232));
             Register(typeof(PWNT3432));
+            Register(typeof(PWHGT3442));
             Register(typeof(PHNGBT34444));
         }
 
