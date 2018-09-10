@@ -1,4 +1,4 @@
-﻿// #define DEBUG_GR2_SERIALIZATION
+﻿#define DEBUG_GR2_SERIALIZATION
 // #define DEBUG_GR2_FORMAT_DIFFERENCES
 
 using System;
@@ -195,9 +195,7 @@ namespace LSLib.Granny.GR2
 
             // TODO: check alignment, secondaryDataOffset[2]
             Debug.Assert(header.relocationsOffset <= Header.fileSize);
-            Debug.Assert(header.relocationsOffset + header.numRelocations * 12 <= Header.fileSize);
             Debug.Assert(header.mixedMarshallingDataOffset <= Header.fileSize);
-            Debug.Assert(header.mixedMarshallingDataOffset + header.numMixedMarshallingData * 16 <= Header.fileSize);
 
 #if DEBUG_GR2_SERIALIZATION
             System.Console.WriteLine(" ===== Section Header ===== ");
@@ -244,11 +242,20 @@ namespace LSLib.Granny.GR2
                 }
                 else if (section.Header.uncompressedSize > 0)
                 {
-                    var uncompressed = Granny2Compressor.Decompress(
-                        (int)hdr.compression,
-                        sectionContents, (int)hdr.uncompressedSize,
-                        (int)hdr.first16bit, (int)hdr.first8bit, (int)hdr.uncompressedSize);
-                    Stream.Write(uncompressed, 0, uncompressed.Length);
+                    if (hdr.compression == 4)
+                    {
+                        var uncompressed = Granny2Compressor.Decompress4(
+                            sectionContents, (int)hdr.uncompressedSize);
+                        Stream.Write(uncompressed, 0, uncompressed.Length);
+                    }
+                    else
+                    {
+                        var uncompressed = Granny2Compressor.Decompress(
+                            (int)hdr.compression,
+                            sectionContents, (int)hdr.compressedSize,
+                            (int)hdr.first16bit, (int)hdr.first8bit, (int)hdr.uncompressedSize);
+                        Stream.Write(uncompressed, 0, uncompressed.Length);
+                    }
                 }
 
 #if DEBUG_GR2_SERIALIZATION
@@ -257,29 +264,56 @@ namespace LSLib.Granny.GR2
             }
         }
 
-        private void ReadSectionRelocations(Section section)
+        private void ReadSectionRelocationsInternal(Section section, Stream relocationsStream)
         {
 #if DEBUG_GR2_SERIALIZATION
             System.Console.WriteLine(String.Format(" ===== Relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
 #endif
 
-            InputStream.Seek(section.Header.relocationsOffset, SeekOrigin.Begin);
-            for (int i = 0; i < section.Header.numRelocations; i++)
+            using (var relocationsReader = new BinaryReader(relocationsStream, Encoding.Default, true))
             {
-                UInt32 offsetInSection = InputReader.ReadUInt32();
-                Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
-                var reference = ReadSectionReference();
+                for (int i = 0; i < section.Header.numRelocations; i++)
+                {
+                    UInt32 offsetInSection = relocationsReader.ReadUInt32();
+                    Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
+                    var reference = ReadSectionReference(relocationsReader);
 
-                Stream.Position = section.Header.offsetInFile + offsetInSection;
-                var fixupAddress = Sections[(int)reference.Section].Header.offsetInFile + reference.Offset;
-                Stream.Write(BitConverter.GetBytes(fixupAddress), 0, 4);
+                    Stream.Position = section.Header.offsetInFile + offsetInSection;
+                    var fixupAddress = Sections[(int)reference.Section].Header.offsetInFile + reference.Offset;
+                    Stream.Write(BitConverter.GetBytes(fixupAddress), 0, 4);
 
 #if DEBUG_GR2_SERIALIZATION
-                System.Console.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
-                System.Console.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}",
-                    offsetInSection + section.Header.offsetInFile,
-                    reference.Offset + Sections[(int)reference.Section].Header.offsetInFile));
+                    System.Console.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
+                    System.Console.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}",
+                        offsetInSection + section.Header.offsetInFile,
+                        reference.Offset + Sections[(int)reference.Section].Header.offsetInFile));
 #endif
+                }
+            }
+        }
+
+        private void ReadSectionRelocations(Section section)
+        {
+            if (section.Header.numRelocations == 0) return;
+
+            InputStream.Seek(section.Header.relocationsOffset, SeekOrigin.Begin);
+            if (section.Header.compression == 4)
+            {
+                using (var reader = new BinaryReader(InputStream, Encoding.Default, true))
+                {
+                    UInt32 compressedSize = reader.ReadUInt32();
+                    byte[] compressed = reader.ReadBytes((int)compressedSize);
+                    var uncompressed = Granny2Compressor.Decompress4(
+                        compressed, (int)(section.Header.numRelocations * 12));
+                    using (var ms = new MemoryStream(uncompressed))
+                    {
+                        ReadSectionRelocationsInternal(section, ms);
+                    }
+                }
+            }
+            else
+            {
+                ReadSectionRelocationsInternal(section, InputStream);
             }
         }
 
@@ -320,45 +354,82 @@ namespace LSLib.Granny.GR2
             }
         }
 
-        private void ReadSectionMixedMarshallingRelocations(Section section)
+        private void ReadSectionMixedMarshallingRelocationsInternal(Section section, Stream relocationsStream)
         {
 #if DEBUG_GR2_SERIALIZATION
             System.Console.WriteLine(String.Format(" ===== Mixed marshalling relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
 #endif
 
-            InputStream.Seek(section.Header.mixedMarshallingDataOffset, SeekOrigin.Begin);
-            for (int i = 0; i < section.Header.numMixedMarshallingData; i++)
+            using (var relocationsReader = new BinaryReader(relocationsStream, Encoding.Default, true))
             {
-                UInt32 count = InputReader.ReadUInt32();
-                UInt32 offsetInSection = InputReader.ReadUInt32();
-                Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
-                var type = ReadSectionReference();
-                var typeDefn = new StructReference();
-                typeDefn.Offset = Sections[(int)type.Section].Header.offsetInFile + type.Offset;
+                for (int i = 0; i < section.Header.numMixedMarshallingData; i++)
+                {
+                    UInt32 count = relocationsReader.ReadUInt32();
+                    UInt32 offsetInSection = relocationsReader.ReadUInt32();
+                    Debug.Assert(offsetInSection <= section.Header.uncompressedSize);
+                    var type = ReadSectionReference(relocationsReader);
+                    var typeDefn = new StructReference();
+                    typeDefn.Offset = Sections[(int)type.Section].Header.offsetInFile + type.Offset;
 
-                Seek(section, offsetInSection);
-                MixedMarshal(count, typeDefn.Resolve(this));
+                    Seek(section, offsetInSection);
+                    MixedMarshal(count, typeDefn.Resolve(this));
 
 #if DEBUG_GR2_SERIALIZATION
-                System.Console.WriteLine(String.Format("    {0:X8} [{1}] --> {2}:{3:X8}", offsetInSection, count, (SectionType)type.Section, type.Offset));
+                    System.Console.WriteLine(String.Format("    {0:X8} [{1}] --> {2}:{3:X8}", offsetInSection, count, (SectionType)type.Section, type.Offset));
 #endif
+                }
             }
+        }
+
+        private void ReadSectionMixedMarshallingRelocations(Section section)
+        {
+            if (section.Header.numMixedMarshallingData == 0) return;
+
+            InputStream.Seek(section.Header.mixedMarshallingDataOffset, SeekOrigin.Begin);
+            if (section.Header.compression == 4)
+            {
+                using (var reader = new BinaryReader(InputStream, Encoding.Default, true))
+                {
+                    UInt32 compressedSize = reader.ReadUInt32();
+                    byte[] compressed = reader.ReadBytes((int)compressedSize);
+                    var uncompressed = Granny2Compressor.Decompress4(
+                        compressed, (int)(section.Header.numMixedMarshallingData * 16));
+                    using (var ms = new MemoryStream(uncompressed))
+                    {
+                        ReadSectionMixedMarshallingRelocationsInternal(section, ms);
+                    }
+                }
+            }
+            else
+            {
+                ReadSectionMixedMarshallingRelocationsInternal(section, InputStream);
+            }
+        }
+
+        public SectionReference ReadSectionReferenceUnchecked(BinaryReader reader)
+        {
+            var reference = new SectionReference();
+            reference.Section = reader.ReadUInt32();
+            reference.Offset = reader.ReadUInt32();
+            return reference;
         }
 
         public SectionReference ReadSectionReferenceUnchecked()
         {
-            var reference = new SectionReference();
-            reference.Section = InputReader.ReadUInt32();
-            reference.Offset = InputReader.ReadUInt32();
+            return ReadSectionReferenceUnchecked(InputReader);
+        }
+
+        public SectionReference ReadSectionReference(BinaryReader reader)
+        {
+            var reference = ReadSectionReferenceUnchecked(reader);
+            Debug.Assert(reference.Section < Sections.Count);
+            Debug.Assert(reference.Offset <= Sections[(int)reference.Section].Header.uncompressedSize);
             return reference;
         }
 
         public SectionReference ReadSectionReference()
         {
-            var reference = ReadSectionReferenceUnchecked();
-            Debug.Assert(reference.Section < Sections.Count);
-            Debug.Assert(reference.Offset <= Sections[(int)reference.Section].Header.uncompressedSize);
-            return reference;
+            return ReadSectionReference(InputReader);
         }
 
         public RelocatableReference ReadReference()
