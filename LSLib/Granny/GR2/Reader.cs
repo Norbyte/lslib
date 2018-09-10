@@ -1,4 +1,4 @@
-﻿#define DEBUG_GR2_SERIALIZATION
+﻿// #define DEBUG_GR2_SERIALIZATION
 // #define DEBUG_GR2_FORMAT_DIFFERENCES
 
 using System;
