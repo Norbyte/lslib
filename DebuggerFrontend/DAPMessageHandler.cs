@@ -12,7 +12,7 @@ namespace LSTools.DebuggerFrontend
 {
     public class DAPMessageHandler
     {
-        private const UInt32 ProtocolVersion = 5;
+        private const UInt32 ProtocolVersion = 6;
 
         private DAPStream Stream;
         private Stream LogStream;
@@ -213,6 +213,15 @@ namespace LSTools.DebuggerFrontend
                 threadId = 1
             };
             Stream.SendEvent("stopped", stopped);
+
+            if (bp.QuerySucceeded != BkBreakpointTriggered.Types.QueryStatus.NotAQuery)
+            {
+                var queryResult = new DAPCustomQueryResultEvent
+                {
+                    succeeded = (bp.QuerySucceeded == BkBreakpointTriggered.Types.QueryStatus.Succeeded)
+                };
+                Stream.SendEvent("osirisQueryResult", queryResult);
+            }
         }
 
         private void OnGlobalBreakpointTriggered(BkGlobalBreakpointTriggered message)
@@ -566,9 +575,15 @@ namespace LSTools.DebuggerFrontend
 
         private UInt32 GetContinueBreakpointMask()
         {
+            UInt32 breakpoints = 0;
+            if (Config == null || Config.stopOnFailedQueries)
+            {
+                breakpoints |= (UInt32)MsgBreakpoint.Types.BreakpointType.FailedQuery;
+            }
+
             if (Config != null && Config.stopOnAllFrames)
             {
-                return
+                breakpoints |=
                     // Break on all possible node events
                     (UInt32)MsgBreakpoint.Types.BreakpointType.Valid
                     | (UInt32)MsgBreakpoint.Types.BreakpointType.Pushdown
@@ -580,7 +595,7 @@ namespace LSTools.DebuggerFrontend
             }
             else
             {
-                return
+                breakpoints |=
                     // Break on Pushdown for rule "AND/NOT AND" nodes
                     (UInt32)MsgBreakpoint.Types.BreakpointType.Pushdown
                     // Break on rule THEN part actions
@@ -589,6 +604,8 @@ namespace LSTools.DebuggerFrontend
                     | (UInt32)MsgBreakpoint.Types.BreakpointType.InitCall
                     | (UInt32)MsgBreakpoint.Types.BreakpointType.ExitCall;
             }
+
+            return breakpoints;
         }
 
         private UInt32 GetContinueFlags()

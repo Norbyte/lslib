@@ -59,6 +59,7 @@ message DbgSetGlobalBreakpoints {
     GAME_INIT = 128;
     GAME_EXIT = 256;
     DELETE_ = 512;
+	FAILED_QUERY = 1024;
   };
 
   uint32 breakpoint_mask = 1;
@@ -74,6 +75,7 @@ message MsgBreakpoint {
     INIT_CALL = 16;
     EXIT_CALL = 32;
     DELETE_ = 64;
+	FAILED_QUERY = 128;
   };
 
   uint32 node_id = 1;
@@ -88,7 +90,14 @@ message DbgSetBreakpoints {
 }
 
 message BkBreakpointTriggered {
+  enum QueryStatus {
+    NOT_A_QUERY = 0;
+    SUCCEEDED = 1;
+    FAILED = 2;
+  };
+
   repeated MsgFrame call_stack = 1;
+  QueryStatus query_succeeded = 2;
 }
 
 message BkGlobalBreakpointTriggered {

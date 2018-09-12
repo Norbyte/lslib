@@ -202,7 +202,7 @@ namespace LSTools.DebuggerFrontend
             {
                 msgBp.ActionIndex = -1;
             }
-
+            
             msgBp.BreakpointMask = 0x3f; // TODO const
             return msgBp;
         }
@@ -302,7 +302,6 @@ namespace LSTools.DebuggerFrontend
                     break;
 
                 case BackendToDebugger.MsgOneofCase.Results:
-                    Console.WriteLine("RC {0}", message.Results.StatusCode);
                     break;
 
                 case BackendToDebugger.MsgOneofCase.StoryLoaded:

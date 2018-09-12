@@ -202,6 +202,11 @@ namespace LSTools.DebuggerFrontend
          * Stop inside database propagation calls during single-stepping.
          */
         public bool stopOnDbPropagation { get; set; }
+
+        /**
+         * Stop when a query inside an IF block fails.
+         */
+        public bool stopOnFailedQueries { get; set; }
     }
 
     /**
@@ -979,5 +984,16 @@ namespace LSTools.DebuggerFrontend
          * The client can use this optional information to present the variables in a paged UI and fetch them in chunks.
          */
         public int? indexedVariables { get; set; }
+    }
+
+    /**
+     * The event transmits the output of the last div query
+     */
+    public class DAPCustomQueryResultEvent : IDAPMessagePayload
+    {
+        /**
+         * Did the query succeed?
+         */
+        public bool succeeded;
     }
 }
