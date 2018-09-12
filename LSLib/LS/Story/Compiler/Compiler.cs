@@ -37,7 +37,7 @@ namespace LSLib.LS.Story.Compiler
             if (IsGuidAliasToAliasCast(param.Type, value.Type))
             {
                 object paramName = (param.Name != null) ? (object)param.Name : paramIndex;
-                Context.Log.Warn(value.Location,
+                Context.Log.Error(value.Location,
                     DiagnosticCode.GuidAliasMismatch,
                     "Parameter {0} of {1} \"{2}\" has GUID type {3}; {4} specified",
                     paramName, func.Type, func.Name, TypeToName(param.Type.TypeId), TypeToName(value.Type.TypeId));
@@ -175,6 +175,24 @@ namespace LSLib.LS.Story.Compiler
         private void VerifyIRVariable(IRRule rule, IRVariable variable)
         {
             var ruleVar = rule.Variables[variable.Index];
+            if (variable.Type == null)
+            {
+                Context.Log.Error(variable.Location,
+                    DiagnosticCode.UnresolvedType,
+                    "Type of variable {0} could not be determined",
+                    ruleVar.Name);
+                return;
+            }
+
+            if (ruleVar.Type == null)
+            {
+                Context.Log.Error(variable.Location,
+                    DiagnosticCode.UnresolvedType,
+                    "Type of rule variable {0} could not be determined",
+                    ruleVar.Name);
+                return;
+            }
+
             if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
             {
                 Context.Log.Error(variable.Location, 
@@ -195,7 +213,7 @@ namespace LSLib.LS.Story.Compiler
 
             if (IsGuidAliasToAliasCast(ruleVar.Type, variable.Type))
             {
-                Context.Log.Warn(variable.Location, 
+                Context.Log.Error(variable.Location, 
                     DiagnosticCode.CastToUnrelatedGuidAlias,
                     "{1} variable {0} converted to unrelated type {2}",
                     ruleVar.Name, TypeToName(ruleVar.Type.TypeId), TypeToName(variable.Type.TypeId));
@@ -222,7 +240,7 @@ namespace LSLib.LS.Story.Compiler
                         nameWithoutType = constant.StringValue.Substring(underscore + 1);
                         if (type.TypeId != constant.Type.TypeId)
                         {
-                            Context.Log.Warn(constant.Location, 
+                            Context.Log.Error(constant.Location, 
                                 DiagnosticCode.GuidAliasMismatch,
                                 "GUID constant \"{0}\" has inferred type {1}",
                                 constant.StringValue, constant.Type.Name);
@@ -553,7 +571,7 @@ namespace LSLib.LS.Story.Compiler
 
             if (IsGuidAliasToAliasCast(lhs, rhs))
             {
-                Context.Log.Warn(condition.Location, 
+                Context.Log.Error(condition.Location, 
                     DiagnosticCode.GuidAliasMismatch,
                     "GUID alias type of left expression ({0}) differs from type of right expression ({1})",
                     TypeToName(lhs.TypeId), TypeToName(rhs.TypeId));

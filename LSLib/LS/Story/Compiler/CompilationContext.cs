@@ -259,7 +259,7 @@ namespace LSLib.LS.Story.Compiler
         /// <summary>
         /// The alias type of a function parameter does not match the expected type.
         /// </summary>
-        public const String GuidAliasMismatch = "W21";
+        public const String GuidAliasMismatch = "E21";
         /// <summary>
         /// Object name GUID is prefixed with a type that is not known.
         /// </summary>
@@ -309,7 +309,7 @@ namespace LSLib.LS.Story.Compiler
         /// <summary>
         /// Attempted to cast an alias to an unrelated alias (i.e. CHARACTERGUID to ITEMGUID)
         /// </summary>
-        public const String CastToUnrelatedGuidAlias = "W32";
+        public const String CastToUnrelatedGuidAlias = "E32";
         /// <summary>
         /// Left-hand side and right-hand side variables are the same in a binary operation.
         /// This will result in an "invalid compare" error in runtime.
