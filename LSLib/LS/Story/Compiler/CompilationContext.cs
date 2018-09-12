@@ -24,6 +24,22 @@ namespace LSLib.LS.Story.Compiler
         public Value.Type IntrinsicTypeId;
         // Type name
         public String Name;
+
+        /// <summary>
+        /// Returns whether this type is an alias of the specified type.
+        /// </summary>
+        public bool IsAliasOf(ValueType type)
+        {
+            return 
+                // The base types match
+                IntrinsicTypeId == type.IntrinsicTypeId
+                // The alias ID doesn't match
+                && TypeId != type.TypeId
+                // This type is an alias type
+                && TypeId != (uint)IntrinsicTypeId
+                // The other type is a base type
+                && type.TypeId == (uint)type.IntrinsicTypeId;
+        }
     }
 
     /// <summary>

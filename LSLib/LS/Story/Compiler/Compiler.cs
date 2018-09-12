@@ -802,11 +802,16 @@ namespace LSLib.LS.Story.Compiler
             }
             else if (value is IRVariable)
             {
+                if (value.Type != null)
+                {
+                    return value.Type;
+                }
+
                 var irVar = value as IRVariable;
                 var ruleVar = rule.Variables[irVar.Index];
                 if (ruleVar.Type != null)
                 {
-                    return Context.LookupType(ruleVar.Type.Name);
+                    return ruleVar.Type;
                 }
                 else
                 {
@@ -951,23 +956,24 @@ namespace LSLib.LS.Story.Compiler
 
         private void PropagateIRVariableType(IRRule rule, IRVariable variable, ValueType type)
         {
-            if (variable.Type == null)
-            {
-                variable.Type = type;
-            }
-            else
-            {
-                // TODO - check for conflicts? shouldn't be possible
-            }
-
             var ruleVar = rule.Variables[variable.Index];
             if (ruleVar.Type == null)
             {
                 ruleVar.Type = type;
             }
-            else
+
+            if (variable.Type == null)
             {
-                // TODO - check for conflicts?
+                // If a more specific type alias is available from the rule variable, apply the
+                // rule type instead of the function argument type
+                if (ruleVar.Type.IsAliasOf(type))
+                {
+                    variable.Type = ruleVar.Type;
+                }
+                else
+                {
+                    variable.Type = type;
+                }
             }
         }
 
