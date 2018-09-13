@@ -324,6 +324,7 @@ namespace LSLib.LS.Story.Compiler
                     // PROC/QRYs bind if they're the first condition in a rule
                     && !(rule.Type == RuleType.Proc && conditionIndex == 0 && signature.Type == FunctionType.Proc)
                     && !(rule.Type == RuleType.Query && conditionIndex == 0 && signature.Type == FunctionType.UserQuery)
+                    && param.Direction != ParamDirection.Out
                 )
             ) {
 
