@@ -304,15 +304,12 @@ namespace LSLib.LS.Story.Compiler
             var ruleVar = rule.Variables[variable.Index];
             var param = signature.Params[parameterIndex];
 
-            if (param.Direction == ParamDirection.Out)
+            if (param.Direction == ParamDirection.Out && !not)
             {
                 Debug.Assert(conditionIndex != -1);
-                if (!not)
+                if (ruleVar.FirstBindingIndex == -1)
                 {
-                    if (ruleVar.FirstBindingIndex == -1)
-                    {
-                        ruleVar.FirstBindingIndex = conditionIndex;
-                    }
+                    ruleVar.FirstBindingIndex = conditionIndex;
                 }
             }
             else if (
