@@ -318,6 +318,8 @@ namespace LSLib.LS.Story.Compiler
             else if (
                 // We're in the THEN section of a rule, so we cannot bind here
                 conditionIndex == -1 
+                // NOT conditions never bind, but they allow unbound unused variables
+                || (!ruleVar.IsUnused() && not)
                 || (
                     // Databases and events always bind
                     signature.Type != FunctionType.Database
