@@ -336,11 +336,21 @@ namespace LSLib.LS.Story.Compiler
                     // The variable was bound after this node (so it is still unbound here)
                     || (conditionIndex != -1 && ruleVar.FirstBindingIndex >= conditionIndex)
                 ) {
-                    object paramName = (param.Name != null) ? (object)param.Name : parameterIndex;
-                    Context.Log.Error(variable.Location, 
-                        DiagnosticCode.ParamNotBound,
-                        "Variable {0} is not bound (when used as parameter {1} in {2} \"{3}\")",
-                        ruleVar.Name, paramName, signature.Type, signature.GetNameAndArity());
+                    object paramName = (param.Name != null) ? (object)param.Name : (parameterIndex + 1);
+                    if (!ruleVar.IsUnused())
+                    {
+                        Context.Log.Error(variable.Location,
+                            DiagnosticCode.ParamNotBound,
+                            "Variable {0} is not bound here (when used as parameter {1} of {2} \"{3}\")",
+                            ruleVar.Name, paramName, signature.Type, signature.GetNameAndArity());
+                    }
+                    else
+                    {
+                        Context.Log.Error(variable.Location,
+                            DiagnosticCode.ParamNotBound,
+                            "Parameter {0} of {1} \"{2}\" requires a variable or constant, not a placeholder",
+                            paramName, signature.Type, signature.GetNameAndArity());
+                    }
                 }
             }
             else
