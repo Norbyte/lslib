@@ -105,7 +105,9 @@ namespace LSTools.StoryCompiler
                 DatabaseId = debugInfo.DatabaseId,
                 Name = debugInfo.Name,
                 Type = (NodeDebugInfoMsg.Types.NodeType)debugInfo.Type,
-                ParentNodeId = debugInfo.ParentNodeId
+                ParentNodeId = debugInfo.ParentNodeId,
+                FunctionName = debugInfo.FunctionName != null ? debugInfo.FunctionName.Name : "",
+                FunctionArity = debugInfo.FunctionName != null ? (uint)debugInfo.FunctionName.Arity : 0
             };
 
             foreach (var map in debugInfo.ColumnToVariableMaps)
@@ -116,9 +118,36 @@ namespace LSTools.StoryCompiler
             return msg;
         }
 
+        private FunctionParamDebugInfoMsg ToProtobuf(FunctionParamDebugInfo debugInfo)
+        {
+            return new FunctionParamDebugInfoMsg
+            {
+                TypeId = debugInfo.TypeId,
+                Name = debugInfo.Name ?? "",
+                Out = debugInfo.Out
+            };
+        }
+
+        private FunctionDebugInfoMsg ToProtobuf(FunctionDebugInfo debugInfo)
+        {
+            var msg = new FunctionDebugInfoMsg
+            {
+                Name = debugInfo.Name
+            };
+
+            foreach (var param in debugInfo.Params)
+            {
+                msg.Params.Add(ToProtobuf(param));
+            }
+
+            return msg;
+        }
+
         private StoryDebugInfoMsg ToProtobuf(StoryDebugInfo debugInfo)
         {
             var msg = new StoryDebugInfoMsg();
+            msg.Version = debugInfo.Version;
+
             foreach (var db in debugInfo.Databases)
             {
                 var dbMsg = ToProtobuf(db.Value);
@@ -141,6 +170,12 @@ namespace LSTools.StoryCompiler
             {
                 var nodeMsg = ToProtobuf(node.Value);
                 msg.Nodes.Add(nodeMsg);
+            }
+
+            foreach (var func in debugInfo.Functions)
+            {
+                var funcMsg = ToProtobuf(func.Value);
+                msg.Functions.Add(funcMsg);
             }
 
             return msg;

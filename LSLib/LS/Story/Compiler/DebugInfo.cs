@@ -87,13 +87,40 @@ namespace LSLib.LS.Story.Compiler
         public Node.Type Type;
         // ID of left parent node
         public UInt32 ParentNodeId;
+        // Function (query, proc, etc.) attached to this node
+        public FunctionNameAndArity FunctionName;
+    }
+
+    public class FunctionParamDebugInfo
+    {
+        // Intrinsic type ID
+        public UInt32 TypeId;
+        // Name of parameter
+        public String Name;
+        // Is an out param (ie. return value)?
+        public bool Out;
+    }
+
+    public class FunctionDebugInfo
+    {
+        // Name of function
+        public String Name;
+        // Type of node
+        public List<FunctionParamDebugInfo> Params;
     }
 
     public class StoryDebugInfo
     {
+        /// <summary>
+        /// Story debug info format version. Increment each time the format changes.
+        /// </summary>
+        public const UInt32 CurrentVersion = 1;
+
+        public UInt32 Version;
         public Dictionary<UInt32, DatabaseDebugInfo> Databases = new Dictionary<UInt32, DatabaseDebugInfo>();
         public Dictionary<UInt32, GoalDebugInfo> Goals = new Dictionary<UInt32, GoalDebugInfo>();
         public Dictionary<UInt32, RuleDebugInfo> Rules = new Dictionary<UInt32, RuleDebugInfo>();
         public Dictionary<UInt32, NodeDebugInfo> Nodes = new Dictionary<UInt32, NodeDebugInfo>();
+        public Dictionary<FunctionNameAndArity, FunctionDebugInfo> Functions = new Dictionary<FunctionNameAndArity, FunctionDebugInfo>();
     }
 }

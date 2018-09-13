@@ -112,6 +112,11 @@ namespace LSTools.DebuggerFrontend
                 ParentNodeId = msg.ParentNodeId
             };
 
+            if (msg.FunctionName != "")
+            {
+                debugInfo.FunctionName = new FunctionNameAndArity(msg.FunctionName, (int)msg.FunctionArity);
+            }
+
             foreach (var map in msg.ColumnMaps)
             {
                 debugInfo.ColumnToVariableMaps.Add((Int32)map.Key, (Int32)map.Value);
@@ -120,9 +125,37 @@ namespace LSTools.DebuggerFrontend
             return debugInfo;
         }
 
+        private FunctionParamDebugInfo FromProtobuf(FunctionParamDebugInfoMsg msg)
+        {
+            return new FunctionParamDebugInfo
+            {
+                TypeId = msg.TypeId,
+                Name = msg.Name,
+                Out = msg.Out
+            };
+        }
+
+        private FunctionDebugInfo FromProtobuf(FunctionDebugInfoMsg msg)
+        {
+            var debugInfo = new FunctionDebugInfo
+            {
+                Name = msg.Name,
+                Params = new List<FunctionParamDebugInfo>()
+            };
+
+            foreach (var param in msg.Params)
+            {
+                debugInfo.Params.Add(FromProtobuf(param));
+            }
+
+            return debugInfo;
+        }
+
         private StoryDebugInfo FromProtobuf(StoryDebugInfoMsg msg)
         {
             var debugInfo = new StoryDebugInfo();
+            debugInfo.Version = msg.Version;
+
             foreach (var dbMsg in msg.Databases)
             {
                 var db = FromProtobuf(dbMsg);
@@ -145,6 +178,12 @@ namespace LSTools.DebuggerFrontend
             {
                 var node = FromProtobuf(nodeMsg);
                 debugInfo.Nodes.Add(node.Id, node);
+            }
+
+            foreach (var funcMsg in msg.Functions)
+            {
+                var func = FromProtobuf(funcMsg);
+                debugInfo.Functions.Add(new FunctionNameAndArity(func.Name, func.Params.Count), func);
             }
 
             return debugInfo;

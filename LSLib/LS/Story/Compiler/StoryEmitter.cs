@@ -41,6 +41,7 @@ namespace LSLib.LS.Story.Compiler
         public void EnableDebugInfo()
         {
             DebugInfo = new StoryDebugInfo();
+            DebugInfo.Version = StoryDebugInfo.CurrentVersion;
         }
 
         private void AddStoryTypes()
@@ -179,6 +180,11 @@ namespace LSLib.LS.Story.Compiler
                     nodeDebug.ParentNodeId = (node as RelNode).ParentRef.Index;
                 }
 
+                if (node.Name != "")
+                {
+                    nodeDebug.FunctionName = new FunctionNameAndArity(node.Name, node.NumParams);
+                }
+
                 if (location != null)
                 {
                     var columnIndex = 0;
@@ -229,6 +235,27 @@ namespace LSLib.LS.Story.Compiler
 
             FuncEntries.Add(signature.GetNameAndArity(), osiFunc);
             Story.Functions.Add(osiFunc);
+
+            if (DebugInfo != null)
+            {
+                var funcDebug = new FunctionDebugInfo
+                {
+                    Name = osiFunc.Name.Name,
+                    Params = new List<FunctionParamDebugInfo>()
+                };
+
+                foreach (var param in signature.Params)
+                {
+                    funcDebug.Params.Add(new FunctionParamDebugInfo
+                    {
+                        TypeId = (UInt32)param.Type.IntrinsicTypeId,
+                        Name = param.Name,
+                        Out = param.Direction == ParamDirection.Out
+                    });
+                }
+
+                DebugInfo.Functions.Add(signature.GetNameAndArity(), funcDebug);
+            }
 
             return osiFunc;
         }

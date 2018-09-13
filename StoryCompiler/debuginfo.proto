@@ -63,6 +63,19 @@ message NodeDebugInfoMsg {
   string name = 6;
   NodeType type = 7;
   uint32 parent_node_id = 8;
+  string function_name = 9;
+  uint32 function_arity = 10;
+}
+
+message FunctionParamDebugInfoMsg {
+  uint32 type_id = 1;
+  string name = 2;
+  bool out = 3;
+}
+
+message FunctionDebugInfoMsg {
+  string name = 1;
+  repeated FunctionParamDebugInfoMsg params = 2;
 }
 
 message StoryDebugInfoMsg {
@@ -70,4 +83,6 @@ message StoryDebugInfoMsg {
   repeated GoalDebugInfoMsg goals = 2;
   repeated RuleDebugInfoMsg rules = 3;
   repeated NodeDebugInfoMsg nodes = 4;
+  repeated FunctionDebugInfoMsg functions = 5;
+  uint32 version = 6;
 }
