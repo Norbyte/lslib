@@ -75,6 +75,7 @@ namespace LSTools.StoryCompiler
             {
                 Console.WriteLine("Usage: StoryCompiler <args>");
                 Console.WriteLine("    --game-data-path <path> - Location of the game Data folder");
+                Console.WriteLine("    --game <dos2|dos2de>    - Which game to target during compilation");
                 Console.WriteLine("    --output <path>         - Compiled story output path");
                 Console.WriteLine("    --debug-info <path>     - Debugging symbols path");
                 Console.WriteLine("    --debug-log <path>      - Debug output log path");
@@ -82,6 +83,7 @@ namespace LSTools.StoryCompiler
                 Console.WriteLine("    --no-warn <code>        - Suppress warnings with diagnostic code <code>");
                 Console.WriteLine("    --check-only            - Only check scripts for errors, don't generate compiled story file");
                 Console.WriteLine("    --check-names           - Verify game object names (slow!)");
+                Console.WriteLine("    --no-packages           - Don't load files from packages");
                 Environment.Exit(1);
             }
 
