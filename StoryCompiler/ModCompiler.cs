@@ -27,6 +27,7 @@ namespace LSTools.StoryCompiler
         private ModResources Mods = new ModResources();
         private List<GoalScript> GoalScripts = new List<GoalScript>();
         private List<byte[]> GameObjectLSFs = new List<byte[]>();
+        private bool HasErrors = false;
 
         public bool CheckOnly = false;
         public bool CheckGameObjects = false;
@@ -73,9 +74,19 @@ namespace LSTools.StoryCompiler
                 using (var stream = new MemoryStream(script.ScriptBody))
                 {
                     var ast = goalLoader.ParseGoal(script.Path, stream);
-                    var ir = goalLoader.GenerateGoalIR(ast);
-                    ir.Name = script.Name;
-                    tasks.IRs.Enqueue(ir);
+
+                    if (ast != null)
+                    {
+                        var ir = goalLoader.GenerateGoalIR(ast);
+                        ir.Name = script.Name;
+                        tasks.IRs.Enqueue(ir);
+                    }
+                    else
+                    {
+                        var msg = new Diagnostic(null, MessageLevel.Error, "X00", $"Could not parse goal file " + script.Name);
+                        Logger.CompilationDiagnostic(msg);
+                        HasErrors = true;
+                    }
                 }
             }
         }
@@ -280,6 +291,7 @@ namespace LSTools.StoryCompiler
         public bool Compile(string outputPath, string debugInfoPath, List<string> mods)
         {
             Logger.CompilationStarted();
+            HasErrors = false;
             Compiler.Game = Game;
             Mods.Game = Game;
 
@@ -347,17 +359,16 @@ namespace LSTools.StoryCompiler
             Compiler.VerifyIR();
             Logger.TaskFinished();
 
-            bool hasErrors = false;
             foreach (var message in Compiler.Context.Log.Log)
             {
                 Logger.CompilationDiagnostic(message);
                 if (message.Level == MessageLevel.Error)
                 {
-                    hasErrors = true;
+                    HasErrors = true;
                 }
             }
 
-            if (!hasErrors && !CheckOnly)
+            if (!HasErrors && !CheckOnly)
             {
                 Logger.TaskStarted("Generating story nodes");
                 var emitter = new StoryEmitter(Compiler.Context);
@@ -389,8 +400,8 @@ namespace LSTools.StoryCompiler
                 }
             }
 
-            Logger.CompilationFinished(!hasErrors);
-            return !hasErrors;
+            Logger.CompilationFinished(!HasErrors);
+            return !HasErrors;
         }
     }
 }
