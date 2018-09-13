@@ -14,6 +14,9 @@ namespace LSTools.DebuggerFrontend
     {
         private const UInt32 ProtocolVersion = 6;
 
+        // DAP protocol version (VS Code to debugger frontend communication)
+        private const int DAPProtocolVersion = 1;
+
         private DAPStream Stream;
         private Stream LogStream;
 
@@ -308,6 +311,12 @@ namespace LSTools.DebuggerFrontend
                 supportsEvaluateForHovers = true
             };
             Stream.SendReply(request, reply);
+
+            var versionInfo = new DAPCustomVersionInfoEvent
+            {
+                version = DAPProtocolVersion
+            };
+            Stream.SendEvent("osirisProtocolVersion", versionInfo);
         }
 
         private void DebugThreadMain()

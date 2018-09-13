@@ -989,6 +989,17 @@ namespace LSTools.DebuggerFrontend
     /**
      * The event transmits the output of the last div query
      */
+    public class DAPCustomVersionInfoEvent : IDAPMessagePayload
+    {
+        /**
+         * DAP protocol version
+         */
+        public int version;
+    }
+
+    /**
+     * The event transmits the output of the last div query
+     */
     public class DAPCustomQueryResultEvent : IDAPMessagePayload
     {
         /**
