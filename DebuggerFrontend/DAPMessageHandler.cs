@@ -12,7 +12,8 @@ namespace LSTools.DebuggerFrontend
 {
     public class DAPMessageHandler
     {
-        private const UInt32 ProtocolVersion = 6;
+        // DBG protocol version (game/editor backend to debugger frontend communication)
+        private const UInt32 DBGProtocolVersion = 7;
 
         // DAP protocol version (VS Code to debugger frontend communication)
         private const int DAPProtocolVersion = 1;
@@ -40,6 +41,9 @@ namespace LSTools.DebuggerFrontend
         private bool PauseRequested;
         // Are we currently debugging a story?
         private bool DebuggingStory;
+        // Results of last DIV query before breakpoint (if available)
+        private FunctionDebugInfo LastQueryFunc;
+        private List<DebugVariable> LastQueryResults;
         // Mod/project UUID we'll send to the debugger instead of the packaged path
         public string ModUuid;
 
@@ -117,6 +121,10 @@ namespace LSTools.DebuggerFrontend
             var debugPayload = File.ReadAllBytes(DebugInfoPath);
             var loader = new DebugInfoLoader();
             DebugInfo = loader.Load(debugPayload);
+            if (DebugInfo.Version != StoryDebugInfo.CurrentVersion)
+            {
+                throw new InvalidDataException($"Story debug info too old (found version {DebugInfo.Version}, we only support {StoryDebugInfo.CurrentVersion}). Please recompile the story.");
+            }
 
             Formatter = new ValueFormatter(DebugInfo);
             TracePrinter = new StackTracePrinter(DebugInfo, Formatter);
@@ -183,9 +191,9 @@ namespace LSTools.DebuggerFrontend
 
         private void OnBackendInfo(BkVersionInfoResponse response)
         {
-            if (response.ProtocolVersion != ProtocolVersion)
+            if (response.ProtocolVersion != DBGProtocolVersion)
             {
-                throw new InvalidDataException($"Backend sent unsupported protocol version; got {response.ProtocolVersion}, we only support {ProtocolVersion}");
+                throw new InvalidDataException($"Backend sent unsupported protocol version; got {response.ProtocolVersion}, we only support {DBGProtocolVersion}");
             }
 
             if (response.StoryLoaded)
@@ -216,6 +224,35 @@ namespace LSTools.DebuggerFrontend
                 threadId = 1
             };
             Stream.SendEvent("stopped", stopped);
+
+            LastQueryFunc = null;
+            LastQueryResults = null;
+            if (bp.QueryResults != null)
+            {
+                var node = DebugInfo.Nodes[bp.QueryNodeId];
+
+                if (node.FunctionName != null)
+                {
+                    var function = DebugInfo.Functions[node.FunctionName];
+                    LastQueryFunc = function;
+
+                    LastQueryResults = new List<DebugVariable>();
+                    for (var i = 0; i < bp.QueryResults.Column.Count; i++)
+                    {
+                        if (function.Params[i].Out)
+                        {
+                            var col = bp.QueryResults.Column[i];
+                            var resultVar = new DebugVariable
+                            {
+                                Name = "@" + function.Params[i].Name,
+                                Type = function.Params[i].TypeId.ToString(), // TODO name
+                                Value = Formatter.ValueToString(col)
+                            };
+                            LastQueryResults.Add(resultVar);
+                        }
+                    }
+                }
+            }
 
             if (bp.QuerySucceeded != BkBreakpointTriggered.Types.QueryStatus.NotAQuery)
             {
@@ -369,7 +406,7 @@ namespace LSTools.DebuggerFrontend
                 DbgCli.EnableLogging(LogStream);
             }
             
-            DbgCli.SendIdentify(ProtocolVersion);
+            DbgCli.SendIdentify(DBGProtocolVersion);
 
             DbgThread = new Thread(new ThreadStart(DebugThreadMain));
             DbgThread.Start();
@@ -491,7 +528,7 @@ namespace LSTools.DebuggerFrontend
             }
 
             var frame = Stack[msg.frameId];
-            var scope = new DAPScope
+            var stackScope = new DAPScope
             {
                 // TODO DB insert args?
                 name = "Locals",
@@ -507,20 +544,44 @@ namespace LSTools.DebuggerFrontend
             // This restricts them so they're only displayed in the rule that the stack frame belongs to.
             if (frame.Rule != null)
             {
-                scope.source = new DAPSource
+                stackScope.source = new DAPSource
                 {
                     name = Path.GetFileNameWithoutExtension(frame.File),
                     path = frame.File
                 };
-                scope.line = (int)frame.Rule.ConditionsStartLine;
-                scope.column = 1;
-                scope.endLine = (int)frame.Rule.ActionsEndLine + 1;
-                scope.endColumn = 1;
+                stackScope.line = (int)frame.Rule.ConditionsStartLine;
+                stackScope.column = 1;
+                stackScope.endLine = (int)frame.Rule.ActionsEndLine + 1;
+                stackScope.endColumn = 1;
             }
-            
+
+            var scopes = new List<DAPScope> { stackScope };
+
+            if (msg.frameId == 0
+                && LastQueryResults != null
+                && LastQueryResults.Count > 0)
+            {
+                var queryScope = new DAPScope
+                {
+                    name = LastQueryFunc.Name + " Returns",
+                    variablesReference = ((long)3 << 48),
+                    namedVariables = LastQueryResults.Count,
+                    indexedVariables = 0,
+                    expensive = false,
+
+                    source = stackScope.source,
+                    line = stackScope.line,
+                    column = stackScope.column,
+                    endLine = stackScope.endLine,
+                    endColumn = stackScope.endColumn
+                };
+
+                scopes.Add(queryScope);
+            }
+
             var reply = new DAPScopesResponse
             {
-                scopes = new List<DAPScope>{ scope }
+                scopes = scopes
             };
             Stream.SendReply(request, reply);
         }
@@ -542,10 +603,40 @@ namespace LSTools.DebuggerFrontend
             for (var i = startIndex; i < startIndex + numVars; i++)
             {
                 var variable = frame.Variables[i];
-                var dapVar = new DAPVariable();
-                dapVar.name = variable.Name;
-                dapVar.value = variable.Value;
-                dapVar.type = variable.Type;
+                var dapVar = new DAPVariable
+                {
+                    name = variable.Name,
+                    value = variable.Value,
+                    type = variable.Type
+                };
+                variables.Add(dapVar);
+            }
+
+            return variables;
+        }
+
+        private List<DAPVariable> GetQueryResultVariables(DAPVariablesRequest msg, int frameIndex)
+        {
+            if (frameIndex != 0)
+            {
+                throw new RequestFailedException($"Requested query results for bad frame {frameIndex}");
+            }
+            
+            int startIndex = msg.start == null ? 0 : (int)msg.start;
+            int numVars = (msg.count == null || msg.count == 0) ? LastQueryResults.Count : (int)msg.count;
+            int lastIndex = Math.Min(startIndex + numVars, LastQueryResults.Count);
+            // TODO req.filter, format
+
+            var variables = new List<DAPVariable>();
+            for (var i = startIndex; i < startIndex + numVars; i++)
+            {
+                var variable = LastQueryResults[i];
+                var dapVar = new DAPVariable
+                {
+                    name = variable.Name,
+                    value = variable.Value,
+                    type = variable.Type
+                };
                 variables.Add(dapVar);
             }
 
@@ -569,6 +660,11 @@ namespace LSTools.DebuggerFrontend
             else if (variableType == 1 || variableType == 2)
             {
                 variables = DatabaseDumper.GetVariables(msg, msg.variablesReference);
+            }
+            else if (variableType == 3)
+            {
+                int frameIndex = (int)(msg.variablesReference & 0xffffff);
+                variables = GetQueryResultVariables(msg, frameIndex);
             }
             else
             {

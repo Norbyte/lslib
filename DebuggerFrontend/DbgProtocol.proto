@@ -98,6 +98,8 @@ message BkBreakpointTriggered {
 
   repeated MsgFrame call_stack = 1;
   QueryStatus query_succeeded = 2;
+  MsgTuple query_results = 3;
+  uint32 query_node_id = 4;
 }
 
 message BkGlobalBreakpointTriggered {
