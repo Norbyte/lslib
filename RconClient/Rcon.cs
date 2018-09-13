@@ -111,14 +111,18 @@ namespace LSLib.Rcon
             }
             else if (packet is DosEnumerationList)
             {
-                Console.WriteLine("Sending console command:");
-                Console.WriteLine("> " + Command + " " + String.Join(" ", Arguments));
-                var consoleCmd = new DosSendConsoleCommand
+                if (!Executed)
                 {
-                    Command = Command,
-                    Arguments = Arguments
-                };
-                session.SendEncapsulated(consoleCmd, EncapsulatedReliability.ReliableOrdered);
+                    Console.WriteLine("Sending console command:");
+                    Console.WriteLine("> " + Command + " " + String.Join(" ", Arguments));
+                    var consoleCmd = new DosSendConsoleCommand
+                    {
+                        Command = Command,
+                        Arguments = Arguments
+                    };
+                    session.SendEncapsulated(consoleCmd, EncapsulatedReliability.ReliableOrdered);
+                }
+
                 ReceivedEvents = true;
             }
             else if (packet is DosConsoleResponse)
