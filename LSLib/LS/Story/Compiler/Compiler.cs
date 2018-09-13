@@ -165,7 +165,7 @@ namespace LSLib.LS.Story.Compiler
                 }
                 
                 VerifyIRValue(rule, ele);
-                VerifyIRValueCall(rule, ele, func, index, -1);
+                VerifyIRValueCall(rule, ele, func, index, -1, statement.Not);
                 VerifyParamCompatibility(func, index, param, ele);
 
                 index++;
@@ -298,7 +298,8 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void VerifyIRVariableCall(IRRule rule, IRVariable variable, FunctionSignature signature, Int32 parameterIndex, Int32 conditionIndex)
+        private void VerifyIRVariableCall(IRRule rule, IRVariable variable, FunctionSignature signature, Int32 parameterIndex, 
+            Int32 conditionIndex, bool not)
         {
             var ruleVar = rule.Variables[variable.Index];
             var param = signature.Params[parameterIndex];
@@ -306,9 +307,12 @@ namespace LSLib.LS.Story.Compiler
             if (param.Direction == ParamDirection.Out)
             {
                 Debug.Assert(conditionIndex != -1);
-                if (ruleVar.FirstBindingIndex == -1)
+                if (!not)
                 {
-                    ruleVar.FirstBindingIndex = conditionIndex;
+                    if (ruleVar.FirstBindingIndex == -1)
+                    {
+                        ruleVar.FirstBindingIndex = conditionIndex;
+                    }
                 }
             }
             else if (
@@ -339,18 +343,19 @@ namespace LSLib.LS.Story.Compiler
             }
             else
             {
-                if (conditionIndex != -1 && ruleVar.FirstBindingIndex == -1)
+                if (conditionIndex != -1 && ruleVar.FirstBindingIndex == -1 && !not)
                 {
                     ruleVar.FirstBindingIndex = conditionIndex;
                 }
             }
         }
 
-        private void VerifyIRValueCall(IRRule rule, IRValue value, FunctionSignature signature, Int32 parameterIndex, Int32 conditionIndex)
+        private void VerifyIRValueCall(IRRule rule, IRValue value, FunctionSignature signature, Int32 parameterIndex, 
+            Int32 conditionIndex, bool not)
         {
             if (value is IRVariable)
             {
-                VerifyIRVariableCall(rule, value as IRVariable, signature, parameterIndex, conditionIndex);
+                VerifyIRVariableCall(rule, value as IRVariable, signature, parameterIndex, conditionIndex, not);
             }
         }
 
@@ -451,7 +456,7 @@ namespace LSLib.LS.Story.Compiler
                 }
 
                 VerifyIRValue(rule, condParam);
-                VerifyIRValueCall(rule, condParam, func, index, conditionIndex);
+                VerifyIRValueCall(rule, condParam, func, index, conditionIndex, condition.Not);
                 VerifyParamCompatibility(func, index, param, condParam);
 
                 index++;
