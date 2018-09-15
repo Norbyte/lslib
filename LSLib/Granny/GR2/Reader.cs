@@ -252,7 +252,7 @@ namespace LSLib.Granny.GR2
                     {
                         var uncompressed = Granny2Compressor.Decompress(
                             (int)hdr.compression,
-                            sectionContents, (int)hdr.compressedSize,
+                            sectionContents, (int)hdr.uncompressedSize,
                             (int)hdr.first16bit, (int)hdr.first8bit, (int)hdr.uncompressedSize);
                         Stream.Write(uncompressed, 0, uncompressed.Length);
                     }
