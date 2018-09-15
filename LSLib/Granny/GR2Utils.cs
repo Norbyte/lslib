@@ -24,6 +24,7 @@ namespace LSLib.Granny
             switch (extension)
             {
                 case ".gr2":
+                case ".lsm":
                     return ExportFormat.GR2;
 
                 case ".dae":

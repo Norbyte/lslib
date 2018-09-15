@@ -643,17 +643,17 @@
             // 
             // conformSkeletonFileDlg
             // 
-            this.conformSkeletonFileDlg.Filter = "Granny GR2|*.gr2";
+            this.conformSkeletonFileDlg.Filter = "Granny GR2|*.gr2;*.lsm";
             this.conformSkeletonFileDlg.Title = "Select Conforming Skeleton File";
             // 
             // outputFileDlg
             // 
-            this.outputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2";
+            this.outputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.outputFileDlg.Title = "Select Output File";
             // 
             // inputFileDlg
             // 
-            this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2";
+            this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.inputFileDlg.Title = "Select Input File";
             // 
             // rigid

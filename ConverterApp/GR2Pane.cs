@@ -184,10 +184,14 @@ namespace ConverterApp
             UpdateCommonExporterSettings(settings);
 
             settings.InputPath = inputPath.Text;
-            settings.InputFormat = Path.GetExtension(settings.InputPath)?.ToLower() == ".gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
+            var inputExtension = Path.GetExtension(settings.InputPath)?.ToLower();
+            bool inputIsGr2 = inputExtension == ".gr2" || inputExtension == ".lsm";
+            settings.InputFormat = inputIsGr2 ? ExportFormat.GR2 : ExportFormat.DAE;
 
             settings.OutputPath = outputPath.Text;
-            settings.OutputFormat = Path.GetExtension(settings.OutputPath)?.ToLower() == ".gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
+            var outputExtension = Path.GetExtension(settings.OutputPath)?.ToLower();
+            bool outputIsGr2 = outputExtension == ".gr2" || outputExtension == ".lsm";
+            settings.OutputFormat = outputIsGr2 ? ExportFormat.GR2 : ExportFormat.DAE;
 
             foreach (ListViewItem setting in from object item in resourceFormats.Items select item as ListViewItem)
             {
