@@ -42,7 +42,7 @@ namespace ConverterApp
             osirisTab.Controls.Add(osirisPane);
 
             Text += $" (LSLib v{Common.LibraryVersion()})";
-            gr2Game.SelectedIndex = 1;
+            gr2Game.SelectedIndex = 2;
         }
 
         public Game GetGame()

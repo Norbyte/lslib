@@ -100,7 +100,7 @@
             this.gr2Game.Items.AddRange(new object[] {
             "Divinity: Original Sin (32-bit)",
             "Divinity: Original Sin EE (64-bit)",
-            "Divinity: Original Sin 2 (64-bit)"});
+            "Divinity: Original Sin 2 and DE (64-bit)"});
             this.gr2Game.Location = new System.Drawing.Point(74, 12);
             this.gr2Game.Name = "gr2Game";
             this.gr2Game.Size = new System.Drawing.Size(356, 21);
