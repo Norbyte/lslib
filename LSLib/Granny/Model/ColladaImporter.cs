@@ -722,9 +722,12 @@ namespace LSLib.Granny.Model
 
             // Import skinning controllers after skeleton and geometry loading has finished, as
             // we reference both of them during skin import
-            foreach (var skin in collSkins)
+            if (rootBones.Count > 0)
             {
-                ImportSkin(root, skin);
+                foreach (var skin in collSkins)
+                {
+                    ImportSkin(root, skin);
+                }
             }
 
             if (collAnimations.Count > 0 && root.Skeletons.Count > 0)
