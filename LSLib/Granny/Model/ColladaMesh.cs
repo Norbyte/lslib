@@ -12,12 +12,14 @@ namespace LSLib.Granny.Model
         private Dictionary<String, ColladaSource> Sources;
         private InputLocalOffset[] Inputs;
         private List<Vertex> Vertices;
+        private List<Vector3> Normals;
         private List<List<Vector2>> UVs;
         private List<List<Vector4>> Colors;
         private List<int> Indices;
 
         private int InputOffsetCount = 0;
         private int VertexInputIndex = -1;
+        private int NormalsInputIndex = -1;
         private List<int> UVInputIndices = new List<int>();
         private List<int> ColorInputIndices = new List<int>();
         private Type VertexType;
@@ -347,14 +349,8 @@ namespace LSLib.Granny.Model
 
             if (normalInputIndex != -1)
             {
-                for (var vert = 0; vert < TriangleCount * 3; vert++)
-                {
-                    var vertexIndex = Indices[vert * InputOffsetCount + VertexInputIndex];
-                    var normalIndex = Indices[vert * InputOffsetCount + normalInputIndex];
-
-                    Vertex vertex = Vertices[vertexIndex];
-                    vertex.Normal = normals[normalIndex];
-                }
+                Normals = normals;
+                NormalsInputIndex = normalInputIndex;
             }
 
             HasNormals = normals != null;
@@ -539,7 +535,7 @@ namespace LSLib.Granny.Model
 
             ImportColors();
             ImportUVs();
-            if (UVInputIndices.Count() > 0 || ColorInputIndices.Count() > 0)
+            if (UVInputIndices.Count() > 0 || ColorInputIndices.Count() > 0 || NormalsInputIndex != -1)
             {
                 var outVertexIndices = new Dictionary<int[], int>(new VertexIndexComparer());
                 ConsolidatedIndices = new List<int>(TriangleCount * 3);
@@ -559,6 +555,10 @@ namespace LSLib.Granny.Model
                         var vertexIndex = index[VertexInputIndex];
                         consolidatedIndex = ConsolidatedVertices.Count;
                         Vertex vertex = Vertices[vertexIndex].Clone();
+                        if (NormalsInputIndex != -1)
+                        {
+                            vertex.Normal = Normals[index[NormalsInputIndex]];
+                        }
                         for (int uv = 0; uv < UVInputIndices.Count(); uv++ )
                         {
                             vertex.SetUV(uv, UVs[uv][index[UVInputIndices[uv]]]);
@@ -587,7 +587,7 @@ namespace LSLib.Granny.Model
             }
             else
             {
-                Utils.Info(String.Format("Mesh has no UV map, vertex consolidation step skipped."));
+                Utils.Info(String.Format("Mesh has no separate normals, colors or UV map, vertex consolidation step skipped."));
 
                 ConsolidatedVertices = Vertices;
 
