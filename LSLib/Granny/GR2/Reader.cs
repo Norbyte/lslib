@@ -501,6 +501,13 @@ namespace LSLib.Granny.GR2
             if (defn.IsValid)
             {
                 defn.Name = name.Resolve(this);
+
+                // Remove "The Divinity Engine" prefix from LSM fields
+                if (defn.Name.StartsWith("The Divinity Engine", StringComparison.Ordinal))
+                {
+                    defn.Name = defn.Name.Substring(19);
+                }
+
                 defn.GrannyName = defn.Name;
             }
             defn.Definition = ReadStructReference();
