@@ -42,6 +42,9 @@
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="QUT.ShiftReduceParser">
+      <HintPath>..\External\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -67,6 +70,12 @@
     <Compile Include="Debuginfo.cs" />
     <Compile Include="DebugInfoLoader.cs" />
     <Compile Include="DebugInfoSync.cs" />
+    <Compile Include="EvaluationResults.cs" />
+    <Compile Include="ExpressionParser\Expression.lex.cs" />
+    <Compile Include="ExpressionParser\Expression.yy.cs" />
+    <Compile Include="ExpressionEvaluator.cs" />
+    <Compile Include="ExpressionParser\ExpressionNodes.cs" />
+    <Compile Include="ExpressionParser\ExpressionParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StackTracePrinter.cs" />
@@ -75,6 +84,8 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="DbgProtocol.proto" />
+    <None Include="ExpressionParser\Expression.lex" />
+    <None Include="ExpressionParser\Expression.yy" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +97,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto
-$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
+$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\ExpressionParser\Expression.lex.cs" "$(ProjectDir)\ExpressionParser\Expression.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\ExpressionParser\Expression.yy.cs" "$(ProjectDir)\ExpressionParser\Expression.yy"</PreBuildEvent>
   </PropertyGroup>
 </Project>

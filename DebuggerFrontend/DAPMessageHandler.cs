@@ -1,4 +1,5 @@
-﻿using LSLib.LS.Story.Compiler;
+﻿using LSLib.LS.Story;
+using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +14,7 @@ namespace LSTools.DebuggerFrontend
     public class DAPMessageHandler
     {
         // DBG protocol version (game/editor backend to debugger frontend communication)
-        private const UInt32 DBGProtocolVersion = 7;
+        private const UInt32 DBGProtocolVersion = 8;
 
         // DAP protocol version (VS Code to debugger frontend communication)
         private const int DAPProtocolVersion = 1;
@@ -30,7 +31,8 @@ namespace LSTools.DebuggerFrontend
         private ValueFormatter Formatter;
         private StackTracePrinter TracePrinter;
         private BreakpointManager Breakpoints;
-        private DatabaseEnumerator DatabaseDumper;
+        private EvaluationResultManager EvalResults;
+        private ExpressionEvaluator Evaluator;
         private List<CoalescedFrame> Stack;
         private DAPCustomConfiguration Config;
         private bool Stopped;
@@ -134,7 +136,8 @@ namespace LSTools.DebuggerFrontend
                 TracePrinter.MergeFrames = !Config.rawFrames;
             }
 
-            DatabaseDumper = new DatabaseEnumerator(DbgCli, Stream, DebugInfo, Formatter);
+            EvalResults = new EvaluationResultManager(Formatter);
+            Evaluator = new ExpressionEvaluator(DebugInfo, Stream, DbgCli, Formatter, EvalResults);
 
             Stack = null;
             Stopped = false;
@@ -173,7 +176,8 @@ namespace LSTools.DebuggerFrontend
             DebuggingStory = false;
             Stopped = false;
             DebugInfo = null;
-            DatabaseDumper = null;
+            Evaluator = null;
+            EvalResults = null;
             TracePrinter = null;
             Formatter = null;
 
@@ -246,7 +250,8 @@ namespace LSTools.DebuggerFrontend
                             {
                                 Name = "@" + function.Params[i].Name,
                                 Type = function.Params[i].TypeId.ToString(), // TODO name
-                                Value = Formatter.ValueToString(col)
+                                Value = Formatter.ValueToString(col),
+                                TypedValue = col
                             };
                             LastQueryResults.Add(resultVar);
                         }
@@ -659,7 +664,7 @@ namespace LSTools.DebuggerFrontend
             }
             else if (variableType == 1 || variableType == 2)
             {
-                variables = DatabaseDumper.GetVariables(msg, msg.variablesReference);
+                variables = EvalResults.GetVariables(msg, msg.variablesReference);
             }
             else if (variableType == 3)
             {
@@ -779,14 +784,17 @@ namespace LSTools.DebuggerFrontend
                 throw new RequestFailedException("Can only evaluate expressions when stopped");
             }
 
-            // TODO - this is bad for performance!
-            var db = DebugInfo.Databases.Values.FirstOrDefault(r => r.Name == req.expression);
-            if (db == null)
+            var frameIndex = req.frameId ?? 0;
+            if (frameIndex < 0 || frameIndex >= Stack.Count)
             {
-                throw new RequestFailedException($"Database does not exist: \"{req.expression}\"");
+                throw new RequestFailedException($"Requested evaluate for unknown frame {frameIndex}");
             }
 
-            DatabaseDumper.RequestDatabaseEvaluation(request, db.Id);
+            var frame = Stack[frameIndex];
+
+            // Only allow functions that have side effects in the debugger console
+            bool allowMutation = (req.context == "repl");
+            Evaluator.Evaluate(request, req.expression, frame, allowMutation);
         }
 
         private void HandleDisconnectRequest(DAPRequest request, DAPDisconnectRequest msg)

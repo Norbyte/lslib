@@ -133,6 +133,12 @@ namespace LSTools.DebuggerFrontend
         public delegate void EndDatabaseContentsDelegate(BkEndDatabaseContents msg);
         public EndDatabaseContentsDelegate OnEndDatabaseContents = delegate { };
 
+        public delegate void EvaluateRowDelegate(UInt32 seq, BkEvaluateRow msg);
+        public EvaluateRowDelegate OnEvaluateRow = delegate { };
+
+        public delegate void EvaluateFinishedDelegate(UInt32 seq, BkEvaluateFinished msg);
+        public EvaluateFinishedDelegate OnEvaluateFinished = delegate { };
+
         public DebuggerClient(AsyncProtobufClient client, StoryDebugInfo debugInfo)
         {
             Client = client;
@@ -160,11 +166,12 @@ namespace LSTools.DebuggerFrontend
             }
         }
 
-        public void Send(DebuggerToBackend message)
+        public UInt32 Send(DebuggerToBackend message)
         {
             message.SeqNo = OutgoingSeq++;
             LogMessage(message);
             Client.Send(message);
+            return message.SeqNo;
         }
 
         public void SendIdentify(UInt32 protocolVersion)
@@ -273,6 +280,20 @@ namespace LSTools.DebuggerFrontend
             Send(msg);
         }
 
+        public UInt32 SendEvaluate(DbgEvaluate.Types.EvalType type, UInt32 nodeId, MsgTuple args)
+        {
+            var msg = new DebuggerToBackend
+            {
+                Evaluate = new DbgEvaluate
+                {
+                    Type = type,
+                    NodeId = nodeId,
+                    Params = args
+                }
+            };
+            return Send(msg);
+        }
+
         private void BreakpointTriggered(BkBreakpointTriggered message)
         {
             OnBreakpointTriggered(message);
@@ -342,6 +363,14 @@ namespace LSTools.DebuggerFrontend
 
                 case BackendToDebugger.MsgOneofCase.EndDatabaseContents:
                     OnEndDatabaseContents(message.EndDatabaseContents);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.EvaluateRow:
+                    OnEvaluateRow(message.ReplySeqNo, message.EvaluateRow);
+                    break;
+
+                case BackendToDebugger.MsgOneofCase.EvaluateFinished:
+                    OnEvaluateFinished(message.ReplySeqNo, message.EvaluateFinished);
                     break;
 
                 default:

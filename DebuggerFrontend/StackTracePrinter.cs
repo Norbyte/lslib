@@ -14,6 +14,7 @@ namespace LSTools.DebuggerFrontend
         public String Name;
         public String Type;
         public String Value;
+        public MsgTypedValue TypedValue;
     }
 
     public class CoalescedFrame
@@ -68,7 +69,8 @@ namespace LSTools.DebuggerFrontend
                     Name = Formatter.TupleVariableIndexToName(rule, node, i),
                     // TODO type name!
                     Type = value.TypeId.ToString(),
-                    Value = Formatter.ValueToString(value)
+                    Value = Formatter.ValueToString(value),
+                    TypedValue = value
                 };
 
                 variables.Add(variable);

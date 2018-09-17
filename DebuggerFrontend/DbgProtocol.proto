@@ -4,6 +4,17 @@ package LSTools.DebuggerFrontend;
 
 option optimize_for = LITE_RUNTIME;
 
+enum StatusCode {
+  SUCCESS = 0;
+  UNSUPPORTED_BREAKPOINT_TYPE = 1;
+  INVALID_NODE_ID = 2;
+  NOT_IN_PAUSE = 3;
+  NO_DEBUGGEE = 4;
+  INVALID_CONTINUE_ACTION = 5;
+  IN_PAUSE = 6;
+  INVALID_GOAL_ID = 7;
+}
+
 message MsgTypedValue {
   uint32 type_id = 1;
   oneof value {
@@ -145,18 +156,25 @@ message DbgGetDatabaseContents {
 message DbgSyncStory {
 }
 
-message BkResult {
-  enum StatusCode {
-    SUCCESS = 0;
-    UNSUPPORTED_BREAKPOINT_TYPE = 1;
-    INVALID_NODE_ID = 2;
-    NOT_IN_PAUSE = 3;
-    NO_DEBUGGEE = 4;
-    INVALID_CONTINUE_ACTION = 5;
-    IN_PAUSE = 6;
-    INVALID_GOAL_ID = 7;
-  };
+// Requests the debugger to evaluate an expression
+message DbgEvaluate {
+  enum EvalType {
+    // calls IsValid; returns a result row and a true/false match flag
+    IS_VALID = 0;
+    // calls Pushdown; returns an arbitrary number of result rows
+    PUSHDOWN = 1;
+    // calls Insert; no result
+    INSERT = 2;
+    // calls Delete; no result
+    DELETE_ = 3;
+  }
 
+  EvalType type = 1;
+  uint32 node_id = 2;
+  MsgTuple params = 3;
+}
+
+message BkResult {
   StatusCode status_code = 1;
 }
 
@@ -231,6 +249,17 @@ message BkEndDatabaseContents {
   uint32 database_id = 1;
 }
 
+// Adds row(s) to the result set of an evaluation
+message BkEvaluateRow {
+  repeated MsgTuple row = 1;
+}
+
+// Indicates the end of an evaluation
+message BkEvaluateFinished {
+  StatusCode result_code = 1;
+  bool query_succeeded = 2;
+}
+
 message DebuggerToBackend {
   oneof msg {
     DbgIdentifyRequest identify = 1;
@@ -239,6 +268,7 @@ message DebuggerToBackend {
     DbgContinue continue = 4;
     DbgGetDatabaseContents getDatabaseContents = 5;
     DbgSyncStory syncStory = 8;
+	DbgEvaluate evaluate = 9;
   }
   uint32 seq_no = 6;
   uint32 reply_seq_no = 7;
@@ -258,6 +288,8 @@ message BackendToDebugger {
 	BkBeginDatabaseContents beginDatabaseContents = 13;
 	BkDatabaseRow databaseRow = 14;
 	BkEndDatabaseContents endDatabaseContents = 15;
+	BkEvaluateRow evaluateRow = 16;
+	BkEvaluateFinished evaluateFinished = 17;
   }
   uint32 seq_no = 8;
   uint32 reply_seq_no = 9;
