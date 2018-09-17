@@ -71,14 +71,19 @@ namespace LSTools.DebuggerFrontend
             Stream.SendEvent("breakpoint", bpMsg);
         }
 
-        private void LogError(String message)
+        public void SendOutput(string category, string output)
         {
             var outputMsg = new DAPOutputMessage
             {
-                category = "stderr",
-                output = message + "\r\n"
+                category = category,
+                output = output
             };
             Stream.SendEvent("output", outputMsg);
+        }
+
+        private void LogError(String message)
+        {
+            SendOutput("stderr", message + "\r\n");
 
             if (LogStream != null)
             {
@@ -153,24 +158,14 @@ namespace LSTools.DebuggerFrontend
             // Notify the debugger that the status of breakpoints changed
             changedBps.ForEach(bp => SendBreakpoint("changed", bp));
 
-            var outputMsg = new DAPOutputMessage
-            {
-                category = "console",
-                output = "Debug session started\r\n"
-            };
-            Stream.SendEvent("output", outputMsg);
+            SendOutput("console", "Debug session started\r\n");
         }
 
         private void OnDebugSessionEnded()
         {
             if (DebuggingStory)
             {
-                var outputMsg = new DAPOutputMessage
-                {
-                    category = "console",
-                    output = "Story unloaded - debug session terminated\r\n"
-                };
-                Stream.SendEvent("output", outputMsg);
+                SendOutput("console", "Story unloaded - debug session terminated\r\n");
             }
 
             DebuggingStory = false;
@@ -304,20 +299,10 @@ namespace LSTools.DebuggerFrontend
             {
                 OnDebugSessionEnded();
 
-                var outputMsg = new DAPOutputMessage
-                {
-                    category = "stderr",
-                    output = $"Could not start debugging session - debug info does not match loaded story.\r\n"
-                };
-                Stream.SendEvent("output", outputMsg);
+                SendOutput("stderr", $"Could not start debugging session - debug info does not match loaded story.\r\n");
 
                 var reasons = "   " + DebugInfoSync.Reasons.Aggregate((a, b) => a + "\r\n   " + b);
-                var reasonsMsg = new DAPOutputMessage
-                {
-                    category = "console",
-                    output = $"Mismatches:\r\n{reasons}\r\n"
-                };
-                Stream.SendEvent("output", reasonsMsg);
+                SendOutput("console", $"Mismatches:\r\n{reasons}\r\n");
             }
             
             DebugInfoSync = null;
@@ -337,12 +322,7 @@ namespace LSTools.DebuggerFrontend
 
         private void OnDebugOutput(BkDebugOutput msg)
         {
-            var outputMsg = new DAPOutputMessage
-            {
-                category = "stdout",
-                output = "DebugBreak: " + msg.Message + "\r\n"
-            };
-            Stream.SendEvent("output", outputMsg);
+            SendOutput("stdout", "DebugBreak: " + msg.Message + "\r\n");
         }
 
         private void HandleInitializeRequest(DAPRequest request, DAPInitializeRequest init)

@@ -223,6 +223,12 @@ namespace LSTools.DebuggerFrontend
 
         public void EvaluateName(DAPRequest request, string name, bool allowMutation)
         {
+            if (name == "help")
+            {
+                SendUsage();
+                return;
+            }
+
             // TODO - this is bad for performance!
             var db = DebugInfo.Databases.Values.FirstOrDefault(r => r.Name == name);
             if (db == null)
@@ -254,12 +260,37 @@ namespace LSTools.DebuggerFrontend
             }
         }
 
+        private void SendUsage()
+        {
+            string usageText = $@"Basic Usage:
+    Dump the contents of a database: DB_Database
+    Insert a row into a database (EXPERIMENTAL!): DB_Database(1, 2, 3)
+    Delete a row from a database (EXPERIMENTAL!): NOT DB_Database(4, 5, 6)
+    Evaluate a query: QRY_Query(""test"")
+    Evaluate a built-in query: IntegerSum(100, 200, _)
+    Call a PROC: PROC_Proc(111.0, TEST_12345678-1234-1234-1234-123456789abc)
+    Call a built-in call (NOT YET COMPLETE!): SetStoryEvent(...)
+    Trigger an event: GameStarted(""FTJ_FortJoy"", 1)
+
+Notes:
+    - Built-in queries will return their output if they succeed.
+    - You can use local variables from the active rule (_Char, etc.) in the expressions.
+";
+
+            var outputMsg = new DAPOutputMessage
+            {
+                category = "console",
+                output = usageText
+            };
+            DAP.SendEvent("output", outputMsg);
+        }
+
         public void Evaluate(DAPRequest request, string expression, CoalescedFrame frame, bool allowMutation)
         {
             var stmt = Parse(expression);
             if (stmt == null)
             {
-                DAP.SendReply(request, "Syntax error.");
+                DAP.SendReply(request, "Syntax error. Type \"help\" for usage.");
                 return;
             }
 
