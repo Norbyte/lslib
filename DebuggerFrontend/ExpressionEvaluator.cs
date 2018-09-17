@@ -317,6 +317,12 @@ Notes:
         {
             var eval = PendingEvaluations[seq];
 
+            if (msg.ResultCode != StatusCode.Success)
+            {
+                DAP.SendReply(eval.Request, $"Evaluation failed: DBG server sent error code: {msg.ResultCode}");
+                return;
+            }
+
             var funcType = (LSLib.LS.Story.FunctionType)eval.Function.TypeId;
             if (eval.Node.Type == Node.Type.UserQuery)
             {
