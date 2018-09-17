@@ -10,7 +10,7 @@ namespace LSLib.LS.Story
         // Original Sin 2 (v1.11) Type ID-s
         public enum Type : uint
         {
-            Unknown = 0,
+            None = 0,
             Integer = 1,
             Integer64 = 2,
             Float = 3,
@@ -21,7 +21,7 @@ namespace LSLib.LS.Story
         // Original Sin 1 (v1.0 - v1.7) Type ID-s
         public enum Type_OS1 : uint
         {
-            Unknown = 0,
+            None = 0,
             Integer = 1,
             Float = 2,
             String = 3
@@ -37,7 +37,7 @@ namespace LSLib.LS.Story
         {
             switch ((Type)TypeId)
             {
-                case Type.Unknown: return "";
+                case Type.None: return "";
                 case Type.Integer: return IntValue.ToString();
                 case Type.Integer64: return Int64Value.ToString();
                 case Type.Float: return FloatValue.ToString();
@@ -52,8 +52,8 @@ namespace LSLib.LS.Story
             // Convert D:OS 1 type ID to D:OS 2 type ID
             switch ((Type_OS1)os1TypeId)
             {
-                case Type_OS1.Unknown:
-                    return (uint)Type.Unknown;
+                case Type_OS1.None:
+                    return (uint)Type.None;
 
                 case Type_OS1.Integer:
                     return (uint)Type.Integer;
@@ -74,8 +74,8 @@ namespace LSLib.LS.Story
             // Convert D:OS 2 type ID to D:OS 1 type ID
             switch ((Type)os2TypeId)
             {
-                case Type.Unknown:
-                    return (uint)Type_OS1.Unknown;
+                case Type.None:
+                    return (uint)Type_OS1.None;
 
                 case Type.Integer:
                 case Type.Integer64:
@@ -126,7 +126,7 @@ namespace LSLib.LS.Story
 
                 switch ((Type)writtenTypeId)
                 {
-                    case Type.Unknown:
+                    case Type.None:
                         break;
 
                     case Type.Integer:
@@ -189,7 +189,7 @@ namespace LSLib.LS.Story
 
             switch ((Type)writtenTypeId)
             {
-                case Type.Unknown:
+                case Type.None:
                     break;
 
                 case Type.Integer:
@@ -234,7 +234,7 @@ namespace LSLib.LS.Story
         {
             switch ((Type)TypeId)
             {
-                case Type.Unknown:
+                case Type.None:
                     writer.Write("<unknown>");
                     break;
 
@@ -265,7 +265,7 @@ namespace LSLib.LS.Story
         {
             switch ((Type)TypeId)
             {
-                case Type.Unknown:
+                case Type.None:
                     throw new InvalidDataException("Script cannot contain unknown values");
 
                 case Type.Integer:

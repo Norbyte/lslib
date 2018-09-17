@@ -92,7 +92,7 @@ namespace LSLib.LS.Story
                 else
                 {
                     var nullValue = new Variable();
-                    nullValue.TypeId = (uint)Value.Type.Unknown;
+                    nullValue.TypeId = (uint)Value.Type.None;
                     nullValue.Unused = true;
                     result.Physical.Add(nullValue);
                 }

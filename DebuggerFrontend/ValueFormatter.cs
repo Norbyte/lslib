@@ -33,7 +33,7 @@ namespace LSTools.DebuggerFrontend
                 string valueStr;
                 switch ((Value.Type)value.TypeId)
                 {
-                    case Value.Type.Unknown:
+                    case Value.Type.None:
                         valueStr = "(None)";
                         break;
 
@@ -76,7 +76,7 @@ namespace LSTools.DebuggerFrontend
             string valueStr;
             switch ((Value.Type)value.TypeId)
             {
-                case Value.Type.Unknown:
+                case Value.Type.None:
                     valueStr = "(None)";
                     break;
 

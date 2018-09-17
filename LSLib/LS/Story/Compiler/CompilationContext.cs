@@ -482,9 +482,9 @@ namespace LSLib.LS.Story.Compiler
         {
             var tUnknown = new ValueType
             {
-                Name = "UNKNOWN",
+                Name = "NONE",
                 TypeId = 0,
-                IntrinsicTypeId = Value.Type.Unknown
+                IntrinsicTypeId = Value.Type.None
             };
             AddType(tUnknown);
 

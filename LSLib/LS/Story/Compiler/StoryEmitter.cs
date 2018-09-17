@@ -936,7 +936,7 @@ namespace LSLib.LS.Story.Compiler
             {
                 osiRelOp.LeftValue = new Value
                 {
-                    TypeId = (uint)Value.Type.Unknown
+                    TypeId = (uint)Value.Type.None
                 };
                 osiRelOp.LeftValueIndex = (sbyte)(condition.LValue as IRVariable).Index;
             }
@@ -950,7 +950,7 @@ namespace LSLib.LS.Story.Compiler
             {
                 osiRelOp.RightValue = new Value
                 {
-                    TypeId = (uint)Value.Type.Unknown
+                    TypeId = (uint)Value.Type.None
                 };
                 osiRelOp.RightValueIndex = (sbyte)(condition.RValue as IRVariable).Index;
             }
