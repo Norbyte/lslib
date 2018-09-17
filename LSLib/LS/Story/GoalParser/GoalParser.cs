@@ -3,6 +3,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
+using QUT.Gppg;
 
 namespace LSLib.LS.Story.GoalParser
 {
@@ -81,6 +82,8 @@ namespace LSLib.LS.Story.GoalParser
     public abstract class GoalScanBase : AbstractScanner<ASTNode, CodeLocation>
     {
         protected String fileName;
+
+        public override CodeLocation yylloc { get; set; }
 
         protected virtual bool yywrap() { return true; }
 

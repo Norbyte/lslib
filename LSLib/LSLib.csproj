@@ -202,7 +202,6 @@
     <Compile Include="LS\Story\Rel.cs" />
     <Compile Include="LS\Story\RelOp.cs" />
     <Compile Include="LS\Story\Rule.cs" />
-    <Compile Include="LS\Story\ShiftReduceParserCode.cs" />
     <Compile Include="LS\Story\Story.cs" />
     <Compile Include="LS\Story\Value.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
