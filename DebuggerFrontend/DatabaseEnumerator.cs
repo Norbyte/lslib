@@ -52,7 +52,8 @@ namespace LSTools.DebuggerFrontend
 
             if (requests.Count == 0)
             {
-                DatabaseContents[databaseId] = ResultManager.MakeResults();
+                var databaseDebugInfo = DebugInfo.Databases[databaseId];
+                DatabaseContents[databaseId] = ResultManager.MakeResults(databaseDebugInfo.ParamTypes.Count);
             }
 
             requests.Add(request);

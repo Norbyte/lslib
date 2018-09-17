@@ -11,7 +11,9 @@ namespace LSTools.DebuggerFrontend
         private ValueFormatter Formatter;
         private Int64 VariableIndexPrefix;
         private Int64 VariableReference;
+        private Int32 NumColumns;
         private List<MsgTuple> Tuples;
+        public List<String> ColumnNames;
 
         public int Count
         {
@@ -23,11 +25,13 @@ namespace LSTools.DebuggerFrontend
             get { return VariableReference; }
         }
 
-        public EvaluationResults(ValueFormatter formatter, Int64 variableReference, Int64 variableIndexPrefix)
+        public EvaluationResults(ValueFormatter formatter, Int64 variableReference, 
+            Int64 variableIndexPrefix, Int32 numColumns)
         {
             Formatter = formatter;
             VariableReference = variableReference;
             VariableIndexPrefix = variableIndexPrefix;
+            NumColumns = numColumns;
             Tuples = new List<MsgTuple>();
         }
 
@@ -54,7 +58,8 @@ namespace LSTools.DebuggerFrontend
 #pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
                     variablesReference = VariableIndexPrefix | i,
 #pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
-                    // TODO - indexedVariables = database.ParamTypes.Count
+                    indexedVariables = ColumnNames == null ? NumColumns : 0,
+                    namedVariables = ColumnNames == null ? 0 : NumColumns
                 };
                 variables.Add(dapVar);
             }
@@ -70,8 +75,8 @@ namespace LSTools.DebuggerFrontend
             }
 
             int startIndex = msg.start == null ? 0 : (int)msg.start;
-            int numVars = (msg.count == null || msg.count == 0) ? Tuples.Count : (int)msg.count;
-            int lastIndex = Math.Min(startIndex + numVars, Tuples.Count);
+            int numVars = (msg.count == null || msg.count == 0) ? NumColumns : (int)msg.count;
+            int lastIndex = Math.Min(startIndex + numVars, NumColumns);
             // TODO req.filter, format
 
             var row = Tuples[rowIndex];
@@ -80,7 +85,7 @@ namespace LSTools.DebuggerFrontend
             {
                 var dapVar = new DAPVariable
                 {
-                    name = i.ToString(),
+                    name = ColumnNames == null ? i.ToString() : ColumnNames[i],
                     value = Formatter.ValueToString(row.Column[i])
                 };
                 variables.Add(dapVar);
@@ -101,11 +106,17 @@ namespace LSTools.DebuggerFrontend
             Results = new List<EvaluationResults>();
         }
 
-        public EvaluationResults MakeResults()
+        public EvaluationResults MakeResults(int numColumns)
+        {
+            return MakeResults(numColumns, null);
+        }
+
+        public EvaluationResults MakeResults(int numColumns, List<String> columnNames)
         {
             var variableRef = ((UInt64)1 << 48) | ((UInt64)Results.Count << 24);
             var variableIndexPrefix = ((UInt64)2 << 48) | ((UInt64)Results.Count << 24);
-            var result = new EvaluationResults(Formatter, (Int64)variableRef, (Int64)variableIndexPrefix);
+            var result = new EvaluationResults(Formatter, (Int64)variableRef, (Int64)variableIndexPrefix, numColumns);
+            result.ColumnNames = columnNames;
             Results.Add(result);
             return result;
         }

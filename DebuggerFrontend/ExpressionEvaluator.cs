@@ -211,10 +211,11 @@ namespace LSTools.DebuggerFrontend
             
             UInt32 seq = DbgClient.SendEvaluate(evalType, node.Id, args);
 
+            var argNames = function.Params.Select(arg => arg.Name).ToList();
             var eval = new PendingExpressionEvaluation
             {
                 Request = request,
-                Results = EvalResults.MakeResults(),
+                Results = EvalResults.MakeResults(function.Params.Count, argNames),
                 Node = node,
                 Function = function
             };
