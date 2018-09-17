@@ -107,6 +107,8 @@ namespace LSLib.LS.Story.Compiler
         public String Name;
         // Type of node
         public List<FunctionParamDebugInfo> Params;
+        // Function type ID
+        public UInt32 TypeId;
     }
 
     public class StoryDebugInfo
@@ -114,7 +116,7 @@ namespace LSLib.LS.Story.Compiler
         /// <summary>
         /// Story debug info format version. Increment each time the format changes.
         /// </summary>
-        public const UInt32 CurrentVersion = 1;
+        public const UInt32 CurrentVersion = 2;
 
         public UInt32 Version;
         public Dictionary<UInt32, DatabaseDebugInfo> Databases = new Dictionary<UInt32, DatabaseDebugInfo>();

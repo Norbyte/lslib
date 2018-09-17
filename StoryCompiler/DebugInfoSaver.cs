@@ -132,7 +132,8 @@ namespace LSTools.StoryCompiler
         {
             var msg = new FunctionDebugInfoMsg
             {
-                Name = debugInfo.Name
+                Name = debugInfo.Name,
+                TypeId = debugInfo.TypeId
             };
 
             foreach (var param in debugInfo.Params)

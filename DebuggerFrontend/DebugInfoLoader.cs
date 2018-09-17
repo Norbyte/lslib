@@ -140,7 +140,8 @@ namespace LSTools.DebuggerFrontend
             var debugInfo = new FunctionDebugInfo
             {
                 Name = msg.Name,
-                Params = new List<FunctionParamDebugInfo>()
+                Params = new List<FunctionParamDebugInfo>(),
+                TypeId = msg.TypeId
             };
 
             foreach (var param in msg.Params)

@@ -76,6 +76,7 @@ message FunctionParamDebugInfoMsg {
 message FunctionDebugInfoMsg {
   string name = 1;
   repeated FunctionParamDebugInfoMsg params = 2;
+  uint32 type_id = 3;
 }
 
 message StoryDebugInfoMsg {

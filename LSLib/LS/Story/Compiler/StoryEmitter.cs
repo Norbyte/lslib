@@ -241,7 +241,8 @@ namespace LSLib.LS.Story.Compiler
                 var funcDebug = new FunctionDebugInfo
                 {
                     Name = osiFunc.Name.Name,
-                    Params = new List<FunctionParamDebugInfo>()
+                    Params = new List<FunctionParamDebugInfo>(),
+                    TypeId = (UInt32)osiFunc.Type
                 };
 
                 foreach (var param in signature.Params)
