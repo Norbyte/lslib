@@ -2,7 +2,6 @@
 using OpenTK;
 using System;
 using System.Collections.Generic;
-using LSLib.Granny.Model.VertexFormats;
 
 namespace LSLib.Granny.Model
 {
@@ -34,37 +33,227 @@ namespace LSLib.Granny.Model
         }
     }
 
-    /// <summary>
-    /// Describes the type we use for serializing this vertex format
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
-    public class VertexPrototypeAttribute : System.Attribute
+    public enum NormalType
     {
-        /// <summary>
-        /// The Granny prototype we should save when serializing this vertex format
-        /// (Used to provide a type definition skeleton for the serializer)
-        /// </summary>
-        public Type Prototype;
-    }
+        None,
+        Float3,
+        Half4,
+        Short4
+    };
+
+    public enum DiffuseColorType
+    {
+        None,
+        Float4,
+        Byte4
+    };
+
+    public enum TextureCoordinateType
+    {
+        None,
+        Float2,
+        Half2
+    };
 
     /// <summary>
-    /// Describes the properties (Position, Normal, Tangent, ...) this vertex format has
+    /// Describes the properties (Position, Normal, Tangent, ...) of the vertex format
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
-    public class VertexDescriptionAttribute : System.Attribute
+    public class VertexDescriptor
     {
-        public bool Position = true;
-        public bool BoneWeights = false;
-        public bool BoneIndices = false;
-        public bool Normal = false;
-        public bool Tangent = false;
-        public bool Binormal = false;
+        public bool HasPosition = true;
+        public bool HasBoneWeights = false;
+        public int NumBoneInfluences = 4;
+        public NormalType NormalType = NormalType.None;
+        public NormalType TangentType = NormalType.None;
+        public NormalType BinormalType = NormalType.None;
+        public DiffuseColorType DiffuseType = DiffuseColorType.None;
         public int DiffuseColors = 0;
+        public TextureCoordinateType TextureCoordinateType = TextureCoordinateType.None;
         public int TextureCoordinates = 0;
+        private Type VertexType;
+
+        public List<String> ComponentNames()
+        {
+            var names = new List<String>();
+            if (HasPosition)
+            {
+                names.Add("Position");
+            }
+
+            if (HasBoneWeights)
+            {
+                names.Add("BoneWeights");
+                names.Add("BoneIndices");
+            }
+
+            if (NormalType != NormalType.None)
+            {
+                names.Add("Normal");
+            }
+
+            if (TangentType != NormalType.None)
+            {
+                names.Add("Tangent");
+            }
+
+            if (BinormalType != NormalType.None)
+            {
+                names.Add("Binormal");
+            }
+
+            if (DiffuseType != DiffuseColorType.None)
+            {
+                for (int i = 0; i < DiffuseColors; i++)
+                {
+                    names.Add("DiffuseColor_" + i.ToString());
+                }
+            }
+
+            if (TextureCoordinateType != TextureCoordinateType.None)
+            {
+                for (int i = 0; i < TextureCoordinates; i++)
+                {
+                    names.Add("TextureCoordinate_" + i.ToString());
+                }
+            }
+
+            return names;
+        }
+
+        public String Name()
+        {
+            string vertexFormat;
+            vertexFormat = "P";
+            string attributeCounts = "3";
+
+            if (HasBoneWeights)
+            {
+                vertexFormat += "W";
+                attributeCounts += NumBoneInfluences.ToString();
+            }
+            
+            switch (NormalType)
+            {
+                case NormalType.None:
+                    break;
+
+                case NormalType.Float3:
+                    vertexFormat += "N";
+                    attributeCounts += "3";
+                    break;
+
+                case NormalType.Half4:
+                    vertexFormat += "HN";
+                    attributeCounts += "4";
+                    break;
+
+                case NormalType.Short4:
+                    vertexFormat += "QN";
+                    attributeCounts += "4";
+                    break;
+            }
+
+            switch (TangentType)
+            {
+                case NormalType.None:
+                    break;
+
+                case NormalType.Float3:
+                    vertexFormat += "G";
+                    attributeCounts += "3";
+                    break;
+
+                case NormalType.Half4:
+                    vertexFormat += "HG";
+                    attributeCounts += "4";
+                    break;
+
+                case NormalType.Short4:
+                    vertexFormat += "QG";
+                    attributeCounts += "4";
+                    break;
+            }
+
+            switch (BinormalType)
+            {
+                case NormalType.None:
+                    break;
+
+                case NormalType.Float3:
+                    vertexFormat += "B";
+                    attributeCounts += "3";
+                    break;
+
+                case NormalType.Half4:
+                    vertexFormat += "HB";
+                    attributeCounts += "4";
+                    break;
+
+                case NormalType.Short4:
+                    vertexFormat += "QB";
+                    attributeCounts += "4";
+                    break;
+            }
+
+            for (var i = 0; i < DiffuseColors; i++)
+            {
+                switch (DiffuseType)
+                {
+                    case DiffuseColorType.None:
+                        break;
+
+                    case DiffuseColorType.Float4:
+                        vertexFormat += "D";
+                        attributeCounts += "4";
+                        break;
+
+                    case DiffuseColorType.Byte4:
+                        vertexFormat += "CD";
+                        attributeCounts += "4";
+                        break;
+                }
+            }
+
+            for (var i = 0; i < TextureCoordinates; i++)
+            {
+                switch (TextureCoordinateType)
+                {
+                    case TextureCoordinateType.None:
+                        break;
+
+                    case TextureCoordinateType.Float2:
+                        vertexFormat += "T";
+                        attributeCounts += "2";
+                        break;
+
+                    case TextureCoordinateType.Half2:
+                        vertexFormat += "HT";
+                        attributeCounts += "2";
+                        break;
+                }
+            }
+
+            return vertexFormat + attributeCounts;
+        }
+
+        public Vertex CreateInstance()
+        {
+            if (VertexType == null)
+            {
+                var typeName = "Vertex_" + Name();
+                VertexType = VertexTypeBuilder.CreateVertexSubtype(typeName);
+            }
+
+            var vert = Activator.CreateInstance(VertexType) as Vertex;
+            vert.Format = this;
+            return vert;
+        }
     }
 
-    public abstract class Vertex
+    [StructSerialization(TypeSelector = typeof(VertexDefinitionSelector))]
+    public class Vertex
     {
+        public VertexDescriptor Format;
         public Vector3 Position;
         public BoneWeight BoneWeights;
         public BoneWeight BoneIndices;
@@ -74,6 +263,8 @@ namespace LSLib.Granny.Model
         public Vector4 DiffuseColor0;
         public Vector2 TextureCoordinates0;
         public Vector2 TextureCoordinates1;
+
+        protected Vertex() { }
 
         public Vector2 GetUV(int index)
         {
@@ -109,154 +300,6 @@ namespace LSLib.Granny.Model
                 DiffuseColor0 = color;
             else
                 throw new ArgumentException("At most 1 diffuse color set is supported.");
-        }
-
-        protected Vector2 ReadVector2(GR2Reader reader)
-        {
-            Vector2 v;
-            v.X = reader.Reader.ReadSingle();
-            v.Y = reader.Reader.ReadSingle();
-            return v;
-        }
-
-        protected Vector2 ReadHalfVector2(GR2Reader reader)
-        {
-            Vector2 v;
-            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            return v;
-        }
-
-        protected Vector3 ReadVector3(GR2Reader reader)
-        {
-            Vector3 v;
-            v.X = reader.Reader.ReadSingle();
-            v.Y = reader.Reader.ReadSingle();
-            v.Z = reader.Reader.ReadSingle();
-            return v;
-        }
-
-        protected Vector3 ReadHalfVector3(GR2Reader reader)
-        {
-            Vector3 v;
-            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Z = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            return v;
-        }
-
-        protected Vector3 ReadHalfVector4As3(GR2Reader reader)
-        {
-            Vector3 v;
-            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Z = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            reader.Reader.ReadUInt16();
-            return v;
-        }
-
-        protected Vector4 ReadVector4(GR2Reader reader)
-        {
-            Vector4 v;
-            v.X = reader.Reader.ReadSingle();
-            v.Y = reader.Reader.ReadSingle();
-            v.Z = reader.Reader.ReadSingle();
-            v.W = reader.Reader.ReadSingle();
-            return v;
-        }
-
-        protected Vector4 ReadHalfVector4(GR2Reader reader)
-        {
-            Vector4 v;
-            v.X = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Y = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.Z = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            v.W = HalfHelpers.HalfToSingle(reader.Reader.ReadUInt16());
-            return v;
-        }
-
-        protected BoneWeight ReadInfluences2(GR2Reader reader)
-        {
-            BoneWeight v;
-            v.A = reader.Reader.ReadByte();
-            v.B = reader.Reader.ReadByte();
-            v.C = 0;
-            v.D = 0;
-            return v;
-        }
-
-        protected BoneWeight ReadInfluences(GR2Reader reader)
-        {
-            BoneWeight v;
-            v.A = reader.Reader.ReadByte();
-            v.B = reader.Reader.ReadByte();
-            v.C = reader.Reader.ReadByte();
-            v.D = reader.Reader.ReadByte();
-            return v;
-        }
-
-        protected void WriteVector2(WritableSection section, Vector2 v)
-        {
-            section.Writer.Write(v.X);
-            section.Writer.Write(v.Y);
-        }
-
-        protected void WriteHalfVector2(WritableSection section, Vector2 v)
-        {
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
-        }
-
-        protected void WriteVector3(WritableSection section, Vector3 v)
-        {
-            section.Writer.Write(v.X);
-            section.Writer.Write(v.Y);
-            section.Writer.Write(v.Z);
-        }
-
-        protected void WriteHalfVector3(WritableSection section, Vector3 v)
-        {
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Z));
-        }
-
-        protected void WriteHalfVector3As4(WritableSection section, Vector3 v)
-        {
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Z));
-            section.Writer.Write((ushort)0);
-        }
-
-        protected void WriteVector4(WritableSection section, Vector4 v)
-        {
-            section.Writer.Write(v.X);
-            section.Writer.Write(v.Y);
-            section.Writer.Write(v.Z);
-            section.Writer.Write(v.W);
-        }
-
-        protected void WriteHalfVector4(WritableSection section, Vector4 v)
-        {
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.X));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Y));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.Z));
-            section.Writer.Write(HalfHelpers.SingleToHalf(v.W));
-        }
-
-        protected void WriteInfluences2(WritableSection section, BoneWeight v)
-        {
-            section.Writer.Write(v.A);
-            section.Writer.Write(v.B);
-        }
-
-        protected void WriteInfluences(WritableSection section, BoneWeight v)
-        {
-            section.Writer.Write(v.A);
-            section.Writer.Write(v.B);
-            section.Writer.Write(v.C);
-            section.Writer.Write(v.D);
         }
 
         public Vertex Clone()
@@ -298,207 +341,186 @@ namespace LSLib.Granny.Model
             Binormal = Vector3.TransformNormal(Binormal, transformation);
         }
 
-        public static Type Prototype(Type type)
+        public void Serialize(WritableSection section)
         {
-            var attrs = type.GetCustomAttributes(typeof(VertexPrototypeAttribute), true);
-            if (attrs.Length > 0)
-            {
-                VertexPrototypeAttribute proto = attrs[0] as VertexPrototypeAttribute;
-                return proto.Prototype;
-            }
-
-            throw new ArgumentException("Class doesn't have a vertex prototype");
+            VertexSerializationHelpers.Serialize(section, this);
         }
 
-        public static VertexDescriptionAttribute Description(Type type)
+        public void Unserialize(GR2Reader reader)
         {
-            var attrs = type.GetCustomAttributes(typeof(VertexDescriptionAttribute), true);
-            if (attrs.Length > 0)
-            {
-                return attrs[0] as VertexDescriptionAttribute;
-            }
-
-            throw new ArgumentException("Class doesn't have a vertex format descriptor");
-        }
-
-        public Type Prototype()
-        {
-            return Prototype(GetType());
-        }
-
-
-        public abstract List<String> ComponentNames();
-        public abstract void Serialize(WritableSection section);
-        public abstract void Unserialize(GR2Reader reader);
-    }
-
-    public class VertexFormatRegistry
-    {
-        private static Dictionary<String, Type> NameToTypeMap;
-        private static Dictionary<Type, Type> PrototypeMap;
-
-        private static void Register(Type type)
-        {
-            NameToTypeMap.Add(type.Name, type);
-            PrototypeMap.Add(Vertex.Prototype(type), type);
-        }
-
-        private static void Init()
-        {
-            if (NameToTypeMap != null)
-            {
-                return;
-            }
-
-            NameToTypeMap = new Dictionary<String, Type>();
-            PrototypeMap = new Dictionary<Type, Type>();
-
-            Register(typeof(P3));
-            Register(typeof(PN33));
-            Register(typeof(PNG333));
-            Register(typeof(PNGB3333));
-            Register(typeof(PNGBDT333342));
-            Register(typeof(PNGBT33332));
-            Register(typeof(PNGBTT333322));
-            Register(typeof(PNGT3332));
-            Register(typeof(PNT332));
-            Register(typeof(PNTT3322));
-            Register(typeof(PNTG3323));
-            Register(typeof(PT32));
-            Register(typeof(PTT322));
-            Register(typeof(PWN323));
-            Register(typeof(PWN343));
-            Register(typeof(PWNG3233));
-            Register(typeof(PWNG3433));
-            Register(typeof(PWNGB32333));
-            Register(typeof(PWNGB34333));
-            Register(typeof(PWNGBT323332));
-            Register(typeof(PWNGBT343332));
-            Register(typeof(PWNGBDT3433342));
-            Register(typeof(PWNGBTT3433322));
-            Register(typeof(PWNGT32332));
-            Register(typeof(PWNGT34332));
-            Register(typeof(PWNT3232));
-            Register(typeof(PWNT3432));
-            Register(typeof(PWHGT3442));
-            Register(typeof(PHNGBT34444));
-        }
-
-        public static Type Resolve(String name)
-        {
-            Init();
-
-            Type type = null;
-            if (!NameToTypeMap.TryGetValue(name, out type))
-                throw new ParsingException("Unsupported vertex format: " + name);
-
-            return type;
-        }
-
-        public static Type FindByStruct(StructDefinition defn)
-        {
-            Init();
-
-            foreach (var proto in PrototypeMap)
-            {
-                if (CompareType(defn, proto.Key))
-                {
-                    return proto.Value;
-                }
-            }
-
-            ThrowUnknownVertexFormatError(defn);
-            return null;
-        }
-
-        private static void ThrowUnknownVertexFormatError(StructDefinition defn)
-        {
-            string formatDesc = "";
-            foreach (var field in defn.Members)
-            {
-                string format = field.Name + ": " + field.Type.ToString() + "[" + field.ArraySize.ToString() + "]";
-                formatDesc += format + Environment.NewLine;
-            }
-
-            throw new Exception("The specified vertex format was not recognized. Format descriptor: " + Environment.NewLine + formatDesc);
-        }
-
-        public static Dictionary<String, Type> GetAllTypes()
-        {
-            Init();
-
-            return NameToTypeMap;
-        }
-
-        private static bool CompareType(StructDefinition defn, Type type)
-        {
-            var fields = type.GetFields();
-            if (defn.Members.Count != fields.Length)
-                return false;
-
-            for (var i = 0; i < fields.Length; i++)
-            {
-                if (fields[i].Name != defn.Members[i].Name)
-                    return false;
-
-                if (fields[i].FieldType.IsArray)
-                {
-                    var attrs = fields[i].GetCustomAttributes(typeof(SerializationAttribute), true);
-                    if (attrs.Length == 0)
-                        throw new InvalidOperationException("Array fields must have a valid SerializationAttribute");
-
-                    var attr = attrs[0] as SerializationAttribute;
-                    if (attr.ArraySize != defn.Members[i].ArraySize)
-                        return false;
-                }
-            }
-
-            return true;
+            VertexSerializationHelpers.Unserialize(reader, this);
         }
     }
+    
 
-
-    public class VertexSerializer : VariantTypeSelector, NodeSerializer, SectionSelector
+    public class VertexSerializer : NodeSerializer, SectionSelector
     {
-        private Dictionary<object, Type> VertexTypeCache = new Dictionary<object,Type>();
+        private Dictionary<object, VertexDescriptor> VertexTypeCache = new Dictionary<object, VertexDescriptor>();
 
         public SectionType SelectSection(MemberDefinition member, Type type, object obj)
         {
-            var vertices = obj as System.Collections.IList;
+            var vertices = obj as List<Vertex>;
             if (vertices == null || vertices.Count == 0)
                 return SectionType.RigidVertex;
 
-            if (Vertex.Description(vertices[0].GetType()).BoneWeights)
+            if (vertices[0].Format.HasBoneWeights)
                 return SectionType.DeformableVertex;
             else
                 return SectionType.RigidVertex;
         }
 
-        public Type SelectType(MemberDefinition member, object node)
+        public VertexDescriptor ConstructDescriptor(MemberDefinition memberDefn, StructDefinition defn, object parent)
         {
-            var list = node as System.Collections.IList;
-            if (list == null || list.Count == 0)
-                return null;
+            var desc = new VertexDescriptor();
+            
+            foreach (var member in defn.Members)
+            {
+                switch (member.Name)
+                {
+                    case "Position":
+                        if (member.Type != MemberType.Real32
+                            || member.ArraySize != 3)
+                        {
+                            throw new Exception("Vertex position must be a Vector3");
+                        }
+                        desc.HasPosition = true;
+                        break;
 
-            return (list[0] as Vertex).Prototype();
-        }
+                    case "BoneWeights":
+                        if (member.Type != MemberType.NormalUInt8)
+                        {
+                            throw new Exception("Bone weight must be a NormalUInt8");
+                        }
 
-        public Type SelectType(MemberDefinition member, StructDefinition defn, object parent)
-        {
-            return VertexFormatRegistry.FindByStruct(defn);
+                        if (member.ArraySize != 2 && member.ArraySize != 4)
+                        {
+                            throw new Exception("Unsupported bone influence count");
+                        }
+
+                        desc.HasBoneWeights = true;
+                        desc.NumBoneInfluences = (int)member.ArraySize;
+                        break;
+
+                    case "BoneIndices":
+                        if (member.Type != MemberType.UInt8)
+                        {
+                            throw new Exception("Bone index must be an UInt8");
+                        }
+                        break;
+
+                    case "Normal":
+                        if (member.Type == MemberType.Real32 && member.ArraySize == 3)
+                        {
+                            desc.NormalType = NormalType.Float3;
+                        }
+                        else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Half4;
+                        }
+                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Short4;
+                        }
+                        else
+                        {
+                            throw new Exception("Unsupported vertex normal format");
+                        }
+                        break;
+
+                    case "QTangent": // TODO - different format?
+                    case "Tangent":
+                        if (member.Type == MemberType.Real32 && member.ArraySize == 3)
+                        {
+                            desc.TangentType = NormalType.Float3;
+                        }
+                        else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Half4;
+                        }
+                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Short4;
+                        }
+                        else
+                        {
+                            throw new Exception("Unsupported vertex tangent format");
+                        }
+                        break;
+
+                    case "Binormal":
+                        if (member.Type == MemberType.Real32 && member.ArraySize == 3)
+                        {
+                            desc.BinormalType = NormalType.Float3;
+                        }
+                        else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Half4;
+                        }
+                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Short4;
+                        }
+                        else
+                        {
+                            throw new Exception("Unsupported vertex binormal format");
+                        }
+                        break;
+
+                    case "DiffuseColor0":
+                        desc.DiffuseColors = 1;
+                        if (member.Type == MemberType.Real32 && member.ArraySize == 4)
+                        {
+                            desc.DiffuseType = DiffuseColorType.Float4;
+                        }
+                        else if (member.Type == MemberType.NormalUInt8 && member.ArraySize == 4)
+                        {
+                            desc.DiffuseType = DiffuseColorType.Byte4;
+                        }
+                        else
+                        {
+                            throw new Exception("Unsupported vertex diffuse color type");
+                        }
+                        break;
+
+                    case "TextureCoordinates0":
+                        desc.TextureCoordinates = 1;
+                        if (member.Type == MemberType.Real32 && member.ArraySize == 2)
+                        {
+                            desc.TextureCoordinateType = TextureCoordinateType.Float2;
+                        }
+                        else if (member.Type == MemberType.Real16 && member.ArraySize == 2)
+                        {
+                            desc.TextureCoordinateType = TextureCoordinateType.Half2;
+                        }
+                        else
+                        {
+                            throw new Exception("Unsupported vertex binormal format");
+                        }
+                        break;
+
+                    case "TextureCoordinates1":
+                        desc.TextureCoordinates = 2;
+                        break;
+
+                    default:
+                        throw new Exception($"Unknown vertex property: {member.Name}");
+                }
+            }
+
+            return desc;
         }
 
         public object Read(GR2Reader reader, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)
         {
-            Type type;
-            if (!VertexTypeCache.TryGetValue(parent, out type))
+            VertexDescriptor descriptor;
+            if (!VertexTypeCache.TryGetValue(parent, out descriptor))
             {
-                type = SelectType(member, definition, parent);
-                VertexTypeCache.Add(parent, type);
+                descriptor = ConstructDescriptor(member, definition, parent);
+                VertexTypeCache.Add(parent, descriptor);
             }
 
-            var vertex = Helpers.CreateInstance(type);
-            (vertex as Vertex).Unserialize(reader);
+            var vertex = descriptor.CreateInstance();
+            vertex.Unserialize(reader);
             return vertex;
         }
 

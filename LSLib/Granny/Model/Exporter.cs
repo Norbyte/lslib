@@ -74,7 +74,7 @@ namespace LSLib.Granny.Model
         public bool ConformAnimations = true;
         public bool ConformMeshBoneBindings = true;
         public bool ConformModels = true;
-        public Dictionary<string, string> VertexFormats = new Dictionary<string,string>();
+        public Dictionary<string, VertexDescriptor> VertexFormats = new Dictionary<string, VertexDescriptor>();
         // Update the UserDefinedProperties property of meshes/bones (D:OS 2-specific)
         public bool WriteUserDefinedProperties = true;
         public DivinityModelType ModelType = DivinityModelType.Undefined;
@@ -456,7 +456,7 @@ namespace LSLib.Granny.Model
             vertexData.VertexComponentNames = meshBinding.Mesh.PrimaryVertexData.VertexComponentNames
                 .Select(name => new GrannyString(name.String)).ToList();
             vertexData.Vertices = new List<Vertex>();
-            var dummyVertex = Helpers.CreateInstance(meshBinding.Mesh.VertexFormat) as Vertex;
+            var dummyVertex = meshBinding.Mesh.VertexFormat.CreateInstance();
             vertexData.Vertices.Add(dummyVertex);
             Root.VertexDatas.Add(vertexData);
 

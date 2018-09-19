@@ -940,7 +940,7 @@ namespace LSLib.Granny.GR2
                     Serializer = Activator.CreateInstance(serialization.Serializer) as NodeSerializer;
 
                 if (writer != null && serialization.Prototype != null)
-                    WriteDefinition = writer.LookupStructDefinition(serialization.Prototype);
+                    WriteDefinition = writer.LookupStructDefinition(serialization.Prototype, serialization.Prototype);
 
                 if (serialization.Name != null)
                     GrannyName = serialization.Name;
@@ -1028,11 +1028,11 @@ namespace LSLib.Granny.GR2
             {
                 if (member.Type == MemberType.Inline || member.Type == MemberType.Reference)
                 {
-                    member.WriteDefinition = writer.LookupStructDefinition(type);
+                    member.WriteDefinition = writer.LookupStructDefinition(type, null);
                 }
                 else if (member.Type == MemberType.ReferenceToArray || member.Type == MemberType.ArrayOfReferences)
                 {
-                    member.WriteDefinition = writer.LookupStructDefinition(type.GetGenericArguments().Single());
+                    member.WriteDefinition = writer.LookupStructDefinition(type.GetGenericArguments().Single(), null);
                 }
             }
 
@@ -1166,6 +1166,11 @@ namespace LSLib.Granny.GR2
         SectionType SelectSection(MemberDefinition member, Type type, object obj);
     }
 
+    public interface StructDefinitionSelector
+    {
+        StructDefinition CreateStructDefinition(object instance);
+    }
+
     /// <summary>
     /// Tells the Granny serializer about the way we want it to write a field to the .GR2 file.
     /// </summary>
@@ -1233,5 +1238,10 @@ namespace LSLib.Granny.GR2
         /// Should we do mixed marshalling on this struct?
         /// </summary>
         public bool MixedMarshal = false;
+
+        /// <summary>
+        /// User-defined data structure selector class (must implement StructDefinitionSelector)
+        /// </summary>
+        public Type TypeSelector;
     }
 }

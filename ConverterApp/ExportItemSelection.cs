@@ -26,10 +26,7 @@ namespace ConverterApp
                 case "Mesh":
                 {
                     _currentItemCombo.Items.Add("Automatic");
-                    foreach (KeyValuePair<string, Type> defn in VertexFormatRegistry.GetAllTypes())
-                    {
-                        _currentItemCombo.Items.Add(defn.Key);
-                    }
+                    // TODO - add list of commonly used formats?
                     break;
                 }
                 case "Position Track":

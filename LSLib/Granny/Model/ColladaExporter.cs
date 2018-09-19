@@ -146,8 +146,8 @@ namespace LSLib.Granny.Model
 
         private void DetermineInputsFromVertex(Vertex vertex)
         {
-            var desc = Vertex.Description(vertex.GetType());
-            if (!desc.Position)
+            var desc = vertex.Format;
+            if (!desc.HasPosition)
             {
                 throw new NotImplementedException("Cannot import vertices without position");
             }
@@ -157,21 +157,21 @@ namespace LSLib.Granny.Model
             AddInput(positions, "POSITION", "VERTEX");
 
             // Normals
-            if (desc.Normal && Options.ExportNormals)
+            if (desc.NormalType != NormalType.None && Options.ExportNormals)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedMesh.Name);
                 AddInput(normals, "NORMAL");
             }
 
             // Tangents
-            if (desc.Tangent && Options.ExportTangents)
+            if (desc.TangentType != NormalType.None && Options.ExportTangents)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
                 AddInput(normals, "TANGENT");
             }
 
             // Binormals
-            if (desc.Binormal && Options.ExportTangents)
+            if (desc.BinormalType != NormalType.None && Options.ExportTangents)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
                 AddInput(normals, "BINORMAL");
@@ -198,7 +198,6 @@ namespace LSLib.Granny.Model
             }
 
             // BoneWeights and BoneIndices are handled in ExportSkin()
-            // TODO: DiffuseColor0 is not exported at the moment.
         }
 
         public mesh Export()

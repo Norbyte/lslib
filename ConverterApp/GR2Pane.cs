@@ -200,7 +200,9 @@ namespace ConverterApp
                 string value = setting.SubItems[2].Text;
                 if (type == "Mesh" && value != "Automatic")
                 {
-                    settings.VertexFormats.Add(name, value);
+                    // TODO - support for name -> format translation
+                    throw new NotImplementedException("Custom vertex formats not supported");
+                    // settings.VertexFormats.Add(name, value);
                 }
             }
         }

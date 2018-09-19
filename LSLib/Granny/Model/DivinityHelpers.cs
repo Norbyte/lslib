@@ -92,7 +92,7 @@ namespace LSLib.Granny.Model
             {
                 foreach (var mesh in root.Meshes)
                 {
-                    var isSkinned = Vertex.Description(mesh.VertexFormat).BoneWeights;
+                    var isSkinned = mesh.VertexFormat.HasBoneWeights;
                     if (!isSkinned)
                     {
                         return DivinityModelType.Rigid;

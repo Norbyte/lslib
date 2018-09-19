@@ -244,7 +244,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private Mesh ImportMesh(geometry geom, mesh mesh, string vertexFormat)
+        private Mesh ImportMesh(geometry geom, mesh mesh, VertexDescriptor vertexFormat)
         {
             var collada = new ColladaMesh();
             bool isSkinned = SkinnedMeshes.Contains(geom.id);
@@ -255,41 +255,7 @@ namespace LSLib.Granny.Model
             m.Name = "Unnamed";
 
             m.PrimaryVertexData = new VertexData();
-            var components = new List<GrannyString>();
-            components.Add(new GrannyString("Position"));
-
-            var vertexDesc = Vertex.Description(m.VertexFormat);
-            if (vertexDesc.BoneWeights)
-            {
-                components.Add(new GrannyString("BoneWeights"));
-                components.Add(new GrannyString("BoneIndices"));
-            }
-
-            if (vertexDesc.Normal)
-            {
-                components.Add(new GrannyString("Normal"));
-            }
-
-            if (vertexDesc.Tangent)
-            {
-                components.Add(new GrannyString("Tangent"));
-            }
-
-            if (vertexDesc.Binormal)
-            {
-                components.Add(new GrannyString("Binormal"));
-            }
-
-            for (int i = 0; i < vertexDesc.DiffuseColors; i++)
-            {
-                components.Add(new GrannyString("DiffuseColor" + i.ToString()));
-            }
-
-            for (int i = 0; i < vertexDesc.TextureCoordinates; i++)
-            {
-                components.Add(new GrannyString("TextureCoordinate" + i.ToString()));
-            }
-
+            var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
             m.PrimaryVertexData.VertexComponentNames = components;
             m.PrimaryVertexData.Vertices = collada.ConsolidatedVertices;
 
@@ -308,12 +274,15 @@ namespace LSLib.Granny.Model
             // m.BoneBindings; - TODO
 
             m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
-            Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", (vertexDesc.BoneWeights ? "skinned" : "rigid"), m.PrimaryTopology.Groups.Count, collada.TriangleCount));
+            Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
+                (m.VertexFormat.HasBoneWeights ? "skinned" : "rigid"), 
+                m.PrimaryTopology.Groups.Count, 
+                collada.TriangleCount));
 
             return m;
         }
 
-        private Mesh ImportMesh(Root root, string name, geometry geom, mesh mesh, string vertexFormat)
+        private Mesh ImportMesh(Root root, string name, geometry geom, mesh mesh, VertexDescriptor vertexFormat)
         {
             var m = ImportMesh(geom, mesh, vertexFormat);
             m.Name = name;
@@ -332,9 +301,10 @@ namespace LSLib.Granny.Model
             if (!ColladaGeometries.TryGetValue(skin.source1.Substring(1), out mesh))
                 throw new ParsingException("Skin references nonexistent mesh: " + skin.source1);
 
-            if (!Vertex.Description(mesh.VertexFormat).BoneWeights)
+            if (!mesh.VertexFormat.HasBoneWeights)
             {
-                var msg = String.Format("Tried to apply skin to mesh ({0}) with non-skinned vertices ({1})", mesh.Name, mesh.VertexFormat.Name);
+                var msg = String.Format("Tried to apply skin to mesh ({0}) with non-skinned vertices", 
+                    mesh.Name);
                 throw new ParsingException(msg);
             }
 
@@ -713,7 +683,7 @@ namespace LSLib.Granny.Model
 
             foreach (var geometry in collGeometries)
             {
-                string vertexFormat = null;
+                VertexDescriptor vertexFormat = null;
                 // Use the override vertex format, if one was specified
                 Options.VertexFormats.TryGetValue(geometry.name, out vertexFormat);
                 var mesh = ImportMesh(root, geometry.name, geometry, geometry.Item as mesh, vertexFormat);

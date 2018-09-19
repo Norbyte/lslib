@@ -105,7 +105,7 @@ namespace LSLib.Granny.GR2
         {
             if (type.IsClass)
             {
-                var defn = GR2.LookupStructDefinition(type);
+                var defn = GR2.LookupStructDefinition(type, o);
                 if (defn.MixedMarshal)
                 {
                     AddMixedMarshalling(o, count, defn);
@@ -232,7 +232,7 @@ namespace LSLib.Granny.GR2
 
         internal void WriteStruct(Type type, object node, bool allowRecursion = true)
         {
-            WriteStruct(GR2.LookupStructDefinition(type), node, allowRecursion);
+            WriteStruct(GR2.LookupStructDefinition(type, node), node, allowRecursion);
         }
 
         internal void StoreObjectOffset(object o)
@@ -432,7 +432,7 @@ namespace LSLib.Granny.GR2
                                     inferredType = variantType;
                             }
 
-                            WriteStructReference(GR2.LookupStructDefinition(inferredType));
+                            WriteStructReference(GR2.LookupStructDefinition(inferredType, node));
                             WriteReference(node);
 
                             GR2.QueueStructWrite(Type, dataArea, definition, inferredType, node);
@@ -486,7 +486,7 @@ namespace LSLib.Granny.GR2
                                     inferredType = variantType;
                             }
 
-                            WriteStructReference(GR2.LookupStructDefinition(inferredType));
+                            WriteStructReference(GR2.LookupStructDefinition(inferredType, list[0]));
                             WriteArrayIndicesReference(list);
                             GR2.QueueArrayWrite(Type, dataArea, inferredType, definition, list);
                         }
@@ -798,7 +798,7 @@ namespace LSLib.Granny.GR2
                     section.Header.mixedMarshallingDataOffset += relocSection.Header.offsetInFile;
                 }
 
-                var rootStruct = LookupStructDefinition(root.GetType());
+                var rootStruct = LookupStructDefinition(root.GetType(), root);
                 Header.rootType = ObjectOffsets[rootStruct];
                 Header.rootNode = new SectionReference(SectionType.Main, 0);
                 Header.fileSize = (UInt32)Stream.Length;
@@ -904,13 +904,30 @@ namespace LSLib.Granny.GR2
             Writer.Write(r.Offset);
         }
 
-        internal StructDefinition LookupStructDefinition(Type type)
+        internal StructDefinition LookupStructDefinition(Type type, object instance)
         {
+            StructDefinition defn = null;
+            if (Types.TryGetValue(type, out defn))
+            {
+                return defn;
+            }
+
             if (type.GetInterfaces().Contains(typeof(System.Collections.IList)) || type.IsArray || type.IsPrimitive)
                 throw new ArgumentException("Cannot create a struct definition for array or primitive types");
 
-            StructDefinition defn = null;
-            if (!Types.TryGetValue(type, out defn))
+            var attrs = type.GetCustomAttributes(typeof(StructSerializationAttribute), true);
+            if (attrs.Length > 0)
+            {
+                StructSerializationAttribute serialization = attrs[0] as StructSerializationAttribute;
+                if (serialization.TypeSelector != null)
+                {
+                    var selector = Activator.CreateInstance(serialization.TypeSelector) as StructDefinitionSelector;
+                    defn = selector.CreateStructDefinition(instance);
+                    Types.Add(type, defn);
+                }
+            }
+
+            if (defn == null)
             {
                 defn = new StructDefinition();
                 Types.Add(type, defn);

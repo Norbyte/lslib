@@ -22,7 +22,7 @@ namespace LSLib.Granny.Model
         private int NormalsInputIndex = -1;
         private List<int> UVInputIndices = new List<int>();
         private List<int> ColorInputIndices = new List<int>();
-        private Type VertexType;
+        private VertexDescriptor VertexType;
         private bool HasNormals = false;
         private bool HasTangents = false;
 
@@ -32,7 +32,7 @@ namespace LSLib.Granny.Model
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
         private ExporterOptions Options;
 
-        public Type InternalVertexType
+        public VertexDescriptor InternalVertexType
         {
             get { return VertexType; }
         }
@@ -75,8 +75,7 @@ namespace LSLib.Granny.Model
             if (ConsolidatedVertices.Count() > 0)
             {
                 var v = ConsolidatedVertices[0];
-                var descriptor = Vertex.Description(v.GetType());
-                if (descriptor.TextureCoordinates == 0)
+                if (v.Format.TextureCoordinates == 0)
                 {
                     throw new InvalidOperationException("At least one UV set is required to recompute tangents");
                 }
@@ -323,10 +322,9 @@ namespace LSLib.Granny.Model
                 throw new ParsingException("Required triangle input semantic missing: VERTEX");
 
             Vertices = new List<Vertex>(positions.Count);
-            var vertexCtor = GR2.Helpers.GetConstructor(VertexType);
             for (var vert = 0; vert < positions.Count; vert++)
             {
-                Vertex vertex = vertexCtor() as Vertex;
+                var vertex = VertexType.CreateInstance();
                 vertex.Position = positions[vert];
 
                 if (tangents != null)
@@ -434,20 +432,22 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private string FindVertexFormat(bool isSkinned)
+        private VertexDescriptor FindVertexFormat(bool isSkinned)
         {
-            bool hasNormals = false,
-                hasTangents = false,
-                hasBinormals = false;
-            int numUVs = 0, numColors = 0;
+            var desc = new VertexDescriptor();
+            desc.HasPosition = true;
+            if (isSkinned)
+            {
+                desc.HasBoneWeights = true;
+            }
 
             foreach (var input in Mesh.vertices.input)
             {
                 switch (input.semantic)
                 {
-                    case "NORMAL": hasNormals = true; break;
-                    case "TANGENT": hasTangents = true; break;
-                    case "BINORMAL": hasBinormals = true; break;
+                    case "NORMAL": desc.NormalType = NormalType.Float3; break;
+                    case "TANGENT": desc.TangentType = NormalType.Float3; break;
+                    case "BINORMAL": desc.BinormalType = NormalType.Float3; break;
                 }
             }
 
@@ -455,61 +455,24 @@ namespace LSLib.Granny.Model
             {
                 switch (input.semantic)
                 {
-                    case "NORMAL": hasNormals = true; break;
-                    case "TANGENT": hasTangents = true; break;
-                    case "BINORMAL": hasBinormals = true; break;
-                    case "TEXCOORD": numUVs++; break;
-                    case "COLOR": numColors++; break;
+                    case "NORMAL": desc.NormalType = NormalType.Float3; break;
+                    case "TANGENT": desc.TangentType = NormalType.Float3; break;
+                    case "BINORMAL": desc.BinormalType = NormalType.Float3; break;
+                    case "TEXCOORD":
+                        desc.TextureCoordinateType = TextureCoordinateType.Float2;
+                        desc.TextureCoordinates++;
+                        break;
+                    case "COLOR":
+                        desc.DiffuseType = DiffuseColorType.Float4;
+                        desc.DiffuseColors++;
+                        break;
                 }
             }
 
-            string vertexFormat;
-            vertexFormat = "P";
-            string attributeCounts = "3";
-
-            if (isSkinned)
-            {
-                vertexFormat += "W";
-                attributeCounts += "4";
-            }
-
-            // Granny doesn't have any skinned vertex formats without normals
-            if (hasNormals && (Options.ExportNormals || isSkinned))
-            {
-                vertexFormat += "N";
-                attributeCounts += "3";
-            }
-
-            if (((hasTangents && hasBinormals) || (hasNormals && numUVs > 0)) && Options.ExportTangents)
-            {
-                vertexFormat += "GB";
-                attributeCounts += "33";
-            }
-
-            if (Options.ExportColors)
-            {
-                for (int i = 0; i < numColors; i++)
-                {
-                    vertexFormat += "D";
-                    attributeCounts += "4";
-                }
-            }
-
-            if (Options.ExportUVs)
-            {
-                for (int i = 0; i < numUVs; i++)
-                {
-                    vertexFormat += "T";
-                    attributeCounts += "2";
-                }
-            }
-
-            vertexFormat += attributeCounts;
-
-            return vertexFormat;
+            return desc;
         }
 
-        public void ImportFromCollada(mesh mesh, string vertexFormat, bool isSkinned, ExporterOptions options)
+        public void ImportFromCollada(mesh mesh, VertexDescriptor vertexFormat, bool isSkinned, ExporterOptions options)
         {
             Options = options;
             Mesh = mesh;
@@ -521,7 +484,7 @@ namespace LSLib.Granny.Model
                 vertexFormat = FindVertexFormat(isSkinned);
             }
 
-            VertexType = VertexFormatRegistry.Resolve(vertexFormat);
+            VertexType = vertexFormat;
             ImportVertices();
 
             // TODO: This should be done before deduplication!
@@ -600,8 +563,9 @@ namespace LSLib.Granny.Model
                     OriginalToConsolidatedVertexIndexMap.Add(i, new List<int> { i });
             }
 
-            var description = Vertex.Description(VertexType);
-            if ((description.Tangent && description.Binormal) && (!HasTangents || Options.RecalculateTangents))
+            if ((VertexType.TangentType != NormalType.None 
+                || VertexType.BinormalType != NormalType.None)
+                && (!HasTangents || Options.RecalculateTangents))
             {
                 if (!HasTangents)
                     Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));

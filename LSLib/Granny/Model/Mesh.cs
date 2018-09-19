@@ -75,7 +75,7 @@ namespace LSLib.Granny.Model
                 VertexDeduplicationMap.Add(i, i);
             }
 
-            var numUvs = Vertex.Description(vertices[0].GetType()).TextureCoordinates;
+            var numUvs = vertices[0].Format.TextureCoordinates;
             for (var uv = 0; uv < numUvs; uv++)
             {
                 var uvMap = new Dictionary<int, int>();
@@ -90,7 +90,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            var numColors = Vertex.Description(vertices[0].GetType()).DiffuseColors;
+            var numColors = vertices[0].Format.DiffuseColors;
             for (var color = 0; color < numColors; color++)
             {
                 var colorMap = new Dictionary<int, int>();
@@ -122,7 +122,7 @@ namespace LSLib.Granny.Model
                 VertexDeduplicationMap.Add(i, mappedIndex);
             }
 
-            var numUvs = Vertex.Description(vertices[0].GetType()).TextureCoordinates;
+            var numUvs = vertices[0].Format.TextureCoordinates;
             for (var uv = 0; uv < numUvs; uv++)
             {
                 var uvMap = new Dictionary<int, int>();
@@ -145,7 +145,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            var numColors = Vertex.Description(vertices[0].GetType()).DiffuseColors;
+            var numColors = vertices[0].Format.DiffuseColors;
             for (var color = 0; color < numColors; color++)
             {
                 var colorMap = new Dictionary<int, int>();
@@ -198,7 +198,7 @@ namespace LSLib.Granny.Model
                 VertexComponentNames = new List<GrannyString>();
                 if (Vertices.Count > 0)
                 {
-                    var components = Vertices[0].ComponentNames();
+                    var components = Vertices[0].Format.ComponentNames();
                     foreach (var name in components)
                     {
                         VertexComponentNames.Add(new GrannyString(name));
@@ -559,13 +559,13 @@ namespace LSLib.Granny.Model
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;
 
         [Serialization(Kind = SerializationKind.None)]
-        public Type VertexFormat;
+        public VertexDescriptor VertexFormat;
 
         public void PostLoad()
         {
             if (PrimaryVertexData.Vertices.Count > 0)
             {
-                VertexFormat = PrimaryVertexData.Vertices[0].GetType();
+                VertexFormat = PrimaryVertexData.Vertices[0].Format;
             }
         }
 
@@ -580,7 +580,7 @@ namespace LSLib.Granny.Model
             else if (PrimaryVertexData.Vertices != null
                 && PrimaryVertexData.Vertices.Count > 0)
             {
-                return PrimaryVertexData.Vertices[0].ComponentNames();
+                return PrimaryVertexData.Vertices[0].Format.ComponentNames();
             }
             else
             {
@@ -596,9 +596,8 @@ namespace LSLib.Granny.Model
             // If we have vertices, check the vertex prototype, as VertexComponentNames is unreliable.
             if (PrimaryVertexData.Vertices.Count > 0)
             {
-                var desc = Vertex.Description(PrimaryVertexData.Vertices[0].GetType());
-                hasWeights = desc.BoneWeights;
-                hasIndices = desc.BoneIndices;
+                var desc = PrimaryVertexData.Vertices[0].Format;
+                hasWeights = hasIndices = desc.HasBoneWeights;
             }
             else
             {
