@@ -464,8 +464,8 @@ namespace LSLib.Granny.Model
             {
                 switch (desc.TextureCoordinateType)
                 {
-                    case TextureCoordinateType.Float2: AddMember(defn, "TextureCoordinate" + i.ToString(), MemberType.Real32, 2); break;
-                    case TextureCoordinateType.Half2: AddMember(defn, "TextureCoordinate" + i.ToString(), MemberType.Real16, 2); break;
+                    case TextureCoordinateType.Float2: AddMember(defn, "TextureCoordinates" + i.ToString(), MemberType.Real32, 2); break;
+                    case TextureCoordinateType.Half2: AddMember(defn, "TextureCoordinates" + i.ToString(), MemberType.Real16, 2); break;
                 }
             }
 
