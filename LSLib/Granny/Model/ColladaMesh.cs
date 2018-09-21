@@ -22,7 +22,8 @@ namespace LSLib.Granny.Model
         private int NormalsInputIndex = -1;
         private List<int> UVInputIndices = new List<int>();
         private List<int> ColorInputIndices = new List<int>();
-        private VertexDescriptor VertexType;
+        private VertexDescriptor InputVertexType;
+        private VertexDescriptor OutputVertexType;
         private bool HasNormals = false;
         private bool HasTangents = false;
 
@@ -34,7 +35,7 @@ namespace LSLib.Granny.Model
 
         public VertexDescriptor InternalVertexType
         {
-            get { return VertexType; }
+            get { return OutputVertexType; }
         }
 
         private class VertexIndexComparer : IEqualityComparer<int[]>
@@ -324,7 +325,7 @@ namespace LSLib.Granny.Model
             Vertices = new List<Vertex>(positions.Count);
             for (var vert = 0; vert < positions.Count; vert++)
             {
-                var vertex = VertexType.CreateInstance();
+                var vertex = OutputVertexType.CreateInstance();
                 vertex.Position = positions[vert];
 
                 if (tangents != null)
@@ -484,7 +485,39 @@ namespace LSLib.Granny.Model
                 vertexFormat = FindVertexFormat(isSkinned);
             }
 
-            VertexType = vertexFormat;
+            InputVertexType = vertexFormat;
+            OutputVertexType = new VertexDescriptor
+            {
+                HasPosition = InputVertexType.HasPosition,
+                HasBoneWeights = InputVertexType.HasBoneWeights,
+                NumBoneInfluences = InputVertexType.NumBoneInfluences,
+                NormalType = InputVertexType.NormalType,
+                TangentType = InputVertexType.TangentType,
+                BinormalType = InputVertexType.BinormalType,
+                DiffuseType = InputVertexType.DiffuseType,
+                DiffuseColors = InputVertexType.DiffuseColors,
+                TextureCoordinateType = InputVertexType.TextureCoordinateType,
+                TextureCoordinates = InputVertexType.TextureCoordinates
+            };
+            
+            if (OutputVertexType.NormalType == NormalType.None
+                && (!HasNormals || Options.RecalculateNormals))
+            {
+                OutputVertexType.NormalType = NormalType.Float3;
+            }
+
+            if (OutputVertexType.TangentType == NormalType.None
+                && (!HasTangents || Options.RecalculateTangents))
+            {
+                OutputVertexType.TangentType = NormalType.Float3;
+            }
+
+            if (OutputVertexType.BinormalType == NormalType.None
+                && (!HasTangents || Options.RecalculateTangents))
+            {
+                OutputVertexType.BinormalType = NormalType.Float3;
+            }
+
             ImportVertices();
 
             // TODO: This should be done before deduplication!
@@ -563,8 +596,8 @@ namespace LSLib.Granny.Model
                     OriginalToConsolidatedVertexIndexMap.Add(i, new List<int> { i });
             }
 
-            if ((VertexType.TangentType != NormalType.None 
-                || VertexType.BinormalType != NormalType.None)
+            if ((InputVertexType.TangentType == NormalType.None 
+                || InputVertexType.BinormalType == NormalType.None)
                 && (!HasTangents || Options.RecalculateTangents))
             {
                 if (!HasTangents)
