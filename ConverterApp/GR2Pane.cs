@@ -22,6 +22,7 @@ namespace ConverterApp
             InitializeComponent();
             gr2BatchInputFormat.SelectedIndex = 0;
             gr2BatchOutputFormat.SelectedIndex = 1;
+            gr2ExtraProps.SelectedIndex = 0;
         }
 
         private void UpdateExportableObjects()
@@ -166,7 +167,22 @@ namespace ConverterApp
             }
 
             var modelType = DivinityHelpers.DetermineModelType(_root);
-            rigid.Checked = (modelType == DivinityModelType.Rigid);
+            switch (modelType)
+            {
+                case DivinityModelType.Undefined:
+                case DivinityModelType.Normal:
+                    gr2ExtraProps.SelectedIndex = 0;
+                    break;
+
+                case DivinityModelType.Rigid:
+                    gr2ExtraProps.SelectedIndex = 1;
+                    break;
+
+                case DivinityModelType.Cloth:
+                    gr2ExtraProps.SelectedIndex = 2;
+                    break;
+            }
+
             UpdateExportableObjects();
             UpdateResourceFormats();
 
@@ -238,13 +254,11 @@ namespace ConverterApp
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
 
-            if (rigid.Checked)
+            switch (gr2ExtraProps.SelectedIndex)
             {
-                settings.ModelType = DivinityModelType.Rigid;
-            }
-            else
-            {
-                settings.ModelType = DivinityModelType.Normal;
+                case 0: settings.ModelType = DivinityModelType.Normal; break;
+                case 1: settings.ModelType = DivinityModelType.Rigid; break;
+                case 2: settings.ModelType = DivinityModelType.Cloth; break;
             }
 
             settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;

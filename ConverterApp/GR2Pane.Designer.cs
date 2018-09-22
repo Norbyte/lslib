@@ -82,7 +82,8 @@
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.rigid = new System.Windows.Forms.CheckBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.gr2ExtraProps = new System.Windows.Forms.ComboBox();
             this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
@@ -540,7 +541,8 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.rigid);
+            this.groupBox1.Controls.Add(this.gr2ExtraProps);
+            this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.applyBasisTransforms);
             this.groupBox1.Controls.Add(this.conformantGR2BrowseBtn);
             this.groupBox1.Controls.Add(this.conformantGR2Path);
@@ -656,15 +658,27 @@
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.inputFileDlg.Title = "Select Input File";
             // 
-            // rigid
+            // label3
             // 
-            this.rigid.AutoSize = true;
-            this.rigid.Location = new System.Drawing.Point(245, 45);
-            this.rigid.Name = "rigid";
-            this.rigid.Size = new System.Drawing.Size(50, 17);
-            this.rigid.TabIndex = 27;
-            this.rigid.Text = "Rigid";
-            this.rigid.UseVisualStyleBackColor = true;
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(242, 45);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(83, 13);
+            this.label3.TabIndex = 27;
+            this.label3.Text = "Extra properties:";
+            // 
+            // gr2ExtraProps
+            // 
+            this.gr2ExtraProps.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.gr2ExtraProps.FormattingEnabled = true;
+            this.gr2ExtraProps.Items.AddRange(new object[] {
+            "None",
+            "Rigid",
+            "Cloth"});
+            this.gr2ExtraProps.Location = new System.Drawing.Point(245, 62);
+            this.gr2ExtraProps.Name = "gr2ExtraProps";
+            this.gr2ExtraProps.Size = new System.Drawing.Size(140, 21);
+            this.gr2ExtraProps.TabIndex = 28;
             // 
             // resourceFormats
             // 
@@ -758,6 +772,7 @@
         internal System.Windows.Forms.CheckBox use16bitIndex;
         private System.Windows.Forms.CheckBox flipUVs;
         private System.Windows.Forms.CheckBox exportColors;
-        private System.Windows.Forms.CheckBox rigid;
+        private System.Windows.Forms.ComboBox gr2ExtraProps;
+        private System.Windows.Forms.Label label3;
     }
 }

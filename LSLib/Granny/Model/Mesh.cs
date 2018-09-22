@@ -543,6 +543,58 @@ namespace LSLib.Granny.Model
         public Int32 DataIsDeltas;
     }
 
+    public class DivinityFormatDesc
+    {
+        [Serialization(ArraySize = 1)]
+        public SByte[] Stream;
+        [Serialization(ArraySize = 1)]
+        public Byte[] Usage;
+        [Serialization(ArraySize = 1)]
+        public Byte[] UsageIndex;
+        [Serialization(ArraySize = 1)]
+        public Byte[] RefType;
+        [Serialization(ArraySize = 1)]
+        public Byte[] Format;
+        [Serialization(ArraySize = 1)]
+        public Byte[] Size;
+    }
+
+    public class DivinityMeshProperties
+    {
+        [Serialization(ArraySize = 4)]
+        public UInt32[] Flags;
+        [Serialization(ArraySize = 1)]
+        public Int32[] Lod;
+        public List<DivinityFormatDesc> FormatDescs;
+        [Serialization(Type = MemberType.VariantReference)]
+        public object ExtendedData;
+    }
+
+    public class DivinityMeshExtendedData
+    {
+        const Int32 CurrentLSMVersion = 1;
+
+        public string UserDefinedProperties;
+        public DivinityMeshProperties UserMeshProperties;
+        public Int32 LSMVersion;
+
+        public static DivinityMeshExtendedData Make()
+        {
+            return new DivinityMeshExtendedData
+            {
+                UserDefinedProperties = "",
+                UserMeshProperties = new DivinityMeshProperties
+                {
+                    Flags = new UInt32[] { 0, 0, 0, 0 },
+                    Lod = new Int32[] { -1 },
+                    FormatDescs = null,
+                    ExtendedData = null
+                },
+                LSMVersion = CurrentLSMVersion
+            };
+        }
+    }
+    
     public class Mesh
     {
         public string Name;
@@ -553,7 +605,7 @@ namespace LSLib.Granny.Model
         public List<MaterialBinding> MaterialBindings;
         public List<BoneBinding> BoneBindings;
         [Serialization(Type = MemberType.VariantReference)]
-        public DivinityExtendedData ExtendedData;
+        public DivinityMeshExtendedData ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
         public Dictionary<int, List<int>> OriginalToConsolidatedVertexIndexMap;

@@ -5,7 +5,7 @@ using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
 {
-    public class DivinityExtendedData
+    public class DivinityBoneExtendedData
     {
         public string UserDefinedProperties;
     }
@@ -19,7 +19,7 @@ namespace LSLib.Granny.Model
         public float[] InverseWorldTransform;
         public float LODError;
         [Serialization(Type = MemberType.VariantReference)]
-        public DivinityExtendedData ExtendedData;
+        public DivinityBoneExtendedData ExtendedData;
 
         [Serialization(Kind = SerializationKind.None)]
         public string TransformSID;

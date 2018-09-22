@@ -194,10 +194,33 @@ namespace LSLib.Granny.Model
                 {
                     if (mesh.ExtendedData == null)
                     {
-                        mesh.ExtendedData = new DivinityExtendedData();
+                        mesh.ExtendedData = DivinityMeshExtendedData.Make();
                     }
 
-                    mesh.ExtendedData.UserDefinedProperties = userDefinedProperties;
+                    // Only mark model as cloth if it has colored vertices
+                    var meshModelType = modelType;
+                    if (mesh.VertexFormat.DiffuseColors == 0 
+                        && meshModelType == DivinityModelType.Cloth)
+                    {
+                        meshModelType = DivinityModelType.Normal;
+                    }
+                    
+                    mesh.ExtendedData.UserDefinedProperties =
+                        DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
+
+                    // TODO - LSM info not supported yet
+                    mesh.ExtendedData.LSMVersion = 0;
+                    mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x18;
+                    switch (meshModelType)
+                    {
+                        case DivinityModelType.Cloth:
+                            mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x02;
+                            break;
+
+                        case DivinityModelType.Rigid:
+                            mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x20;
+                            break;
+                    }
                 }
             }
 
@@ -211,7 +234,7 @@ namespace LSLib.Granny.Model
                         {
                             if (bone.ExtendedData == null)
                             {
-                                bone.ExtendedData = new DivinityExtendedData();
+                                bone.ExtendedData = new DivinityBoneExtendedData();
                             }
 
                             bone.ExtendedData.UserDefinedProperties = userDefinedProperties;

@@ -19,7 +19,7 @@ namespace LSLib.Granny.Model
     public class DivinityHelpers
     {
         public const string UserDefinedProperties_Rigid = "Rigid = true";
-        public const string UserDefinedProperties_Cloth = "Cloth = true";
+        public const string UserDefinedProperties_Cloth = "Cloth=true";
 
         public static string ModelTypeToUserDefinedProperties(DivinityModelType modelType)
         {
@@ -92,6 +92,11 @@ namespace LSLib.Granny.Model
             {
                 foreach (var mesh in root.Meshes)
                 {
+                    if (mesh.VertexFormat.DiffuseColors > 0)
+                    {
+                        return DivinityModelType.Cloth;
+                    }
+
                     var isSkinned = mesh.VertexFormat.HasBoneWeights;
                     if (!isSkinned)
                     {
