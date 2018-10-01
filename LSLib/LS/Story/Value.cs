@@ -232,7 +232,13 @@ namespace LSLib.LS.Story
 
         public virtual void DebugDump(TextWriter writer, Story story)
         {
-            switch ((Type)TypeId)
+            var builtinTypeId = (byte)TypeId;
+            if (builtinTypeId > (byte)Type.GuidString)
+            {
+                builtinTypeId = story.Types[builtinTypeId].Alias;
+            }
+
+            switch ((Type)builtinTypeId)
             {
                 case Type.None:
                     writer.Write("<unknown>");
@@ -255,15 +261,23 @@ namespace LSLib.LS.Story
                     break;
 
                 case Type.GuidString:
-                default:
                     writer.Write(StringValue);
                     break;
+
+                default:
+                    throw new Exception("Unsupported builtin type ID");
             }
         }
 
         public virtual void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes = false)
         {
-            switch ((Type)TypeId)
+            var builtinTypeId = (byte)TypeId;
+            if (builtinTypeId > (byte)Type.GuidString)
+            {
+                builtinTypeId = story.Types[builtinTypeId].Alias;
+            }
+
+            switch ((Type)builtinTypeId)
             {
                 case Type.None:
                     throw new InvalidDataException("Script cannot contain unknown values");
@@ -281,13 +295,15 @@ namespace LSLib.LS.Story
                     break;
 
                 case Type.String:
-                case Type.GuidString:
                     writer.Write("\"{0}\"", StringValue);
                     break;
 
-                default:
+                case Type.GuidString:
                     writer.Write(StringValue);
                     break;
+
+                default:
+                    throw new Exception("Unsupported builtin type ID");
             }
         }
     }
