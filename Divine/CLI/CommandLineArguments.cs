@@ -100,7 +100,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), "gr2-options",
             Description = "Set extra options for GR2/DAE conversion",
             AllowMultiple = true,
-            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;filter-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
+            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
             ValueOptional = false,
             Optional = true
         )]
@@ -310,21 +310,20 @@ namespace Divine.CLI
         {
             Dictionary<string, bool> results = new Dictionary<string, bool>
             {
-                { "export-normals", false },
-                { "export-tangents", false },
-                { "export-uvs", false },
-                { "export-colors", false },
-                { "deduplicate-vertices", false },
-                { "deduplicate-uvs", false },
-                { "filter-uvs", false },
+                { "export-normals", true },
+                { "export-tangents", true },
+                { "export-uvs", true },
+                { "export-colors", true },
+                { "deduplicate-vertices", true },
+                { "deduplicate-uvs", true },
                 { "recalculate-normals", false },
                 { "recalculate-tangents", false },
                 { "recalculate-iwt", false },
-                { "flip-uvs", false },
+                { "flip-uvs", true },
                 { "force-legacy-version", false },
-                { "compact-tris", false },
-                { "build-dummy-skeleton", false },
-                { "apply-basis-transforms", false },
+                { "compact-tris", true },
+                { "build-dummy-skeleton", true },
+                { "apply-basis-transforms", true },
                 { "conform", false }
             };
 
