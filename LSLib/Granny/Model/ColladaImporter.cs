@@ -526,7 +526,7 @@ namespace LSLib.Granny.Model
 
             if (skin.bind_shape_matrix != null)
             {
-                var bindShapeFloats = skin.bind_shape_matrix.Split(new char[] { ' ' }).Select(s => Single.Parse(s)).ToArray();
+                var bindShapeFloats = skin.bind_shape_matrix.Trim().Split(new char[] { ' ' }).Select(s => Single.Parse(s)).ToArray();
                 var bindShapeMat = ColladaHelpers.FloatsToMatrix(bindShapeFloats);
                 bindShapeMat.Transpose();
 
