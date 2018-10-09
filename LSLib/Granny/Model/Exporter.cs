@@ -78,6 +78,8 @@ namespace LSLib.Granny.Model
         // Update the UserDefinedProperties property of meshes/bones (D:OS 2-specific)
         public bool WriteUserDefinedProperties = true;
         public DivinityModelType ModelType = DivinityModelType.Undefined;
+        // Remove unused metadata from the GR2 file
+        public bool StripMetadata = true;
     }
 
 

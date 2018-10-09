@@ -278,9 +278,17 @@ namespace LSLib.Granny.Model
             m.Name = "Unnamed";
 
             m.PrimaryVertexData = new VertexData();
-            var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
-            m.PrimaryVertexData.VertexComponentNames = components;
             m.PrimaryVertexData.Vertices = collada.ConsolidatedVertices;
+
+            if (!Options.StripMetadata)
+            {
+                var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
+                m.PrimaryVertexData.VertexComponentNames = components;
+            }
+            else
+            {
+                m.PrimaryVertexData.VertexComponentNames = null;
+            }
 
             m.PrimaryTopology = new TriTopology();
             m.PrimaryTopology.Indices = collada.ConsolidatedIndices;
@@ -607,7 +615,11 @@ namespace LSLib.Granny.Model
             var collada = COLLADA.Load(inputPath);
             var root = new Root();
             root.ArtToolInfo = ImportArtToolInfo(collada);
-            root.ExporterInfo = ImportExporterInfo(collada);
+            if (!Options.StripMetadata)
+            {
+                root.ExporterInfo = ImportExporterInfo(collada);
+            }
+
             root.FromFileName = inputPath;
 
             root.Skeletons = new List<Skeleton>();
