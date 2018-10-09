@@ -225,14 +225,14 @@ namespace LSLib.Granny.GR2
             WriteMemberDefinition(end);
         }
 
-        internal void WriteStruct(object node, bool allowRecursion = true)
+        internal void WriteStruct(object node, bool allowRecursion = true, bool allowAlign = true)
         {
-            WriteStruct(node.GetType(), node, allowRecursion);
+            WriteStruct(node.GetType(), node, allowRecursion, allowAlign);
         }
 
-        internal void WriteStruct(Type type, object node, bool allowRecursion = true)
+        internal void WriteStruct(Type type, object node, bool allowRecursion = true, bool allowAlign = true)
         {
-            WriteStruct(GR2.LookupStructDefinition(type, node), node, allowRecursion);
+            WriteStruct(GR2.LookupStructDefinition(type, node), node, allowRecursion, allowAlign);
         }
 
         internal void StoreObjectOffset(object o)
@@ -267,11 +267,15 @@ namespace LSLib.Granny.GR2
             }
         }
 
-        internal void WriteStruct(StructDefinition definition, object node, bool allowRecursion = true)
+        internal void WriteStruct(StructDefinition definition, object node, bool allowRecursion = true, bool allowAlign = true)
         {
             if (node == null) throw new ArgumentNullException();
 
-            AlignWrite();
+            if (allowAlign)
+            {
+                AlignWrite();
+            }
+
             StoreObjectOffset(node);
 
             var tag = GR2.Header.tag;
@@ -350,7 +354,7 @@ namespace LSLib.Granny.GR2
                         {
                             for (int i = 0; i < list.Count; i++)
                             {
-                                WriteStruct(elementType, list[i], false);
+                                WriteStruct(elementType, list[i], false, false);
                             }
                         }
 
