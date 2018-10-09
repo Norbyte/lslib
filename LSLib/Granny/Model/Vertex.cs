@@ -38,7 +38,7 @@ namespace LSLib.Granny.Model
         None,
         Float3,
         Half4,
-        Short4
+        QTangent
     };
 
     public enum DiffuseColorType
@@ -88,15 +88,24 @@ namespace LSLib.Granny.Model
 
             if (NormalType != NormalType.None)
             {
-                names.Add("Normal");
+                if (NormalType == NormalType.QTangent)
+                {
+                    names.Add("QTangent");
+                }
+                else
+                {
+                    names.Add("Normal");
+                }
             }
 
-            if (TangentType != NormalType.None)
+            if (TangentType != NormalType.None
+                && TangentType != NormalType.QTangent)
             {
                 names.Add("Tangent");
             }
 
-            if (BinormalType != NormalType.None)
+            if (BinormalType != NormalType.None
+                && BinormalType != NormalType.QTangent)
             {
                 names.Add("Binormal");
             }
@@ -147,7 +156,7 @@ namespace LSLib.Granny.Model
                     attributeCounts += "4";
                     break;
 
-                case NormalType.Short4:
+                case NormalType.QTangent:
                     vertexFormat += "QN";
                     attributeCounts += "4";
                     break;
@@ -167,11 +176,6 @@ namespace LSLib.Granny.Model
                     vertexFormat += "HG";
                     attributeCounts += "4";
                     break;
-
-                case NormalType.Short4:
-                    vertexFormat += "QG";
-                    attributeCounts += "4";
-                    break;
             }
 
             switch (BinormalType)
@@ -186,11 +190,6 @@ namespace LSLib.Granny.Model
 
                 case NormalType.Half4:
                     vertexFormat += "HB";
-                    attributeCounts += "4";
-                    break;
-
-                case NormalType.Short4:
-                    vertexFormat += "QB";
                     attributeCounts += "4";
                     break;
             }
@@ -417,17 +416,25 @@ namespace LSLib.Granny.Model
                         {
                             desc.NormalType = NormalType.Half4;
                         }
-                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
-                        {
-                            desc.NormalType = NormalType.Short4;
-                        }
                         else
                         {
                             throw new Exception("Unsupported vertex normal format");
                         }
                         break;
 
-                    case "QTangent": // TODO - different format?
+                    case "QTangent":
+                        if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.QTangent;
+                            desc.TangentType = NormalType.QTangent;
+                            desc.BinormalType = NormalType.QTangent;
+                        }
+                        else
+                        {
+                            throw new Exception("Unsupported QTangent format");
+                        }
+                        break;
+
                     case "Tangent":
                         if (member.Type == MemberType.Real32 && member.ArraySize == 3)
                         {
@@ -436,10 +443,6 @@ namespace LSLib.Granny.Model
                         else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
                         {
                             desc.NormalType = NormalType.Half4;
-                        }
-                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
-                        {
-                            desc.NormalType = NormalType.Short4;
                         }
                         else
                         {
@@ -455,10 +458,6 @@ namespace LSLib.Granny.Model
                         else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
                         {
                             desc.NormalType = NormalType.Half4;
-                        }
-                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
-                        {
-                            desc.NormalType = NormalType.Short4;
                         }
                         else
                         {

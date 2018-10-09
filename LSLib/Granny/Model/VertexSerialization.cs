@@ -53,13 +53,13 @@ namespace LSLib.Granny.Model
             return v;
         }
 
-        public static Vector3 ReadBinormalShortVector4As3(GR2Reader reader)
+        public static Vector4 ReadBinormalShortVector4(GR2Reader reader)
         {
-            Vector3 v;
+            Vector4 v;
             v.X = reader.Reader.ReadInt16() / 32767.0f;
             v.Y = reader.Reader.ReadInt16() / 32767.0f;
             v.Z = reader.Reader.ReadInt16() / 32767.0f;
-            reader.Reader.ReadInt16();
+            v.W = reader.Reader.ReadInt16() / 32767.0f;
             return v;
         }
 
@@ -91,6 +91,122 @@ namespace LSLib.Granny.Model
             v.Z = reader.Reader.ReadByte() * 255.0f;
             v.W = reader.Reader.ReadByte() * 255.0f;
             return v;
+        }
+
+        public static Matrix3 ReadQTangent(GR2Reader reader)
+        {
+            Vector4 qTangent = ReadBinormalShortVector4(reader);
+            return QTangentToMatrix(qTangent);
+        }
+
+        private static Vector4 MatrixToQTangent(Matrix3 m)
+        {
+            float f = 1.0f;
+
+            var dir =
+                (m[0, 0] * m[1, 1] * m[2, 2] +
+                m[0, 1] * m[1, 2] * m[2, 0] +
+                m[0, 2] * m[1, 0] * m[2, 1]) -
+                (m[0, 2] * m[1, 1] * m[2, 0] +
+                m[0, 1] * m[1, 0] * m[2, 2] +
+                m[0, 0] * m[1, 2] * m[2, 1]);
+            if (dir < 0.0)
+            {
+                f = -1.0f;
+                m.Row2 = -m.Row2;
+            }
+
+            float t = m[0, 0] + (m[1, 1] + m[2, 2]);
+            Vector4 r;
+
+            if (t > 2.9999999f)
+            {
+                r = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+            }
+            else if (t > 0.0000001f)
+            {
+                float s = (float)Math.Sqrt(1.0f + t) * 2.0f;
+                r = new Vector4(
+                    (m[1, 2] - m[2, 1]) / s, 
+                    (m[2, 0] - m[0, 2]) / s, 
+                    (m[0, 1] - m[1, 0]) / s,
+                    s * 0.25f);
+            }
+            else if ((m[0, 0] > m[1, 1]) && (m[0, 0] > m[2, 2]))
+            {
+                float s = (float)Math.Sqrt(1.0f + m[0, 0] - m[1, 1] + m[2, 2]) * 2.0f;
+                r = new Vector4(
+                    s * 0.25f, 
+                    (m[1, 0] - m[0, 1]) / s, 
+                    (m[2, 0] - m[0, 2]) / s, 
+                    (m[0, 2] - m[2, 1]) / s);
+            }
+            else if (m[1, 1] > m[2, 2])
+            {
+                float s = (float)Math.Sqrt(1.0f + m[1, 1] - m[0, 0] + m[2, 2]) * 2.0f;
+                r = new Vector4(
+                    (m[1, 0] + m[0, 1]) / s,
+                    s * 0.25f,
+                    (m[2, 1] + m[1, 2]) / s,
+                    (m[2, 0] - m[0, 2]) / s);
+            }
+            else
+            {
+                float s = (float)Math.Sqrt(1.0f + m[2, 2] - m[0, 0] + m[1, 1]) * 2.0f;
+                r = new Vector4(
+                    (m[2, 0] + m[0, 2]) / s,
+                    (m[2, 1] + m[1, 2]) / s,
+                    s * 0.25f,
+                    (m[0, 1] - m[1, 0]) / s);
+            }
+
+            r.Normalize();
+
+            const float threshold = 1.0f / 32767.0f;
+
+            if (r.W <= threshold)
+            {
+                var mul = (float)Math.Sqrt(1.0f - (threshold * threshold));
+                r = new Vector4(
+                    r.X * mul,
+                    r.Y * mul,
+                    r.Z * mul,
+                    (r.W > 0.0f) ? threshold : -threshold
+                );
+            }
+
+            if (((f < 0.0f) && (r.W >= 0.0f)) || ((f >= 0.0f) && (r.W < 0.0f)))
+            {
+                r = -r;
+            }
+
+            return r;
+        }
+
+        private static Matrix3 QTangentToMatrix(Vector4 qTangent)
+        {
+            var q = qTangent.Normalized();
+            float qx2 = q.X + q.X,
+                  qy2 = q.Y + q.Y,
+                  qz2 = q.Z + q.Z,
+                  qxqx2 = q.X * qx2,
+                  qxqy2 = q.X * qy2,
+                  qxqz2 = q.X * qz2,
+                  qxqw2 = q.W * qx2,
+                  qyqy2 = q.Y * qy2,
+                  qyqz2 = q.Y * qz2,
+                  qyqw2 = q.W * qy2,
+                  qzqz2 = q.Z * qz2,
+                  qzqw2 = q.W * qz2;
+            Matrix3 m = new Matrix3(
+                1.0f - (qyqy2 + qzqz2), qxqy2 + qzqw2, qxqz2 - qyqw2,
+                qxqy2 - qzqw2, 1.0f - (qxqx2 + qzqz2), qyqz2 + qxqw2,
+                qxqz2 + qyqw2, qyqz2 - qxqw2, 1.0f - (qxqx2 + qyqy2)
+            );
+
+            var row1 = Vector3.Cross(m.Row0, m.Row1).Normalized() * ((q.W < 0.0f) ? -1.0f : 1.0f);
+            m.Row1 = row1;
+            return m;
         }
 
         public static BoneWeight ReadInfluences2(GR2Reader reader)
@@ -147,12 +263,12 @@ namespace LSLib.Granny.Model
             section.Writer.Write((ushort)0);
         }
 
-        public static void WriteBinormalShortVector3As4(WritableSection section, Vector3 v)
+        public static void WriteBinormalShortVector4(WritableSection section, Vector4 v)
         {
             section.Writer.Write((Int16)(v.X * 32767.0f));
             section.Writer.Write((Int16)(v.Y * 32767.0f));
             section.Writer.Write((Int16)(v.Z * 32767.0f));
-            section.Writer.Write((Int16)0);
+            section.Writer.Write((Int16)(v.W * 32767.0f));
         }
 
         public static void WriteVector4(WritableSection section, Vector4 v)
@@ -193,6 +309,13 @@ namespace LSLib.Granny.Model
             section.Writer.Write(v.D);
         }
 
+        public static void WriteQTangent(WritableSection section, Vector3 normal, Vector3 tangent, Vector3 binormal)
+        {
+            Matrix3 normals = new Matrix3(normal, tangent, binormal);
+            var qTangent = MatrixToQTangent(normals);
+            WriteBinormalShortVector4(section, qTangent);
+        }
+
         public static void Serialize(WritableSection section, Vertex v)
         {
             var d = v.Format;
@@ -221,7 +344,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: WriteVector3(section, v.Normal); break;
                 case NormalType.Half4: WriteHalfVector3As4(section, v.Normal); break;
-                case NormalType.Short4: WriteBinormalShortVector3As4(section, v.Normal); break;
+                case NormalType.QTangent: WriteQTangent(section, v.Normal, v.Tangent, v.Binormal); break;
             }
 
             switch (d.TangentType)
@@ -229,7 +352,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: WriteVector3(section, v.Tangent); break;
                 case NormalType.Half4: WriteHalfVector3As4(section, v.Tangent); break;
-                case NormalType.Short4: WriteBinormalShortVector3As4(section, v.Tangent); break;
+                case NormalType.QTangent: break; // Tangent saved into QTangent
             }
 
             switch (d.BinormalType)
@@ -237,7 +360,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: WriteVector3(section, v.Binormal); break;
                 case NormalType.Half4: WriteHalfVector3As4(section, v.Binormal); break;
-                case NormalType.Short4: WriteBinormalShortVector3As4(section, v.Binormal); break;
+                case NormalType.QTangent: break; // Binormal saved into QTangent
             }
 
             switch (d.DiffuseType)
@@ -296,7 +419,14 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: v.Normal = ReadVector3(reader); break;
                 case NormalType.Half4: v.Normal = ReadHalfVector4As3(reader); break;
-                case NormalType.Short4: v.Normal = ReadBinormalShortVector4As3(reader); break;
+                case NormalType.QTangent:
+                    {
+                        var qTangent = ReadQTangent(reader);
+                        v.Normal = qTangent.Row0;
+                        v.Tangent = qTangent.Row1;
+                        v.Binormal = qTangent.Row2;
+                        break;
+                    }
             }
 
             switch (d.TangentType)
@@ -304,7 +434,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: v.Tangent = ReadVector3(reader); break;
                 case NormalType.Half4: v.Tangent = ReadHalfVector4As3(reader); break;
-                case NormalType.Short4: v.Tangent = ReadBinormalShortVector4As3(reader); break;
+                case NormalType.QTangent: break; // Tangent read from QTangent
             }
 
             switch (d.BinormalType)
@@ -312,7 +442,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: v.Binormal = ReadVector3(reader); break;
                 case NormalType.Half4: v.Binormal = ReadHalfVector4As3(reader); break;
-                case NormalType.Short4: v.Binormal = ReadBinormalShortVector4As3(reader); break;
+                case NormalType.QTangent: break; // Binormal read from QTangent
             }
 
             switch (d.DiffuseType)
@@ -432,7 +562,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: AddMember(defn, "Normal", MemberType.Real32, 3); break;
                 case NormalType.Half4: AddMember(defn, "Normal", MemberType.Real16, 4); break;
-                case NormalType.Short4: AddMember(defn, "Normal", MemberType.BinormalInt16, 4); break;
+                case NormalType.QTangent: AddMember(defn, "QTangent", MemberType.BinormalInt16, 4); break;
             }
 
             switch (desc.TangentType)
@@ -440,7 +570,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: AddMember(defn, "Tangent", MemberType.Real32, 3); break;
                 case NormalType.Half4: AddMember(defn, "Tangent", MemberType.Real16, 4); break;
-                case NormalType.Short4: AddMember(defn, "Tangent", MemberType.BinormalInt16, 4); break;
+                case NormalType.QTangent: break; // Tangent saved into QTangent
             }
 
             switch (desc.BinormalType)
@@ -448,7 +578,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: AddMember(defn, "Binormal", MemberType.Real32, 3); break;
                 case NormalType.Half4: AddMember(defn, "Binormal", MemberType.Real16, 4); break;
-                case NormalType.Short4: AddMember(defn, "Binormal", MemberType.BinormalInt16, 4); break;
+                case NormalType.QTangent: break; // Binormal saved into QTangent
             }
 
             for (int i = 0; i < desc.DiffuseColors; i++)

@@ -506,24 +506,6 @@ namespace LSLib.Granny.Model
                 TextureCoordinateType = InputVertexType.TextureCoordinateType,
                 TextureCoordinates = InputVertexType.TextureCoordinates
             };
-            
-            if (OutputVertexType.NormalType == NormalType.None
-                && (!HasNormals || Options.RecalculateNormals))
-            {
-                OutputVertexType.NormalType = NormalType.Float3;
-            }
-
-            if (OutputVertexType.TangentType == NormalType.None
-                && (!HasTangents || Options.RecalculateTangents))
-            {
-                OutputVertexType.TangentType = NormalType.Float3;
-            }
-
-            if (OutputVertexType.BinormalType == NormalType.None
-                && (!HasTangents || Options.RecalculateTangents))
-            {
-                OutputVertexType.BinormalType = NormalType.Float3;
-            }
 
             ImportVertices();
 
@@ -533,6 +515,9 @@ namespace LSLib.Granny.Model
             {
                 if (!HasNormals)
                     Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
+
+                HasNormals = true;
+                OutputVertexType.NormalType = NormalType.Float3;
                 computeNormals();
             }
 
@@ -605,11 +590,38 @@ namespace LSLib.Granny.Model
 
             if ((InputVertexType.TangentType == NormalType.None 
                 || InputVertexType.BinormalType == NormalType.None)
-                && (!HasTangents || Options.RecalculateTangents))
+                && ((!HasTangents && UVs.Count > 0) || Options.RecalculateTangents))
             {
                 if (!HasTangents)
                     Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
+
+                OutputVertexType.TangentType = NormalType.Float3;
+                OutputVertexType.BinormalType = NormalType.Float3;
+                HasTangents = true;
                 computeTangents();
+
+            }
+
+            if (Options.ModelInfoFormat == DivinityModelInfoFormat.LSM)
+            {
+                if (!HasNormals || !HasTangents)
+                {
+                    throw new ParsingException("Cannot export to LSM - normals/tangents/bintangents unavailable.");
+                }
+
+                OutputVertexType.NormalType = NormalType.QTangent;
+                OutputVertexType.TangentType = NormalType.QTangent;
+                OutputVertexType.BinormalType = NormalType.QTangent;
+
+                if (OutputVertexType.TextureCoordinateType == TextureCoordinateType.Float2)
+                {
+                    OutputVertexType.TextureCoordinateType = TextureCoordinateType.Half2;
+                }
+
+                if (OutputVertexType.DiffuseType == DiffuseColorType.Float4)
+                {
+                    OutputVertexType.DiffuseType = DiffuseColorType.Byte4;
+                }
             }
         }
     }

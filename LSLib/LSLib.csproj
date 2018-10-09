@@ -104,7 +104,7 @@
     <Compile Include="Granny\Model\CurveData\DaK32fC32f.cs" />
     <Compile Include="Granny\Model\CurveData\DaK8uC8u.cs" />
     <Compile Include="Granny\Model\CurveData\DaKeyframes32f.cs" />
-    <Compile Include="Granny\Model\DivinityHelpers.cs" />
+    <Compile Include="Granny\Model\DivinityMesh.cs" />
     <Compile Include="Granny\Model\Exporter.cs" />
     <Compile Include="Granny\Model\HalfHelpers.cs" />
     <Compile Include="Granny\Model\Metadata.cs" />
