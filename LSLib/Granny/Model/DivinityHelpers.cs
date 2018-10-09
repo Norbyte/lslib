@@ -51,61 +51,65 @@ namespace LSLib.Granny.Model
             return DivinityModelType.Normal;
         }
 
-        public static DivinityModelType DetermineModelType(Root root)
+        public static DivinityModelType UserMeshFlagsToModelType(UInt32 flags)
         {
-            // Check if one of the meshes already has a UserDefinedProperties attribute.
-            if (root.Meshes != null)
+            if ((flags & 0x20) != 0)
             {
-                foreach (var mesh in root.Meshes)
-                {
-                    if (mesh.ExtendedData != null
-                        && mesh.ExtendedData.UserDefinedProperties != null
-                        && mesh.ExtendedData.UserDefinedProperties.Length > 0)
-                    {
-                        return UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
-                    }
-                }
+                return DivinityModelType.Rigid;
             }
 
-            // Check if one of the bones already has a UserDefinedProperties attribute.
-            if (root.Skeletons != null)
+            if ((flags & 0x02) != 0)
             {
-                foreach (var skeleton in root.Skeletons)
-                {
-                    if (skeleton.Bones != null)
-                    {
-                        foreach (var bone in skeleton.Bones)
-                        {
-                            if (bone.ExtendedData != null
-                                && bone.ExtendedData.UserDefinedProperties != null
-                                && bone.ExtendedData.UserDefinedProperties.Length > 0)
-                            {
-                                return UserDefinedPropertiesToModelType(bone.ExtendedData.UserDefinedProperties);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Check if any of the meshes has a rigid vertex format
-            if (root.Meshes != null)
-            {
-                foreach (var mesh in root.Meshes)
-                {
-                    if (mesh.VertexFormat.DiffuseColors > 0)
-                    {
-                        return DivinityModelType.Cloth;
-                    }
-
-                    var isSkinned = mesh.VertexFormat.HasBoneWeights;
-                    if (!isSkinned)
-                    {
-                        return DivinityModelType.Rigid;
-                    }
-                }
+                return DivinityModelType.Cloth;
             }
 
             return DivinityModelType.Normal;
+        }
+
+        public static DivinityModelType DetermineModelType(Mesh mesh)
+        {
+            if (mesh.ExtendedData != null
+                && mesh.ExtendedData.LSMVersion >= 1
+                && mesh.ExtendedData.UserMeshProperties != null)
+            {
+                return UserMeshFlagsToModelType(mesh.ExtendedData.UserMeshProperties.Flags[0]);
+            }
+            else if (mesh.ExtendedData != null
+                && mesh.ExtendedData.UserDefinedProperties != null)
+            {
+                return UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
+            }
+            // Only mark model as cloth if it has colored vertices
+            else if (mesh.VertexFormat.DiffuseColors > 0)
+            {
+                return DivinityModelType.Cloth;
+            }
+            else if (!mesh.VertexFormat.HasBoneWeights)
+            {
+                return DivinityModelType.Rigid;
+            }
+
+            return DivinityModelType.Normal;
+        }
+
+        public static DivinityModelType DetermineModelType(Root root)
+        {
+            var modelType = DivinityModelType.Undefined;
+            
+            if (root.Meshes != null)
+            {
+                foreach (var mesh in root.Meshes)
+                {
+                    var meshType = DetermineModelType(mesh);
+                    if (modelType == DivinityModelType.Undefined
+                        || (modelType == DivinityModelType.Normal && meshType == DivinityModelType.Cloth))
+                    {
+                        modelType = meshType;
+                    }
+                }
+            }
+
+            return modelType;
         }
     }
 }

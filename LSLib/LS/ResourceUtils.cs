@@ -40,12 +40,19 @@ namespace LSLib.LS
 
         public static Resource LoadResource(string inputPath, ResourceFormat format)
         {
-            var file = new FileStream(inputPath, FileMode.Open, FileAccess.Read);
+            using (var stream = new FileStream(inputPath, FileMode.Open, FileAccess.Read))
+            {
+                return LoadResource(stream, format);
+            }
+        }
+
+        public static Resource LoadResource(Stream stream, ResourceFormat format)
+        {
             switch (format)
             {
                 case ResourceFormat.LSX:
                     {
-                        using (var reader = new LSXReader(file))
+                        using (var reader = new LSXReader(stream))
                         {
                             return reader.Read();
                         }
@@ -53,7 +60,7 @@ namespace LSLib.LS
 
                 case ResourceFormat.LSB:
                     {
-                        using (var reader = new LSBReader(file))
+                        using (var reader = new LSBReader(stream))
                         {
                             return reader.Read();
                         }
@@ -61,7 +68,7 @@ namespace LSLib.LS
 
                 case ResourceFormat.LSF:
                     {
-                        using (var reader = new LSFReader(file))
+                        using (var reader = new LSFReader(stream))
                         {
                             return reader.Read();
                         }
@@ -69,7 +76,7 @@ namespace LSLib.LS
 
                 case ResourceFormat.LSJ:
                     {
-                        using (var reader = new LSJReader(file))
+                        using (var reader = new LSJReader(stream))
                         {
                             return reader.Read();
                         }

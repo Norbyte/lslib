@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
 using LSLib.Granny.GR2;
@@ -7,7 +8,8 @@ namespace LSLib.Granny.Model
 {
     public class DivinityBoneExtendedData
     {
-        public string UserDefinedProperties;
+        public String UserDefinedProperties;
+        public Int32 IsRigid;
     }
 
     public class Bone

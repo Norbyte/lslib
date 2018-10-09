@@ -543,28 +543,40 @@ namespace LSLib.Granny.Model
         public Int32 DataIsDeltas;
     }
 
+    public enum DivinityVertexUsage
+    {
+        Position = 1,
+        TexCoord = 2,
+        QTangent = 3,
+        BoneWeights = 6,
+        BoneIndices = 7,
+        Color = 8
+    };
+
+    public enum DivinityVertexFormat
+    {
+        Float32 = 0,
+        Float16 = 3,
+        NormalInt16 = 6,
+        NormalUInt8 = 8,
+        UInt8 = 9
+    };
+
     public class DivinityFormatDesc
     {
-        [Serialization(ArraySize = 1)]
-        public SByte[] Stream;
-        [Serialization(ArraySize = 1)]
-        public Byte[] Usage;
-        [Serialization(ArraySize = 1)]
-        public Byte[] UsageIndex;
-        [Serialization(ArraySize = 1)]
-        public Byte[] RefType;
-        [Serialization(ArraySize = 1)]
-        public Byte[] Format;
-        [Serialization(ArraySize = 1)]
-        public Byte[] Size;
+        public SByte Stream;
+        public Byte Usage;
+        public Byte UsageIndex;
+        public Byte RefType;
+        public Byte Format;
+        public Byte Size;
     }
 
     public class DivinityMeshProperties
     {
         [Serialization(ArraySize = 4)]
         public UInt32[] Flags;
-        [Serialization(ArraySize = 1)]
-        public Int32[] Lod;
+        public Int32 Lod;
         public List<DivinityFormatDesc> FormatDescs;
         [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
@@ -586,7 +598,7 @@ namespace LSLib.Granny.Model
                 UserMeshProperties = new DivinityMeshProperties
                 {
                     Flags = new UInt32[] { 0, 0, 0, 0 },
-                    Lod = new Int32[] { -1 },
+                    Lod = -1,
                     FormatDescs = null,
                     ExtendedData = null
                 },

@@ -21,6 +21,16 @@ namespace LSLib.Granny.Model
         DAE
     };
 
+    public enum DivinityModelInfoFormat
+    {
+        // No ExtendedInfo on bones and meshes
+        None,
+        // User the UserDefinedProperties string to add properties
+        UserDefinedProperties,
+        // Use LSM UserMeshProperties
+        LSM
+    };
+
     public class ExporterOptions
     {
         public string InputPath;
@@ -75,8 +85,9 @@ namespace LSLib.Granny.Model
         public bool ConformMeshBoneBindings = true;
         public bool ConformModels = true;
         public Dictionary<string, VertexDescriptor> VertexFormats = new Dictionary<string, VertexDescriptor>();
-        // Update the UserDefinedProperties property of meshes/bones (D:OS 2-specific)
-        public bool WriteUserDefinedProperties = true;
+        // Extended model info format to use when exporting to D:OS
+        public DivinityModelInfoFormat ModelInfoFormat = DivinityModelInfoFormat.None;
+        // Model flags to use when exporting
         public DivinityModelType ModelType = DivinityModelType.Undefined;
         // Remove unused metadata from the GR2 file
         public bool StripMetadata = true;

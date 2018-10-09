@@ -178,8 +178,135 @@ namespace LSLib.Granny.Model
             return exporterInfo;
         }
 
+        private List<DivinityFormatDesc> MakeVertexFormatDescs(VertexDescriptor format)
+        {
+            var formats = new List<DivinityFormatDesc>();
+            if (format.HasPosition)
+            {
+                formats.Add(new DivinityFormatDesc
+                {
+                    Usage = (byte)DivinityVertexUsage.Position,
+                    Format = (byte)DivinityVertexFormat.Float32,
+                    Size = 3
+                });
+            }
+
+            if (format.HasBoneWeights)
+            {
+                formats.Add(new DivinityFormatDesc
+                {
+                    Usage = (byte)DivinityVertexUsage.BoneWeights,
+                    Format = (byte)DivinityVertexFormat.NormalUInt8,
+                    Size = (byte)format.NumBoneInfluences
+                });
+
+                formats.Add(new DivinityFormatDesc
+                {
+                    Usage = (byte)DivinityVertexUsage.BoneIndices,
+                    Format = (byte)DivinityVertexFormat.UInt8,
+                    Size = (byte)format.NumBoneInfluences
+                });
+            }
+
+            if (format.DiffuseType != DiffuseColorType.None)
+            {
+                if (format.DiffuseType == DiffuseColorType.Byte4)
+                {
+                    for (int i = 0; i < format.DiffuseColors; i++)
+                    {
+                        formats.Add(new DivinityFormatDesc
+                        {
+                            Usage = (byte)DivinityVertexUsage.Color,
+                            UsageIndex = (byte)i,
+                            Format = (byte)DivinityVertexFormat.UInt8,
+                            Size = 4
+                        });
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Color format not supported in LSM: {format.DiffuseType}");
+                }
+            }
+
+            // TODO - handle QTangent
+            if (format.NormalType != NormalType.None)
+            {
+                if (format.DiffuseType == DiffuseColorType.Byte4)
+                {
+                    formats.Add(new DivinityFormatDesc
+                    {
+                        Usage = (byte)DivinityVertexUsage.QTangent,
+                        Format = (byte)DivinityVertexFormat.Float32,
+                        Size = 3
+                    });
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Normal format not supported in LSM: {format.NormalType}");
+                }
+            }
+
+            // TODO - handle QTangent
+            if (format.TextureCoordinateType != TextureCoordinateType.None)
+            {
+                if (format.TextureCoordinateType == TextureCoordinateType.Half2)
+                {
+                    formats.Add(new DivinityFormatDesc
+                    {
+                        Usage = (byte)DivinityVertexUsage.TexCoord,
+                        Format = (byte)DivinityVertexFormat.Float16,
+                        Size = 2
+                    });
+                }
+                else
+                {
+                    throw new InvalidOperationException($"UV format not supported in LSM: {format.TextureCoordinateType}");
+                }
+            }
+
+            return formats;
+        }
+
+        private DivinityMeshExtendedData MakeMeshExtendedData(Mesh mesh)
+        {
+            var extendedData = DivinityMeshExtendedData.Make();
+            var meshModelType = DivinityHelpers.DetermineModelType(mesh);
+
+            if (Options.ModelInfoFormat == DivinityModelInfoFormat.UserDefinedProperties)
+            {
+                extendedData.UserDefinedProperties =
+                   DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
+            }
+            else
+            {
+                extendedData.LSMVersion = 1;
+                extendedData.UserMeshProperties.Flags[0] |= 0x18;
+                switch (meshModelType)
+                {
+                    case DivinityModelType.Cloth:
+                        extendedData.UserMeshProperties.Flags[0] |= 0x02;
+                        break;
+
+                    case DivinityModelType.Rigid:
+                        extendedData.UserMeshProperties.Flags[0] |= 0x20;
+                        break;
+                }
+
+                extendedData.UserMeshProperties.FormatDescs = MakeVertexFormatDescs(mesh.VertexFormat);
+                // TODO - update LSM mesh properties
+            }
+
+            return extendedData;
+        }
+
         private void UpdateUserDefinedProperties(Root root)
         {
+            if (Options.ModelInfoFormat == DivinityModelInfoFormat.None)
+            {
+                return;
+            }
+
             var modelType = Options.ModelType;
             if (modelType == DivinityModelType.Undefined)
             {
@@ -187,7 +314,7 @@ namespace LSLib.Granny.Model
             }
 
             var userDefinedProperties = DivinityHelpers.ModelTypeToUserDefinedProperties(modelType);
-            
+
             if (root.Meshes != null)
             {
                 foreach (var mesh in root.Meshes)
@@ -204,22 +331,28 @@ namespace LSLib.Granny.Model
                     {
                         meshModelType = DivinityModelType.Normal;
                     }
-                    
-                    mesh.ExtendedData.UserDefinedProperties =
-                        DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
 
-                    // TODO - LSM info not supported yet
-                    mesh.ExtendedData.LSMVersion = 0;
-                    mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x18;
-                    switch (meshModelType)
+                    if (Options.ModelInfoFormat == DivinityModelInfoFormat.UserDefinedProperties)
                     {
-                        case DivinityModelType.Cloth:
-                            mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x02;
-                            break;
+                        mesh.ExtendedData.UserDefinedProperties =
+                           DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
+                    }
+                    else
+                    {
+                        mesh.ExtendedData.LSMVersion = 1;
+                        mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x18;
+                        switch (meshModelType)
+                        {
+                            case DivinityModelType.Cloth:
+                                mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x02;
+                                break;
 
-                        case DivinityModelType.Rigid:
-                            mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x20;
-                            break;
+                            case DivinityModelType.Rigid:
+                                mesh.ExtendedData.UserMeshProperties.Flags[0] |= 0x20;
+                                break;
+                        }
+
+                        // TODO - update LSM mesh properties
                     }
                 }
             }
@@ -236,8 +369,9 @@ namespace LSLib.Granny.Model
                             {
                                 bone.ExtendedData = new DivinityBoneExtendedData();
                             }
-
+                            
                             bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
+                            bone.ExtendedData.IsRigid = (modelType == DivinityModelType.Rigid) ? 1 : 0;
                         }
                     }
                 }
@@ -763,10 +897,7 @@ namespace LSLib.Granny.Model
             root.ZUp = ZUp;
             root.PostLoad();
 
-            if (Options.WriteUserDefinedProperties)
-            {
-                this.UpdateUserDefinedProperties(root);
-            }
+            this.UpdateUserDefinedProperties(root);
 
             return root;
         }

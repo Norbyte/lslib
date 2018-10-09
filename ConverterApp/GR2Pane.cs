@@ -231,12 +231,22 @@ namespace ConverterApp
                 settings.Is64Bit = false;
                 settings.AlternateSignature = false;
                 settings.VersionTag = Header.Tag_DOS;
+                settings.ModelInfoFormat = DivinityModelInfoFormat.None;
             }
             else
             {
                 settings.Is64Bit = true;
                 settings.AlternateSignature = true;
                 settings.VersionTag = Header.Tag_DOSEE;
+
+                if (game == Game.DivinityOriginalSinEE)
+                {
+                    settings.ModelInfoFormat = DivinityModelInfoFormat.UserDefinedProperties;
+                }
+                else
+                {
+                    settings.ModelInfoFormat = DivinityModelInfoFormat.LSM;
+                }
             }
 
             settings.ExportNormals = exportNormals.Checked;
