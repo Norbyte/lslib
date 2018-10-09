@@ -101,111 +101,50 @@ namespace LSLib.Granny.Model
 
         private static Vector4 MatrixToQTangent(Matrix3 m)
         {
-            float f = 1.0f;
+            float scale = 1.0f;
 
-            var dir =
-                (m[0, 0] * m[1, 1] * m[2, 2] +
-                m[0, 1] * m[1, 2] * m[2, 0] +
-                m[0, 2] * m[1, 0] * m[2, 1]) -
-                (m[0, 2] * m[1, 1] * m[2, 0] +
-                m[0, 1] * m[1, 0] * m[2, 2] +
-                m[0, 0] * m[1, 2] * m[2, 1]);
-            if (dir < 0.0)
+            // Flip y axis in case the tangent frame encodes a reflection
+            if (m.Determinant < 0.0f)
             {
-                f = -1.0f;
+                scale = -1.0f;
                 m.Row2 = -m.Row2;
             }
 
-            float t = m[0, 0] + (m[1, 1] + m[2, 2]);
-            Vector4 r;
+            var quat = Quaternion.FromMatrix(m);
 
-            if (t > 2.9999999f)
+            // Make sure we don't end up with 0 as w component
+            const float threshold = 0.000001f;
+            if (quat.W <= threshold)
             {
-                r = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
-            }
-            else if (t > 0.0000001f)
-            {
-                float s = (float)Math.Sqrt(1.0f + t) * 2.0f;
-                r = new Vector4(
-                    (m[1, 2] - m[2, 1]) / s, 
-                    (m[2, 0] - m[0, 2]) / s, 
-                    (m[0, 1] - m[1, 0]) / s,
-                    s * 0.25f);
-            }
-            else if ((m[0, 0] > m[1, 1]) && (m[0, 0] > m[2, 2]))
-            {
-                float s = (float)Math.Sqrt(1.0f + m[0, 0] - m[1, 1] + m[2, 2]) * 2.0f;
-                r = new Vector4(
-                    s * 0.25f, 
-                    (m[1, 0] - m[0, 1]) / s, 
-                    (m[2, 0] - m[0, 2]) / s, 
-                    (m[0, 2] - m[2, 1]) / s);
-            }
-            else if (m[1, 1] > m[2, 2])
-            {
-                float s = (float)Math.Sqrt(1.0f + m[1, 1] - m[0, 0] + m[2, 2]) * 2.0f;
-                r = new Vector4(
-                    (m[1, 0] + m[0, 1]) / s,
-                    s * 0.25f,
-                    (m[2, 1] + m[1, 2]) / s,
-                    (m[2, 0] - m[0, 2]) / s);
-            }
-            else
-            {
-                float s = (float)Math.Sqrt(1.0f + m[2, 2] - m[0, 0] + m[1, 1]) * 2.0f;
-                r = new Vector4(
-                    (m[2, 0] + m[0, 2]) / s,
-                    (m[2, 1] + m[1, 2]) / s,
-                    s * 0.25f,
-                    (m[0, 1] - m[1, 0]) / s);
-            }
-
-            r.Normalize();
-
-            const float threshold = 1.0f / 32767.0f;
-
-            if (r.W <= threshold)
-            {
-                var mul = (float)Math.Sqrt(1.0f - (threshold * threshold));
-                r = new Vector4(
-                    r.X * mul,
-                    r.Y * mul,
-                    r.Z * mul,
-                    (r.W > 0.0f) ? threshold : -threshold
+                var renormalization = (float)Math.Sqrt(1.0f - (threshold * threshold));
+                quat = new Quaternion(
+                    quat.X * renormalization,
+                    quat.Y * renormalization,
+                    quat.Z * renormalization,
+                    (quat.W > 0.0f) ? threshold : -threshold
                 );
             }
-
-            if (((f < 0.0f) && (r.W >= 0.0f)) || ((f >= 0.0f) && (r.W < 0.0f)))
+            
+            // Encode reflection into quaternion's W element by making sign of W negative
+            // if Y axis needs to be flipped, positive otherwise
+            if ((scale < 0.0f && quat.W >= 0.0f) 
+                || (scale >= 0.0f && quat.W < 0.0f))
             {
-                r = -r;
+                quat = new Quaternion(-quat.X, -quat.Y, -quat.Z, -quat.W);
             }
 
-            return r;
+            return new Vector4(quat.X, quat.Y, quat.Z, quat.W);
         }
 
-        private static Matrix3 QTangentToMatrix(Vector4 qTangent)
+        private static Matrix3 QTangentToMatrix(Vector4 q)
         {
-            var q = qTangent.Normalized();
-            float qx2 = q.X + q.X,
-                  qy2 = q.Y + q.Y,
-                  qz2 = q.Z + q.Z,
-                  qxqx2 = q.X * qx2,
-                  qxqy2 = q.X * qy2,
-                  qxqz2 = q.X * qz2,
-                  qxqw2 = q.W * qx2,
-                  qyqy2 = q.Y * qy2,
-                  qyqz2 = q.Y * qz2,
-                  qyqw2 = q.W * qy2,
-                  qzqz2 = q.Z * qz2,
-                  qzqw2 = q.W * qz2;
             Matrix3 m = new Matrix3(
-                1.0f - (qyqy2 + qzqz2), qxqy2 + qzqw2, qxqz2 - qyqw2,
-                qxqy2 - qzqw2, 1.0f - (qxqx2 + qzqz2), qyqz2 + qxqw2,
-                qxqz2 + qyqw2, qyqz2 - qxqw2, 1.0f - (qxqx2 + qyqy2)
+                1.0f - 2.0f * (q.Y * q.Y + q.Z * q.Z), 2 * (q.X * q.Y + q.W * q.Z), 2 * (q.X * q.Z - q.W * q.Y),
+                2.0f * (q.X * q.Y - q.W * q.Z), 1 - 2 * (q.X * q.X + q.Z * q.Z), 2 * (q.Y * q.Z + q.W * q.X),
+                0.0f, 0.0f, 0.0f
             );
-
-            var row1 = Vector3.Cross(m.Row0, m.Row1).Normalized() * ((q.W < 0.0f) ? -1.0f : 1.0f);
-            m.Row1 = row1;
+            
+            m.Row2 = Vector3.Cross(m.Row0, m.Row1) * ((q.W < 0.0f) ? -1.0f : 1.0f);
             return m;
         }
 
@@ -311,7 +250,7 @@ namespace LSLib.Granny.Model
 
         public static void WriteQTangent(WritableSection section, Vector3 normal, Vector3 tangent, Vector3 binormal)
         {
-            Matrix3 normals = new Matrix3(normal, tangent, binormal);
+            Matrix3 normals = new Matrix3(tangent, binormal, normal);
             var qTangent = MatrixToQTangent(normals);
             WriteBinormalShortVector4(section, qTangent);
         }
@@ -422,9 +361,9 @@ namespace LSLib.Granny.Model
                 case NormalType.QTangent:
                     {
                         var qTangent = ReadQTangent(reader);
-                        v.Normal = qTangent.Row0;
+                        v.Normal = qTangent.Row2;
                         v.Tangent = qTangent.Row1;
-                        v.Binormal = qTangent.Row2;
+                        v.Binormal = qTangent.Row0;
                         break;
                     }
             }
