@@ -377,7 +377,14 @@ namespace LSLib.Granny.Model
                     if (!inputSource.FloatParams.TryGetValue("R", out r) ||
                         !inputSource.FloatParams.TryGetValue("G", out g) ||
                         !inputSource.FloatParams.TryGetValue("B", out b))
-                        throw new ParsingException("Color input source " + input.source + " must have R, G, B float attributes");
+                    {
+                        if (!inputSource.FloatParams.TryGetValue("X", out r) ||
+                            !inputSource.FloatParams.TryGetValue("Y", out g) ||
+                            !inputSource.FloatParams.TryGetValue("Z", out b))
+                        {
+                            throw new ParsingException("Color input source " + input.source + " must have R, G, B float attributes");
+                        }
+                    }
 
                     var colors = new List<Vector4>();
                     Colors.Add(colors);
