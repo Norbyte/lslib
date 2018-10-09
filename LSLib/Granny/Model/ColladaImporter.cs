@@ -123,9 +123,9 @@ namespace LSLib.Granny.Model
             ZUp = false;
             var toolInfo = new ArtToolInfo();
             toolInfo.FromArtToolName = "Unknown";
-            toolInfo.ArtToolMajorRevision = 0;
-            toolInfo.ArtToolMinorRevision = 1;
-            toolInfo.ArtToolPointerSize = 32;
+            toolInfo.ArtToolMajorRevision = 1;
+            toolInfo.ArtToolMinorRevision = 0;
+            toolInfo.ArtToolPointerSize = Options.Is64Bit ? 64 : 32;
             toolInfo.Origin = new float[] { 0, 0, 0 };
             toolInfo.SetYUp();
 
