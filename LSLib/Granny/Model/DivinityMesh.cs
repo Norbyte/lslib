@@ -258,6 +258,8 @@ namespace LSLib.Granny.Model
 
             if (format == DivinityModelInfoFormat.UserDefinedProperties)
             {
+                extendedData.LSMVersion = 0;
+                extendedData.UserMeshProperties = null;
                 extendedData.UserDefinedProperties =
                    DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
             }
