@@ -90,7 +90,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            var numColors = vertices[0].Format.DiffuseColors;
+            var numColors = vertices[0].Format.ColorMaps;
             for (var color = 0; color < numColors; color++)
             {
                 var colorMap = new Dictionary<int, int>();
@@ -145,7 +145,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            var numColors = vertices[0].Format.DiffuseColors;
+            var numColors = vertices[0].Format.ColorMaps;
             for (var color = 0; color < numColors; color++)
             {
                 var colorMap = new Dictionary<int, int>();

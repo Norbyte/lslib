@@ -302,29 +302,30 @@ namespace LSLib.Granny.Model
                 case NormalType.QTangent: break; // Binormal saved into QTangent
             }
 
-            switch (d.DiffuseType)
+            if (d.ColorMaps > 0)
             {
-                case DiffuseColorType.None: break;
-                case DiffuseColorType.Float4: WriteVector4(section, v.DiffuseColor0); break;
-                case DiffuseColorType.Byte4: WriteNormalByteVector4(section, v.DiffuseColor0); break;
+                for (var i = 0; i < d.ColorMaps; i++)
+                {
+                    var color = v.GetColor(i);
+                    switch (d.ColorMapType)
+                    {
+                        case ColorMapType.Float4: WriteVector4(section, color); break;
+                        case ColorMapType.Byte4: WriteNormalByteVector4(section, color); break;
+                        default: throw new Exception($"Cannot unserialize color map: Unsupported format {d.ColorMapType}");
+                    }
+                }
             }
 
             if (d.TextureCoordinates > 0)
             {
-                switch (d.TextureCoordinateType)
+                for (var i = 0; i < d.TextureCoordinates; i++)
                 {
-                    case TextureCoordinateType.None: break;
-                    case TextureCoordinateType.Float2: WriteVector2(section, v.TextureCoordinates0); break;
-                    case TextureCoordinateType.Half2: WriteHalfVector2(section, v.TextureCoordinates0); break;
-                }
-
-                if (d.TextureCoordinates > 1)
-                {
+                    var uv = v.GetUV(i);
                     switch (d.TextureCoordinateType)
                     {
-                        case TextureCoordinateType.None: break;
-                        case TextureCoordinateType.Float2: WriteVector2(section, v.TextureCoordinates1); break;
-                        case TextureCoordinateType.Half2: WriteHalfVector2(section, v.TextureCoordinates1); break;
+                        case TextureCoordinateType.Float2: WriteVector2(section, uv); break;
+                        case TextureCoordinateType.Half2: WriteHalfVector2(section, uv); break;
+                        default: throw new Exception($"Cannot serialize UV map: Unsupported format {d.TextureCoordinateType}");
                     }
                 }
             }
@@ -384,30 +385,35 @@ namespace LSLib.Granny.Model
                 case NormalType.QTangent: break; // Binormal read from QTangent
             }
 
-            switch (d.DiffuseType)
+            if (d.ColorMaps > 0)
             {
-                case DiffuseColorType.None: break;
-                case DiffuseColorType.Float4: v.DiffuseColor0 = ReadVector4(reader); break;
-                case DiffuseColorType.Byte4: v.DiffuseColor0 = ReadNormalByteVector4(reader); break;
+                for (var i = 0; i < d.ColorMaps; i++)
+                {
+                    Vector4 color;
+                    switch (d.ColorMapType)
+                    {
+                        case ColorMapType.Float4: color = ReadVector4(reader); break;
+                        case ColorMapType.Byte4: color = ReadNormalByteVector4(reader); break;
+                        default: throw new Exception($"Cannot unserialize color map: Unsupported format {d.ColorMapType}");
+                    }
+
+                    v.SetColor(i, color);
+                }
             }
 
             if (d.TextureCoordinates > 0)
             {
-                switch (d.TextureCoordinateType)
+                for (var i = 0; i < d.ColorMaps; i++)
                 {
-                    case TextureCoordinateType.None: break;
-                    case TextureCoordinateType.Float2: v.TextureCoordinates0 = ReadVector2(reader); break;
-                    case TextureCoordinateType.Half2: v.TextureCoordinates0 = ReadHalfVector2(reader); break;
-                }
-
-                if (d.TextureCoordinates > 1)
-                {
+                    Vector2 uv;
                     switch (d.TextureCoordinateType)
                     {
-                        case TextureCoordinateType.None: break;
-                        case TextureCoordinateType.Float2: v.TextureCoordinates1 = ReadVector2(reader); break;
-                        case TextureCoordinateType.Half2: v.TextureCoordinates1 = ReadHalfVector2(reader); break;
+                        case TextureCoordinateType.Float2: uv = ReadVector2(reader); break;
+                        case TextureCoordinateType.Half2: uv = ReadHalfVector2(reader); break;
+                        default: throw new Exception($"Cannot unserialize UV map: Unsupported format {d.TextureCoordinateType}");
                     }
+
+                    v.SetUV(i, uv);
                 }
             }
         }
@@ -520,12 +526,12 @@ namespace LSLib.Granny.Model
                 case NormalType.QTangent: break; // Binormal saved into QTangent
             }
 
-            for (int i = 0; i < desc.DiffuseColors; i++)
+            for (int i = 0; i < desc.ColorMaps; i++)
             {
-                switch (desc.DiffuseType)
+                switch (desc.ColorMapType)
                 {
-                    case DiffuseColorType.Float4: AddMember(defn, "DiffuseColor" + i.ToString(), MemberType.Real32, 4); break;
-                    case DiffuseColorType.Byte4: AddMember(defn, "DiffuseColor" + i.ToString(), MemberType.NormalUInt8, 4); break;
+                    case ColorMapType.Float4: AddMember(defn, "DiffuseColor" + i.ToString(), MemberType.Real32, 4); break;
+                    case ColorMapType.Byte4: AddMember(defn, "DiffuseColor" + i.ToString(), MemberType.NormalUInt8, 4); break;
                 }
             }
 

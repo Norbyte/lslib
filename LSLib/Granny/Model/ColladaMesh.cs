@@ -471,8 +471,8 @@ namespace LSLib.Granny.Model
                         desc.TextureCoordinates++;
                         break;
                     case "COLOR":
-                        desc.DiffuseType = DiffuseColorType.Float4;
-                        desc.DiffuseColors++;
+                        desc.ColorMapType = ColorMapType.Float4;
+                        desc.ColorMaps++;
                         break;
                 }
             }
@@ -501,8 +501,8 @@ namespace LSLib.Granny.Model
                 NormalType = InputVertexType.NormalType,
                 TangentType = InputVertexType.TangentType,
                 BinormalType = InputVertexType.BinormalType,
-                DiffuseType = InputVertexType.DiffuseType,
-                DiffuseColors = InputVertexType.DiffuseColors,
+                ColorMapType = InputVertexType.ColorMapType,
+                ColorMaps = InputVertexType.ColorMaps,
                 TextureCoordinateType = InputVertexType.TextureCoordinateType,
                 TextureCoordinates = InputVertexType.TextureCoordinates
             };
@@ -618,9 +618,9 @@ namespace LSLib.Granny.Model
                     OutputVertexType.TextureCoordinateType = TextureCoordinateType.Half2;
                 }
 
-                if (OutputVertexType.DiffuseType == DiffuseColorType.Float4)
+                if (OutputVertexType.ColorMapType == ColorMapType.Float4)
                 {
-                    OutputVertexType.DiffuseType = DiffuseColorType.Byte4;
+                    OutputVertexType.ColorMapType = ColorMapType.Byte4;
                 }
             }
         }

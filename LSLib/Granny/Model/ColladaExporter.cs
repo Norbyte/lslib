@@ -190,7 +190,7 @@ namespace LSLib.Granny.Model
             // Vertex colors
             if (Options.ExportColors)
             {
-                for (var colorIndex = 0; colorIndex < desc.DiffuseColors; colorIndex++)
+                for (var colorIndex = 0; colorIndex < desc.ColorMaps; colorIndex++)
                 {
                     var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedMesh.Name, colorIndex);
                     AddInput(colors, null, "COLOR", (ulong)colorIndex);

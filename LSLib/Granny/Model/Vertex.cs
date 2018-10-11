@@ -41,7 +41,7 @@ namespace LSLib.Granny.Model
         QTangent
     };
 
-    public enum DiffuseColorType
+    public enum ColorMapType
     {
         None,
         Float4,
@@ -66,8 +66,8 @@ namespace LSLib.Granny.Model
         public NormalType NormalType = NormalType.None;
         public NormalType TangentType = NormalType.None;
         public NormalType BinormalType = NormalType.None;
-        public DiffuseColorType DiffuseType = DiffuseColorType.None;
-        public int DiffuseColors = 0;
+        public ColorMapType ColorMapType = ColorMapType.None;
+        public int ColorMaps = 0;
         public TextureCoordinateType TextureCoordinateType = TextureCoordinateType.None;
         public int TextureCoordinates = 0;
         private Type VertexType;
@@ -110,9 +110,9 @@ namespace LSLib.Granny.Model
                 names.Add("Binormal");
             }
 
-            if (DiffuseType != DiffuseColorType.None)
+            if (ColorMapType != ColorMapType.None)
             {
-                for (int i = 0; i < DiffuseColors; i++)
+                for (int i = 0; i < ColorMaps; i++)
                 {
                     names.Add("DiffuseColor_" + i.ToString());
                 }
@@ -194,19 +194,19 @@ namespace LSLib.Granny.Model
                     break;
             }
 
-            for (var i = 0; i < DiffuseColors; i++)
+            for (var i = 0; i < ColorMaps; i++)
             {
-                switch (DiffuseType)
+                switch (ColorMapType)
                 {
-                    case DiffuseColorType.None:
+                    case ColorMapType.None:
                         break;
 
-                    case DiffuseColorType.Float4:
+                    case ColorMapType.Float4:
                         vertexFormat += "D";
                         attributeCounts += "4";
                         break;
 
-                    case DiffuseColorType.Byte4:
+                    case ColorMapType.Byte4:
                         vertexFormat += "CD";
                         attributeCounts += "4";
                         break;
@@ -252,6 +252,9 @@ namespace LSLib.Granny.Model
     [StructSerialization(TypeSelector = typeof(VertexDefinitionSelector))]
     public class Vertex
     {
+        public const int MaxUVs = 4;
+        public const int MaxColors = 2;
+
         public VertexDescriptor Format;
         public Vector3 Position;
         public BoneWeight BoneWeights;
@@ -259,46 +262,57 @@ namespace LSLib.Granny.Model
         public Vector3 Normal;
         public Vector3 Tangent;
         public Vector3 Binormal;
-        public Vector4 DiffuseColor0;
+        public Vector4 Color0;
+        public Vector4 Color1;
         public Vector2 TextureCoordinates0;
         public Vector2 TextureCoordinates1;
+        public Vector2 TextureCoordinates2;
+        public Vector2 TextureCoordinates3;
 
         protected Vertex() { }
 
         public Vector2 GetUV(int index)
         {
-            if (index == 0)
-                return TextureCoordinates0;
-            else if (index == 1)
-                return TextureCoordinates1;
-            else
-                throw new ArgumentException("At most 2 UV sets are supported.");
+            switch (index)
+            {
+                case 0: return TextureCoordinates0;
+                case 1: return TextureCoordinates1;
+                case 2: return TextureCoordinates2;
+                case 3: return TextureCoordinates3;
+                default: throw new ArgumentException($"At most {MaxUVs} UVs are supported.");
+            }
         }
 
         public void SetUV(int index, Vector2 uv)
         {
-            if (index == 0)
-                TextureCoordinates0 = uv;
-            else if (index == 1)
-                TextureCoordinates1 = uv;
-            else
-                throw new ArgumentException("At most 2 UV sets are supported.");
+            switch (index)
+            {
+                case 0: TextureCoordinates0 = uv; break;
+                case 1: TextureCoordinates1 = uv; break;
+                case 2: TextureCoordinates2 = uv; break;
+                case 3: TextureCoordinates3 = uv; break;
+                default: throw new ArgumentException($"At most {MaxUVs} UVs are supported.");
+            }
         }
 
         public Vector4 GetColor(int index)
         {
-            if (index == 0)
-                return DiffuseColor0;
-            else
-                throw new ArgumentException("At most 1 diffuse color set is supported.");
+            switch (index)
+            {
+                case 0: return Color0;
+                case 1: return Color1;
+                default: throw new ArgumentException($"At most {MaxColors} color maps are supported.");
+            }
         }
 
         public void SetColor(int index, Vector4 color)
         {
-            if (index == 0)
-                DiffuseColor0 = color;
-            else
-                throw new ArgumentException("At most 1 diffuse color set is supported.");
+            switch (index)
+            {
+                case 0: Color0 = color; break;
+                case 1: Color1 = color; break;
+                default: throw new ArgumentException($"At most {MaxColors} color maps are supported.");
+            }
         }
 
         public Vertex Clone()
@@ -393,7 +407,7 @@ namespace LSLib.Granny.Model
 
                         if (member.ArraySize != 2 && member.ArraySize != 4)
                         {
-                            throw new Exception("Unsupported bone influence count");
+                            throw new Exception($"Unsupported bone influence count: {member.ArraySize}");
                         }
 
                         desc.HasBoneWeights = true;
@@ -418,7 +432,7 @@ namespace LSLib.Granny.Model
                         }
                         else
                         {
-                            throw new Exception("Unsupported vertex normal format");
+                            throw new Exception($"Unsupported normal format: {member.Type}, {member.ArraySize}");
                         }
                         break;
 
@@ -431,7 +445,7 @@ namespace LSLib.Granny.Model
                         }
                         else
                         {
-                            throw new Exception("Unsupported QTangent format");
+                            throw new Exception($"Unsupported QTangent format: {member.Type}, {member.ArraySize}");
                         }
                         break;
 
@@ -446,7 +460,7 @@ namespace LSLib.Granny.Model
                         }
                         else
                         {
-                            throw new Exception("Unsupported vertex tangent format");
+                            throw new Exception($"Unsupported tangent format: {member.Type}, {member.ArraySize}");
                         }
                         break;
 
@@ -461,28 +475,32 @@ namespace LSLib.Granny.Model
                         }
                         else
                         {
-                            throw new Exception("Unsupported vertex binormal format");
+                            throw new Exception($"Unsupported binormal format: {member.Type}, {member.ArraySize}");
                         }
                         break;
 
                     case "DiffuseColor0":
-                        desc.DiffuseColors = 1;
+                    case "DiffuseColor1":
+                        desc.ColorMaps++;
                         if (member.Type == MemberType.Real32 && member.ArraySize == 4)
                         {
-                            desc.DiffuseType = DiffuseColorType.Float4;
+                            desc.ColorMapType = ColorMapType.Float4;
                         }
                         else if (member.Type == MemberType.NormalUInt8 && member.ArraySize == 4)
                         {
-                            desc.DiffuseType = DiffuseColorType.Byte4;
+                            desc.ColorMapType = ColorMapType.Byte4;
                         }
                         else
                         {
-                            throw new Exception("Unsupported vertex diffuse color type");
+                            throw new Exception($"Unsupported color map type: {member.Type}, {member.ArraySize}");
                         }
                         break;
 
                     case "TextureCoordinates0":
-                        desc.TextureCoordinates = 1;
+                    case "TextureCoordinates1":
+                    case "TextureCoordinates2":
+                    case "TextureCoordinates3":
+                        desc.TextureCoordinates++;
                         if (member.Type == MemberType.Real32 && member.ArraySize == 2)
                         {
                             desc.TextureCoordinateType = TextureCoordinateType.Float2;
@@ -493,12 +511,8 @@ namespace LSLib.Granny.Model
                         }
                         else
                         {
-                            throw new Exception("Unsupported vertex binormal format");
+                            throw new Exception($"Unsupported texture coordinate format: {member.Type}, {member.ArraySize}");
                         }
-                        break;
-
-                    case "TextureCoordinates1":
-                        desc.TextureCoordinates = 2;
                         break;
 
                     default:

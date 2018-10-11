@@ -73,18 +73,18 @@ namespace LSLib.Granny.Model
                 formats.Add(Make(DivinityVertexUsage.BoneIndices, DivinityVertexFormat.UInt8, (byte)format.NumBoneInfluences));
             }
 
-            if (format.DiffuseType != DiffuseColorType.None)
+            if (format.ColorMapType != ColorMapType.None)
             {
-                if (format.DiffuseType == DiffuseColorType.Byte4)
+                if (format.ColorMapType == ColorMapType.Byte4)
                 {
-                    for (int i = 0; i < format.DiffuseColors; i++)
+                    for (int i = 0; i < format.ColorMaps; i++)
                     {
                         formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexFormat.UInt8, 4, (byte)i));
                     }
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Color format not supported in LSM: {format.DiffuseType}");
+                    throw new InvalidOperationException($"Color format not supported in LSM: {format.ColorMapType}");
                 }
             }
 
@@ -219,7 +219,7 @@ namespace LSLib.Granny.Model
                 return UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
             }
             // Only mark model as cloth if it has colored vertices
-            else if (mesh.VertexFormat.DiffuseColors > 0)
+            else if (mesh.VertexFormat.ColorMaps > 0)
             {
                 return DivinityModelType.Cloth;
             }
