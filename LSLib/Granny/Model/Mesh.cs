@@ -352,6 +352,17 @@ namespace LSLib.Granny.Model
                 vertex.Transform(transformation);
             }
         }
+
+        public void Flip()
+        {
+            foreach (var vertex in Vertices)
+            {
+                vertex.Position.X = -vertex.Position.X;
+                vertex.Normal = new Vector3(-vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z);
+                vertex.Tangent = new Vector3(-vertex.Tangent.X, vertex.Tangent.Y, vertex.Tangent.Z);
+                vertex.Binormal = new Vector3(-vertex.Binormal.X, vertex.Binormal.Y, vertex.Binormal.Z);
+            }
+        }
     }
 
     public class TriTopologyGroup
@@ -403,6 +414,31 @@ namespace LSLib.Granny.Model
         [Serialization(Section = SectionType.DeformableIndex, Prototype = typeof(TriIndex), Kind = SerializationKind.UserMember, Serializer = typeof(Int32ListSerializer))]
         public List<Int32> TriangleToBoneIndices;
         public List<TriAnnotationSet> TriAnnotationSets;
+        
+        public void ChangeWindingOrder()
+        {
+            if (Indices != null)
+            {
+                var tris = Indices.Count / 3;
+                for (var i = 0; i < tris; i++)
+                {
+                    var v1 = Indices[i * 3 + 1];
+                    Indices[i * 3 + 1] = Indices[i * 3 + 2];
+                    Indices[i * 3 + 2] = v1;
+                }
+            }
+
+            if (Indices16 != null)
+            {
+                var tris = Indices16.Count / 3;
+                for (var i = 0; i < tris; i++)
+                {
+                    var v1 = Indices16[i * 3 + 1];
+                    Indices16[i * 3 + 1] = Indices16[i * 3 + 2];
+                    Indices16[i * 3 + 2] = v1;
+                }
+            }
+        }
 
         public void PostLoad()
         {

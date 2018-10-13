@@ -33,6 +33,11 @@ namespace LSLib.Granny.GR2
         private HashSet<StructReference> DebugPendingResolve = new HashSet<StructReference>();
 #endif
 
+        public UInt32 Tag
+        {
+            get { return Header.tag; }
+        }
+
         public GR2Reader(Stream stream)
         {
             this.InputStream = stream;

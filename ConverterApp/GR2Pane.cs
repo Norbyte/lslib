@@ -246,6 +246,7 @@ namespace ConverterApp
                 else
                 {
                     settings.ModelInfoFormat = DivinityModelInfoFormat.LSM;
+                    settings.FlipMesh = true;
                 }
             }
 

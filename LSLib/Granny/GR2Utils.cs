@@ -48,7 +48,7 @@ namespace LSLib.Granny
                         var root = new Root();
                         var gr2 = new GR2Reader(fs);
                         gr2.Read(root);
-                        root.PostLoad();
+                        root.PostLoad(gr2.Tag);
                         return root;
                     }
                 }

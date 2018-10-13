@@ -91,6 +91,8 @@ namespace LSLib.Granny.Model
         public DivinityModelType ModelType = DivinityModelType.Undefined;
         // Remove unused metadata from the GR2 file
         public bool StripMetadata = true;
+        // Flip mesh on X axis
+        public bool FlipMesh = false;
     }
 
 
@@ -105,7 +107,7 @@ namespace LSLib.Granny.Model
             FileStream fs = new FileStream(inPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
             var gr2 = new LSLib.Granny.GR2.GR2Reader(fs);
             gr2.Read(root);
-            root.PostLoad();
+            root.PostLoad(gr2.Tag);
             fs.Close();
             fs.Dispose();
             return root;
@@ -661,6 +663,12 @@ namespace LSLib.Granny.Model
             if (Options.BuildDummySkeleton && Root.Models != null)
             {
                 GenerateDummySkeleton(Root);
+            }
+
+            if (Options.OutputFormat == ExportFormat.GR2 && 
+                Options.FlipMesh)
+            {
+                Root.Flip();
             }
 
             // This option should be handled after everything else, as it converts Indices

@@ -400,6 +400,11 @@ namespace LSLib.Granny.GR2
         public const UInt32 Tag_DOSEE = 0x80000039;
 
         /// <summary>
+        /// D:OS:2 DE LSM version tag
+        /// </summary>
+        public const UInt32 Tag_DOS2DE = 0xE57F0039;
+
+        /// <summary>
         /// Granny file format we support for writing (currently only version 7)
         /// </summary>
         public const UInt32 Version = 7;

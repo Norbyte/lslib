@@ -62,8 +62,32 @@ namespace LSLib.Granny.Model
             ZUp = false;
         }
 
-        public void PostLoad()
+        public void Flip()
         {
+            if (VertexDatas != null)
+            {
+                foreach (var vertexData in VertexDatas)
+                {
+                    vertexData.Flip();
+                }
+            }
+
+            if (TriTopologies != null)
+            {
+                foreach (var topology in TriTopologies)
+                {
+                    topology.ChangeWindingOrder();
+                }
+            }
+        }
+
+        public void PostLoad(UInt32 tag)
+        {
+            if (tag == Header.Tag_DOS2DE)
+            {
+                Flip();
+            }
+
             if (VertexDatas != null)
             {
                 foreach (var vertexData in VertexDatas)
