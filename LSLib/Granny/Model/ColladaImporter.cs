@@ -739,7 +739,7 @@ namespace LSLib.Granny.Model
             if (root.Skeletons.Count > 0)
                 root.Skeletons[0].UpdateInverseWorldTransforms();
             root.ZUp = ZUp;
-            root.PostLoad();
+            root.PostLoad(GR2.Header.DefaultTag);
 
             this.UpdateUserDefinedProperties(root);
 

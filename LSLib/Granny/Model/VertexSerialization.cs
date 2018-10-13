@@ -403,7 +403,7 @@ namespace LSLib.Granny.Model
 
             if (d.TextureCoordinates > 0)
             {
-                for (var i = 0; i < d.ColorMaps; i++)
+                for (var i = 0; i < d.TextureCoordinates; i++)
                 {
                     Vector2 uv;
                     switch (d.TextureCoordinateType)
