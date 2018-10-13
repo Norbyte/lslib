@@ -16,6 +16,11 @@ namespace LSLib.Granny
         private List<Single> Times;
         private Bone Bone;
 
+        public Single Duration
+        {
+            get { return Times.Last(); }
+        }
+
         private void ImportSources()
         {
             Sources = new Dictionary<String, ColladaSource>();

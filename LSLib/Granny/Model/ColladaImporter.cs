@@ -526,22 +526,29 @@ namespace LSLib.Granny.Model
 
         public void ImportAnimations(IEnumerable<animation> anims, Root root, Skeleton skeleton)
         {
-            var animation = new Animation();
-            animation.Name = "Default";
-            animation.TimeStep = 0.016667f; // 60 FPS
-            animation.Oversampling = 1;
-            animation.DefaultLoopCount = 1;
-            animation.Flags = 1;
+            var trackGroup = new TrackGroup
+            {
+                Name = skeleton.Name,
+                TransformTracks = new List<TransformTrack>(),
+                InitialPlacement = new Transform(),
+                AccumulationFlags = 2,
+                LoopTranslation = new float[] { 0, 0, 0 }
+            };
 
-            var trackGroup = new TrackGroup();
-            trackGroup.Name = skeleton.Name;
-            trackGroup.TransformTracks = new List<TransformTrack>();
-            trackGroup.InitialPlacement = new Transform();
-            trackGroup.AccumulationFlags = 2;
-            trackGroup.LoopTranslation = new float[] { 0, 0, 0 };
+            var animation = new Animation
+            {
+                Name = "Default",
+                TimeStep = 0.016667f, // 60 FPS
+                Oversampling = 1,
+                DefaultLoopCount = 1,
+                Flags = 1,
+                Duration = .0f,
+                TrackGroups = new List<TrackGroup> { trackGroup }
+            };
+
             foreach (var colladaTrack in anims)
             {
-                ImportAnimation(colladaTrack, trackGroup, skeleton);
+                ImportAnimation(colladaTrack, animation, trackGroup, skeleton);
             }
 
             if (trackGroup.TransformTracks.Count > 0)
@@ -549,43 +556,37 @@ namespace LSLib.Granny.Model
                 // Reorder transform tracks in lexicographic order
                 // This is needed by Granny; otherwise it'll fail to find animation tracks
                 trackGroup.TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
-
-                animation.Duration =
-                    Math.Max(
-                        trackGroup.TransformTracks.Max(t => t.OrientationCurve.CurveData.Duration()),
-                        Math.Max(
-                            trackGroup.TransformTracks.Max(t => t.PositionCurve.CurveData.Duration()),
-                            trackGroup.TransformTracks.Max(t => t.ScaleShearCurve.CurveData.Duration())
-                        )
-                    );
-                animation.TrackGroups = new List<TrackGroup> { trackGroup };
-
+                
                 root.TrackGroups.Add(trackGroup);
                 root.Animations.Add(animation);
             }
         }
 
-        public void ImportAnimation(animation anim, TrackGroup trackGroup, Skeleton skeleton)
+        public void ImportAnimation(animation colladaAnim, Animation animation, TrackGroup trackGroup, Skeleton skeleton)
         {
             var childAnims = 0;
-            foreach (var item in anim.Items)
+            foreach (var item in colladaAnim.Items)
             {
                 if (item is animation)
                 {
-                    ImportAnimation(item as animation, trackGroup, skeleton);
+                    ImportAnimation(item as animation, animation, trackGroup, skeleton);
                     childAnims++;
                 }
             }
 
-            if (childAnims < anim.Items.Length)
+            var duration = .0f;
+            if (childAnims < colladaAnim.Items.Length)
             {
-                ColladaAnimation collada = new ColladaAnimation();
-                if (collada.ImportFromCollada(anim, skeleton))
+                ColladaAnimation importAnim = new ColladaAnimation();
+                if (importAnim.ImportFromCollada(colladaAnim, skeleton))
                 {
-                    var track = collada.MakeTrack();
+                    duration = Math.Max(duration, importAnim.Duration);
+                    var track = importAnim.MakeTrack();
                     trackGroup.TransformTracks.Add(track);
                 }
             }
+
+            animation.Duration = Math.Max(animation.Duration, duration);
         }
 
         public Root Import(string inputPath)
