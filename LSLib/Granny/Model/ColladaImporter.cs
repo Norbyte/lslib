@@ -548,7 +548,7 @@ namespace LSLib.Granny.Model
             {
                 // Reorder transform tracks in lexicographic order
                 // This is needed by Granny; otherwise it'll fail to find animation tracks
-                trackGroup.TransformTracks.Sort((t1, t2) => t1.Name.CompareTo(t2.Name));
+                trackGroup.TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
 
                 animation.Duration =
                     Math.Max(
