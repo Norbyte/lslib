@@ -509,7 +509,6 @@ namespace LSLib.Granny.Model
             if (notInfluenced > 0)
                 Utils.Warn(String.Format("{0} vertices are not influenced by any bone", notInfluenced));
 
-
             if (skin.bind_shape_matrix != null)
             {
                 var bindShapeFloats = skin.bind_shape_matrix.Trim().Split(new char[] { ' ' }).Select(s => Single.Parse(s)).ToArray();
@@ -517,10 +516,7 @@ namespace LSLib.Granny.Model
                 bindShapeMat.Transpose();
 
                 // Deform geometries that were affected by our bind shape matrix
-                foreach (var vertex in mesh.PrimaryVertexData.Vertices)
-                {
-                    vertex.Transform(bindShapeMat);
-                }
+                mesh.PrimaryVertexData.Transform(bindShapeMat);
             }
         }
 
