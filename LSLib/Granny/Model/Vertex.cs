@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace LSLib.Granny.Model
 {
-    public struct BoneWeight
+    public struct BoneWeight : IEquatable<BoneWeight>
     {
         public byte A, B, C, D;
 
@@ -30,6 +30,19 @@ namespace LSLib.Granny.Model
                 else if (index == 3) D = value;
                 else throw new IndexOutOfRangeException("Illegal bone influence index: " + index);
             }
+        }
+
+        public bool Equals(BoneWeight w)
+        {
+            return A == w.A
+                && B == w.B
+                && C == w.C
+                && D == w.D;
+        }
+
+        public override int GetHashCode()
+        {
+            return (int)A ^ (int)(B << 8) ^ (int)(C << 16) ^ (int)(D << 24);
         }
     }
 

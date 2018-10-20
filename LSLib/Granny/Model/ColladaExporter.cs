@@ -160,21 +160,21 @@ namespace LSLib.Granny.Model
             if (desc.NormalType != NormalType.None && Options.ExportNormals)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedMesh.Name);
-                AddInput(normals, "NORMAL");
+                AddInput(normals, null, "NORMAL");
             }
 
             // Tangents
             if (desc.TangentType != NormalType.None && Options.ExportTangents)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
-                AddInput(normals, "TANGENT");
+                AddInput(normals, null, "TANGENT");
             }
 
             // Binormals
             if (desc.BinormalType != NormalType.None && Options.ExportTangents)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
-                AddInput(normals, "BINORMAL");
+                AddInput(normals, null, "BINORMAL");
             }
 
             // Texture coordinates
@@ -223,9 +223,10 @@ namespace LSLib.Granny.Model
             // TODO: model transform/inverse transform?
             var triangles = ExportedMesh.PrimaryTopology.MakeColladaTriangles(
                 InputOffsets.ToArray(),
-                vertexData.Deduplicator.VertexDeduplicationMap,
-                vertexData.Deduplicator.UVDeduplicationMaps,
-                vertexData.Deduplicator.ColorDeduplicationMaps
+                vertexData.Deduplicator.Vertices.DeduplicationMap,
+                vertexData.Deduplicator.Normals.DeduplicationMap,
+                vertexData.Deduplicator.UVs.Select(uv => uv.DeduplicationMap).ToList(),
+                vertexData.Deduplicator.Colors.Select(color => color.DeduplicationMap).ToList()
             );
 
             var colladaMesh = new mesh();
@@ -344,15 +345,15 @@ namespace LSLib.Granny.Model
             var poseSource = ColladaUtils.MakeFloatSource(mesh.Name, "poses", new string[] { "TRANSFORM" }, poses.ToArray(), 16, "float4x4");
             var weightsSource = mesh.PrimaryVertexData.MakeBoneWeights(mesh.Name);
 
-            var vertices = mesh.PrimaryVertexData.Deduplicator.DeduplicatedPositions;
+            var vertices = mesh.PrimaryVertexData.Deduplicator.Vertices.Uniques;
             var vertexInfluenceCounts = new List<int>(vertices.Count);
             var vertexInfluences = new List<int>(vertices.Count);
             int weightIdx = 0;
             foreach (var vertex in vertices)
             {
                 int influences = 0;
-                var indices = vertex.BoneIndices;
-                var weights = vertex.BoneWeights;
+                var indices = vertex.Indices;
+                var weights = vertex.Weights;
                 for (int i = 0; i < 4; i++)
                 {
                     if (weights[i] > 0)

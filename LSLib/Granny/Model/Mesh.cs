@@ -7,165 +7,157 @@ using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
 {
+    public class Deduplicator<T>
+    {
+        private IEqualityComparer<T> Comparer;
+        public Dictionary<int, int> DeduplicationMap = new Dictionary<int, int>();
+        public List<T> Uniques = new List<T>();
+
+        public Deduplicator(IEqualityComparer<T> comparer)
+        {
+            Comparer = comparer;
+        }
+
+        public void MakeIdentityMapping(IEnumerable<T> items)
+        {
+            var i = 0;
+            foreach (var item in items)
+            {
+                Uniques.Add(item);
+                DeduplicationMap.Add(i, i);
+                i++;
+            }
+        }
+
+        public void Deduplicate(IEnumerable<T> items)
+        {
+            var uniqueItems = new Dictionary<T, int>(Comparer);
+            var i = 0;
+            foreach (var item in items)
+            {
+                int mappedIndex;
+                if (!uniqueItems.TryGetValue(item, out mappedIndex))
+                {
+                    mappedIndex = uniqueItems.Count;
+                    uniqueItems.Add(item, mappedIndex);
+                    Uniques.Add(item);
+                }
+
+                DeduplicationMap.Add(i, mappedIndex);
+                i++;
+            }
+        }
+    }
+    
+    class GenericEqualityComparer<T> : IEqualityComparer<T> where T : IEquatable<T>
+    {
+        public bool Equals(T a, T b)
+        {
+            return a.Equals(b);
+        }
+
+        public int GetHashCode(T v)
+        {
+            return v.GetHashCode();
+        }
+    }
+
+    public struct SkinnedVertex : IEquatable<SkinnedVertex>
+    {
+        public Vector3 Position;
+        public BoneWeight Indices;
+        public BoneWeight Weights;
+
+        public bool Equals(SkinnedVertex w)
+        {
+            return Position.Equals(w.Position)
+                && Indices.Equals(w.Indices)
+                && Weights.Equals(w.Weights);
+        }
+
+        public override int GetHashCode()
+        {
+            return Position.GetHashCode() ^ Indices.GetHashCode() ^ Weights.GetHashCode();
+        }
+    }
+    
     public class VertexDeduplicator
     {
-        public Dictionary<int, int> VertexDeduplicationMap = new Dictionary<int, int>();
-        public List<Dictionary<int, int>> UVDeduplicationMaps = new List<Dictionary<int, int>>();
-        public List<Dictionary<int, int>> ColorDeduplicationMaps = new List<Dictionary<int, int>>();
-        public List<Vertex> DeduplicatedPositions = new List<Vertex>();
-        public List<List<Vector2>> DeduplicatedUVs = new List<List<Vector2>>();
-        public List<List<Vector4>> DeduplicatedColors = new List<List<Vector4>>();
-
-        private class VertexPositionComparer : IEqualityComparer<Vector3>
-        {
-            public bool Equals(Vector3 a, Vector3 b)
-            {
-                return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
-            }
-
-            public int GetHashCode(Vector3 v)
-            {
-                int hash = 17;
-                hash = hash * 23 + v.X.GetHashCode();
-                hash = hash * 23 + v.Y.GetHashCode();
-                hash = hash * 23 + v.Z.GetHashCode();
-                return hash;
-            }
-        }
-
-        private class VertexUVComparer : IEqualityComparer<Vector2>
-        {
-            public bool Equals(Vector2 a, Vector2 b)
-            {
-                return a.X == b.X && a.Y == b.Y;
-            }
-
-            public int GetHashCode(Vector2 v)
-            {
-                int hash = 17;
-                hash = hash * 23 + v.X.GetHashCode();
-                hash = hash * 23 + v.Y.GetHashCode();
-                return hash;
-            }
-        }
-
-        private class VertexColorComparer : IEqualityComparer<Vector4>
-        {
-            public bool Equals(Vector4 a, Vector4 b)
-            {
-                return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
-            }
-
-            public int GetHashCode(Vector4 v)
-            {
-                int hash = 17;
-                hash = hash * 23 + v.X.GetHashCode();
-                hash = hash * 23 + v.Y.GetHashCode();
-                hash = hash * 23 + v.Z.GetHashCode();
-                hash = hash * 23 + v.W.GetHashCode();
-                return hash;
-            }
-        }
+        public Deduplicator<SkinnedVertex> Vertices = new Deduplicator<SkinnedVertex>(new GenericEqualityComparer<SkinnedVertex>());
+        public Deduplicator<Matrix3> Normals = new Deduplicator<Matrix3>(new GenericEqualityComparer<Matrix3>());
+        public List<Deduplicator<Vector2>> UVs = new List<Deduplicator<Vector2>>();
+        public List<Deduplicator<Vector4>> Colors = new List<Deduplicator<Vector4>>();
 
         public void MakeIdentityMapping(List<Vertex> vertices)
         {
-            for (var i = 0; i < vertices.Count; i++)
+            if (vertices.Count() == 0) return;
+
+            var format = vertices[0].Format;
+
+            Vertices.MakeIdentityMapping(vertices.Select(v => new SkinnedVertex {
+                Position = v.Position,
+                Indices = v.BoneIndices,
+                Weights = v.BoneWeights
+            }));
+
+            if (format.NormalType != NormalType.None
+                || format.TangentType != NormalType.None
+                || format.BinormalType != NormalType.None)
             {
-                DeduplicatedPositions.Add(vertices[i]);
-                VertexDeduplicationMap.Add(i, i);
+                Normals.MakeIdentityMapping(vertices.Select(v => new Matrix3(v.Normal, v.Tangent, v.Binormal)));
             }
 
-            var numUvs = vertices[0].Format.TextureCoordinates;
+            var numUvs = format.TextureCoordinates;
             for (var uv = 0; uv < numUvs; uv++)
             {
-                var uvMap = new Dictionary<int, int>();
-                var deduplicatedUvs = new List<Vector2>();
-                UVDeduplicationMaps.Add(uvMap);
-                DeduplicatedUVs.Add(deduplicatedUvs);
-
-                for (var i = 0; i < vertices.Count; i++)
-                {
-                    deduplicatedUvs.Add(vertices[i].GetUV(uv));
-                    uvMap.Add(i, i);
-                }
+                var uvDedup = new Deduplicator<Vector2>(new GenericEqualityComparer<Vector2>());
+                uvDedup.MakeIdentityMapping(vertices.Select(v => v.GetUV(uv)));
+                UVs.Add(uvDedup);
             }
 
-            var numColors = vertices[0].Format.ColorMaps;
+            var numColors = format.ColorMaps;
             for (var color = 0; color < numColors; color++)
             {
-                var colorMap = new Dictionary<int, int>();
-                var deduplicatedColors = new List<Vector4>();
-                ColorDeduplicationMaps.Add(colorMap);
-                DeduplicatedColors.Add(deduplicatedColors);
-
-                for (var i = 0; i < vertices.Count; i++)
-                {
-                    deduplicatedColors.Add(vertices[i].GetColor(color));
-                    colorMap.Add(i, i);
-                }
+                var colorDedup = new Deduplicator<Vector4>(new GenericEqualityComparer<Vector4>());
+                colorDedup.MakeIdentityMapping(vertices.Select(v => v.GetColor(color)));
+                Colors.Add(colorDedup);
             }
         }
 
         public void Deduplicate(List<Vertex> vertices)
         {
-            var positions = new Dictionary<Vector3, int>(new VertexPositionComparer());
-            for (var i = 0; i < vertices.Count; i++)
-            {
-                int mappedIndex;
-                if (!positions.TryGetValue(vertices[i].Position, out mappedIndex))
-                {
-                    mappedIndex = positions.Count;
-                    positions.Add(vertices[i].Position, mappedIndex);
-                    DeduplicatedPositions.Add(vertices[i]);
-                }
+            if (vertices.Count() == 0) return;
 
-                VertexDeduplicationMap.Add(i, mappedIndex);
+            var format = vertices[0].Format;
+
+            Vertices.Deduplicate(vertices.Select(v => new SkinnedVertex
+            {
+                Position = v.Position,
+                Indices = v.BoneIndices,
+                Weights = v.BoneWeights
+            }));
+
+            if (format.NormalType != NormalType.None
+                || format.TangentType != NormalType.None
+                || format.BinormalType != NormalType.None)
+            {
+                Normals.Deduplicate(vertices.Select(v => new Matrix3(v.Normal, v.Tangent, v.Binormal)));
             }
 
-            var numUvs = vertices[0].Format.TextureCoordinates;
+            var numUvs = format.TextureCoordinates;
             for (var uv = 0; uv < numUvs; uv++)
             {
-                var uvMap = new Dictionary<int, int>();
-                var deduplicatedUvs = new List<Vector2>();
-                UVDeduplicationMaps.Add(uvMap);
-                DeduplicatedUVs.Add(deduplicatedUvs);
-
-                var uvs = new Dictionary<Vector2, int>(new VertexUVComparer());
-                for (var i = 0; i < vertices.Count; i++)
-                {
-                    int mappedIndex;
-                    if (!uvs.TryGetValue(vertices[i].GetUV(uv), out mappedIndex))
-                    {
-                        mappedIndex = uvs.Count;
-                        uvs.Add(vertices[i].GetUV(uv), mappedIndex);
-                        deduplicatedUvs.Add(vertices[i].GetUV(uv));
-                    }
-
-                    uvMap.Add(i, mappedIndex);
-                }
+                var uvDedup = new Deduplicator<Vector2>(new GenericEqualityComparer<Vector2>());
+                uvDedup.Deduplicate(vertices.Select(v => v.GetUV(uv)));
+                UVs.Add(uvDedup);
             }
 
-            var numColors = vertices[0].Format.ColorMaps;
+            var numColors = format.ColorMaps;
             for (var color = 0; color < numColors; color++)
             {
-                var colorMap = new Dictionary<int, int>();
-                var deduplicatedColors = new List<Vector4>();
-                ColorDeduplicationMaps.Add(colorMap);
-                DeduplicatedColors.Add(deduplicatedColors);
-
-                var colors = new Dictionary<Vector4, int>(new VertexColorComparer());
-                for (var i = 0; i < vertices.Count; i++)
-                {
-                    int mappedIndex;
-                    if (!colors.TryGetValue(vertices[i].GetColor(color), out mappedIndex))
-                    {
-                        mappedIndex = colors.Count;
-                        colors.Add(vertices[i].GetColor(color), mappedIndex);
-                        deduplicatedColors.Add(vertices[i].GetColor(color));
-                    }
-
-                    colorMap.Add(i, mappedIndex);
-                }
+                var colorDedup = new Deduplicator<Vector4>(new GenericEqualityComparer<Vector4>());
+                colorDedup.Deduplicate(vertices.Select(v => v.GetColor(color)));
+                Colors.Add(colorDedup);
             }
         }
     }
@@ -230,8 +222,8 @@ namespace LSLib.Granny.Model
             EnsureDeduplicationMap();
 
             int index = 0;
-            var positions = new float[Deduplicator.DeduplicatedPositions.Count * 3];
-            foreach (var vertex in Deduplicator.DeduplicatedPositions)
+            var positions = new float[Deduplicator.Vertices.Uniques.Count * 3];
+            foreach (var vertex in Deduplicator.Vertices.Uniques)
             {
                 var pos = vertex.Position;
                 positions[index++] = pos[0];
@@ -247,10 +239,10 @@ namespace LSLib.Granny.Model
             EnsureDeduplicationMap();
 
             int index = 0;
-            var normals = new float[Deduplicator.DeduplicatedPositions.Count * 3];
-            foreach (var vertex in Deduplicator.DeduplicatedPositions)
+            var normals = new float[Deduplicator.Normals.Uniques.Count * 3];
+            foreach (var ntb in Deduplicator.Normals.Uniques)
             {
-                var normal = vertex.Normal;
+                var normal = ntb.Row0;
                 normals[index++] = normal[0];
                 normals[index++] = normal[1];
                 normals[index++] = normal[2];
@@ -264,10 +256,10 @@ namespace LSLib.Granny.Model
             EnsureDeduplicationMap();
 
             int index = 0;
-            var tangents = new float[Deduplicator.DeduplicatedPositions.Count * 3];
-            foreach (var vertex in Deduplicator.DeduplicatedPositions)
+            var tangents = new float[Deduplicator.Normals.Uniques.Count * 3];
+            foreach (var ntb in Deduplicator.Normals.Uniques)
             {
-                var tangent = vertex.Tangent;
+                var tangent = ntb.Row1;
                 tangents[index++] = tangent[0];
                 tangents[index++] = tangent[1];
                 tangents[index++] = tangent[2];
@@ -281,10 +273,10 @@ namespace LSLib.Granny.Model
             EnsureDeduplicationMap();
 
             int index = 0;
-            var binormals = new float[Deduplicator.DeduplicatedPositions.Count * 3];
-            foreach (var vertex in Deduplicator.DeduplicatedPositions)
+            var binormals = new float[Deduplicator.Normals.Uniques.Count * 3];
+            foreach (var ntb in Deduplicator.Normals.Uniques)
             {
-                var binormal = vertex.Binormal;
+                var binormal = ntb.Row2;
                 binormals[index++] = binormal[0];
                 binormals[index++] = binormal[1];
                 binormals[index++] = binormal[2];
@@ -298,8 +290,8 @@ namespace LSLib.Granny.Model
             EnsureDeduplicationMap();
 
             int index = 0;
-            var uvs = new float[Deduplicator.DeduplicatedUVs[uvIndex].Count * 2];
-            foreach (var uv in Deduplicator.DeduplicatedUVs[uvIndex])
+            var uvs = new float[Deduplicator.UVs[uvIndex].Uniques.Count * 2];
+            foreach (var uv in Deduplicator.UVs[uvIndex].Uniques)
             {
                 uvs[index++] = uv[0];
                 if (flip)
@@ -316,8 +308,8 @@ namespace LSLib.Granny.Model
             EnsureDeduplicationMap();
 
             int index = 0;
-            var colors = new float[Deduplicator.DeduplicatedColors[setIndex].Count * 3];
-            foreach (var color in Deduplicator.DeduplicatedColors[setIndex])
+            var colors = new float[Deduplicator.Colors[setIndex].Uniques.Count * 3];
+            foreach (var color in Deduplicator.Colors[setIndex].Uniques)
             {
                 colors[index++] = color[0];
                 colors[index++] = color[1];
@@ -331,10 +323,10 @@ namespace LSLib.Granny.Model
         {
             EnsureDeduplicationMap();
 
-            var weights = new List<float>(Deduplicator.DeduplicatedPositions.Count);
-            foreach (var vertex in Deduplicator.DeduplicatedPositions)
+            var weights = new List<float>(Deduplicator.Vertices.Uniques.Count);
+            foreach (var vertex in Deduplicator.Vertices.Uniques)
             {
-                var boneWeights = vertex.BoneWeights;
+                var boneWeights = vertex.Weights;
                 for (int i = 0; i < 4; i++)
                 {
                     if (boneWeights[i] > 0)
@@ -347,9 +339,11 @@ namespace LSLib.Granny.Model
 
         public void Transform(Matrix4 transformation)
         {
+            var inverse = transformation.Inverted();
+
             foreach (var vertex in Vertices)
             {
-                vertex.Transform(transformation);
+                vertex.Transform(transformation, inverse);
             }
         }
 
@@ -456,8 +450,11 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, Dictionary<int, int> vertexMaps,
-            List<Dictionary<int, int>> uvMaps, List<Dictionary<int, int>> colorMaps)
+        public triangles MakeColladaTriangles(InputLocalOffset[] inputs, 
+            Dictionary<int, int> positionMaps,
+            Dictionary<int, int> normalMaps,
+            List<Dictionary<int, int>> uvMaps, 
+            List<Dictionary<int, int>> colorMaps)
         {
             int numTris = (from grp in Groups
                            select grp.TriCount).Sum();
@@ -473,7 +470,10 @@ namespace LSLib.Granny.Model
                 var input = inputs[i];
                 switch (input.semantic)
                 {
-                    case "VERTEX": inputMaps.Add(vertexMaps); break;
+                    case "VERTEX": inputMaps.Add(positionMaps); break;
+                    case "NORMAL":
+                    case "TANGENT":
+                    case "BINORMAL": inputMaps.Add(normalMaps); break;
                     case "TEXCOORD": inputMaps.Add(uvMaps[uvIndex]); uvIndex++; break;
                     case "COLOR": inputMaps.Add(colorMaps[colorIndex]); colorIndex++; break;
                     default: throw new InvalidOperationException("No input maps available for semantic " + input.semantic);

@@ -618,17 +618,14 @@ namespace LSLib.Granny.Model
 
                 Root = Options.Input;
             }
-
-            if (Options.OutputFormat == ExportFormat.GR2)
+            
+            if (Options.DeduplicateVertices)
             {
-                if (Options.DeduplicateVertices)
+                if (Root.VertexDatas != null)
                 {
-                    if (Root.VertexDatas != null)
+                    foreach (var vertexData in Root.VertexDatas)
                     {
-                        foreach (var vertexData in Root.VertexDatas)
-                        {
-                            vertexData.Deduplicate();
-                        }
+                        vertexData.Deduplicate();
                     }
                 }
             }
