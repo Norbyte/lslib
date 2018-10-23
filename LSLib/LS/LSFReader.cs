@@ -865,13 +865,19 @@ namespace LSLib.LS
         private string ReadString(BinaryReader reader, int length)
         {
             var bytes = reader.ReadBytes(length - 1);
+
+            // Remove null bytes at the end of the string
+            int lastNull = bytes.Length;
+            while (lastNull > 0 && bytes[lastNull - 1] == 0)
+                lastNull--;
+
             var nullTerminator = reader.ReadByte();
             if (nullTerminator != 0)
             {
                 throw new InvalidDataException("String is not null-terminated");
             }
 
-            return Encoding.UTF8.GetString(bytes);
+            return Encoding.UTF8.GetString(bytes, 0, lastNull);
         }
 
         private string ReadString(BinaryReader reader)
