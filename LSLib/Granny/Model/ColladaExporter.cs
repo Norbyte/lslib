@@ -424,7 +424,7 @@ namespace LSLib.Granny.Model
             // Find the root bone and export it
             for (var i = 0; i < skeleton.Bones.Count; i++)
             {
-                if (skeleton.Bones[i].ParentIndex == -1)
+                if (skeleton.Bones[i].IsRoot)
                 {
                     if (rootIndex == -1)
                     {

@@ -45,6 +45,14 @@ namespace LSLib.Granny.Model
                     vertexData.Transform(transformation);
                 }
             }
+
+            if (Skeletons != null)
+            {
+                foreach (var skeleton in Skeletons)
+                {
+                    skeleton.TransformRoots(transformation);
+                }
+            }
         }
 
         public void ConvertToYUp()
@@ -69,6 +77,14 @@ namespace LSLib.Granny.Model
                 foreach (var vertexData in VertexDatas)
                 {
                     vertexData.Flip();
+                }
+            }
+
+            if (Skeletons != null)
+            {
+                foreach (var skeleton in Skeletons)
+                {
+                    skeleton.Flip();
                 }
             }
 

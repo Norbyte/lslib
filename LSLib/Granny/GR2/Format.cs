@@ -73,7 +73,10 @@ namespace LSLib.Granny.GR2
 
         public void SetRotation(Quaternion rotation)
         {
-            if (rotation.Length > 0.0001f)
+            if (rotation.Length > 0.0001f
+                && (Math.Abs(rotation.X) >= 0.001f
+                || Math.Abs(rotation.Y) >= 0.001f
+                || Math.Abs(rotation.Z) >= 0.001f))
             {
                 Rotation = rotation;
                 Flags |= (uint)TransformFlags.HasRotation;

@@ -288,7 +288,7 @@ namespace LSLib.Granny.Model
 
                 // Bones must have the same parent. We check this in two steps:
                 // 1) Either both of them are root bones (no parent index) or none of them are.
-                if ((conformBone.ParentIndex == -1) != (inputBone.ParentIndex == -1))
+                if (conformBone.IsRoot != inputBone.IsRoot)
                 {
                     string msg = String.Format(
                         "Cannot map non-root bones to root bone '{1}' for skeleton '{0}'.",

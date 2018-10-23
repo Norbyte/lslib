@@ -28,6 +28,8 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public Matrix4 OriginalTransform;
 
+        public bool IsRoot { get { return ParentIndex == -1; } }
+
         public Matrix4 CalculateInverseWorldTransform(List<Bone> bones)
         {
             var iwt = Matrix4.Identity;
@@ -36,7 +38,7 @@ namespace LSLib.Granny.Model
             {
                 var untranslated = currentBone.Transform.ToMatrix4();
                 iwt = iwt * untranslated;
-                if (currentBone.ParentIndex == -1) break;
+                if (currentBone.IsRoot) break;
                 currentBone = bones[currentBone.ParentIndex];
             }
 
@@ -150,6 +152,38 @@ namespace LSLib.Granny.Model
         public Bone GetBoneByName(string name)
         {
             return Bones.FirstOrDefault(b => b.Name == name);
+        }
+
+        public void TransformRoots(Matrix4 transform)
+        {
+            foreach (var bone in Bones)
+            {
+                if (bone.IsRoot)
+                {
+                    var boneTransform = transform * bone.Transform.ToMatrix4();
+                    bone.Transform = GR2.Transform.FromMatrix4(boneTransform);
+                }
+            }
+
+            UpdateInverseWorldTransforms();
+        }
+
+        public void Flip()
+        {
+            foreach (var bone in Bones)
+            {
+                if (bone.IsRoot)
+                {
+                    bone.Transform.Flags |= (uint)Transform.TransformFlags.HasScaleShear;
+                    bone.Transform.ScaleShear = new Matrix3(
+                        -1.0f, 0.0f, 0.0f,
+                        0.0f, 1.0f, 0.0f,
+                        0.0f, 0.0f, 1.0f
+                    );
+                }
+            }
+
+            UpdateInverseWorldTransforms();
         }
 
         public void UpdateInverseWorldTransforms()
