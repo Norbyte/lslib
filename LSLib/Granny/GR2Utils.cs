@@ -35,11 +35,18 @@ namespace LSLib.Granny
             }
         }
 
-        public static Root LoadModel(string inputPath) => LoadModel(inputPath, ExtensionToModelFormat(inputPath));
-
-        public static Root LoadModel(string inputPath, ExportFormat format)
+        public static Root LoadModel(string inputPath)
         {
-            switch (format)
+            var options = new ExporterOptions
+            {
+                InputFormat = ExtensionToModelFormat(inputPath)
+            };
+            return LoadModel(inputPath, options);
+        }
+
+        public static Root LoadModel(string inputPath, ExporterOptions options)
+        {
+            switch (options.InputFormat)
             {
                 case ExportFormat.GR2:
                 {
@@ -55,9 +62,11 @@ namespace LSLib.Granny
 
                 case ExportFormat.DAE:
                 {
-                    var importer = new ColladaImporter();
-                    Root root = importer.Import(inputPath);
-                    return root;
+                    var importer = new ColladaImporter
+                    {
+                        Options = options
+                    };
+                    return importer.Import(inputPath);
                 }
 
                 default:
@@ -102,7 +111,7 @@ namespace LSLib.Granny
                 ProgressUpdate($"Converting: {inputFilePath}", i, inputFilePaths.Count);
                 try
                 {
-                    Root model = LoadModel(inputFilePath, exporter.Options.InputFormat);
+                    Root model = LoadModel(inputFilePath, exporter.Options);
                     SaveModel(model, outputFilePath, exporter);
                 }
                 catch (Exception exc)
