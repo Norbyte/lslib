@@ -256,12 +256,13 @@ namespace LSLib.Granny.Model
             var extendedData = DivinityMeshExtendedData.Make();
             var meshModelType = DivinityHelpers.DetermineModelType(mesh);
 
+            extendedData.UserDefinedProperties =
+               DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
+
             if (format == DivinityModelInfoFormat.UserDefinedProperties)
             {
                 extendedData.LSMVersion = 0;
                 extendedData.UserMeshProperties = null;
-                extendedData.UserDefinedProperties =
-                   DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
             }
             else
             {
