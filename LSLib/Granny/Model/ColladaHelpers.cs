@@ -143,5 +143,22 @@ namespace LSLib.Granny.Model
                 items[12], items[13], items[14], items[15]
             );
         }
+
+        public static List<Vector3> SourceToPositions(ColladaSource source)
+        {
+            List<Single> x = null, y = null, z = null;
+            if (!source.FloatParams.TryGetValue("X", out x) ||
+                !source.FloatParams.TryGetValue("Y", out y) ||
+                !source.FloatParams.TryGetValue("Z", out z))
+                throw new ParsingException("Position source " + source.id + " must have X, Y, Z float attributes");
+
+            var positions = new List<Vector3>(x.Count);
+            for (var i = 0; i < x.Count; i++)
+            {
+                positions.Add(new Vector3(x[i], y[i], z[i]));
+            }
+
+            return positions;
+        }
     }
 }

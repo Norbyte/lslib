@@ -13,6 +13,8 @@ namespace LSLib.Granny.Model
         private InputLocalOffset[] Inputs;
         private List<Vertex> Vertices;
         private List<Vector3> Normals;
+        private List<Vector3> Tangents;
+        private List<Vector3> Binormals;
         private List<List<Vector2>> UVs;
         private List<List<Vector4>> Colors;
         private List<int> Indices;
@@ -20,6 +22,8 @@ namespace LSLib.Granny.Model
         private int InputOffsetCount = 0;
         private int VertexInputIndex = -1;
         private int NormalsInputIndex = -1;
+        private int TangentsInputIndex = -1;
+        private int BinormalsInputIndex = -1;
         private List<int> UVInputIndices = new List<int>();
         private List<int> ColorInputIndices = new List<int>();
         private VertexDescriptor InputVertexType;
@@ -250,44 +254,38 @@ namespace LSLib.Granny.Model
                 throw new ParsingException("Triangle input stride / vertex count mismatch.");
         }
 
+        private ColladaSource FindSource(string id)
+        {
+            if (id.Length == 0 || id[0] != '#')
+                throw new ParsingException("Only ID references are supported for input sources: " + id);
+
+            ColladaSource inputSource = null;
+            if (!Sources.TryGetValue(id.Substring(1), out inputSource))
+                throw new ParsingException("Input source does not exist: " + id);
+
+            return inputSource;
+        }
+
         private void ImportVertices()
         {
             var vertexSemantics = new Dictionary<String, List<Vector3>>();
             foreach (var input in Mesh.vertices.input)
             {
-                if (input.source[0] != '#')
-                    throw new ParsingException("Only ID references are supported for vertex input sources");
-
-                ColladaSource inputSource = null;
-                if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
-                    throw new ParsingException("Vertex input source does not exist: " + input.source);
-
-                List<Single> x = null, y = null, z = null;
-                if (!inputSource.FloatParams.TryGetValue("X", out x) ||
-                    !inputSource.FloatParams.TryGetValue("Y", out y) ||
-                    !inputSource.FloatParams.TryGetValue("Z", out z))
-                    throw new ParsingException("Vertex input source " + input.source + " must have X, Y, Z float attributes");
-
-                var vertices = new List<Vector3>(x.Count);
-                for (var i = 0; i < x.Count; i++)
-                {
-                    vertices.Add(new Vector3(x[i], y[i], z[i]));
-                }
-
+                ColladaSource inputSource = FindSource(input.source);
+                var vertices = ColladaHelpers.SourceToPositions(inputSource);
                 vertexSemantics.Add(input.semantic, vertices);
             }
 
-            List<Vector3> positions = null;
-            List<Vector3> normals = null;
-            List<Vector3> tangents = null;
-            List<Vector3> binormals = null;
+            List<Vector3> vertexPositions = null;
+            List<Vector3> perVertexNormals = null;
+            List<Vector3> perVertexTangents = null;
+            List<Vector3> perVertexBinormals = null;
 
-            vertexSemantics.TryGetValue("POSITION", out positions);
-            vertexSemantics.TryGetValue("NORMAL", out normals);
-            vertexSemantics.TryGetValue("TANGENT", out tangents);
-            vertexSemantics.TryGetValue("BINORMAL", out binormals);
+            vertexSemantics.TryGetValue("POSITION", out vertexPositions);
+            vertexSemantics.TryGetValue("NORMAL", out perVertexNormals);
+            vertexSemantics.TryGetValue("TANGENT", out perVertexTangents);
+            vertexSemantics.TryGetValue("BINORMAL", out perVertexBinormals);
 
-            int normalInputIndex = -1;
             foreach (var input in Inputs)
             {
                 if (input.semantic == "VERTEX")
@@ -296,64 +294,54 @@ namespace LSLib.Granny.Model
                 }
                 else if (input.semantic == "NORMAL")
                 {
-                    normals = new List<Vector3>();
-                    normalInputIndex = (int)input.offset;
-
-                    if (input.source[0] != '#')
-                        throw new ParsingException("Only ID references are supported for Normal input sources");
-
-                    ColladaSource inputSource = null;
-                    if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
-                        throw new ParsingException("Normal input source does not exist: " + input.source);
-
-                    List<Single> x = null, y = null, z = null;
-                    if (!inputSource.FloatParams.TryGetValue("X", out x) ||
-                        !inputSource.FloatParams.TryGetValue("Y", out y) ||
-                        !inputSource.FloatParams.TryGetValue("Z", out z))
-                        throw new ParsingException("Normal input source " + input.source + " must have X, Y, Z float attributes");
-
-                    for (var i = 0; i < x.Count; i++)
-                    {
-                        normals.Add(new Vector3(x[i], y[i], z[i]));
-                    }
+                    var normalsSource = FindSource(input.source);
+                    Normals = ColladaHelpers.SourceToPositions(normalsSource);
+                    NormalsInputIndex = (int)input.offset;
+                }
+                else if (input.semantic == "TANGENT")
+                {
+                    var tangentsSource = FindSource(input.source);
+                    Tangents = ColladaHelpers.SourceToPositions(tangentsSource);
+                    TangentsInputIndex = (int)input.offset;
+                }
+                else if (input.semantic == "BINORMAL")
+                {
+                    var binormalsSource = FindSource(input.source);
+                    Binormals = ColladaHelpers.SourceToPositions(binormalsSource);
+                    BinormalsInputIndex = (int)input.offset;
                 }
             }
 
             if (VertexInputIndex == -1)
                 throw new ParsingException("Required triangle input semantic missing: VERTEX");
 
-            Vertices = new List<Vertex>(positions.Count);
-            for (var vert = 0; vert < positions.Count; vert++)
+            Vertices = new List<Vertex>(vertexPositions.Count);
+            for (var vert = 0; vert < vertexPositions.Count; vert++)
             {
                 var vertex = OutputVertexType.CreateInstance();
-                vertex.Position = positions[vert];
+                vertex.Position = vertexPositions[vert];
 
-                if (tangents != null)
+                if (perVertexNormals != null)
                 {
-                    vertex.Tangent = tangents[vert];
+                    vertex.Normal = perVertexNormals[vert];
                 }
 
-                if (binormals != null)
+                if (perVertexTangents != null)
                 {
-                    vertex.Binormal = binormals[vert];
+                    vertex.Tangent = perVertexTangents[vert];
                 }
 
-                if (normals != null && normalInputIndex == -1)
+                if (perVertexBinormals != null)
                 {
-                    vertex.Normal = normals[vert];
+                    vertex.Binormal = perVertexBinormals[vert];
                 }
 
                 Vertices.Add(vertex);
             }
 
-            if (normalInputIndex != -1)
-            {
-                Normals = normals;
-                NormalsInputIndex = normalInputIndex;
-            }
-
-            HasNormals = normals != null;
-            HasTangents = tangents != null && binormals != null;
+            HasNormals = perVertexNormals != null || NormalsInputIndex != -1;
+            HasTangents = (perVertexTangents != null || TangentsInputIndex != -1)
+                && (perVertexBinormals != null || BinormalsInputIndex != -1);
         }
 
         private void ImportColors()
@@ -523,7 +511,9 @@ namespace LSLib.Granny.Model
 
             ImportColors();
             ImportUVs();
-            if (UVInputIndices.Count() > 0 || ColorInputIndices.Count() > 0 || NormalsInputIndex != -1)
+
+            if (UVInputIndices.Count() > 0 || ColorInputIndices.Count() > 0 
+                || NormalsInputIndex != -1 || TangentsInputIndex != -1 || BinormalsInputIndex != -1)
             {
                 var outVertexIndices = new Dictionary<int[], int>(new VertexIndexComparer());
                 ConsolidatedIndices = new List<int>(TriangleCount * 3);
@@ -546,6 +536,14 @@ namespace LSLib.Granny.Model
                         if (NormalsInputIndex != -1)
                         {
                             vertex.Normal = Normals[index[NormalsInputIndex]];
+                        }
+                        if (TangentsInputIndex != -1)
+                        {
+                            vertex.Tangent = Tangents[index[TangentsInputIndex]];
+                        }
+                        if (BinormalsInputIndex != -1)
+                        {
+                            vertex.Binormal = Binormals[index[BinormalsInputIndex]];
                         }
                         for (int uv = 0; uv < UVInputIndices.Count(); uv++ )
                         {
