@@ -198,10 +198,6 @@ namespace LSLib.Granny.GR2
                 Debug.Assert(header.offsetInFile + header.uncompressedSize <= Header.fileSize);
             }
 
-            // TODO: check alignment, secondaryDataOffset[2]
-            Debug.Assert(header.relocationsOffset <= Header.fileSize);
-            Debug.Assert(header.mixedMarshallingDataOffset <= Header.fileSize);
-
 #if DEBUG_GR2_SERIALIZATION
             System.Console.WriteLine(" ===== Section Header ===== ");
             System.Console.WriteLine(String.Format("Compression: {0}", header.compression));
