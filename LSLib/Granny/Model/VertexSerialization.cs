@@ -53,9 +53,9 @@ namespace LSLib.Granny.Model
             return v;
         }
 
-        public static Vector4 ReadBinormalShortVector4(GR2Reader reader)
+        public static Quaternion ReadBinormalShortVector4(GR2Reader reader)
         {
-            Vector4 v;
+            Quaternion v = new Quaternion();
             v.X = reader.Reader.ReadInt16() / 32767.0f;
             v.Y = reader.Reader.ReadInt16() / 32767.0f;
             v.Z = reader.Reader.ReadInt16() / 32767.0f;
@@ -95,48 +95,57 @@ namespace LSLib.Granny.Model
 
         public static Matrix3 ReadQTangent(GR2Reader reader)
         {
-            Vector4 qTangent = ReadBinormalShortVector4(reader);
+            Quaternion qTangent = ReadBinormalShortVector4(reader);
             return QTangentToMatrix(qTangent);
         }
 
-        private static Vector4 MatrixToQTangent(Matrix3 m)
+        private static Matrix3 Orthonormalize(Matrix3 m)
         {
-            float scale = 1.0f;
+            Vector3 x = new Vector3(m.M11, m.M21, m.M31).Normalized();
+            Vector3 y = Vector3.Cross(new Vector3(m.M13, m.M23, m.M33), x).Normalized();
+            Vector3 z = Vector3.Cross(x, y);
+            return new Matrix3(
+                x.X, y.X, z.X,
+                x.Y, y.Y, z.Y,
+                x.Z, y.Z, z.Z
+            );
+        }
 
-            // Flip y axis in case the tangent frame encodes a reflection
-            if (m.Determinant < 0.0f)
-            {
-                scale = -1.0f;
-                m.Row2 = -m.Row2;
-            }
+        private static Quaternion MatrixToQTangent(Matrix3 mm, bool reflect)
+        {
+            var m = Orthonormalize(mm);
 
             var quat = Quaternion.FromMatrix(m);
+            quat.Normalize();
+
+            quat.Conjugate();
+            if (quat.W < 0.0f)
+            {
+                quat.Conjugate();
+                quat.Invert();
+            }
 
             // Make sure we don't end up with 0 as w component
-            const float threshold = 0.000001f;
-            if (quat.W <= threshold)
+            const float threshold16bit = 1.0f / 32767.0f;
+            if (Math.Abs(quat.W) < threshold16bit)
             {
-                var renormalization = (float)Math.Sqrt(1.0f - (threshold * threshold));
-                quat = new Quaternion(
-                    quat.X * renormalization,
-                    quat.Y * renormalization,
-                    quat.Z * renormalization,
-                    (quat.W > 0.0f) ? threshold : -threshold
-                );
+                var bias16bit = (float)Math.Sqrt(1.0f - (threshold16bit * threshold16bit));
+                quat *= bias16bit;
+                quat.W = threshold16bit;
             }
             
             // Encode reflection into quaternion's W element by making sign of W negative
             // if Y axis needs to be flipped, positive otherwise
-            if ((scale < 0.0f && quat.W >= 0.0f) 
-                || (scale >= 0.0f && quat.W < 0.0f))
+            if (reflect)
             {
-                quat = new Quaternion(-quat.X, -quat.Y, -quat.Z, -quat.W);
+                quat.Conjugate();
+                quat.Invert();
             }
 
-            return new Vector4(quat.X, quat.Y, quat.Z, quat.W);
+            return quat;
         }
 
-        private static Matrix3 QTangentToMatrix(Vector4 q)
+        private static Matrix3 QTangentToMatrix(Quaternion q)
         {
             Matrix3 m = new Matrix3(
                 1.0f - 2.0f * (q.Y * q.Y + q.Z * q.Z), 2 * (q.X * q.Y + q.W * q.Z), 2 * (q.X * q.Z - q.W * q.Y),
@@ -202,7 +211,7 @@ namespace LSLib.Granny.Model
             section.Writer.Write((ushort)0);
         }
 
-        public static void WriteBinormalShortVector4(WritableSection section, Vector4 v)
+        public static void WriteBinormalShortVector4(WritableSection section, Quaternion v)
         {
             section.Writer.Write((Int16)(v.X * 32767.0f));
             section.Writer.Write((Int16)(v.Y * 32767.0f));
@@ -250,8 +259,10 @@ namespace LSLib.Granny.Model
 
         public static void WriteQTangent(WritableSection section, Vector3 normal, Vector3 tangent, Vector3 binormal)
         {
-            Matrix3 normals = new Matrix3(tangent, binormal, normal);
-            var qTangent = MatrixToQTangent(normals);
+            var n2 = Vector3.Cross(tangent, binormal).Normalized();
+            var reflection = Vector3.Dot(normal, n2);
+            Matrix3 normals = new Matrix3(tangent, binormal, n2);
+            var qTangent = MatrixToQTangent(normals, reflection < 0.0f);
             WriteBinormalShortVector4(section, qTangent);
         }
 
