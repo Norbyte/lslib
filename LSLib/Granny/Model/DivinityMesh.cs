@@ -73,21 +73,6 @@ namespace LSLib.Granny.Model
                 formats.Add(Make(DivinityVertexUsage.BoneIndices, DivinityVertexFormat.UInt8, (byte)format.NumBoneInfluences));
             }
 
-            if (format.ColorMapType != ColorMapType.None)
-            {
-                if (format.ColorMapType == ColorMapType.Byte4)
-                {
-                    for (int i = 0; i < format.ColorMaps; i++)
-                    {
-                        formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexFormat.UInt8, 4, (byte)i));
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Color format not supported in LSM: {format.ColorMapType}");
-                }
-            }
-
             if (format.NormalType != NormalType.None)
             {
                 if (format.NormalType == NormalType.QTangent)
@@ -97,6 +82,21 @@ namespace LSLib.Granny.Model
                 else
                 {
                     throw new InvalidOperationException($"Normal format not supported in LSM: {format.NormalType}");
+                }
+            }
+
+            if (format.ColorMapType != ColorMapType.None)
+            {
+                if (format.ColorMapType == ColorMapType.Byte4)
+                {
+                    for (int i = 0; i < format.ColorMaps; i++)
+                    {
+                        formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexFormat.NormalUInt8, 4, (byte)i));
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Color format not supported in LSM: {format.ColorMapType}");
                 }
             }
 
@@ -266,7 +266,6 @@ namespace LSLib.Granny.Model
             }
             else
             {
-                extendedData.LSMVersion = 1;
                 switch (meshModelType)
                 {
                     case DivinityModelType.Normal:
@@ -282,7 +281,16 @@ namespace LSLib.Granny.Model
                         break;
                 }
 
-                extendedData.UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
+                if (format == DivinityModelInfoFormat.LSMv1)
+                {
+                    extendedData.LSMVersion = 1;
+                    extendedData.UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
+                }
+                else
+                {
+                    extendedData.LSMVersion = 0;
+                    extendedData.UserMeshProperties.FormatDescs = new List<DivinityFormatDesc>();
+                }
             }
 
             return extendedData;

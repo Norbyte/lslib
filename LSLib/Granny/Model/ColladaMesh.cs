@@ -600,7 +600,8 @@ namespace LSLib.Granny.Model
 
             }
 
-            if (Options.ModelInfoFormat == DivinityModelInfoFormat.LSM)
+            if (Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv0
+                || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv1)
             {
                 if (!HasNormals || !HasTangents)
                 {

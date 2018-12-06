@@ -28,7 +28,9 @@ namespace LSLib.Granny.Model
         // User the UserDefinedProperties string to add properties
         UserDefinedProperties,
         // Use LSM UserMeshProperties
-        LSM
+        LSMv0,
+        // Use LSM UserMeshProperties and FormatDescs
+        LSMv1
     };
 
     public class ExporterOptions

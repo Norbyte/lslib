@@ -245,7 +245,7 @@ namespace ConverterApp
                 }
                 else
                 {
-                    settings.ModelInfoFormat = DivinityModelInfoFormat.LSM;
+                    settings.ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
                 }
             }
 
