@@ -70,9 +70,9 @@ namespace LSLib.Granny.Model
             ZUp = false;
         }
 
-        public void Flip()
+        public void Flip(bool flipMesh, bool flipSkeleton)
         {
-            if (VertexDatas != null)
+            if (flipMesh && VertexDatas != null)
             {
                 foreach (var vertexData in VertexDatas)
                 {
@@ -80,7 +80,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (Skeletons != null)
+            if (flipSkeleton && Skeletons != null)
             {
                 foreach (var skeleton in Skeletons)
                 {
@@ -88,7 +88,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (TriTopologies != null)
+            if (flipMesh && TriTopologies != null)
             {
                 foreach (var topology in TriTopologies)
                 {
@@ -101,7 +101,7 @@ namespace LSLib.Granny.Model
         {
             if (tag == Header.Tag_DOS2DE)
             {
-                Flip();
+                Flip(true, true);
             }
 
             if (VertexDatas != null)

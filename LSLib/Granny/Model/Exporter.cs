@@ -93,6 +93,8 @@ namespace LSLib.Granny.Model
         public bool StripMetadata = true;
         // Flip mesh on X axis
         public bool FlipMesh = false;
+        // Flip skeleton on X axis
+        public bool FlipSkeleton = false;
     }
 
 
@@ -663,9 +665,9 @@ namespace LSLib.Granny.Model
             }
 
             if (Options.OutputFormat == ExportFormat.GR2 && 
-                Options.FlipMesh)
+                (Options.FlipMesh || Options.FlipSkeleton))
             {
-                Root.Flip();
+                Root.Flip(Options.FlipMesh, Options.FlipSkeleton);
             }
 
             // This option should be handled after everything else, as it converts Indices

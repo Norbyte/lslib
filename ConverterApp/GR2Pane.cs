@@ -246,7 +246,6 @@ namespace ConverterApp
                 else
                 {
                     settings.ModelInfoFormat = DivinityModelInfoFormat.LSM;
-                    settings.FlipMesh = true;
                 }
             }
 
@@ -264,6 +263,8 @@ namespace ConverterApp
             settings.DeduplicateUVs = filterUVs.Checked;
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
+            settings.FlipMesh = flipMeshes.Checked;
+            settings.FlipSkeleton = flipSkeletons.Checked;
 
             switch (gr2ExtraProps.SelectedIndex)
             {
