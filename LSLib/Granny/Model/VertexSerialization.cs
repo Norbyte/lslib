@@ -86,10 +86,10 @@ namespace LSLib.Granny.Model
         public static Vector4 ReadNormalByteVector4(GR2Reader reader)
         {
             Vector4 v;
-            v.X = reader.Reader.ReadByte() * 255.0f;
-            v.Y = reader.Reader.ReadByte() * 255.0f;
-            v.Z = reader.Reader.ReadByte() * 255.0f;
-            v.W = reader.Reader.ReadByte() * 255.0f;
+            v.X = reader.Reader.ReadByte() / 255.0f;
+            v.Y = reader.Reader.ReadByte() / 255.0f;
+            v.Z = reader.Reader.ReadByte() / 255.0f;
+            v.W = reader.Reader.ReadByte() / 255.0f;
             return v;
         }
 
