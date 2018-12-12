@@ -436,8 +436,8 @@ namespace LSLib.Granny.Model
                 offset += stride;
             }
 
-            if (boundBones.Count > 255)
-                throw new ParsingException("GR2 supports at most 255 bound bones per mesh.");
+            if (boundBones.Count > 127)
+                throw new ParsingException("D:OS supports at most 127 bound bones per mesh.");
 
             mesh.BoneBindings = new List<BoneBinding>();
             var boneToIndexMaps = new Dictionary<Bone, int>();
