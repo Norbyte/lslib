@@ -306,10 +306,14 @@ namespace LSLib.Granny.Model
             return modelType;
         }
 
-        public static DivinityMeshExtendedData MakeMeshExtendedData(Mesh mesh, DivinityModelInfoFormat format)
+        public static DivinityMeshExtendedData MakeMeshExtendedData(Mesh mesh, DivinityModelInfoFormat format,
+            DivinityModelType meshModelType)
         {
             var extendedData = DivinityMeshExtendedData.Make();
-            var meshModelType = DivinityHelpers.DetermineModelType(mesh);
+            if (meshModelType == DivinityModelType.Undefined)
+            {
+                meshModelType = DivinityHelpers.DetermineModelType(mesh);
+            }
 
             extendedData.UserDefinedProperties =
                DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
@@ -321,20 +325,34 @@ namespace LSLib.Granny.Model
             }
             else
             {
+                DivinityModelFlag flags = 0;
+
+                if (mesh.VertexFormat.HasBoneWeights)
+                {
+                    flags |= DivinityModelFlag.Skinned;
+                }
+
+                if (mesh.VertexFormat.ColorMaps > 0)
+                {
+                    flags |= DivinityModelFlag.HasColor;
+                }
+                
                 switch (meshModelType)
                 {
                     case DivinityModelType.Normal:
-                        extendedData.UserMeshProperties.Flags[0] |= 0x10;
+                        // No special flag should be set here
                         break;
 
                     case DivinityModelType.Cloth:
-                        extendedData.UserMeshProperties.Flags[0] |= 0x02 | 0x10 | 0x08;
+                        flags |= DivinityModelFlag.Cloth;
                         break;
 
                     case DivinityModelType.Rigid:
-                        extendedData.UserMeshProperties.Flags[0] |= 0x20;
+                        flags |= DivinityModelFlag.Rigid;
                         break;
                 }
+
+                extendedData.UserMeshProperties.MeshFlags = flags;
 
                 if (format == DivinityModelInfoFormat.LSMv1)
                 {

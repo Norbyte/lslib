@@ -197,7 +197,7 @@ namespace LSLib.Granny.Model
             {
                 foreach (var mesh in root.Meshes)
                 {
-                    mesh.ExtendedData = DivinityHelpers.MakeMeshExtendedData(mesh, Options.ModelInfoFormat);
+                    mesh.ExtendedData = DivinityHelpers.MakeMeshExtendedData(mesh, Options.ModelInfoFormat, Options.ModelType);
                 }
             }
 
