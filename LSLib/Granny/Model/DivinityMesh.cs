@@ -9,7 +9,8 @@ namespace LSLib.Granny.Model
         Undefined,
         Normal,
         Rigid,
-        Cloth
+        Cloth,
+        MeshProxy
     };
 
     [Flags]
@@ -214,6 +215,7 @@ namespace LSLib.Granny.Model
         public const string UserDefinedProperties_Rigid = "Rigid = true";
         // The GR2 loader checks for this exact string.
         public const string UserDefinedProperties_Cloth = "Cloth=true";
+        public const string UserDefinedProperties_MeshProxy = "MeshProxy=true";
 
         public static string ModelTypeToUserDefinedProperties(DivinityModelType modelType)
         {
@@ -222,6 +224,7 @@ namespace LSLib.Granny.Model
                 case DivinityModelType.Normal: return "";
                 case DivinityModelType.Rigid: return UserDefinedProperties_Rigid;
                 case DivinityModelType.Cloth: return UserDefinedProperties_Cloth;
+                case DivinityModelType.MeshProxy: return UserDefinedProperties_MeshProxy;
                 default: throw new ArgumentException();
             }
         }
@@ -242,6 +245,11 @@ namespace LSLib.Granny.Model
                 return DivinityModelType.Cloth;
             }
 
+            if (userDefinedProperties.Contains("MeshProxy"))
+            {
+                return DivinityModelType.MeshProxy;
+            }
+
             return DivinityModelType.Normal;
         }
 
@@ -250,6 +258,11 @@ namespace LSLib.Granny.Model
             if ((flags & DivinityModelFlag.Rigid) == DivinityModelFlag.Rigid)
             {
                 return DivinityModelType.Rigid;
+            }
+
+            if ((flags & DivinityModelFlag.MeshProxy) == DivinityModelFlag.MeshProxy)
+            {
+                return DivinityModelType.MeshProxy;
             }
 
             if ((flags & DivinityModelFlag.Cloth) == DivinityModelFlag.Cloth)
@@ -350,6 +363,13 @@ namespace LSLib.Granny.Model
                     case DivinityModelType.Rigid:
                         flags |= DivinityModelFlag.Rigid;
                         break;
+
+                    case DivinityModelType.MeshProxy:
+                        flags |= DivinityModelFlag.MeshProxy;
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
                 }
 
                 extendedData.UserMeshProperties.MeshFlags = flags;

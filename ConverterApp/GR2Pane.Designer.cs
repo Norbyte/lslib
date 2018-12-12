@@ -54,8 +54,14 @@
             this.label20 = new System.Windows.Forms.Label();
             this.gr2BatchOutputDir = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.flipMeshes = new System.Windows.Forms.CheckBox();
+            this.flipSkeletons = new System.Windows.Forms.CheckBox();
             this.exportColors = new System.Windows.Forms.CheckBox();
             this.flipUVs = new System.Windows.Forms.CheckBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.exportableObjects = new System.Windows.Forms.ListView();
+            this.exportableName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.exportableType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.exportUVs = new System.Windows.Forms.CheckBox();
             this.exportTangents = new System.Windows.Forms.CheckBox();
             this.exportNormals = new System.Windows.Forms.CheckBox();
@@ -74,19 +80,13 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
+            this.label1 = new System.Windows.Forms.Label();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.flipMeshes = new System.Windows.Forms.CheckBox();
-            this.flipSkeletons = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
-            this.exportableName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.exportableType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.exportableObjects = new System.Windows.Forms.ListView();
-            this.label2 = new System.Windows.Forms.Label();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
             this.gr2BatchTab.SuspendLayout();
@@ -391,6 +391,28 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export Options";
             // 
+            // flipMeshes
+            // 
+            this.flipMeshes.AutoSize = true;
+            this.flipMeshes.Checked = true;
+            this.flipMeshes.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.flipMeshes.Location = new System.Drawing.Point(189, 133);
+            this.flipMeshes.Name = "flipMeshes";
+            this.flipMeshes.Size = new System.Drawing.Size(132, 17);
+            this.flipMeshes.TabIndex = 26;
+            this.flipMeshes.Text = "X-flip meshes (D:OS 2)";
+            this.flipMeshes.UseVisualStyleBackColor = true;
+            // 
+            // flipSkeletons
+            // 
+            this.flipSkeletons.AutoSize = true;
+            this.flipSkeletons.Location = new System.Drawing.Point(9, 133);
+            this.flipSkeletons.Name = "flipSkeletons";
+            this.flipSkeletons.Size = new System.Drawing.Size(141, 17);
+            this.flipSkeletons.TabIndex = 25;
+            this.flipSkeletons.Text = "X-flip skeletons (D:OS 2)";
+            this.flipSkeletons.UseVisualStyleBackColor = true;
+            // 
             // exportColors
             // 
             this.exportColors.AutoSize = true;
@@ -414,6 +436,43 @@
             this.flipUVs.TabIndex = 23;
             this.flipUVs.Text = "Flip UVs";
             this.flipUVs.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(6, 166);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(141, 13);
+            this.label2.TabIndex = 22;
+            this.label2.Text = "Select subobjects for export:";
+            // 
+            // exportableObjects
+            // 
+            this.exportableObjects.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.exportableObjects.CheckBoxes = true;
+            this.exportableObjects.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.exportableName,
+            this.exportableType});
+            this.exportableObjects.Enabled = false;
+            this.exportableObjects.FullRowSelect = true;
+            this.exportableObjects.Location = new System.Drawing.Point(9, 186);
+            this.exportableObjects.Name = "exportableObjects";
+            this.exportableObjects.Size = new System.Drawing.Size(373, 207);
+            this.exportableObjects.TabIndex = 21;
+            this.exportableObjects.UseCompatibleStateImageBehavior = false;
+            this.exportableObjects.View = System.Windows.Forms.View.Details;
+            // 
+            // exportableName
+            // 
+            this.exportableName.Text = "Name";
+            this.exportableName.Width = 230;
+            // 
+            // exportableType
+            // 
+            this.exportableType.Text = "Type";
+            this.exportableType.Width = 130;
             // 
             // exportUVs
             // 
@@ -533,7 +592,8 @@
             this.gr2ExtraProps.Items.AddRange(new object[] {
             "None",
             "Rigid",
-            "Cloth"});
+            "Cloth",
+            "MeshProxy"});
             this.gr2ExtraProps.Location = new System.Drawing.Point(245, 62);
             this.gr2ExtraProps.Name = "gr2ExtraProps";
             this.gr2ExtraProps.Size = new System.Drawing.Size(140, 21);
@@ -623,6 +683,28 @@
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
             // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(13, 139);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(139, 13);
+            this.label1.TabIndex = 15;
+            this.label1.Text = "Customize resource formats:";
+            // 
             // conformSkeletonFileDlg
             // 
             this.conformSkeletonFileDlg.Filter = "Granny GR2|*.gr2;*.lsm";
@@ -637,87 +719,6 @@
             // 
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.inputFileDlg.Title = "Select Input File";
-            // 
-            // flipMeshes
-            // 
-            this.flipMeshes.AutoSize = true;
-            this.flipMeshes.Checked = true;
-            this.flipMeshes.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.flipMeshes.Location = new System.Drawing.Point(189, 133);
-            this.flipMeshes.Name = "flipMeshes";
-            this.flipMeshes.Size = new System.Drawing.Size(132, 17);
-            this.flipMeshes.TabIndex = 26;
-            this.flipMeshes.Text = "X-flip meshes (D:OS 2)";
-            this.flipMeshes.UseVisualStyleBackColor = true;
-            // 
-            // flipSkeletons
-            // 
-            this.flipSkeletons.AutoSize = true;
-            this.flipSkeletons.Location = new System.Drawing.Point(9, 133);
-            this.flipSkeletons.Name = "flipSkeletons";
-            this.flipSkeletons.Size = new System.Drawing.Size(141, 17);
-            this.flipSkeletons.TabIndex = 25;
-            this.flipSkeletons.Text = "X-flip skeletons (D:OS 2)";
-            this.flipSkeletons.UseVisualStyleBackColor = true;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(13, 139);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(139, 13);
-            this.label1.TabIndex = 15;
-            this.label1.Text = "Customize resource formats:";
-            // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
-            // 
-            // exportableName
-            // 
-            this.exportableName.Text = "Name";
-            this.exportableName.Width = 230;
-            // 
-            // exportableType
-            // 
-            this.exportableType.Text = "Type";
-            this.exportableType.Width = 130;
-            // 
-            // exportableObjects
-            // 
-            this.exportableObjects.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.exportableObjects.CheckBoxes = true;
-            this.exportableObjects.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.exportableName,
-            this.exportableType});
-            this.exportableObjects.Enabled = false;
-            this.exportableObjects.FullRowSelect = true;
-            this.exportableObjects.Location = new System.Drawing.Point(9, 186);
-            this.exportableObjects.Name = "exportableObjects";
-            this.exportableObjects.Size = new System.Drawing.Size(373, 207);
-            this.exportableObjects.TabIndex = 21;
-            this.exportableObjects.UseCompatibleStateImageBehavior = false;
-            this.exportableObjects.View = System.Windows.Forms.View.Details;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(6, 166);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(141, 13);
-            this.label2.TabIndex = 22;
-            this.label2.Text = "Select subobjects for export:";
             // 
             // GR2Pane
             // 

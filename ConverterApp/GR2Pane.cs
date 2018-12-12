@@ -181,6 +181,10 @@ namespace ConverterApp
                 case DivinityModelType.Cloth:
                     gr2ExtraProps.SelectedIndex = 2;
                     break;
+
+                case DivinityModelType.MeshProxy:
+                    gr2ExtraProps.SelectedIndex = 3;
+                    break;
             }
 
             UpdateExportableObjects();
@@ -271,6 +275,8 @@ namespace ConverterApp
                 case 0: settings.ModelType = DivinityModelType.Normal; break;
                 case 1: settings.ModelType = DivinityModelType.Rigid; break;
                 case 2: settings.ModelType = DivinityModelType.Cloth; break;
+                case 3: settings.ModelType = DivinityModelType.MeshProxy; break;
+                default: throw new Exception("Unknown model type selected");
             }
 
             settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;
