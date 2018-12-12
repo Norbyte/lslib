@@ -210,7 +210,9 @@ namespace LSLib.Granny.Model
 
     public static class DivinityHelpers
     {
-        public const string UserDefinedProperties_Rigid = "Rigid=true";
+        // The GR2 loader checks for this exact string, including spaces.
+        public const string UserDefinedProperties_Rigid = "Rigid = true";
+        // The GR2 loader checks for this exact string.
         public const string UserDefinedProperties_Cloth = "Cloth=true";
 
         public static string ModelTypeToUserDefinedProperties(DivinityModelType modelType)
@@ -228,14 +230,14 @@ namespace LSLib.Granny.Model
         {
             // The D:OS 2 editor uses the ExtendedData attribute to determine whether a model can be 
             // bound to a character.
-            // The "Rigid=true" user defined property is checked for rigid bodies (e.g. weapons), the "Cloth=true"
+            // The "Rigid = true" user defined property is checked for rigid bodies (e.g. weapons), the "Cloth=true"
             // user defined property is checked for clothes.
-            if (userDefinedProperties.Contains(UserDefinedProperties_Rigid))
+            if (userDefinedProperties.Contains("Rigid"))
             {
                 return DivinityModelType.Rigid;
             }
 
-            if (userDefinedProperties.Contains(UserDefinedProperties_Cloth))
+            if (userDefinedProperties.Contains("Cloth"))
             {
                 return DivinityModelType.Cloth;
             }
