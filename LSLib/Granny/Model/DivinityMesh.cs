@@ -275,6 +275,11 @@ namespace LSLib.Granny.Model
 
         public static DivinityModelType DetermineModelType(Mesh mesh)
         {
+            if (mesh.ModelType != DivinityModelType.Undefined)
+            {
+                return mesh.ModelType;
+            }
+
             if (mesh.ExtendedData != null
                 && mesh.ExtendedData.LSMVersion >= 1
                 && mesh.ExtendedData.UserMeshProperties != null)
@@ -309,7 +314,8 @@ namespace LSLib.Granny.Model
                 {
                     var meshType = DetermineModelType(mesh);
                     if (modelType == DivinityModelType.Undefined
-                        || (modelType == DivinityModelType.Normal && meshType == DivinityModelType.Cloth))
+                        || (modelType == DivinityModelType.Normal && 
+                            (meshType == DivinityModelType.Cloth || meshType == DivinityModelType.MeshProxy)))
                     {
                         modelType = meshType;
                     }
@@ -323,6 +329,18 @@ namespace LSLib.Granny.Model
             DivinityModelType meshModelType)
         {
             var extendedData = DivinityMeshExtendedData.Make();
+
+            if (mesh.ModelType != DivinityModelType.Undefined)
+            {
+                meshModelType = mesh.ModelType;
+            }
+
+            if (meshModelType == DivinityModelType.Cloth
+                && mesh.VertexFormat.ColorMaps == 0)
+            {
+                meshModelType = DivinityModelType.Normal;
+            }
+
             if (meshModelType == DivinityModelType.Undefined)
             {
                 meshModelType = DivinityHelpers.DetermineModelType(mesh);

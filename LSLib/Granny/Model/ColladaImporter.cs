@@ -245,6 +245,57 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private technique FindExporterExtraData(extra[] extras)
+        {
+            if (extras != null)
+            {
+                foreach (var extra in extras)
+                {
+                    if (extra.technique != null)
+                    {
+                        foreach (var technique in extra.technique)
+                        {
+                            if (technique.profile == "LSTools")
+                            {
+                                return technique;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private DivinityModelType FindDivModelType(mesh mesh)
+        {
+            var technique = FindExporterExtraData(mesh.extra);
+            if (technique != null)
+            {
+                if (technique.Any != null)
+                {
+                    foreach (var setting in technique.Any)
+                    {
+                        if (setting.LocalName == "DivModelType")
+                        {
+                            switch (setting.InnerText.Trim())
+                            {
+                                case "Normal": return DivinityModelType.Normal;
+                                case "Cloth": return DivinityModelType.Cloth;
+                                case "Rigid": return DivinityModelType.Rigid;
+                                case "MeshProxy": return DivinityModelType.MeshProxy;
+                                default:
+                                    Utils.Warn($"Unrecognized model type in <DivModelType> tag: {setting.Value}");
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return DivinityModelType.Undefined;
+        }
+
         private Mesh ImportMesh(geometry geom, mesh mesh, VertexDescriptor vertexFormat)
         {
             var collada = new ColladaMesh();
@@ -283,6 +334,13 @@ namespace LSLib.Granny.Model
             // m.BoneBindings; - TODO
 
             m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
+
+            var divModelType = FindDivModelType(mesh);
+            if (divModelType != DivinityModelType.Undefined)
+            {
+                m.ModelType = divModelType;
+            }
+
             Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
                 (m.VertexFormat.HasBoneWeights ? "skinned" : "rigid"), 
                 m.PrimaryTopology.Groups.Count, 
