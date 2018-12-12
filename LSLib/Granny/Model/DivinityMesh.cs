@@ -100,6 +100,18 @@ namespace LSLib.Granny.Model
                 {
                     formats.Add(Make(DivinityVertexUsage.QTangent, DivinityVertexAttributeFormat.BinormalInt16, 4));
                 }
+                else if (format.NormalType == NormalType.Float3)
+                {
+                    formats.Add(Make(DivinityVertexUsage.Normal, DivinityVertexAttributeFormat.Real32, 3));
+                    if (format.TangentType == NormalType.Float3)
+                    {
+                        formats.Add(Make(DivinityVertexUsage.Tangent, DivinityVertexAttributeFormat.Real32, 3));
+                    }
+                    if (format.BinormalType == NormalType.Float3)
+                    {
+                        formats.Add(Make(DivinityVertexUsage.Binormal, DivinityVertexAttributeFormat.Real32, 3));
+                    }
+                }
                 else
                 {
                     throw new InvalidOperationException($"Normal format not supported in LSM: {format.NormalType}");
@@ -115,6 +127,13 @@ namespace LSLib.Granny.Model
                         formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexAttributeFormat.NormalUInt8, 4, (byte)i));
                     }
                 }
+                else if (format.ColorMapType == ColorMapType.Float4)
+                {
+                    for (int i = 0; i < format.ColorMaps; i++)
+                    {
+                        formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexAttributeFormat.Real32, 4, (byte)i));
+                    }
+                }
                 else
                 {
                     throw new InvalidOperationException($"Color format not supported in LSM: {format.ColorMapType}");
@@ -128,6 +147,13 @@ namespace LSLib.Granny.Model
                     for (int i = 0; i < format.TextureCoordinates; i++)
                     {
                         formats.Add(Make(DivinityVertexUsage.TexCoord, DivinityVertexAttributeFormat.Real16, 2, (byte)i));
+                    }
+                }
+                else if (format.TextureCoordinateType == TextureCoordinateType.Float2)
+                {
+                    for (int i = 0; i < format.TextureCoordinates; i++)
+                    {
+                        formats.Add(Make(DivinityVertexUsage.TexCoord, DivinityVertexAttributeFormat.Real32, 2, (byte)i));
                     }
                 }
                 else

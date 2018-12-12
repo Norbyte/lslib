@@ -597,17 +597,14 @@ namespace LSLib.Granny.Model
                 OutputVertexType.BinormalType = NormalType.Float3;
                 HasTangents = true;
                 computeTangents();
-
             }
 
-            if (Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv0
+            // Use optimized tangent, texture map and color map format when exporting for D:OS 2
+            if ((Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv0
                 || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv1)
+                && HasNormals 
+                && HasTangents)
             {
-                if (!HasNormals || !HasTangents)
-                {
-                    throw new ParsingException("Cannot export to LSM - normals/tangents/bintangents unavailable.");
-                }
-
                 OutputVertexType.NormalType = NormalType.QTangent;
                 OutputVertexType.TangentType = NormalType.QTangent;
                 OutputVertexType.BinormalType = NormalType.QTangent;
