@@ -12,23 +12,44 @@ namespace LSLib.Granny.Model
         Cloth
     };
 
+    [Flags]
+    public enum DivinityModelFlag
+    {
+        MeshProxy = 0x01,
+        Cloth = 0x02,
+        HasProxyGeometry = 0x04,
+        HasColor = 0x08,
+        Skinned = 0x10,
+        Rigid = 0x20
+    };
+
     public enum DivinityVertexUsage
     {
         Position = 1,
         TexCoord = 2,
         QTangent = 3,
+        Normal = 3, // The same value is reused for QTangents
+        Tangent = 4,
+        Binormal = 5,
         BoneWeights = 6,
         BoneIndices = 7,
         Color = 8
     };
 
-    public enum DivinityVertexFormat
+    public enum DivinityVertexAttributeFormat
     {
-        Float32 = 0,
-        Float16 = 3,
-        NormalInt16 = 6,
+        Real32 = 0,
+        UInt32 = 1,
+        Int32 = 2,
+        Real16 = 3,
+        NormalUInt16 = 4,
+        UInt16 = 5,
+        BinormalInt16 = 6,
+        Int16 = 7,
         NormalUInt8 = 8,
-        UInt8 = 9
+        UInt8 = 9,
+        BinormalInt8 = 10,
+        Int8 = 11
     };
 
     public class DivinityFormatDesc
@@ -46,7 +67,7 @@ namespace LSLib.Granny.Model
         [Serialization(ArraySize = 1)]
         public Byte[] Size;
 
-        private static DivinityFormatDesc Make(DivinityVertexUsage usage, DivinityVertexFormat format, Byte size, Byte usageIndex = 0)
+        private static DivinityFormatDesc Make(DivinityVertexUsage usage, DivinityVertexAttributeFormat format, Byte size, Byte usageIndex = 0)
         {
             return new DivinityFormatDesc
             {
@@ -64,20 +85,20 @@ namespace LSLib.Granny.Model
             var formats = new List<DivinityFormatDesc>();
             if (format.HasPosition)
             {
-                formats.Add(Make(DivinityVertexUsage.Position, DivinityVertexFormat.Float32, 3));
+                formats.Add(Make(DivinityVertexUsage.Position, DivinityVertexAttributeFormat.Real32, 3));
             }
 
             if (format.HasBoneWeights)
             {
-                formats.Add(Make(DivinityVertexUsage.BoneWeights, DivinityVertexFormat.NormalUInt8, (byte)format.NumBoneInfluences));
-                formats.Add(Make(DivinityVertexUsage.BoneIndices, DivinityVertexFormat.UInt8, (byte)format.NumBoneInfluences));
+                formats.Add(Make(DivinityVertexUsage.BoneWeights, DivinityVertexAttributeFormat.NormalUInt8, (byte)format.NumBoneInfluences));
+                formats.Add(Make(DivinityVertexUsage.BoneIndices, DivinityVertexAttributeFormat.UInt8, (byte)format.NumBoneInfluences));
             }
 
             if (format.NormalType != NormalType.None)
             {
                 if (format.NormalType == NormalType.QTangent)
                 {
-                    formats.Add(Make(DivinityVertexUsage.QTangent, DivinityVertexFormat.NormalInt16, 4));
+                    formats.Add(Make(DivinityVertexUsage.QTangent, DivinityVertexAttributeFormat.BinormalInt16, 4));
                 }
                 else
                 {
@@ -91,7 +112,7 @@ namespace LSLib.Granny.Model
                 {
                     for (int i = 0; i < format.ColorMaps; i++)
                     {
-                        formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexFormat.NormalUInt8, 4, (byte)i));
+                        formats.Add(Make(DivinityVertexUsage.Color, DivinityVertexAttributeFormat.NormalUInt8, 4, (byte)i));
                     }
                 }
                 else
@@ -106,7 +127,7 @@ namespace LSLib.Granny.Model
                 {
                     for (int i = 0; i < format.TextureCoordinates; i++)
                     {
-                        formats.Add(Make(DivinityVertexUsage.TexCoord, DivinityVertexFormat.Float16, 2, (byte)i));
+                        formats.Add(Make(DivinityVertexUsage.TexCoord, DivinityVertexAttributeFormat.Real16, 2, (byte)i));
                     }
                 }
                 else
@@ -128,6 +149,12 @@ namespace LSLib.Granny.Model
         public List<DivinityFormatDesc> FormatDescs;
         [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
+
+        public DivinityModelFlag MeshFlags
+        {
+            get { return (DivinityModelFlag)Flags[0]; }
+            set { Flags[0] = (UInt32)value; }
+        }
     }
 
     public class DivinityMeshExtendedData
@@ -190,14 +217,14 @@ namespace LSLib.Granny.Model
             return DivinityModelType.Normal;
         }
 
-        public static DivinityModelType UserMeshFlagsToModelType(UInt32 flags)
+        public static DivinityModelType UserMeshFlagsToModelType(DivinityModelFlag flags)
         {
-            if ((flags & 0x20) != 0)
+            if ((flags & DivinityModelFlag.Rigid) == DivinityModelFlag.Rigid)
             {
                 return DivinityModelType.Rigid;
             }
 
-            if ((flags & 0x02) != 0)
+            if ((flags & DivinityModelFlag.Cloth) == DivinityModelFlag.Cloth)
             {
                 return DivinityModelType.Cloth;
             }
@@ -211,7 +238,7 @@ namespace LSLib.Granny.Model
                 && mesh.ExtendedData.LSMVersion >= 1
                 && mesh.ExtendedData.UserMeshProperties != null)
             {
-                return UserMeshFlagsToModelType(mesh.ExtendedData.UserMeshProperties.Flags[0]);
+                return UserMeshFlagsToModelType(mesh.ExtendedData.UserMeshProperties.MeshFlags);
             }
             else if (mesh.ExtendedData != null
                 && mesh.ExtendedData.UserDefinedProperties != null)
