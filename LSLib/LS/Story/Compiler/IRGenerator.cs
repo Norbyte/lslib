@@ -169,7 +169,21 @@ namespace LSLib.LS.Story.Compiler
             {
                 var astVar = astValue as ASTLocalVar;
                 // TODO - compiler error if type resolution fails
-                var type = astVar.Type != null ? Context.LookupType(astVar.Type) : null;
+                ValueType type;
+                if (astVar.Type != null)
+                {
+                    type = Context.LookupType(astVar.Type);
+                    if (type == null)
+                    {
+                        Context.Log.Error(astVar.Location, DiagnosticCode.UnresolvedType,
+                            String.Format("Type \"{0}\" does not exist", astVar.Type));
+                    }
+                }
+                else
+                {
+                    type = null;
+                }
+
                 var ruleVar = rule.FindOrAddVariable(astVar.Name, type);
 
                 return new IRVariable
@@ -226,7 +240,7 @@ namespace LSLib.LS.Story.Compiler
                 type = Context.LookupType(astConstant.TypeName);
                 if (type == null)
                 {
-                    Context.Log.Error(null, DiagnosticCode.UnresolvedType,
+                    Context.Log.Error(astConstant.Location, DiagnosticCode.UnresolvedType,
                         String.Format("Type \"{0}\" does not exist", astConstant.TypeName));
                 }
             }

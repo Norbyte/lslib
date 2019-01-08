@@ -235,7 +235,7 @@ namespace LSLib.LS.Story.Compiler
         /// </summary>
         public const String LocalTypeMismatch = "E11";
         /// <summary>
-        /// Constant value with unknown type encountered during IR generation.
+        /// Value with unknown type encountered during IR generation.
         /// </summary>
         public const String UnresolvedType = "E12";
         /// <summary>
