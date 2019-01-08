@@ -30,7 +30,7 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(value.Location,
                     DiagnosticCode.LocalTypeMismatch,
                     "Parameter {0} of {1} \"{2}\" expects {3}; {4} specified",
-                    paramName, func.Type, func.Name, TypeToName(param.Type.IntrinsicTypeId), TypeToName(value.Type.IntrinsicTypeId));
+                    paramName, func.Type, func.Name, param.Type.Name, value.Type.Name);
                 return;
             }
 
@@ -40,7 +40,7 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(value.Location,
                     DiagnosticCode.GuidAliasMismatch,
                     "Parameter {0} of {1} \"{2}\" has GUID type {3}; {4} specified",
-                    paramName, func.Type, func.Name, TypeToName(param.Type.TypeId), TypeToName(value.Type.TypeId));
+                    paramName, func.Type, func.Name, param.Type.Name, value.Type.Name);
                 return;
             }
         }
@@ -198,7 +198,7 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(variable.Location, 
                     DiagnosticCode.CastToUnrelatedType,
                     "Cannot cast {1} variable {0} to unrelated type {2}",
-                    ruleVar.Name, TypeToName(ruleVar.Type.IntrinsicTypeId), TypeToName(variable.Type.IntrinsicTypeId));
+                    ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
                 return;
             }
 
@@ -207,7 +207,7 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(variable.Location,
                     DiagnosticCode.RiskyComparison,
                     "Coercion of {1} variable {0} to {2} may trigger incorrect behavior",
-                    ruleVar.Name, TypeToName(ruleVar.Type.IntrinsicTypeId), TypeToName(variable.Type.IntrinsicTypeId));
+                    ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
                 return;
             }
 
@@ -216,7 +216,7 @@ namespace LSLib.LS.Story.Compiler
                 Context.Log.Error(variable.Location, 
                     DiagnosticCode.CastToUnrelatedGuidAlias,
                     "{1} variable {0} converted to unrelated type {2}",
-                    ruleVar.Name, TypeToName(ruleVar.Type.TypeId), TypeToName(variable.Type.TypeId));
+                    ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
             }
         }
 
@@ -280,7 +280,7 @@ namespace LSLib.LS.Story.Compiler
                         Context.Log.Warn(constant.Location,
                             DiagnosticCode.GameObjectTypeMismatch,
                             "Constant \"{0}\" of type {1} references game object of type {2}",
-                            constant.StringValue, TypeToName(constant.Type.TypeId), TypeToName(objectInfo.Type.TypeId));
+                            constant.StringValue, constant.Type.Name, objectInfo.Type.Name);
                     }
                 }
             }
