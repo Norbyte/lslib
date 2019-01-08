@@ -222,8 +222,7 @@ namespace LSLib.LS.Story.Compiler
 
         private void VerifyIRConstant(IRConstant constant)
         {
-            if (constant.Type.IntrinsicTypeId == Value.Type.GuidString
-                && constant.Type.TypeId > CompilationContext.MaxIntrinsicTypeId)
+            if (constant.Type.IntrinsicTypeId == Value.Type.GuidString)
             {
                 var nameWithoutType = constant.StringValue;
                 ValueType type = null;
@@ -238,7 +237,8 @@ namespace LSLib.LS.Story.Compiler
                     if (type != null)
                     {
                         nameWithoutType = constant.StringValue.Substring(underscore + 1);
-                        if (type.TypeId != constant.Type.TypeId)
+                        if (constant.Type.TypeId > CompilationContext.MaxIntrinsicTypeId
+                            && type.TypeId != constant.Type.TypeId)
                         {
                             Context.Log.Error(constant.Location, 
                                 DiagnosticCode.GuidAliasMismatch,
