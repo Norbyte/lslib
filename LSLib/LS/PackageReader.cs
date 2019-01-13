@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LZ4;
+using Alphaleonis.Win32.Filesystem;
+using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
@@ -46,7 +48,7 @@ namespace LSLib.LS
             for (var part = 1; part < numParts; part++)
             {
                 string partPath = Package.MakePartFilename(_path, part);
-                _streams[part] = new FileStream(partPath, FileMode.Open, FileAccess.Read);
+                _streams[part] = File.Open(partPath, FileMode.Open, FileAccess.Read);
             }
         }
 
@@ -133,7 +135,7 @@ namespace LSLib.LS
 
         public Package Read()
         {
-            var mainStream = new FileStream(_path, FileMode.Open, FileAccess.Read);
+            var mainStream = File.Open(_path, FileMode.Open, FileAccess.Read);
 
             using (var reader = new BinaryReader(mainStream, new UTF8Encoding(), true))
             {

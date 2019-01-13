@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using LSLib.LS.Enums;
+using Alphaleonis.Win32.Filesystem;
 
 namespace Divine.CLI
 {
@@ -147,8 +147,6 @@ namespace Divine.CLI
 
         public static string TryToValidatePath(string path)
         {
-            const int maxPath = 248;
-
             CommandLineLogger.LogDebug($"Using path: {path}");
 
             if (string.IsNullOrWhiteSpace(path))
@@ -173,11 +171,6 @@ namespace Divine.CLI
 
             // ReSharper disable once AssignNullToNotNullAttribute
             path = Path.GetFullPath(path);
-
-            if (path.Length > maxPath)
-            {
-                CommandLineLogger.LogFatal($"Cannot proceed with path exceeding {maxPath} characters: {path}", 1);
-            }
 
             return path;
         }

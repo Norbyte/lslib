@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using LSLib.LS.Enums;
+using Alphaleonis.Win32.Filesystem;
+using Path = Alphaleonis.Win32.Filesystem.Path;
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
@@ -40,7 +44,7 @@ namespace LSLib.LS
 
         public static Resource LoadResource(string inputPath, ResourceFormat format)
         {
-            using (var stream = new FileStream(inputPath, FileMode.Open, FileAccess.Read))
+            using (var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read))
             {
                 return LoadResource(stream, format);
             }
@@ -96,7 +100,7 @@ namespace LSLib.LS
         {
             FileManager.TryToCreateDirectory(outputPath);
 
-            using (var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            using (var file = File.Open(outputPath, FileMode.Create, FileAccess.Write))
             {
                 switch (format)
                 {

@@ -5,6 +5,10 @@ using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS;
+using Alphaleonis.Win32.Filesystem;
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using Path = Alphaleonis.Win32.Filesystem.Path;
+using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.Granny
 {
@@ -50,7 +54,7 @@ namespace LSLib.Granny
             {
                 case ExportFormat.GR2:
                 {
-                    using (var fs = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var fs = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
                         var root = new Root();
                         var gr2 = new GR2Reader(fs);

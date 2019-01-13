@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using LSLib.LS;
 using OpenTK;
+using Alphaleonis.Win32.Filesystem;
+using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.Granny.Model
 {
@@ -108,7 +110,7 @@ namespace LSLib.Granny.Model
         private Root LoadGR2(string inPath)
         {
             var root = new LSLib.Granny.Model.Root();
-            FileStream fs = new FileStream(inPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
+            FileStream fs = File.Open(inPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
             var gr2 = new LSLib.Granny.GR2.GR2Reader(fs);
             gr2.Read(root);
             root.PostLoad(gr2.Tag);
@@ -158,7 +160,7 @@ namespace LSLib.Granny.Model
             var body = writer.Write(root);
             writer.Dispose();
 
-            FileStream f = new FileStream(outPath, FileMode.Create, System.IO.FileAccess.Write, FileShare.None);
+            FileStream f = File.Open(outPath, FileMode.Create, System.IO.FileAccess.Write, FileShare.None);
             f.Write(body, 0, body.Length);
             f.Close();
             f.Dispose();

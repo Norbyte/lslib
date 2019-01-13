@@ -8,6 +8,8 @@ using System.Text;
 using LSLib.LS.Enums;
 using LSLib.Native;
 using LZ4;
+using Alphaleonis.Win32.Filesystem;
+using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
@@ -49,7 +51,7 @@ namespace LSLib.LS
             {
                 // Start a new package file if the current one is full.
                 string partPath = Package.MakePartFilename(_path, _streams.Count);
-                var nextPart = new FileStream(partPath, FileMode.Create, FileAccess.Write);
+                var nextPart = File.Open(partPath, FileMode.Create, FileAccess.Write);
                 _streams.Add(nextPart);
             }
 
@@ -297,7 +299,7 @@ namespace LSLib.LS
 
         public void Write()
         {
-            var mainStream = new FileStream(_path, FileMode.Create, FileAccess.Write);
+            var mainStream = File.Open(_path, FileMode.Create, FileAccess.Write);
             _streams.Add(mainStream);
 
             switch (Version)
