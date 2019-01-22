@@ -41,10 +41,19 @@ namespace Divine.CLI
         [ValueArgument(typeof(string), 'd', "destination",
             Description = "Set destination file path or directory",
             DefaultValue = null,
-            ValueOptional = false,
-            Optional = false
+            ValueOptional = true,
+            Optional = true
         )]
         public string Destination;
+
+        // @formatter:off
+        [ValueArgument(typeof(string), 'f', "packaged-path",
+            Description = "File to extract from package",
+            DefaultValue = null,
+            ValueOptional = true,
+            Optional = true
+        )]
+        public string PackagedPath;
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'i', "input-format",
@@ -70,7 +79,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'a', "action",
             Description = "Set action to execute",
             DefaultValue = "extract-package",
-            AllowedValues = "create-package;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
+            AllowedValues = "create-package;list-package;extract-single-file;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
             ValueOptional = false,
             Optional = false
         )]

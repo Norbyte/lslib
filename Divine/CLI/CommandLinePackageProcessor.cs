@@ -15,6 +15,93 @@ namespace Divine.CLI
             CreatePackageResource();
         }
 
+        public static void ListFiles()
+        {
+            if (CommandLineActions.SourcePath == null)
+            {
+                CommandLineLogger.LogFatal("Cannot list package without source path", 1);
+            }
+            else
+            {
+                ListPackageFiles(CommandLineActions.SourcePath);
+            }
+        }
+
+        public static void ExtractSingleFile()
+        {
+            ExtractSingleFile(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.PackagedFilePath);
+        }
+
+        private static void ExtractSingleFile(string packagePath, string destinationPath, string packagedPath)
+        {
+            try
+            {
+                using (var reader = new PackageReader(packagePath))
+                {
+                    var package = reader.Read();
+                    // Try to match by full path
+                    var file = package.Files.Find(fileInfo => String.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
+                    if (file == null)
+                    {
+                        // Try to match by filename only
+                        file = package.Files.Find(fileInfo => String.Compare(Path.GetFileName(fileInfo.Name), packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
+                        if (file == null)
+                        {
+                            CommandLineLogger.LogError($"Package doesn't contain file named '{packagedPath}'");
+                            return;
+                        }
+                    }
+
+                    using (var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
+                    {
+                        try
+                        {
+                            var stream = file.MakeStream();
+                            stream.CopyTo(fs);
+                        }
+                        finally
+                        {
+                            file.ReleaseStream();
+                        }
+
+                    }
+                }
+            }
+            catch (NotAPackageException)
+            {
+                CommandLineLogger.LogError("Failed to list package contents because the package is not an Original Sin package or savegame archive");
+            }
+            catch (Exception e)
+            {
+                CommandLineLogger.LogFatal($"Failed to list package: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
+            }
+        }
+
+        private static void ListPackageFiles(string packagePath)
+        {
+            try
+            {
+                using (var reader = new PackageReader(packagePath))
+                {
+                    var package = reader.Read();
+                    foreach (var fileInfo in package.Files)
+                    {
+                        Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.CRC()}");
+                    }
+                }
+            }
+            catch (NotAPackageException)
+            {
+                CommandLineLogger.LogError("Failed to list package contents because the package is not an Original Sin package or savegame archive");
+            }
+            catch (Exception e)
+            {
+                CommandLineLogger.LogFatal($"Failed to list package: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
+            }
+        }
+
         public static void Extract()
         {
             if (CommandLineActions.SourcePath == null)

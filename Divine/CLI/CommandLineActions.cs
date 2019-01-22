@@ -10,6 +10,7 @@ namespace Divine.CLI
     {
         public static string SourcePath;
         public static string DestinationPath;
+        public static string PackagedFilePath;
         public static string ConformPath;
 
         public static Game Game;
@@ -39,6 +40,8 @@ namespace Divine.CLI
             string[] packageActions =
             {
                 "create-package",
+                "list-package",
+                "extract-single-file",
                 "extract-package",
                 "extract-packages"
             };
@@ -75,7 +78,7 @@ namespace Divine.CLI
                 }
             }
 
-            if (packageActions.Any(args.Action.Contains))
+            if (args.Action == "create-package")
             {
                 PackageVersion = CommandLineArguments.GetPackageVersion(args.PackageVersion);
                 CommandLineLogger.LogDebug($"Using package version: {PackageVersion}");
@@ -93,7 +96,14 @@ namespace Divine.CLI
             }
 
             SourcePath = TryToValidatePath(args.Source);
-            DestinationPath = TryToValidatePath(args.Destination);
+            if (args.Action != "list-package")
+            {
+                DestinationPath = TryToValidatePath(args.Destination);
+            }
+            if (args.Action == "extract-single-file")
+            {
+                PackagedFilePath = args.PackagedPath;
+            }
         }
 
         private static void Process(CommandLineArguments args)
@@ -109,6 +119,18 @@ namespace Divine.CLI
                 case "extract-package":
                 {
                     CommandLinePackageProcessor.Extract();
+                    break;
+                }
+
+                case "extract-single-file":
+                {
+                    CommandLinePackageProcessor.ExtractSingleFile();
+                    break;
+                }
+
+                case "list-package":
+                {
+                    CommandLinePackageProcessor.ListFiles();
                     break;
                 }
 
@@ -141,6 +163,11 @@ namespace Divine.CLI
                 {
                     CommandLineDataProcessor.BatchConvert();
                     break;
+                }
+
+                default:
+                {
+                    throw new ArgumentException($"Unhandled action: {args.Action}");
                 }
             }
         }
