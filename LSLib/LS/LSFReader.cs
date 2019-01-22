@@ -388,7 +388,6 @@ namespace LSLib.LS
             //         L x 16-bit string length (S)
             //             [S bytes of UTF-8 string data]
 
-            Names = new List<List<String>>();
             using (var reader = new BinaryReader(s))
             {
                 var numHashEntries = reader.ReadUInt32();
@@ -423,7 +422,6 @@ namespace LSLib.LS
             Console.WriteLine(" ----- DUMP OF NODE TABLE -----");
 #endif
 
-            Nodes = new List<NodeInfo>();
             using (var reader = new BinaryReader(s))
             {
                 Int32 index = 0;
@@ -471,7 +469,6 @@ namespace LSLib.LS
         /// <param name="s">Stream to read the attribute headers from</param>
         private void ReadAttributesV2(Stream s)
         {
-            Attributes = new List<AttributeInfo>();
             using (var reader = new BinaryReader(s))
             {
 #if DEBUG_LSF_SERIALIZATION
@@ -553,7 +550,6 @@ namespace LSLib.LS
         /// <param name="s">Stream to read the attribute headers from</param>
         private void ReadAttributesV3(Stream s)
         {
-            Attributes = new List<AttributeInfo>();
             using (var reader = new BinaryReader(s))
             {
                 while (s.Position < s.Length)
@@ -615,6 +611,7 @@ namespace LSLib.LS
                     throw new InvalidDataException(msg);
                 }
 
+                Names = new List<List<String>>();
                 bool isCompressed = BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) != CompressionMethod.None;
                 if (hdr.StringsSizeOnDisk > 0 || hdr.StringsUncompressedSize > 0)
                 {
@@ -642,7 +639,8 @@ namespace LSLib.LS
                         ReadNames(namesStream);
                     }
                 }
-
+                
+                Nodes = new List<NodeInfo>();
                 if (hdr.NodesSizeOnDisk > 0 || hdr.NodesUncompressedSize > 0)
                 {
                     uint onDiskSize = isCompressed ? hdr.NodesSizeOnDisk : hdr.NodesUncompressedSize;
@@ -663,6 +661,7 @@ namespace LSLib.LS
                     }
                 }
 
+                Attributes = new List<AttributeInfo>();
                 if (hdr.AttributesSizeOnDisk > 0 || hdr.AttributesUncompressedSize > 0)
                 {
                     uint onDiskSize = isCompressed ? hdr.AttributesSizeOnDisk : hdr.AttributesUncompressedSize;
