@@ -318,22 +318,7 @@ namespace ConverterApp
             {
                 exporter.Export();
 
-				string optionsDebug = "Options: ";
-
-				var properties = typeof(ExporterOptions).GetFields();
-
-				foreach (var property in properties)
-				{
-					if (property != null)
-					{
-						object val = property.GetValue(exporter.Options);
-						optionsDebug += $"{property.Name}: {val}" + Environment.NewLine;
-					}
-				}
-
-				MessageBox.Show(optionsDebug);
-
-				//MessageBox.Show("Export completed successfully.");
+				MessageBox.Show("Export completed successfully.");
             }
             catch (Exception exc)
             {

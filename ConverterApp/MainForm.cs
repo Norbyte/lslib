@@ -42,7 +42,7 @@ namespace ConverterApp
             osirisTab.Controls.Add(osirisPane);
 
             Text += $" (LSLib v{Common.LibraryVersion()})";
-            gr2Game.SelectedIndex = 2;
+            gr2Game.SelectedIndex = gr2Game.Items.Count - 1;
         }
 
         public Game GetGame()
@@ -61,10 +61,10 @@ namespace ConverterApp
                 {
                     return Game.DivinityOriginalSin2;
                 }
-				case 3:
-				{
-					return Game.DivinityOriginalSin2DE;
-				}
+                case 3:
+                {
+                    return Game.DivinityOriginalSin2DE;
+                }
                 default:
                 {
                     throw new InvalidOperationException();
@@ -77,8 +77,8 @@ namespace ConverterApp
             Game game = GetGame();
             if (gr2Tab.Controls[0] is GR2Pane pane)
             {
-				pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game.IsDOS2();
-				pane.flipMeshes.Checked = game.IsDOS2();
+                pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game.IsDOS2();
+                pane.flipMeshes.Checked = game.IsDOS2();
             }
 
             packagePane.SetGame(game);
