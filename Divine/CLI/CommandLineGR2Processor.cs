@@ -65,21 +65,6 @@ namespace Divine.CLI
 
             try
             {
-				string optionsDebug = "Options: ";
-
-				var properties = typeof(ExporterOptions).GetFields();
-
-				foreach (var property in properties)
-				{
-					if(property != null)
-					{
-						object val = property.GetValue(exporter.Options);
-						optionsDebug += $"{property.Name}: {val}" + Environment.NewLine;
-					}
-				}
-
-				CommandLineLogger.LogInfo(optionsDebug);
-
                 exporter.Export();
 
                 CommandLineLogger.LogInfo("Export completed successfully.");
