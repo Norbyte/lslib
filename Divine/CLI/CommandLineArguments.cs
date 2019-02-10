@@ -22,7 +22,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'g', "game",
             Description = "Set target game when generating output",
             DefaultValue = "dos2",
-            AllowedValues = "dos;dosee;dos2",
+            AllowedValues = "dos;dosee;dos2;dos2de",
             ValueOptional = false,
             Optional = true
         )]
@@ -193,17 +193,17 @@ namespace Divine.CLI
                 {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2;
                 }
-				case "dos2de":
-				default:
-				{
-					return LSLib.LS.Enums.Game.DivinityOriginalSin2DE;
-				}
+                case "dos2de":
+                default:
+                {
+                    return LSLib.LS.Enums.Game.DivinityOriginalSin2DE;
+                }
             }
         }
 
         public static FileVersion GetFileVersionByGame(Game divinityGame)
         {
-			return divinityGame.IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+            return divinityGame.IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
         }
 
         public static ExportFormat GetExportFormatByString(string optionExportFormat)
