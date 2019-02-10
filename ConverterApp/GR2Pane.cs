@@ -230,28 +230,6 @@ namespace ConverterApp
         private void UpdateCommonExporterSettings(ExporterOptions settings)
         {
             Game game = _form.GetGame();
-            if (game == Game.DivinityOriginalSin)
-            {
-                settings.Is64Bit = false;
-                settings.AlternateSignature = false;
-                settings.VersionTag = Header.Tag_DOS;
-                settings.ModelInfoFormat = DivinityModelInfoFormat.None;
-            }
-            else
-            {
-                settings.Is64Bit = true;
-                settings.AlternateSignature = true;
-                settings.VersionTag = Header.Tag_DOSEE;
-
-                if (game == Game.DivinityOriginalSinEE)
-                {
-                    settings.ModelInfoFormat = DivinityModelInfoFormat.UserDefinedProperties;
-                }
-                else
-                {
-                    settings.ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
-                }
-            }
 
             settings.ExportNormals = exportNormals.Checked;
             settings.ExportTangents = exportTangents.Checked;
@@ -269,6 +247,8 @@ namespace ConverterApp
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
             settings.FlipMesh = flipMeshes.Checked;
             settings.FlipSkeleton = flipSkeletons.Checked;
+
+			settings.LoadGameSettings(game);
 
             switch (gr2ExtraProps.SelectedIndex)
             {
@@ -337,7 +317,8 @@ namespace ConverterApp
             try
             {
                 exporter.Export();
-                MessageBox.Show("Export completed successfully.");
+
+				MessageBox.Show("Export completed successfully.");
             }
             catch (Exception exc)
             {

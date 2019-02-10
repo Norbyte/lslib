@@ -91,21 +91,22 @@ namespace ConverterApp
                 switch (packageVersion.SelectedIndex)
                 {
                     case 0:
+                    case 1:
                     {
                         version = PackageVersion.V13;
                         break;
                     }
-                    case 1:
+                    case 2:
                     {
                         version = PackageVersion.V10;
                         break;
                     }
-                    case 2:
+                    case 3:
                     {
                         version = PackageVersion.V9;
                         break;
                     }
-                    case 3:
+                    case 4:
                     {
                         version = PackageVersion.V7;
                         break;
@@ -219,14 +220,17 @@ namespace ConverterApp
             switch (game)
             {
                 case Game.DivinityOriginalSin:
-                    packageVersion.SelectedIndex = 2;
+                    packageVersion.SelectedIndex = 3;
                     break;
 
                 case Game.DivinityOriginalSinEE:
-                    packageVersion.SelectedIndex = 1;
+                    packageVersion.SelectedIndex = 2;
                     break;
 
                 case Game.DivinityOriginalSin2:
+                    packageVersion.SelectedIndex = 1;
+                    break;
+                case Game.DivinityOriginalSin2DE:
                     packageVersion.SelectedIndex = 0;
                     break;
             }
