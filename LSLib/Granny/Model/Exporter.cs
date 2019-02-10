@@ -99,6 +99,38 @@ namespace LSLib.Granny.Model
         public bool FlipMesh = false;
         // Flip skeleton on X axis
         public bool FlipSkeleton = false;
+
+		public void LoadGameSettings(LSLib.LS.Enums.Game game)
+		{
+			switch (game)
+			{
+				case LSLib.LS.Enums.Game.DivinityOriginalSin:
+					Is64Bit = false;
+					AlternateSignature = false;
+					VersionTag = LSLib.Granny.GR2.Header.Tag_DOS;
+					ModelInfoFormat = DivinityModelInfoFormat.None;
+					break;
+				case LSLib.LS.Enums.Game.DivinityOriginalSinEE:
+					Is64Bit = true;
+					AlternateSignature = true;
+					VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+					ModelInfoFormat = DivinityModelInfoFormat.UserDefinedProperties;
+					break;
+				case LSLib.LS.Enums.Game.DivinityOriginalSin2:
+					Is64Bit = true;
+					AlternateSignature = false;
+					VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
+					break;
+				case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
+				default:
+					Is64Bit = true;
+					AlternateSignature = false;
+					VersionTag = LSLib.Granny.GR2.Header.Tag_DOS2DE;
+					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
+					break;
+			}
+		}
     }
 
 

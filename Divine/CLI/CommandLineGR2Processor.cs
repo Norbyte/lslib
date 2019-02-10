@@ -23,7 +23,7 @@ namespace Divine.CLI
 
         public static ExporterOptions UpdateExporterSettings()
         {
-            ExporterOptions exporterOptions = new ExporterOptions
+            ExporterOptions exporterOptions = new ExporterOptions ()
             {
                 InputPath = CommandLineActions.SourcePath,
                 OutputPath = CommandLineActions.DestinationPath,
@@ -46,18 +46,7 @@ namespace Divine.CLI
                 ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null
             };
 
-            if (CommandLineActions.Game == Game.DivinityOriginalSin)
-            {
-                exporterOptions.Is64Bit = false;
-                exporterOptions.AlternateSignature = false;
-                exporterOptions.VersionTag = Header.Tag_DOS;
-            }
-            else
-            {
-                exporterOptions.Is64Bit = true;
-                exporterOptions.AlternateSignature = true;
-                exporterOptions.VersionTag = Header.Tag_DOSEE;
-            }
+			exporterOptions.LoadGameSettings(CommandLineActions.Game);
 
             return exporterOptions;
         }
@@ -76,7 +65,23 @@ namespace Divine.CLI
 
             try
             {
+				string optionsDebug = "Options: ";
+
+				var properties = typeof(ExporterOptions).GetFields();
+
+				foreach (var property in properties)
+				{
+					if(property != null)
+					{
+						object val = property.GetValue(exporter.Options);
+						optionsDebug += $"{property.Name}: {val}" + Environment.NewLine;
+					}
+				}
+
+				CommandLineLogger.LogInfo(optionsDebug);
+
                 exporter.Export();
+
                 CommandLineLogger.LogInfo("Export completed successfully.");
             }
             catch (Exception e)

@@ -190,16 +190,20 @@ namespace Divine.CLI
                     return LSLib.LS.Enums.Game.DivinityOriginalSinEE;
                 }
                 case "dos2":
-                default:
                 {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2;
                 }
+				case "dos2de":
+				default:
+				{
+					return LSLib.LS.Enums.Game.DivinityOriginalSin2DE;
+				}
             }
         }
 
         public static FileVersion GetFileVersionByGame(Game divinityGame)
         {
-            return divinityGame == LSLib.LS.Enums.Game.DivinityOriginalSin2 ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+			return divinityGame.IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
         }
 
         public static ExportFormat GetExportFormatByString(string optionExportFormat)

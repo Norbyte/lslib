@@ -61,6 +61,10 @@ namespace ConverterApp
                 {
                     return Game.DivinityOriginalSin2;
                 }
+				case 3:
+				{
+					return Game.DivinityOriginalSin2DE;
+				}
                 default:
                 {
                     throw new InvalidOperationException();
@@ -73,8 +77,8 @@ namespace ConverterApp
             Game game = GetGame();
             if (gr2Tab.Controls[0] is GR2Pane pane)
             {
-                pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game == Game.DivinityOriginalSin2;
-                pane.flipMeshes.Checked = game == Game.DivinityOriginalSin2;
+				pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game.IsDOS2();
+				pane.flipMeshes.Checked = game.IsDOS2();
             }
 
             packagePane.SetGame(game);
