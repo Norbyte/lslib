@@ -123,6 +123,12 @@ namespace LSLib.Granny.Model
                 float t2 = w3.Y - w1.Y;
 
                 float r = 1.0F / (s1 * t2 - s2 * t1);
+
+                if (Single.IsNaN(r) || Single.IsInfinity(r))
+                {
+                    throw new Exception("NaN tangent - possible UV coordinate reuse?");
+                }
+
                 var sdir = new Vector3(
                     (t2 * x1 - t1 * x2) * r,
                     (t2 * y1 - t1 * y2) * r,
