@@ -43,7 +43,8 @@ namespace Divine.CLI
                 DeduplicateUVs = GR2Options["deduplicate-uvs"],
                 ApplyBasisTransforms = GR2Options["apply-basis-transforms"],
                 UseObsoleteVersionTag = GR2Options["force-legacy-version"],
-                ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null
+                ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
+                TransformSkeletons = GR2Options["y-up-skeletons"],
             };
 
 			exporterOptions.LoadGameSettings(CommandLineActions.Game);

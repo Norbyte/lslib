@@ -36,7 +36,7 @@ namespace LSLib.Granny.Model
         public bool ZUp = false;
 
 
-        public void Transform(Matrix4 transformation)
+        public void TransformVertices(Matrix4 transformation)
         {
             if (VertexDatas != null)
             {
@@ -45,7 +45,10 @@ namespace LSLib.Granny.Model
                     vertexData.Transform(transformation);
                 }
             }
+        }
 
+        public void TransformSkeletons(Matrix4 transformation)
+        {
             if (Skeletons != null)
             {
                 foreach (var skeleton in Skeletons)
@@ -55,12 +58,16 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public void ConvertToYUp()
+        public void ConvertToYUp(bool transformSkeletons)
         {
             if (!ZUp) return;
 
             var transform = Matrix4.CreateRotationX((float)(-0.5 * Math.PI));
-            Transform(transform);
+            TransformVertices(transform);
+            if (transformSkeletons)
+            {
+                TransformSkeletons(transform);
+            }
 
             if (ArtToolInfo != null)
             {
