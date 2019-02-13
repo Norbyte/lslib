@@ -26,6 +26,7 @@ namespace LSLib.Granny.Model
 
     public enum DivinityVertexUsage
     {
+        None = 0,
         Position = 1,
         TexCoord = 2,
         QTangent = 3,

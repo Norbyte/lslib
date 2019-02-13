@@ -99,8 +99,10 @@ namespace LSLib.Granny.Model
         public bool FlipMesh = false;
         // Flip skeleton on X axis
         public bool FlipSkeleton = false;
+        // Apply Y-up transforms on skeletons?
+        public bool TransformSkeletons = true;
 
-		public void LoadGameSettings(LSLib.LS.Enums.Game game)
+        public void LoadGameSettings(LSLib.LS.Enums.Game game)
 		{
 			switch (game)
 			{
@@ -670,7 +672,7 @@ namespace LSLib.Granny.Model
 
             if (Options.ApplyBasisTransforms)
             {
-                Root.ConvertToYUp();
+                Root.ConvertToYUp(Options.TransformSkeletons);
             }
 
             if (Options.RecalculateIWT && Root.Skeletons != null)

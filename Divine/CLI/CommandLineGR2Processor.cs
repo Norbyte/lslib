@@ -45,7 +45,8 @@ namespace Divine.CLI
                 UseObsoleteVersionTag = GR2Options["force-legacy-version"],
                 ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
 				FlipSkeleton = GR2Options["x-flip-skeletons"],
-				FlipMesh = GR2Options["x-flip-meshes"]
+				FlipMesh = GR2Options["x-flip-meshes"],
+                TransformSkeletons = GR2Options["y-up-skeletons"]
             };
 
 			exporterOptions.LoadGameSettings(CommandLineActions.Game);

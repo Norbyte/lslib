@@ -247,8 +247,9 @@ namespace ConverterApp
             settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
             settings.FlipMesh = flipMeshes.Checked;
             settings.FlipSkeleton = flipSkeletons.Checked;
+            settings.TransformSkeletons = transfomSkeletons.Checked;
 
-			settings.LoadGameSettings(game);
+            settings.LoadGameSettings(game);
 
             switch (gr2ExtraProps.SelectedIndex)
             {

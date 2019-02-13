@@ -80,13 +80,14 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
+            this.transfomSkeletons = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
             this.gr2BatchTab.SuspendLayout();
@@ -370,6 +371,7 @@
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
+            this.groupBox2.Controls.Add(this.transfomSkeletons);
             this.groupBox2.Controls.Add(this.flipMeshes);
             this.groupBox2.Controls.Add(this.flipSkeletons);
             this.groupBox2.Controls.Add(this.exportColors);
@@ -386,7 +388,7 @@
             this.groupBox2.Controls.Add(this.recalculateNormals);
             this.groupBox2.Location = new System.Drawing.Point(7, 174);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(395, 410);
+            this.groupBox2.Size = new System.Drawing.Size(395, 448);
             this.groupBox2.TabIndex = 37;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export Options";
@@ -440,7 +442,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(6, 166);
+            this.label2.Location = new System.Drawing.Point(8, 183);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(141, 13);
             this.label2.TabIndex = 22;
@@ -457,9 +459,9 @@
             this.exportableType});
             this.exportableObjects.Enabled = false;
             this.exportableObjects.FullRowSelect = true;
-            this.exportableObjects.Location = new System.Drawing.Point(9, 186);
+            this.exportableObjects.Location = new System.Drawing.Point(9, 201);
             this.exportableObjects.Name = "exportableObjects";
-            this.exportableObjects.Size = new System.Drawing.Size(373, 207);
+            this.exportableObjects.Size = new System.Drawing.Size(373, 230);
             this.exportableObjects.TabIndex = 21;
             this.exportableObjects.UseCompatibleStateImageBehavior = false;
             this.exportableObjects.View = System.Windows.Forms.View.Details;
@@ -580,7 +582,7 @@
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Location = new System.Drawing.Point(418, 174);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(476, 410);
+            this.groupBox1.Size = new System.Drawing.Size(476, 448);
             this.groupBox1.TabIndex = 36;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "GR2 Export Options";
@@ -683,19 +685,6 @@
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
             // 
-            // resourceFormats
-            // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 233);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -720,6 +709,31 @@
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.inputFileDlg.Title = "Select Input File";
             // 
+            // transfomSkeletons
+            // 
+            this.transfomSkeletons.AutoSize = true;
+            this.transfomSkeletons.Checked = true;
+            this.transfomSkeletons.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.transfomSkeletons.Location = new System.Drawing.Point(9, 156);
+            this.transfomSkeletons.Name = "transfomSkeletons";
+            this.transfomSkeletons.Size = new System.Drawing.Size(121, 17);
+            this.transfomSkeletons.TabIndex = 27;
+            this.transfomSkeletons.Text = "Transform skeletons";
+            this.transfomSkeletons.UseVisualStyleBackColor = true;
+            // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 271);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            // 
             // GR2Pane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -728,7 +742,7 @@
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "GR2Pane";
-            this.Size = new System.Drawing.Size(901, 592);
+            this.Size = new System.Drawing.Size(901, 630);
             this.gr2ModeTabControl.ResumeLayout(false);
             this.gr2SingleFileTab.ResumeLayout(false);
             this.gr2SingleFileTab.PerformLayout();
@@ -803,5 +817,6 @@
         private System.Windows.Forms.ColumnHeader exportableType;
         private ExportItemSelection resourceFormats;
         private System.Windows.Forms.Label label1;
+        internal System.Windows.Forms.CheckBox transfomSkeletons;
     }
 }

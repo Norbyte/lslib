@@ -109,7 +109,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
             Description = "Set extra options for GR2/DAE conversion",
             AllowMultiple = true,
-            AllowedValues = "x-flip-skeletons;x-flip-meshes;export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
+            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform",
             ValueOptional = false,
             Optional = true
         )]
@@ -323,8 +323,6 @@ namespace Divine.CLI
         {
             Dictionary<string, bool> results = new Dictionary<string, bool>
             {
-                { "x-flip-skeletons", false },
-                { "x-flip-meshes", false },
                 { "export-normals", true },
                 { "export-tangents", true },
                 { "export-uvs", true },
@@ -335,10 +333,13 @@ namespace Divine.CLI
                 { "recalculate-tangents", false },
                 { "recalculate-iwt", false },
                 { "flip-uvs", true },
+                { "y-up-skeletons", true },
                 { "force-legacy-version", false },
                 { "compact-tris", true },
                 { "build-dummy-skeleton", true },
                 { "apply-basis-transforms", true },
+                { "x-flip-skeletons", false },
+                { "x-flip-meshes", false },
                 { "conform", false }
             };
 
