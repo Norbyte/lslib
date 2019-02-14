@@ -74,8 +74,7 @@ namespace Divine.CLI
             }
             catch (Exception e)
             {
-                CommandLineLogger.LogFatal($"Export failed: {e.Message}", 2);
-                CommandLineLogger.LogTrace($"{e.StackTrace}");
+                CommandLineLogger.LogFatal($"Export failed: {e.Message + Environment.NewLine + e.StackTrace}", 2);
             }
         }
 

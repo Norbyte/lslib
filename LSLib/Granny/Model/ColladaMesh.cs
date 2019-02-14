@@ -126,7 +126,7 @@ namespace LSLib.Granny.Model
 
                 if (Single.IsNaN(r) || Single.IsInfinity(r))
                 {
-                    throw new Exception("NaN tangent - possible UV coordinate reuse?");
+                    throw new Exception($"NaN tangent - possible UV coordinate reuse? UV1{w1.ToString()} UV2{w2.ToString()} UV3{w3.ToString()}");
                 }
 
                 var sdir = new Vector3(
