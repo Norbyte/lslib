@@ -191,11 +191,13 @@ namespace LSLib.Granny.Model
                 modelType = DivinityHelpers.DetermineModelType(root);
             }
 
-            var userDefinedProperties = DivinityHelpers.ModelTypeToUserDefinedProperties(modelType);
+			var userDefinedProperties = "";
 
             if (root.Meshes != null)
             {
-                foreach (var mesh in root.Meshes)
+				userDefinedProperties = DivinityHelpers.ModelTypeToUserDefinedProperties(modelType);
+
+				foreach (var mesh in root.Meshes)
                 {
                     mesh.ExtendedData = DivinityHelpers.MakeMeshExtendedData(mesh, Options.ModelInfoFormat, Options.ModelType);
                 }

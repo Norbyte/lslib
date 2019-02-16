@@ -87,7 +87,17 @@ namespace Divine.CLI
             if (graphicsActions.Any(args.Action.Contains))
             {
                 GR2Options = CommandLineArguments.GetGR2Options(args.Options);
-                CommandLineLogger.LogDebug($"Using graphics options: {GR2Options}");
+
+                if(CommandLineActions.LogLevel == LogLevel.DEBUG || CommandLineActions.LogLevel == LogLevel.ALL)
+                {
+                    CommandLineLogger.LogDebug("Using graphics options:");
+
+                    foreach (var x in GR2Options)
+                    {
+                        CommandLineLogger.LogDebug($"   {x.Key} = {x.Value}");
+                    }
+                    
+                }
 
                 if (GR2Options["conform"])
                 {
