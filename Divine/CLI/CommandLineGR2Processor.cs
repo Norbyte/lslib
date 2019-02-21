@@ -27,8 +27,8 @@ namespace Divine.CLI
             {
                 InputPath = CommandLineActions.SourcePath,
                 OutputPath = CommandLineActions.DestinationPath,
-                InputFormat = CommandLineArguments.GetExportFormatByString(Program.argv.InputFormat),
-                OutputFormat = CommandLineArguments.GetExportFormatByString(Program.argv.OutputFormat),
+                InputFormat = Program.argv.InputFormat != null ? CommandLineArguments.GetModelFormatByString(Program.argv.InputFormat) : CommandLineArguments.GetModelFormatByPath(CommandLineActions.SourcePath),
+                OutputFormat = Program.argv.OutputFormat != null ? CommandLineArguments.GetModelFormatByString(Program.argv.OutputFormat) : CommandLineArguments.GetModelFormatByPath(CommandLineActions.DestinationPath),
                 ExportNormals = GR2Options["export-normals"],
                 ExportTangents = GR2Options["export-tangents"],
                 ExportUVs = GR2Options["export-uvs"],
