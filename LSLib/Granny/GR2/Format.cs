@@ -126,6 +126,33 @@ namespace LSLib.Granny.GR2
             return transform;
         }
 
+        public Matrix4 ToMatrix4Composite()
+        {
+            Matrix3 transform3 = Matrix3.CreateFromQuaternion(Rotation);
+
+            if (HasScaleShear)
+            {
+                transform3 = ScaleShear * transform3;
+            }
+
+            Matrix4 transform = Matrix4.Identity;
+            transform[0, 0] = transform3[0, 0];
+            transform[0, 1] = transform3[0, 1];
+            transform[0, 2] = transform3[0, 2];
+            transform[1, 0] = transform3[1, 0];
+            transform[1, 1] = transform3[1, 1];
+            transform[1, 2] = transform3[1, 2];
+            transform[2, 0] = transform3[2, 0];
+            transform[2, 1] = transform3[2, 1];
+            transform[2, 2] = transform3[2, 2];
+
+            transform[3, 0] = Translation[0];
+            transform[3, 1] = Translation[1];
+            transform[3, 2] = Translation[2];
+
+            return transform;
+        }
+
         public Matrix4 ToMatrix4()
         {
             Matrix4 transform = Matrix4.Identity;

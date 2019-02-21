@@ -245,7 +245,7 @@ namespace LSLib.Granny.Model
                     bone.Transform = new Transform();
 
                     // TODO: Transform / IWT is not always identity on dummy bones!
-                    skeleton.UpdateInverseWorldTransforms();
+                    skeleton.UpdateWorldTransforms();
                     model.Skeleton = skeleton;
 
                     foreach (var mesh in model.MeshBindings)
@@ -679,7 +679,7 @@ namespace LSLib.Granny.Model
             {
                 foreach (var skeleton in Root.Skeletons)
                 {
-                    skeleton.UpdateInverseWorldTransforms();
+                    skeleton.UpdateWorldTransforms();
                 }
             }
 
