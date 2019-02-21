@@ -44,7 +44,9 @@ namespace Divine.CLI
                 ApplyBasisTransforms = GR2Options["apply-basis-transforms"],
                 UseObsoleteVersionTag = GR2Options["force-legacy-version"],
                 ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
-                TransformSkeletons = GR2Options["y-up-skeletons"],
+				FlipSkeleton = GR2Options["x-flip-skeletons"],
+				FlipMesh = GR2Options["x-flip-meshes"],
+                TransformSkeletons = GR2Options["y-up-skeletons"]
             };
 
 			exporterOptions.LoadGameSettings(CommandLineActions.Game);
@@ -72,8 +74,7 @@ namespace Divine.CLI
             }
             catch (Exception e)
             {
-                CommandLineLogger.LogFatal($"Export failed: {e.Message}", 2);
-                CommandLineLogger.LogTrace($"{e.StackTrace}");
+                CommandLineLogger.LogFatal($"Export failed: {e.Message + Environment.NewLine + e.StackTrace}", 2);
             }
         }
 

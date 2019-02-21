@@ -108,10 +108,10 @@ namespace Divine.CLI
         public string CompressionMethod;
 
         // @formatter:off
-        [EnumeratedValueArgument(typeof(string), "gr2-options",
+        [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
             Description = "Set extra options for GR2/DAE conversion",
             AllowMultiple = true,
-            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;conform",
+            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform",
             ValueOptional = false,
             Optional = true
         )]
@@ -358,6 +358,8 @@ namespace Divine.CLI
                 { "compact-tris", true },
                 { "build-dummy-skeleton", true },
                 { "apply-basis-transforms", true },
+                { "x-flip-skeletons", false },
+                { "x-flip-meshes", false },
                 { "conform", false }
             };
 
