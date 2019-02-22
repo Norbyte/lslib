@@ -120,14 +120,14 @@ namespace LSLib.Granny.Model
 					break;
 				case LSLib.LS.Enums.Game.DivinityOriginalSin2:
 					Is64Bit = true;
-					AlternateSignature = false;
+					AlternateSignature = true;
 					VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
 					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
 					break;
 				case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
 				default:
 					Is64Bit = true;
-					AlternateSignature = false;
+					AlternateSignature = true;
 					VersionTag = LSLib.Granny.GR2.Header.Tag_DOS2DE;
 					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
 					break;
