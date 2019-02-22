@@ -27,27 +27,25 @@ namespace LSLib.Granny.Model
         public string TransformSID;
         [Serialization(Kind = SerializationKind.None)]
         public Matrix4 OriginalTransform;
+        [Serialization(Kind = SerializationKind.None)]
+        public Matrix4 WorldTransform;
 
         public bool IsRoot { get { return ParentIndex == -1; } }
-
-        public Matrix4 CalculateInverseWorldTransform(List<Bone> bones)
+        
+        public void UpdateWorldTransforms(List<Bone> bones)
         {
-            var iwt = Matrix4.Identity;
-            var currentBone = this;
-            while (true)
+            var localTransform = Transform.ToMatrix4Composite();
+            if (IsRoot)
             {
-                var untranslated = currentBone.Transform.ToMatrix4();
-                iwt = iwt * untranslated;
-                if (currentBone.IsRoot) break;
-                currentBone = bones[currentBone.ParentIndex];
+                WorldTransform = localTransform;
+            }
+            else
+            {
+                var parentBone = bones[ParentIndex];
+                WorldTransform = localTransform * parentBone.WorldTransform;
             }
 
-            return iwt.Inverted();
-        }
-
-        public void UpdateInverseWorldTransform(List<Bone> bones)
-        {
-            var iwt = CalculateInverseWorldTransform(bones);
+            var iwt = WorldTransform.Inverted();
             InverseWorldTransform = new float[] {
                 iwt[0, 0], iwt[0, 1], iwt[0, 2], iwt[0, 3],
                 iwt[1, 0], iwt[1, 1], iwt[1, 2], iwt[1, 3],
@@ -74,7 +72,7 @@ namespace LSLib.Granny.Model
             colladaBone.LODError = 0; // TODO
             colladaBone.OriginalTransform = transMat.transform;
             colladaBone.Transform = Transform.FromMatrix4(transMat.transform);
-            colladaBone.UpdateInverseWorldTransform(bones);
+            colladaBone.UpdateWorldTransforms(bones);
 
             if (bone.node1 != null)
             {
@@ -160,12 +158,12 @@ namespace LSLib.Granny.Model
             {
                 if (bone.IsRoot)
                 {
-                    var boneTransform = transform * bone.Transform.ToMatrix4();
+                    var boneTransform = bone.Transform.ToMatrix4() * transform;
                     bone.Transform = GR2.Transform.FromMatrix4(boneTransform);
                 }
             }
 
-            UpdateInverseWorldTransforms();
+            UpdateWorldTransforms();
         }
 
         public void Flip()
@@ -183,14 +181,14 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            UpdateInverseWorldTransforms();
+            UpdateWorldTransforms();
         }
 
-        public void UpdateInverseWorldTransforms()
+        public void UpdateWorldTransforms()
         {
             foreach (var bone in Bones)
             {
-                bone.UpdateInverseWorldTransform(Bones);
+                bone.UpdateWorldTransforms(Bones);
             }
         }
     }

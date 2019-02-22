@@ -120,14 +120,14 @@ namespace LSLib.Granny.Model
 					break;
 				case LSLib.LS.Enums.Game.DivinityOriginalSin2:
 					Is64Bit = true;
-					AlternateSignature = false;
+					AlternateSignature = true;
 					VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
 					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
 					break;
 				case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
 				default:
 					Is64Bit = true;
-					AlternateSignature = false;
+					AlternateSignature = true;
 					VersionTag = LSLib.Granny.GR2.Header.Tag_DOS2DE;
 					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
 					break;
@@ -245,7 +245,7 @@ namespace LSLib.Granny.Model
                     bone.Transform = new Transform();
 
                     // TODO: Transform / IWT is not always identity on dummy bones!
-                    skeleton.UpdateInverseWorldTransforms();
+                    skeleton.UpdateWorldTransforms();
                     model.Skeleton = skeleton;
 
                     foreach (var mesh in model.MeshBindings)
@@ -679,7 +679,7 @@ namespace LSLib.Granny.Model
             {
                 foreach (var skeleton in Root.Skeletons)
                 {
-                    skeleton.UpdateInverseWorldTransforms();
+                    skeleton.UpdateWorldTransforms();
                 }
             }
 

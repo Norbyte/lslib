@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using CommandLineParser.Arguments;
 using LSLib.Granny.Model;
@@ -206,9 +208,27 @@ namespace Divine.CLI
             return divinityGame.IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
         }
 
-        public static ExportFormat GetExportFormatByString(string optionExportFormat)
+        public static ExportFormat GetModelFormatByString(string format)
         {
-            return optionExportFormat == "gr2" ? ExportFormat.GR2 : ExportFormat.DAE;
+            switch (format.ToLower())
+            {
+                case "gr2": return ExportFormat.GR2;
+                case "dae": return ExportFormat.DAE;
+                default: throw new ArgumentException($"Unknown model format: {format}");
+            }
+        }
+
+        public static ExportFormat GetModelFormatByPath(string path)
+        {
+            var extension = Path.GetExtension(path);
+            if (extension != null)
+            {
+                return GetModelFormatByString(extension.Substring(1));
+            }
+            else
+            {
+                throw new ArgumentException($"Could not determine model format from filename: {path}");
+            }
         }
 
         // ReSharper disable once RedundantCaseLabel

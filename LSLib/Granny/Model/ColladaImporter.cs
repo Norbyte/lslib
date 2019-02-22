@@ -533,12 +533,19 @@ namespace LSLib.Granny.Model
             for (var vertexIndex = 0; vertexIndex < influenceCounts.Count; vertexIndex++)
             {
                 var influenceCount = influenceCounts[vertexIndex];
+                float influenceSum = 0.0f;
+                for (var i = 0; i < influenceCount; i++)
+                {
+                    var weightIndex = influences[offset + i * stride + weightInputIndex];
+                    influenceSum += weights[weightIndex];
+                }
+
                 for (var i = 0; i < influenceCount; i++)
                 {
                     var jointIndex = influences[offset + jointInputIndex];
                     var weightIndex = influences[offset + weightInputIndex];
                     var joint = joints[jointIndex];
-                    var weight = weights[weightIndex];
+                    var weight = weights[weightIndex] / influenceSum;
                     // Not all vertices are actually used in triangles, we may have unused verts in the
                     // source list (though this is rare) which won't show up in the consolidated vertex map.
                     if (mesh.OriginalToConsolidatedVertexIndexMap.TryGetValue(vertexIndex, out List<int> consolidatedIndices))
@@ -794,7 +801,7 @@ namespace LSLib.Granny.Model
             root.Models.Add(rootModel);
             // TODO: make this an option!
             if (root.Skeletons.Count > 0)
-                root.Skeletons[0].UpdateInverseWorldTransforms();
+                root.Skeletons[0].UpdateWorldTransforms();
             root.ZUp = ZUp;
             root.PostLoad(GR2.Header.DefaultTag);
 
