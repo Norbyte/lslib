@@ -222,12 +222,12 @@ namespace LSLib.Granny.Model
         {
             switch (modelType)
             {
-                case DivinityModelType.Normal: return "";
                 case DivinityModelType.Rigid: return UserDefinedProperties_Rigid;
                 case DivinityModelType.Cloth: return UserDefinedProperties_Cloth;
                 case DivinityModelType.MeshProxy: return UserDefinedProperties_MeshProxy;
-                default: throw new ArgumentException();
-            }
+				case DivinityModelType.Normal: 
+				default: return "";
+			}
         }
 
         public static DivinityModelType UserDefinedPropertiesToModelType(string userDefinedProperties)

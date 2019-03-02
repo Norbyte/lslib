@@ -6,17 +6,31 @@ using LSLib.LS.Enums;
 namespace ConverterApp
 {
     public partial class ResourcePane : UserControl
-    {
-        private readonly MainForm _form;
+	{
+		private readonly MainForm _form;
         private Resource _resource;
 
-        public ResourcePane(MainForm form)
+		private Action SaveSettings { get; set; }
+
+		public ResourcePane(MainForm form)
         {
-            _form = form;
             InitializeComponent();
-            resourceInputFormatCb.SelectedIndex = 2;
-            resourceOutputFormatCb.SelectedIndex = 0;
-        }
+
+			SaveSettings = form.SaveSettings;
+
+			_form = form;
+
+			resourceInputFormatCb.SelectedIndex = 2;
+			resourceOutputFormatCb.SelectedIndex = 0;
+
+			resourceInputPath.DataBindings.Add("Text", form, "Settings.Resources.InputPath");
+			resourceOutputPath.DataBindings.Add("Text", form, "Settings.Resources.OutputPath");
+			resourceInputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchInputPath");
+			resourceOutputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchOutputPath");
+
+			resourceInputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+			resourceOutputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+		}
 
         private void resourceConvertBtn_Click(object sender, EventArgs e)
         {
@@ -28,7 +42,9 @@ namespace ConverterApp
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, outputVersion);
 
                 MessageBox.Show("Resource saved successfully.");
-            }
+
+				SaveSettings?.Invoke();
+			}
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -40,7 +56,9 @@ namespace ConverterApp
             if (resourceInputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceInputPath.Text = resourceInputFileDlg.FileName;
-            }
+
+				SaveSettings?.Invoke();
+			}
         }
 
         private void resourceOutputBrowseBtn_Click(object sender, EventArgs e)
@@ -48,7 +66,9 @@ namespace ConverterApp
             if (resourceOutputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceOutputPath.Text = resourceOutputFileDlg.FileName;
-            }
+
+				SaveSettings?.Invoke();
+			}
         }
 
         private void resourceInputPathBrowseBtn_Click(object sender, EventArgs e)
@@ -56,7 +76,9 @@ namespace ConverterApp
             if (resourceInputPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceInputDir.Text = resourceInputPathDlg.SelectedPath;
-            }
+
+				SaveSettings?.Invoke();
+			}
         }
 
         private void resourceOutputPathBrowseBtn_Click(object sender, EventArgs e)
@@ -64,7 +86,9 @@ namespace ConverterApp
             if (resourceOutputPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceOutputDir.Text = resourceOutputPathDlg.SelectedPath;
-            }
+
+				SaveSettings?.Invoke();
+			}
         }
 
         public void ResourceProgressUpdate(string status, long numerator, long denominator)
@@ -138,7 +162,9 @@ namespace ConverterApp
                 utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, outputVersion);
 
                 MessageBox.Show("Resources converted successfully.");
-            }
+
+				SaveSettings?.Invoke();
+			}
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);

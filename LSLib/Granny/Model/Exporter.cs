@@ -374,7 +374,7 @@ namespace LSLib.Granny.Model
                 foreach (var track in trackGroup.TransformTracks)
                 {
                     var bone = skeleton.GetBoneByName(track.Name);
-                    if (bone == null)
+					if (bone == null)
                     {
                         string msg = String.Format("Animation track references bone '{0}' that cannot be found in the skeleton.", track.Name);
                         throw new ExportException(msg);
