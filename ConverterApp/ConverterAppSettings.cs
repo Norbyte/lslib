@@ -34,7 +34,7 @@ namespace ConverterApp
         public GR2PaneSettings GR2
         {
             get { return gr2; }
-            set { gr2 = value; OnPropertyChanged(); }
+            set { gr2 = value; }
         }
 
         private PackagePaneSettings pakSettings;
@@ -42,7 +42,7 @@ namespace ConverterApp
         public PackagePaneSettings PAK
         {
             get { return pakSettings; }
-            set { pakSettings = value; OnPropertyChanged(); }
+            set { pakSettings = value; }
         }
 
         private ResourcePaneSettings resourceSettings;
@@ -50,7 +50,7 @@ namespace ConverterApp
         public ResourcePaneSettings Resources
         {
             get { return resourceSettings; }
-            set { resourceSettings = value; OnPropertyChanged(); }
+            set { resourceSettings = value; }
         }
 
         private OsirisPaneSettings storySettings;
@@ -58,7 +58,7 @@ namespace ConverterApp
         public OsirisPaneSettings Story
         {
             get { return storySettings; }
-            set { storySettings = value; OnPropertyChanged(); }
+            set { storySettings = value; }
         }
 
         private Game selectedGame = Game.DivinityOriginalSin2DE;
@@ -74,12 +74,7 @@ namespace ConverterApp
         public string Version
         {
             get { return version; }
-            set { version = value; OnPropertyChanged(); }
-        }
-
-        public void UpdateVersion(string newVersion)
-        {
-            version = newVersion;
+            set { version = value; }
         }
 
         public void SetPropertyChangedEvent(PropertyChangedEventHandler eventHandler)
@@ -351,5 +346,4 @@ namespace ConverterApp
             return 0;
         }
     }
-
 }

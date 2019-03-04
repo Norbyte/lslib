@@ -69,7 +69,7 @@ namespace ConverterApp
             gr2Game.SelectedIndex = gr2Game.Items.Count - 1;
             gr2Game.DataBindings.Add("SelectedIndex", Settings, "SelectedGame", true, DataSourceUpdateMode.OnPropertyChanged);
 
-            Settings.UpdateVersion(Common.LibraryVersion());
+            Settings.Version = Common.LibraryVersion();
             Settings.SetPropertyChangedEvent(SaveSettings);
         }
 
