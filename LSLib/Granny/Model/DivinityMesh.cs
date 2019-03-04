@@ -225,9 +225,9 @@ namespace LSLib.Granny.Model
                 case DivinityModelType.Rigid: return UserDefinedProperties_Rigid;
                 case DivinityModelType.Cloth: return UserDefinedProperties_Cloth;
                 case DivinityModelType.MeshProxy: return UserDefinedProperties_MeshProxy;
-				case DivinityModelType.Normal: 
-				default: return "";
-			}
+                case DivinityModelType.Normal: 
+                default: return "";
+            }
         }
 
         public static DivinityModelType UserDefinedPropertiesToModelType(string userDefinedProperties)

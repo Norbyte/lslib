@@ -11,23 +11,23 @@ using Node = LSLib.LS.Story.Node;
 namespace ConverterApp
 {
     public partial class OsirisPane : UserControl
-	{
-		private Story _story;
+    {
+        private Story _story;
 
-		public OsirisPane(ISettingsDataSource settingsDataSource)
+        public OsirisPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
 
-			storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath");
-			goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath");
-		}
+            storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath");
+            goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath");
+        }
 
         private void storyFileBrowseBtn_Click(object sender, EventArgs e)
         {
             if (storyPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 storyFilePath.Text = storyPathDlg.FileName;
-			}
+            }
         }
 
         private void goalPathBrowseBtn_Click(object sender, EventArgs e)
@@ -35,7 +35,7 @@ namespace ConverterApp
             if (goalPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 goalPath.Text = goalPathDlg.SelectedPath;
-			}
+            }
         }
 
         private void LoadStory(Stream s)
@@ -120,7 +120,7 @@ namespace ConverterApp
                     break;
                 }
             }
-		}
+        }
 
         private void SaveSavegameDatabase()
         {
@@ -245,7 +245,7 @@ namespace ConverterApp
                     break;
                 }
             }
-		}
+        }
 
         private void decompileStoryBtn_Click(object sender, EventArgs e)
         {
@@ -295,7 +295,7 @@ namespace ConverterApp
             }
 
             MessageBox.Show("Story unpacked successfully.");
-		}
+        }
 
         private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)
         {

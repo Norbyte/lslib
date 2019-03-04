@@ -103,36 +103,36 @@ namespace LSLib.Granny.Model
         public bool TransformSkeletons = true;
 
         public void LoadGameSettings(LSLib.LS.Enums.Game game)
-		{
-			switch (game)
-			{
-				case LSLib.LS.Enums.Game.DivinityOriginalSin:
-					Is64Bit = false;
-					AlternateSignature = false;
-					VersionTag = LSLib.Granny.GR2.Header.Tag_DOS;
-					ModelInfoFormat = DivinityModelInfoFormat.None;
-					break;
-				case LSLib.LS.Enums.Game.DivinityOriginalSinEE:
-					Is64Bit = true;
-					AlternateSignature = true;
-					VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
-					ModelInfoFormat = DivinityModelInfoFormat.UserDefinedProperties;
-					break;
-				case LSLib.LS.Enums.Game.DivinityOriginalSin2:
-					Is64Bit = true;
-					AlternateSignature = true;
-					VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
-					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
-					break;
-				case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
-				default:
-					Is64Bit = true;
-					AlternateSignature = true;
-					VersionTag = LSLib.Granny.GR2.Header.Tag_DOS2DE;
-					ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
-					break;
-			}
-		}
+        {
+            switch (game)
+            {
+                case LSLib.LS.Enums.Game.DivinityOriginalSin:
+                    Is64Bit = false;
+                    AlternateSignature = false;
+                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOS;
+                    ModelInfoFormat = DivinityModelInfoFormat.None;
+                    break;
+                case LSLib.LS.Enums.Game.DivinityOriginalSinEE:
+                    Is64Bit = true;
+                    AlternateSignature = true;
+                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                    ModelInfoFormat = DivinityModelInfoFormat.UserDefinedProperties;
+                    break;
+                case LSLib.LS.Enums.Game.DivinityOriginalSin2:
+                    Is64Bit = true;
+                    AlternateSignature = true;
+                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                    ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
+                    break;
+                case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
+                default:
+                    Is64Bit = true;
+                    AlternateSignature = true;
+                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOS2DE;
+                    ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
+                    break;
+            }
+        }
     }
 
 
@@ -374,8 +374,8 @@ namespace LSLib.Granny.Model
                 foreach (var track in trackGroup.TransformTracks)
                 {
                     var bone = skeleton.GetBoneByName(track.Name);
-					if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
-					if (bone == null)
+                    //if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
+                    if (bone == null)
                     {
                         string msg = String.Format("Animation track references bone '{0}' that cannot be found in the skeleton.", track.Name);
                         throw new ExportException(msg);

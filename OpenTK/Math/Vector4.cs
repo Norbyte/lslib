@@ -1490,7 +1490,7 @@ namespace OpenTK
             vec.W *= scale;
             return vec;
         }
-		
+        
         /// <summary>
         /// Component-wise multiplication between the specified instance by a scale vector.
         /// </summary>
@@ -1505,7 +1505,7 @@ namespace OpenTK
             vec.W *= scale.W;
             return vec;
         }
-		
+        
         /// <summary>
         /// Divides an instance by a scalar.
         /// </summary>

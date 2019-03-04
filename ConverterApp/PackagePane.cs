@@ -8,23 +8,23 @@ using LSLib.LS.Enums;
 namespace ConverterApp
 {
     public partial class PackagePane : UserControl
-	{
-		private Stopwatch _displayTimer;
+    {
+        private Stopwatch _displayTimer;
 
-		public PackagePane(ISettingsDataSource settingsDataSource)
+        public PackagePane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
 
-			packageVersion.SelectedIndex = 0;
-			compressionMethod.SelectedIndex = 3;
+            packageVersion.SelectedIndex = 0;
+            compressionMethod.SelectedIndex = 3;
 
-			extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath");
-			extractionPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractOutputPath");
-			createSrcPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateInputPath");
-			createPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateOutputPath");
+            extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath");
+            extractionPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractOutputPath");
+            createSrcPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateInputPath");
+            createPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateOutputPath");
 
-			packageVersion.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageVersion", true, DataSourceUpdateMode.OnPropertyChanged);
-			compressionMethod.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageCompression", true, DataSourceUpdateMode.OnPropertyChanged);
+            packageVersion.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageVersion", true, DataSourceUpdateMode.OnPropertyChanged);
+            compressionMethod.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageCompression", true, DataSourceUpdateMode.OnPropertyChanged);
         }
 
         private void PackageProgressUpdate(string status, long numerator, long denominator, AbstractFileInfo file)
@@ -66,13 +66,13 @@ namespace ConverterApp
             extractPackageBtn.Enabled = false;
             _displayTimer = null;
 
-			try
+            try
             {
                 var packager = new Packager();
                 packager.ProgressUpdate += PackageProgressUpdate;
                 packager.UncompressPackage(extractPackagePath.Text, extractionPath.Text);
                 MessageBox.Show("Package extracted successfully.");
-			}
+            }
             catch (NotAPackageException)
             {
                 MessageBox.Show($"The specified package ({extractPackagePath.Text}) is not an Original Sin package or savegame archive.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -86,7 +86,7 @@ namespace ConverterApp
                 packageProgressLabel.Text = "";
                 packageProgress.Value = 0;
                 extractPackageBtn.Enabled = true;
-			}
+            }
         }
 
         private void createPackageBtn_Click(object sender, EventArgs e)
@@ -161,7 +161,7 @@ namespace ConverterApp
                 packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, version, compression, fastCompression);
 
                 MessageBox.Show("Package created successfully.");
-			}
+            }
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Package Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -171,7 +171,7 @@ namespace ConverterApp
                 packageProgressLabel.Text = "";
                 packageProgress.Value = 0;
                 createPackageBtn.Enabled = true;
-			}
+            }
         }
 
         private void packagePath_TextChanged(object sender, EventArgs e)
@@ -180,7 +180,7 @@ namespace ConverterApp
             if (Path.GetExtension(createPackagePath.Text) == ".lsv")
             {
                 compressionMethod.SelectedIndex = 2;
-			}
+            }
         }
 
         private void extractPackageBrowseBtn_Click(object sender, EventArgs e)
@@ -188,7 +188,7 @@ namespace ConverterApp
             if (extractPackageFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 extractPackagePath.Text = extractPackageFileDlg.FileName;
-			}
+            }
         }
 
         private void extractPathBrowseBtn_Click(object sender, EventArgs e)
@@ -197,7 +197,7 @@ namespace ConverterApp
             if (result == DialogResult.OK)
             {
                 extractionPath.Text = extractPathDlg.SelectedPath;
-			}
+            }
         }
 
         private void createSrcPathBrowseBtn_Click(object sender, EventArgs e)
@@ -206,7 +206,7 @@ namespace ConverterApp
             if (result == DialogResult.OK)
             {
                 createSrcPath.Text = createPackagePathDlg.SelectedPath;
-			}
+            }
         }
 
         private void createPackagePathBrowseBtn_Click(object sender, EventArgs e)
@@ -222,7 +222,7 @@ namespace ConverterApp
             {
                 compressionMethod.SelectedIndex = 2;
             }
-		}
+        }
 
         public void SetGame(Game game)
         {

@@ -6,27 +6,27 @@ using LSLib.LS.Enums;
 namespace ConverterApp
 {
     public partial class ResourcePane : UserControl
-	{
-		private readonly MainForm _form;
+    {
+        private readonly MainForm _form;
         private Resource _resource;
 
-		public ResourcePane(MainForm form)
+        public ResourcePane(MainForm form)
         {
             InitializeComponent();
 
-			_form = form;
+            _form = form;
 
-			resourceInputFormatCb.SelectedIndex = 2;
-			resourceOutputFormatCb.SelectedIndex = 0;
+            resourceInputFormatCb.SelectedIndex = 2;
+            resourceOutputFormatCb.SelectedIndex = 0;
 
-			resourceInputPath.DataBindings.Add("Text", form, "Settings.Resources.InputPath");
-			resourceOutputPath.DataBindings.Add("Text", form, "Settings.Resources.OutputPath");
-			resourceInputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchInputPath");
-			resourceOutputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchOutputPath");
+            resourceInputPath.DataBindings.Add("Text", form, "Settings.Resources.InputPath");
+            resourceOutputPath.DataBindings.Add("Text", form, "Settings.Resources.OutputPath");
+            resourceInputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchInputPath");
+            resourceOutputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchOutputPath");
 
-			resourceInputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
-			resourceOutputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
-		}
+            resourceInputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            resourceOutputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+        }
 
         private void resourceConvertBtn_Click(object sender, EventArgs e)
         {
@@ -38,7 +38,7 @@ namespace ConverterApp
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, outputVersion);
 
                 MessageBox.Show("Resource saved successfully.");
-			}
+            }
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -50,7 +50,7 @@ namespace ConverterApp
             if (resourceInputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceInputPath.Text = resourceInputFileDlg.FileName;
-			}
+            }
         }
 
         private void resourceOutputBrowseBtn_Click(object sender, EventArgs e)
@@ -58,7 +58,7 @@ namespace ConverterApp
             if (resourceOutputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceOutputPath.Text = resourceOutputFileDlg.FileName;
-			}
+            }
         }
 
         private void resourceInputPathBrowseBtn_Click(object sender, EventArgs e)
@@ -66,7 +66,7 @@ namespace ConverterApp
             if (resourceInputPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceInputDir.Text = resourceInputPathDlg.SelectedPath;
-			}
+            }
         }
 
         private void resourceOutputPathBrowseBtn_Click(object sender, EventArgs e)
@@ -74,7 +74,7 @@ namespace ConverterApp
             if (resourceOutputPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceOutputDir.Text = resourceOutputPathDlg.SelectedPath;
-			}
+            }
         }
 
         public void ResourceProgressUpdate(string status, long numerator, long denominator)
@@ -148,7 +148,7 @@ namespace ConverterApp
                 utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, outputVersion);
 
                 MessageBox.Show("Resources converted successfully.");
-			}
+            }
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
