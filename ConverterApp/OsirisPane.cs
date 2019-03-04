@@ -11,20 +11,20 @@ using Node = LSLib.LS.Story.Node;
 namespace ConverterApp
 {
     public partial class OsirisPane : UserControl
-	{
-		private Story _story;
+    {
+        private Story _story;
 
-		private Action SaveSettings { get; set; }
+        private Action SaveSettings { get; set; }
 
-		public OsirisPane(ISettingsDataSource settingsDataSource)
+        public OsirisPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
 
-			SaveSettings = settingsDataSource.SaveSettings;
+            SaveSettings = settingsDataSource.SaveSettings;
 
-			storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath");
-			goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath");
-		}
+            storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath");
+            goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath");
+        }
 
         private void storyFileBrowseBtn_Click(object sender, EventArgs e)
         {
@@ -32,8 +32,8 @@ namespace ConverterApp
             {
                 storyFilePath.Text = storyPathDlg.FileName;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void goalPathBrowseBtn_Click(object sender, EventArgs e)
@@ -42,8 +42,8 @@ namespace ConverterApp
             {
                 goalPath.Text = goalPathDlg.SelectedPath;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void LoadStory(Stream s)
@@ -129,8 +129,8 @@ namespace ConverterApp
                 }
             }
 
-			SaveSettings?.Invoke();
-		}
+            SaveSettings?.Invoke();
+        }
 
         private void SaveSavegameDatabase()
         {
@@ -256,8 +256,8 @@ namespace ConverterApp
                 }
             }
 
-			SaveSettings?.Invoke();
-		}
+            SaveSettings?.Invoke();
+        }
 
         private void decompileStoryBtn_Click(object sender, EventArgs e)
         {
@@ -308,8 +308,8 @@ namespace ConverterApp
 
             MessageBox.Show("Story unpacked successfully.");
 
-			SaveSettings?.Invoke();
-		}
+            SaveSettings?.Invoke();
+        }
 
         private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)
         {

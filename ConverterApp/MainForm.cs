@@ -8,83 +8,83 @@ using Newtonsoft.Json;
 namespace ConverterApp
 {
     public sealed partial class MainForm : Form, ISettingsDataSource
-	{
+    {
         PackagePane packagePane;
 
-		public ConverterAppSettings Settings { get; set; }
+        public ConverterAppSettings Settings { get; set; }
 
         public MainForm()
         {
             InitializeComponent();
 
-			Settings = new ConverterAppSettings();
+            Settings = new ConverterAppSettings();
 
-			try
-			{
-				if (File.Exists("settings.json"))
-				{
-					using (System.IO.StreamReader file = File.OpenText("settings.json"))
-					{
-						JsonSerializer serializer = new JsonSerializer();
-						Settings = (ConverterAppSettings)serializer.Deserialize(file, typeof(ConverterAppSettings));
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show($"Error reading settings: {ex.ToString()}");
-			}
+            try
+            {
+                if (File.Exists("settings.json"))
+                {
+                    using (System.IO.StreamReader file = File.OpenText("settings.json"))
+                    {
+                        JsonSerializer serializer = new JsonSerializer();
+                        Settings = (ConverterAppSettings)serializer.Deserialize(file, typeof(ConverterAppSettings));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading settings: {ex.ToString()}");
+            }
 
-			var gr2Pane = new GR2Pane(this)
+            var gr2Pane = new GR2Pane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = gr2Tab.ClientSize
             };
             gr2Tab.Controls.Add(gr2Pane);
 
-			packagePane = new PackagePane(this)
+            packagePane = new PackagePane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = packageTab.ClientSize
             };
             packageTab.Controls.Add(packagePane);
 
-			var resourcePane = new ResourcePane(this)
+            var resourcePane = new ResourcePane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = resourceTab.ClientSize
             };
             resourceTab.Controls.Add(resourcePane);
 
-			var osirisPane = new OsirisPane(this)
+            var osirisPane = new OsirisPane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = osirisTab.ClientSize
             };
             osirisTab.Controls.Add(osirisPane);
 
-			Text += $" (LSLib v{Common.LibraryVersion()})";
+            Text += $" (LSLib v{Common.LibraryVersion()})";
 
-			gr2Game.SelectedIndex = gr2Game.Items.Count - 1;
-			gr2Game.DataBindings.Add("SelectedIndex", Settings, "SelectedGame", true, DataSourceUpdateMode.OnPropertyChanged);
-		}
+            gr2Game.SelectedIndex = gr2Game.Items.Count - 1;
+            gr2Game.DataBindings.Add("SelectedIndex", Settings, "SelectedGame", true, DataSourceUpdateMode.OnPropertyChanged);
+        }
 
-		public void SaveSettings()
-		{
-			try
-			{
-				Settings.Version = Common.LibraryVersion();
+        public void SaveSettings()
+        {
+            try
+            {
+                Settings.Version = Common.LibraryVersion();
 
-				File.WriteAllText("settings.json", JsonConvert.SerializeObject(Settings, Formatting.Indented));
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show($"Error saving settings: {ex.ToString()}");
-			}
+                File.WriteAllText("settings.json", JsonConvert.SerializeObject(Settings, Formatting.Indented));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving settings: {ex.ToString()}");
+            }
 
-		}
+        }
 
-		public Game GetGame()
+        public Game GetGame()
         {
             switch (gr2Game.SelectedIndex)
             {
@@ -121,6 +121,6 @@ namespace ConverterApp
             }
 
             packagePane.SetGame(game);
-		}
+        }
     }
 }

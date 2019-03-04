@@ -12,43 +12,43 @@ using Mesh = LSLib.Granny.Model.Mesh;
 namespace ConverterApp
 {
     public partial class GR2Pane : UserControl
-	{
+    {
         private readonly MainForm _form;
         private Root _root;
 
-		private ExporterOptions lastExporterSettings;
-		private Action SaveSettings { get; set; }
+        private ExporterOptions lastExporterSettings;
+        private Action SaveSettings { get; set; }
 
-		public GR2Pane(MainForm form)
+        public GR2Pane(MainForm form)
         {
             _form = form;
             InitializeComponent();
 
-			SaveSettings = form.SaveSettings;
+            SaveSettings = form.SaveSettings;
 
-			gr2BatchInputFormat.SelectedIndex = 0;
-			gr2BatchOutputFormat.SelectedIndex = 1;
+            gr2BatchInputFormat.SelectedIndex = 0;
+            gr2BatchOutputFormat.SelectedIndex = 1;
 
-			inputPath.DataBindings.Add("Text", _form, "Settings.GR2.InputPath");
-			outputPath.DataBindings.Add("Text", _form, "Settings.GR2.OutputPath");
+            inputPath.DataBindings.Add("Text", _form, "Settings.GR2.InputPath");
+            outputPath.DataBindings.Add("Text", _form, "Settings.GR2.OutputPath");
 
-			conformantGR2Path.DataBindings.Add("Text", _form, "Settings.GR2.ConformPath");
+            conformantGR2Path.DataBindings.Add("Text", _form, "Settings.GR2.ConformPath");
 
-			gr2BatchInputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchInputPath");
-			gr2BatchOutputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchOutputPath");
+            gr2BatchInputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchInputPath");
+            gr2BatchOutputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchOutputPath");
 
-			gr2BatchInputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
-			gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchInputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
 
-			gr2ExtraProps.SelectedIndex = 0;
+            gr2ExtraProps.SelectedIndex = 0;
 
-			if(File.Exists(inputPath.Text))
-			{
-				loadInputBtn_Click(loadInputBtn, EventArgs.Empty);
-			}
+            if(File.Exists(inputPath.Text))
+            {
+                loadInputBtn_Click(loadInputBtn, EventArgs.Empty);
+            }
         }
 
-		private void UpdateExportableObjects()
+        private void UpdateExportableObjects()
         {
             exportableObjects.Items.Clear();
 
@@ -292,8 +292,8 @@ namespace ConverterApp
             {
                 inputPath.Text = inputFileDlg.FileName;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void loadInputBtn_Click(object sender, EventArgs e)
@@ -326,8 +326,8 @@ namespace ConverterApp
             {
                 outputPath.Text = outputFileDlg.FileName;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void conformantSkeletonBrowseBtn_Click(object sender, EventArgs e)
@@ -336,28 +336,28 @@ namespace ConverterApp
             {
                 conformantGR2Path.Text = conformSkeletonFileDlg.FileName;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void saveOutputBtn_Click(object sender, EventArgs e)
         {
             var exporter = new Exporter();
             UpdateExporterSettings(exporter.Options);
-			lastExporterSettings = exporter.Options;
-			try
+            lastExporterSettings = exporter.Options;
+            try
             {
                 exporter.Export();
 
-				MessageBox.Show("Export completed successfully.");
-			}
+                MessageBox.Show("Export completed successfully.");
+            }
             catch (Exception exc)
             {
                 GR2ConversionError(exporter.Options.InputPath, exporter.Options.OutputPath, exc);
             }
 
-			SaveSettings?.Invoke();
-		}
+            SaveSettings?.Invoke();
+        }
 
         private void GR2BatchInputBrowseBtn_Click(object sender, EventArgs e)
         {
@@ -365,8 +365,8 @@ namespace ConverterApp
             {
                 gr2BatchInputDir.Text = gr2InputDirDlg.SelectedPath;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void GR2BatchOutputBrowseBtn_Click(object sender, EventArgs e)
@@ -375,8 +375,8 @@ namespace ConverterApp
             {
                 gr2BatchOutputDir.Text = gr2OutputDirDlg.SelectedPath;
 
-				SaveSettings?.Invoke();
-			}
+                SaveSettings?.Invoke();
+            }
         }
 
         private void GR2ProgressUpdate(string status, long numerator, long denominator)
@@ -428,7 +428,7 @@ namespace ConverterApp
 
             MessageBox.Show("Batch export completed.");
 
-			SaveSettings?.Invoke();
-		}
+            SaveSettings?.Invoke();
+        }
     }
 }
