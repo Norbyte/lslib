@@ -61,12 +61,12 @@ namespace ConverterApp
             set { storySettings = value; OnPropertyChanged(); }
         }
 
-        private int selectedGame = (int)Game.DivinityOriginalSin2DE;
+        private Game selectedGame = Game.DivinityOriginalSin2DE;
 
         public int SelectedGame
         {
-            get { return selectedGame; }
-            set { selectedGame = value; OnPropertyChanged(); }
+            get { return (int)selectedGame; }
+            set { selectedGame = (Game)value; OnPropertyChanged(); }
         }
 
         private string version = "";

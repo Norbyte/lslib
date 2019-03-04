@@ -73,6 +73,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="LS\Stats\Parser\Stat.lex" />
+    <None Include="LS\Stats\Parser\Stat.yy" />
+    <None Include="LS\Stats\Parser\StatProperty.lex" />
+    <None Include="LS\Stats\Parser\StatProperty.yy" />
     <None Include="LS\Story\GoalParser\Goal.lex" />
     <None Include="LS\Story\GoalParser\Goal.yy" />
     <Compile Include="Granny\Collada.cs" />
@@ -146,6 +150,14 @@
     <Compile Include="LS\PackageCommon.cs" />
     <Compile Include="LS\Resource.cs" />
     <Compile Include="LS\ResourceUtils.cs" />
+    <Compile Include="LS\Stats\Parser\Stat.lex.cs" />
+    <Compile Include="LS\Stats\Parser\Stat.yy.cs" />
+    <Compile Include="LS\Stats\Parser\StatNodes.cs" />
+    <Compile Include="LS\Stats\Parser\StatParser.cs" />
+    <Compile Include="LS\Stats\Parser\StatProperty.lex.cs" />
+    <Compile Include="LS\Stats\Parser\StatProperty.yy.cs" />
+    <Compile Include="LS\Stats\Parser\StatPropertyParser.cs" />
+    <Compile Include="LS\Stats\StatPropertyParsers.cs" />
     <Compile Include="LS\Story\Adapter.cs" />
     <Compile Include="LS\Story\Call.cs" />
     <Compile Include="LS\Story\Common.cs" />
@@ -184,11 +196,6 @@
     <None Include="LS\Story\HeaderParser\StoryHeader.lex" />
     <None Include="LS\Story\HeaderParser\StoryHeader.yy" />
     <None Include="packages.config" />
-    <None Include="Stats\DOSStats.cs" />
-    <None Include="Stats\PropertyDefinition.cs" />
-    <None Include="Stats\StatDefinition.cs" />
-    <None Include="Stats\StatsDatabase.cs" />
-    <None Include="Stats\StatsDataLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj">
@@ -200,6 +207,7 @@
       <Name>OpenTK</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
@@ -208,8 +216,16 @@
   <PropertyGroup>
     <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.lex"
 "$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.yy.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.yy"
+
 "$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy"</PreBuildEvent>
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy"
+
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\Stat.lex.cs" "$(ProjectDir)\LS\Stats\Parser\Stat.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\Stat.yy.cs" "$(ProjectDir)\LS\Stats\Parser\Stat.yy"
+
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.lex.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.yy.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.yy"
+</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

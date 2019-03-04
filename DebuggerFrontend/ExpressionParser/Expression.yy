@@ -39,14 +39,14 @@ ParamList : /* Empty */ { $$ = MakeParamList(); }
           | Param { $$ = MakeParamList($1); }
           | ParamList ',' Param { $$ = MakeParamList($1, $3); }
           ;
-				
+                
 Param : TypedConstant { $$ = $1; }
       | TypedLocalVar { $$ = $1; }
       ;
 
 TypedConstant : Constant { $$ = $1; }
               | '(' IDENTIFIER ')' Constant { $$ = MakeTypedConstant($2, $4); }
-			  ;
+              ;
 
 TypedLocalVar : LOCAL_VAR { $$ = MakeLocalVar($1); }
               | '(' IDENTIFIER ')' LOCAL_VAR { $$ = MakeLocalVar($2, $4); }
@@ -54,6 +54,6 @@ TypedLocalVar : LOCAL_VAR { $$ = MakeLocalVar($1); }
 
 Constant : GUIDSTRING { $$ = MakeConstGuidString($1); }
          | STRING { $$ = MakeConstString($1); }
-		 | INTEGER { $$ = MakeConstInteger($1); }
-		 | FLOAT { $$ = MakeConstFloat($1); }
-		 ;
+         | INTEGER { $$ = MakeConstInteger($1); }
+         | FLOAT { $$ = MakeConstFloat($1); }
+         ;

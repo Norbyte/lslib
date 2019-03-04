@@ -65,7 +65,6 @@ namespace ConverterApp
         {
             extractPackageBtn.Enabled = false;
             _displayTimer = null;
-
             try
             {
                 var packager = new Packager();
