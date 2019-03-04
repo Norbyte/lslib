@@ -134,20 +134,20 @@ namespace ConverterApp
             set { batchOutputPath = value; OnPropertyChanged(); }
         }
 
-        private int batchInputFormat = (int)ExportFormat.GR2;
+        private ExportFormat batchInputFormat = ExportFormat.GR2;
 
         public int BatchInputFormat
         {
-            get { return batchInputFormat; }
-            set { batchInputFormat = value; OnPropertyChanged(); }
+            get { return (int)batchInputFormat; }
+            set { batchInputFormat = (ExportFormat)value; OnPropertyChanged(); }
         }
 
-        private int batchOutputFormat = (int)ExportFormat.DAE;
+        private ExportFormat batchOutputFormat = ExportFormat.DAE;
 
         public int BatchOutputFormat
         {
-            get { return batchOutputFormat; }
-            set { batchOutputFormat = value; OnPropertyChanged(); }
+            get { return (int)batchOutputFormat; }
+            set { batchOutputFormat = (ExportFormat)value; OnPropertyChanged(); }
         }
 
         private string conformPath;
