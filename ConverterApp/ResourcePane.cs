@@ -10,13 +10,9 @@ namespace ConverterApp
 		private readonly MainForm _form;
         private Resource _resource;
 
-		private Action SaveSettings { get; set; }
-
 		public ResourcePane(MainForm form)
         {
             InitializeComponent();
-
-			SaveSettings = form.SaveSettings;
 
 			_form = form;
 
@@ -42,8 +38,6 @@ namespace ConverterApp
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, outputVersion);
 
                 MessageBox.Show("Resource saved successfully.");
-
-				SaveSettings?.Invoke();
 			}
             catch (Exception exc)
             {
@@ -56,8 +50,6 @@ namespace ConverterApp
             if (resourceInputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceInputPath.Text = resourceInputFileDlg.FileName;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -66,8 +58,6 @@ namespace ConverterApp
             if (resourceOutputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceOutputPath.Text = resourceOutputFileDlg.FileName;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -76,8 +66,6 @@ namespace ConverterApp
             if (resourceInputPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceInputDir.Text = resourceInputPathDlg.SelectedPath;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -86,8 +74,6 @@ namespace ConverterApp
             if (resourceOutputPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 resourceOutputDir.Text = resourceOutputPathDlg.SelectedPath;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -162,8 +148,6 @@ namespace ConverterApp
                 utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, outputVersion);
 
                 MessageBox.Show("Resources converted successfully.");
-
-				SaveSettings?.Invoke();
 			}
             catch (Exception exc)
             {

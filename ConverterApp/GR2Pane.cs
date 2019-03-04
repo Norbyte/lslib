@@ -17,14 +17,11 @@ namespace ConverterApp
         private Root _root;
 
 		private ExporterOptions lastExporterSettings;
-		private Action SaveSettings { get; set; }
 
 		public GR2Pane(MainForm form)
         {
             _form = form;
             InitializeComponent();
-
-			SaveSettings = form.SaveSettings;
 
 			gr2BatchInputFormat.SelectedIndex = 0;
 			gr2BatchOutputFormat.SelectedIndex = 1;
@@ -291,8 +288,6 @@ namespace ConverterApp
             if (inputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 inputPath.Text = inputFileDlg.FileName;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -325,8 +320,6 @@ namespace ConverterApp
             if (outputFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 outputPath.Text = outputFileDlg.FileName;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -335,8 +328,6 @@ namespace ConverterApp
             if (conformSkeletonFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 conformantGR2Path.Text = conformSkeletonFileDlg.FileName;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -355,8 +346,6 @@ namespace ConverterApp
             {
                 GR2ConversionError(exporter.Options.InputPath, exporter.Options.OutputPath, exc);
             }
-
-			SaveSettings?.Invoke();
 		}
 
         private void GR2BatchInputBrowseBtn_Click(object sender, EventArgs e)
@@ -364,8 +353,6 @@ namespace ConverterApp
             if (gr2InputDirDlg.ShowDialog(this) == DialogResult.OK)
             {
                 gr2BatchInputDir.Text = gr2InputDirDlg.SelectedPath;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -374,8 +361,6 @@ namespace ConverterApp
             if (gr2OutputDirDlg.ShowDialog(this) == DialogResult.OK)
             {
                 gr2BatchOutputDir.Text = gr2OutputDirDlg.SelectedPath;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -427,8 +412,6 @@ namespace ConverterApp
             gr2BatchConvertBtn.Enabled = true;
 
             MessageBox.Show("Batch export completed.");
-
-			SaveSettings?.Invoke();
 		}
     }
 }

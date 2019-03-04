@@ -11,13 +11,9 @@ namespace ConverterApp
 	{
 		private Stopwatch _displayTimer;
 
-		private Action SaveSettings { get; set; }
-
 		public PackagePane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
-
-			SaveSettings = settingsDataSource.SaveSettings;
 
 			packageVersion.SelectedIndex = 0;
 			compressionMethod.SelectedIndex = 3;
@@ -76,8 +72,6 @@ namespace ConverterApp
                 packager.ProgressUpdate += PackageProgressUpdate;
                 packager.UncompressPackage(extractPackagePath.Text, extractionPath.Text);
                 MessageBox.Show("Package extracted successfully.");
-
-				SaveSettings?.Invoke();
 			}
             catch (NotAPackageException)
             {
@@ -167,8 +161,6 @@ namespace ConverterApp
                 packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, version, compression, fastCompression);
 
                 MessageBox.Show("Package created successfully.");
-
-				SaveSettings?.Invoke();
 			}
             catch (Exception exc)
             {
@@ -188,8 +180,6 @@ namespace ConverterApp
             if (Path.GetExtension(createPackagePath.Text) == ".lsv")
             {
                 compressionMethod.SelectedIndex = 2;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -198,8 +188,6 @@ namespace ConverterApp
             if (extractPackageFileDlg.ShowDialog(this) == DialogResult.OK)
             {
                 extractPackagePath.Text = extractPackageFileDlg.FileName;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -209,8 +197,6 @@ namespace ConverterApp
             if (result == DialogResult.OK)
             {
                 extractionPath.Text = extractPathDlg.SelectedPath;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -220,8 +206,6 @@ namespace ConverterApp
             if (result == DialogResult.OK)
             {
                 createSrcPath.Text = createPackagePathDlg.SelectedPath;
-
-				SaveSettings?.Invoke();
 			}
         }
 
@@ -238,8 +222,6 @@ namespace ConverterApp
             {
                 compressionMethod.SelectedIndex = 2;
             }
-
-			SaveSettings?.Invoke();
 		}
 
         public void SetGame(Game game)

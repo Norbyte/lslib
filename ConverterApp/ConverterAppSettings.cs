@@ -14,7 +14,6 @@ namespace ConverterApp
 	public interface ISettingsDataSource
 	{
 		ConverterAppSettings Settings { get; set; }
-		void SaveSettings();
 	}
 
 	public class SettingsBase : INotifyPropertyChanged
@@ -76,6 +75,20 @@ namespace ConverterApp
 		{
 			get { return version; }
 			set { version = value; OnPropertyChanged(); }
+		}
+
+		public void UpdateVersion(string newVersion)
+		{
+			version = newVersion;
+		}
+
+		public void SetPropertyChangedEvent(PropertyChangedEventHandler eventHandler)
+		{
+			this.PropertyChanged += eventHandler;
+			GR2.PropertyChanged += eventHandler;
+			PAK.PropertyChanged += eventHandler;
+			Resources.PropertyChanged += eventHandler;
+			Story.PropertyChanged += eventHandler;
 		}
 
 		public ConverterAppSettings()
