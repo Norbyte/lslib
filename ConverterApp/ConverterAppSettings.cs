@@ -11,332 +11,332 @@ using System.Threading.Tasks;
 
 namespace ConverterApp
 {
-	public interface ISettingsDataSource
-	{
-		ConverterAppSettings Settings { get; set; }
-		void SaveSettings();
-	}
+    public interface ISettingsDataSource
+    {
+        ConverterAppSettings Settings { get; set; }
+        void SaveSettings();
+    }
 
-	public class SettingsBase : INotifyPropertyChanged
-	{
-		public event PropertyChangedEventHandler PropertyChanged;
+    public class SettingsBase : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
 
-		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-		{
-			var handler = PropertyChanged;
-			if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
-		}
-	}
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            var handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
 
-	public class ConverterAppSettings : SettingsBase
-	{
-		private GR2PaneSettings gr2;
+    public class ConverterAppSettings : SettingsBase
+    {
+        private GR2PaneSettings gr2;
 
-		public GR2PaneSettings GR2
-		{
-			get { return gr2; }
-			set { gr2 = value; OnPropertyChanged(); }
-		}
+        public GR2PaneSettings GR2
+        {
+            get { return gr2; }
+            set { gr2 = value; OnPropertyChanged(); }
+        }
 
-		private PackagePaneSettings pakSettings;
+        private PackagePaneSettings pakSettings;
 
-		public PackagePaneSettings PAK
-		{
-			get { return pakSettings; }
-			set { pakSettings = value; OnPropertyChanged(); }
-		}
+        public PackagePaneSettings PAK
+        {
+            get { return pakSettings; }
+            set { pakSettings = value; OnPropertyChanged(); }
+        }
 
-		private ResourcePaneSettings resourceSettings;
+        private ResourcePaneSettings resourceSettings;
 
-		public ResourcePaneSettings Resources
-		{
-			get { return resourceSettings; }
-			set { resourceSettings = value; OnPropertyChanged(); }
-		}
+        public ResourcePaneSettings Resources
+        {
+            get { return resourceSettings; }
+            set { resourceSettings = value; OnPropertyChanged(); }
+        }
 
-		private OsirisPaneSettings storySettings;
+        private OsirisPaneSettings storySettings;
 
-		public OsirisPaneSettings Story
-		{
-			get { return storySettings; }
-			set { storySettings = value; OnPropertyChanged(); }
-		}
+        public OsirisPaneSettings Story
+        {
+            get { return storySettings; }
+            set { storySettings = value; OnPropertyChanged(); }
+        }
 
-		private Game selectedGame = Game.DivinityOriginalSin2DE;
+        private Game selectedGame = Game.DivinityOriginalSin2DE;
 
-		public Game SelectedGame
-		{
-			get { return selectedGame; }
-			set { selectedGame = value; OnPropertyChanged(); }
-		}
+        public int SelectedGame
+        {
+            get { return (int)selectedGame; }
+            set { selectedGame = (Game)value; OnPropertyChanged(); }
+        }
 
-		private string version = "";
+        private string version = "";
 
-		public string Version
-		{
-			get { return version; }
-			set { version = value; OnPropertyChanged(); }
-		}
+        public string Version
+        {
+            get { return version; }
+            set { version = value; OnPropertyChanged(); }
+        }
 
-		public ConverterAppSettings()
-		{
-			GR2 = new GR2PaneSettings();
-			PAK = new PackagePaneSettings();
-			Resources = new ResourcePaneSettings();
-			Story = new OsirisPaneSettings();
-		}
-	}
+        public ConverterAppSettings()
+        {
+            GR2 = new GR2PaneSettings();
+            PAK = new PackagePaneSettings();
+            Resources = new ResourcePaneSettings();
+            Story = new OsirisPaneSettings();
+        }
+    }
 
-	public class GR2PaneSettings : SettingsBase
-	{
-		private string inputPath = "";
+    public class GR2PaneSettings : SettingsBase
+    {
+        private string inputPath = "";
 
-		public string InputPath
-		{
-			get { return inputPath; }
-			set { inputPath = value; OnPropertyChanged(); }
-		}
+        public string InputPath
+        {
+            get { return inputPath; }
+            set { inputPath = value; OnPropertyChanged(); }
+        }
 
-		private string outputPath = "";
+        private string outputPath = "";
 
-		public string OutputPath
-		{
-			get { return outputPath; }
-			set { outputPath = value; OnPropertyChanged(); }
-		}
+        public string OutputPath
+        {
+            get { return outputPath; }
+            set { outputPath = value; OnPropertyChanged(); }
+        }
 
-		private string batchInputPath = "";
+        private string batchInputPath = "";
 
-		public string BatchInputPath
-		{
-			get { return batchInputPath; }
-			set { batchInputPath = value; OnPropertyChanged(); }
-		}
+        public string BatchInputPath
+        {
+            get { return batchInputPath; }
+            set { batchInputPath = value; OnPropertyChanged(); }
+        }
 
-		private string batchOutputPath = "";
+        private string batchOutputPath = "";
 
-		public string BatchOutputPath
-		{
-			get { return batchOutputPath; }
-			set { batchOutputPath = value; OnPropertyChanged(); }
-		}
+        public string BatchOutputPath
+        {
+            get { return batchOutputPath; }
+            set { batchOutputPath = value; OnPropertyChanged(); }
+        }
 
-		private int batchInputFormat = (int)ExportFormat.GR2;
+        private int batchInputFormat = (int)ExportFormat.GR2;
 
-		public int BatchInputFormat
-		{
-			get { return batchInputFormat; }
-			set { batchInputFormat = value; OnPropertyChanged(); }
-		}
+        public int BatchInputFormat
+        {
+            get { return batchInputFormat; }
+            set { batchInputFormat = value; OnPropertyChanged(); }
+        }
 
-		private int batchOutputFormat = (int)ExportFormat.DAE;
+        private int batchOutputFormat = (int)ExportFormat.DAE;
 
-		public int BatchOutputFormat
-		{
-			get { return batchOutputFormat; }
-			set { batchOutputFormat = value; OnPropertyChanged(); }
-		}
+        public int BatchOutputFormat
+        {
+            get { return batchOutputFormat; }
+            set { batchOutputFormat = value; OnPropertyChanged(); }
+        }
 
-		private string conformPath;
+        private string conformPath;
 
-		public string ConformPath
-		{
-			get { return conformPath; }
-			set { conformPath = value; OnPropertyChanged(); }
-		}
+        public string ConformPath
+        {
+            get { return conformPath; }
+            set { conformPath = value; OnPropertyChanged(); }
+        }
 
-	}
+    }
 
-	public class PackagePaneSettings : SettingsBase
-	{
-		private string extractInputPath = "";
+    public class PackagePaneSettings : SettingsBase
+    {
+        private string extractInputPath = "";
 
-		public string ExtractInputPath
-		{
-			get { return extractInputPath; }
-			set { extractInputPath = value; OnPropertyChanged(); }
-		}
+        public string ExtractInputPath
+        {
+            get { return extractInputPath; }
+            set { extractInputPath = value; OnPropertyChanged(); }
+        }
 
-		private string extractOutputPath = "";
+        private string extractOutputPath = "";
 
-		public string ExtractOutputPath
-		{
-			get { return extractOutputPath; }
-			set { extractOutputPath = value; OnPropertyChanged(); }
-		}
+        public string ExtractOutputPath
+        {
+            get { return extractOutputPath; }
+            set { extractOutputPath = value; OnPropertyChanged(); }
+        }
 
-		private string createInputPath = "";
+        private string createInputPath = "";
 
-		public string CreateInputPath
-		{
-			get { return createInputPath; }
-			set { createInputPath = value; OnPropertyChanged(); }
-		}
+        public string CreateInputPath
+        {
+            get { return createInputPath; }
+            set { createInputPath = value; OnPropertyChanged(); }
+        }
 
-		private string createOutputPath = "";
+        private string createOutputPath = "";
 
-		public string CreateOutputPath
-		{
-			get { return createOutputPath; }
-			set { createOutputPath = value; OnPropertyChanged(); }
-		}
+        public string CreateOutputPath
+        {
+            get { return createOutputPath; }
+            set { createOutputPath = value; OnPropertyChanged(); }
+        }
 
-		private int createPackageVersion = 0;
+        private int createPackageVersion = 0;
 
-		public int CreatePackageVersion
-		{
-			get { return createPackageVersion; }
-			set { createPackageVersion = value; OnPropertyChanged(); }
-		}
+        public int CreatePackageVersion
+        {
+            get { return createPackageVersion; }
+            set { createPackageVersion = value; OnPropertyChanged(); }
+        }
 
-		private int createPackageCompression = 3;
+        private int createPackageCompression = 3;
 
-		public int CreatePackageCompression
-		{
-			get { return createPackageCompression; }
-			set { createPackageCompression = value; OnPropertyChanged(); }
-		}
+        public int CreatePackageCompression
+        {
+            get { return createPackageCompression; }
+            set { createPackageCompression = value; OnPropertyChanged(); }
+        }
 
-		//public string BatchInputPath { get; set; } = "";
-		//public string BatchOutputPath { get; set; } = "";
-	}
+        //public string BatchInputPath { get; set; } = "";
+        //public string BatchOutputPath { get; set; } = "";
+    }
 
-	public class ResourcePaneSettings : SettingsBase
-	{
-		private string inputPath = "";
+    public class ResourcePaneSettings : SettingsBase
+    {
+        private string inputPath = "";
 
-		public string InputPath
-		{
-			get { return inputPath; }
-			set { inputPath = value; OnPropertyChanged(); }
-		}
+        public string InputPath
+        {
+            get { return inputPath; }
+            set { inputPath = value; OnPropertyChanged(); }
+        }
 
-		private string outputPath = "";
+        private string outputPath = "";
 
-		public string OutputPath
-		{
-			get { return outputPath; }
-			set { outputPath = value; OnPropertyChanged(); }
-		}
+        public string OutputPath
+        {
+            get { return outputPath; }
+            set { outputPath = value; OnPropertyChanged(); }
+        }
 
-		private string batchInputPath = "";
+        private string batchInputPath = "";
 
-		public string BatchInputPath
-		{
-			get { return batchInputPath; }
-			set { batchInputPath = value; OnPropertyChanged(); }
-		}
+        public string BatchInputPath
+        {
+            get { return batchInputPath; }
+            set { batchInputPath = value; OnPropertyChanged(); }
+        }
 
-		private string batchOutputPath = "";
+        private string batchOutputPath = "";
 
-		public string BatchOutputPath
-		{
-			get { return batchOutputPath; }
-			set { batchOutputPath = value; OnPropertyChanged(); }
-		}
+        public string BatchOutputPath
+        {
+            get { return batchOutputPath; }
+            set { batchOutputPath = value; OnPropertyChanged(); }
+        }
 
-		private int batchInputFormat;
+        private int batchInputFormat;
 
-		public int BatchInputFormat
-		{
-			get { return batchInputFormat; }
-			set { batchInputFormat = value; OnPropertyChanged(); }
-		}
+        public int BatchInputFormat
+        {
+            get { return batchInputFormat; }
+            set { batchInputFormat = value; OnPropertyChanged(); }
+        }
 
-		private int batchOutputFormat;
+        private int batchOutputFormat;
 
-		public int BatchOutputFormat
-		{
-			get { return batchOutputFormat; }
-			set { batchOutputFormat = value; OnPropertyChanged(); }
-		}
-	}
+        public int BatchOutputFormat
+        {
+            get { return batchOutputFormat; }
+            set { batchOutputFormat = value; OnPropertyChanged(); }
+        }
+    }
 
-	public class OsirisPaneSettings : SettingsBase
-	{
-		private string inputPath = "";
+    public class OsirisPaneSettings : SettingsBase
+    {
+        private string inputPath = "";
 
-		public string InputPath
-		{
-			get { return inputPath; }
-			set { inputPath = value; OnPropertyChanged(); }
-		}
+        public string InputPath
+        {
+            get { return inputPath; }
+            set { inputPath = value; OnPropertyChanged(); }
+        }
 
-		private string outputPath = "";
+        private string outputPath = "";
 
-		public string OutputPath
-		{
-			get { return outputPath; }
-			set { outputPath = value; OnPropertyChanged(); }
-		}
-	}
+        public string OutputPath
+        {
+            get { return outputPath; }
+            set { outputPath = value; OnPropertyChanged(); }
+        }
+    }
 
-	sealed class PackageVersionConverter : TypeConverter
-	{
-		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-		{
-			return true;
-		}
+    sealed class PackageVersionConverter : TypeConverter
+    {
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        {
+            return true;
+        }
 
-		public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
-		{
-			if(value is PackageVersion version)
-			{
-				switch (version)
-				{
-					case PackageVersion.V10:
-						{
-							return 2;
-						}
-					case PackageVersion.V9:
-						{
-							return 3;
-						}
-					case PackageVersion.V7:
-						{
-							return 4;
-						}
-					case PackageVersion.V13:
-					default:
-						{
-							return 0;
-						}
-				}
-			}
-			return 0;
-		}
-	}
+        public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+        {
+            if(value is PackageVersion version)
+            {
+                switch (version)
+                {
+                    case PackageVersion.V10:
+                        {
+                            return 2;
+                        }
+                    case PackageVersion.V9:
+                        {
+                            return 3;
+                        }
+                    case PackageVersion.V7:
+                        {
+                            return 4;
+                        }
+                    case PackageVersion.V13:
+                    default:
+                        {
+                            return 0;
+                        }
+                }
+            }
+            return 0;
+        }
+    }
 
-	sealed class CompressionConverter : TypeConverter
-	{
-		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-		{
-			return true;
-		}
+    sealed class CompressionConverter : TypeConverter
+    {
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        {
+            return true;
+        }
 
-		public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
-		{
-			if (value is CompressionMethod compression)
-			{
-				switch (compression)
-				{
-					case CompressionMethod.Zlib:
-						{
-							return 1;
-						}
-					case CompressionMethod.None:
-						{
-							return 0;
-						}
-					case CompressionMethod.LZ4:
-					default:
-						{
-							return 3;
-						}
-				}
-			}
-			return 0;
-		}
-	}
+        public override object ConvertTo(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value, Type destinationType)
+        {
+            if (value is CompressionMethod compression)
+            {
+                switch (compression)
+                {
+                    case CompressionMethod.Zlib:
+                        {
+                            return 1;
+                        }
+                    case CompressionMethod.None:
+                        {
+                            return 0;
+                        }
+                    case CompressionMethod.LZ4:
+                    default:
+                        {
+                            return 3;
+                        }
+                }
+            }
+            return 0;
+        }
+    }
 
 }
