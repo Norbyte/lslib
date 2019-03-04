@@ -1074,7 +1074,7 @@ namespace OpenTK
             vec.Y *= scale.Y;
             return vec;
         }
-        
+		
         /// <summary>
         /// Divides the specified instance by a scalar.
         /// </summary>
