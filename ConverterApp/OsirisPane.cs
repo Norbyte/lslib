@@ -14,13 +14,9 @@ namespace ConverterApp
     {
         private Story _story;
 
-        private Action SaveSettings { get; set; }
-
         public OsirisPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
-
-            SaveSettings = settingsDataSource.SaveSettings;
 
             storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath");
             goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath");
@@ -31,8 +27,6 @@ namespace ConverterApp
             if (storyPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 storyFilePath.Text = storyPathDlg.FileName;
-
-                SaveSettings?.Invoke();
             }
         }
 
@@ -41,8 +35,6 @@ namespace ConverterApp
             if (goalPathDlg.ShowDialog(this) == DialogResult.OK)
             {
                 goalPath.Text = goalPathDlg.SelectedPath;
-
-                SaveSettings?.Invoke();
             }
         }
 
@@ -128,8 +120,6 @@ namespace ConverterApp
                     break;
                 }
             }
-
-            SaveSettings?.Invoke();
         }
 
         private void SaveSavegameDatabase()
@@ -255,8 +245,6 @@ namespace ConverterApp
                     break;
                 }
             }
-
-            SaveSettings?.Invoke();
         }
 
         private void decompileStoryBtn_Click(object sender, EventArgs e)
@@ -307,8 +295,6 @@ namespace ConverterApp
             }
 
             MessageBox.Show("Story unpacked successfully.");
-
-            SaveSettings?.Invoke();
         }
 
         private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)

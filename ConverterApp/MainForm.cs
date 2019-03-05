@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using LSLib.LS;
 using LSLib.LS.Enums;
 using Newtonsoft.Json;
+using System.ComponentModel;
 
 namespace ConverterApp
 {
@@ -67,21 +68,21 @@ namespace ConverterApp
 
             gr2Game.SelectedIndex = gr2Game.Items.Count - 1;
             gr2Game.DataBindings.Add("SelectedIndex", Settings, "SelectedGame", true, DataSourceUpdateMode.OnPropertyChanged);
+
+            Settings.Version = Common.LibraryVersion();
+            Settings.SetPropertyChangedEvent(SaveSettings);
         }
 
-        public void SaveSettings()
+        private void SaveSettings(object sender, PropertyChangedEventArgs e)
         {
             try
             {
-                Settings.Version = Common.LibraryVersion();
-
                 File.WriteAllText("settings.json", JsonConvert.SerializeObject(Settings, Formatting.Indented));
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving settings: {ex.ToString()}");
             }
-
         }
 
         public Game GetGame()

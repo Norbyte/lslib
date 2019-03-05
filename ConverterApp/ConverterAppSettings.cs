@@ -14,7 +14,6 @@ namespace ConverterApp
     public interface ISettingsDataSource
     {
         ConverterAppSettings Settings { get; set; }
-        void SaveSettings();
     }
 
     public class SettingsBase : INotifyPropertyChanged
@@ -35,7 +34,7 @@ namespace ConverterApp
         public GR2PaneSettings GR2
         {
             get { return gr2; }
-            set { gr2 = value; OnPropertyChanged(); }
+            set { gr2 = value; }
         }
 
         private PackagePaneSettings pakSettings;
@@ -43,7 +42,7 @@ namespace ConverterApp
         public PackagePaneSettings PAK
         {
             get { return pakSettings; }
-            set { pakSettings = value; OnPropertyChanged(); }
+            set { pakSettings = value; }
         }
 
         private ResourcePaneSettings resourceSettings;
@@ -51,7 +50,7 @@ namespace ConverterApp
         public ResourcePaneSettings Resources
         {
             get { return resourceSettings; }
-            set { resourceSettings = value; OnPropertyChanged(); }
+            set { resourceSettings = value; }
         }
 
         private OsirisPaneSettings storySettings;
@@ -59,7 +58,7 @@ namespace ConverterApp
         public OsirisPaneSettings Story
         {
             get { return storySettings; }
-            set { storySettings = value; OnPropertyChanged(); }
+            set { storySettings = value; }
         }
 
         private Game selectedGame = Game.DivinityOriginalSin2DE;
@@ -75,7 +74,16 @@ namespace ConverterApp
         public string Version
         {
             get { return version; }
-            set { version = value; OnPropertyChanged(); }
+            set { version = value; }
+        }
+
+        public void SetPropertyChangedEvent(PropertyChangedEventHandler eventHandler)
+        {
+            this.PropertyChanged += eventHandler;
+            GR2.PropertyChanged += eventHandler;
+            PAK.PropertyChanged += eventHandler;
+            Resources.PropertyChanged += eventHandler;
+            Story.PropertyChanged += eventHandler;
         }
 
         public ConverterAppSettings()
@@ -121,20 +129,20 @@ namespace ConverterApp
             set { batchOutputPath = value; OnPropertyChanged(); }
         }
 
-        private int batchInputFormat = (int)ExportFormat.GR2;
+        private ExportFormat batchInputFormat = ExportFormat.GR2;
 
         public int BatchInputFormat
         {
-            get { return batchInputFormat; }
-            set { batchInputFormat = value; OnPropertyChanged(); }
+            get { return (int)batchInputFormat; }
+            set { batchInputFormat = (ExportFormat)value; OnPropertyChanged(); }
         }
 
-        private int batchOutputFormat = (int)ExportFormat.DAE;
+        private ExportFormat batchOutputFormat = ExportFormat.DAE;
 
         public int BatchOutputFormat
         {
-            get { return batchOutputFormat; }
-            set { batchOutputFormat = value; OnPropertyChanged(); }
+            get { return (int)batchOutputFormat; }
+            set { batchOutputFormat = (ExportFormat)value; OnPropertyChanged(); }
         }
 
         private string conformPath;
@@ -338,5 +346,4 @@ namespace ConverterApp
             return 0;
         }
     }
-
 }
