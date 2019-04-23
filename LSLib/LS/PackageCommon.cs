@@ -252,7 +252,7 @@ namespace LSLib.LS
 
         public override UInt32 CRC() => throw new NotImplementedException("!");
 
-        public override Stream MakeStream() => _stream ?? (_stream = File.Open(FilesystemPath, FileMode.Open, FileAccess.Read));
+        public override Stream MakeStream() => _stream ?? (_stream = File.Open(FilesystemPath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
         public override void ReleaseStream()
         {

@@ -48,7 +48,7 @@ namespace LSLib.LS
             for (var part = 1; part < numParts; part++)
             {
                 string partPath = Package.MakePartFilename(_path, part);
-                _streams[part] = File.Open(partPath, FileMode.Open, FileAccess.Read);
+                _streams[part] = File.Open(partPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
         }
 
@@ -135,7 +135,7 @@ namespace LSLib.LS
 
         public Package Read()
         {
-            var mainStream = File.Open(_path, FileMode.Open, FileAccess.Read);
+            var mainStream = File.Open(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             using (var reader = new BinaryReader(mainStream, new UTF8Encoding(), true))
             {

@@ -12,7 +12,7 @@ namespace LSTools.StoryCompiler
         static void DebugDump(string storyPath, string debugPath)
         {
             Story story;
-            using (var file = new FileStream(storyPath, FileMode.Open, FileAccess.Read))
+            using (var file = new FileStream(storyPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var reader = new StoryReader();
                 story = reader.Read(file);

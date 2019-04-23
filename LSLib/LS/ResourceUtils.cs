@@ -44,7 +44,7 @@ namespace LSLib.LS
 
         public static Resource LoadResource(string inputPath, ResourceFormat format)
         {
-            using (var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read))
+            using (var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 return LoadResource(stream, format);
             }

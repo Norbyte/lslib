@@ -106,7 +106,7 @@ namespace ConverterApp
                 }
                 case ".osi":
                 {
-                    using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read))
+                    using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         LoadStory(file);
                     }

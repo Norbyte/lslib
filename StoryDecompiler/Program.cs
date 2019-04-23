@@ -45,7 +45,7 @@ namespace LSTools.StoryDecompiler
 
         private static Stream LoadStoryStreamFromFile(String path)
         {
-            return new FileStream(path, FileMode.Open, FileAccess.Read);
+            return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
 
         private static Story LoadStory(String path)
