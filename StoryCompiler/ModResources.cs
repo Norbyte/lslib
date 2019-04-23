@@ -21,7 +21,7 @@ namespace LSTools.StoryCompiler
         }
     }
 
-    public class ModResources
+    public class ModResources : IDisposable
     {
         private static Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static Regex orphanQueryIgnoresRe = new Regex("^Mods/(.*)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -33,6 +33,13 @@ namespace LSTools.StoryCompiler
         public TargetGame Game = TargetGame.DOS2;
         public bool CollectNames = false;
         public bool LoadPackages = true;
+        private List<PackageReader> LoadedPackages = new List<PackageReader>();
+
+        public void Dispose()
+        {
+            LoadedPackages.ForEach(p => p.Dispose());
+            LoadedPackages.Clear();
+        }
 
         private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string pattern)
         {

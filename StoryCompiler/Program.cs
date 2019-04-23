@@ -27,7 +27,7 @@ namespace LSTools.StoryCompiler
             }
         }
 
-        static void Run(CommandLineArguments args)
+        static int Run(CommandLineArguments args)
         {
             Logger logger;
             if (args.JsonOutput)
@@ -38,35 +38,39 @@ namespace LSTools.StoryCompiler
             {
                 logger = new ConsoleLogger();
             }
-            
-            var modCompiler = new ModCompiler(logger, args.GameDataPath);
-            modCompiler.SetWarningOptions(CommandLineArguments.GetWarningOptions(args.Warnings));
-            modCompiler.CheckGameObjects = args.CheckGameObjects;
-            modCompiler.CheckOnly = args.CheckOnly;
-            modCompiler.LoadPackages = !args.NoPackages;
-            if (args.Game == "dos2")
+
+            using (var modCompiler = new ModCompiler(logger, args.GameDataPath))
             {
-                modCompiler.Game = TargetGame.DOS2;
-            }
-            else if (args.Game == "dos2de")
-            {
-                modCompiler.Game = TargetGame.DOS2DE;
-            }
-            else
-            {
-                throw new ArgumentException("Unsupported game type");
+                modCompiler.SetWarningOptions(CommandLineArguments.GetWarningOptions(args.Warnings));
+                modCompiler.CheckGameObjects = args.CheckGameObjects;
+                modCompiler.CheckOnly = args.CheckOnly;
+                modCompiler.LoadPackages = !args.NoPackages;
+                if (args.Game == "dos2")
+                {
+                    modCompiler.Game = TargetGame.DOS2;
+                }
+                else if (args.Game == "dos2de")
+                {
+                    modCompiler.Game = TargetGame.DOS2DE;
+                }
+                else
+                {
+                    throw new ArgumentException("Unsupported game type");
+                }
+
+                var mods = new List<string>(args.Mods);
+                if (!modCompiler.Compile(args.OutputPath, args.DebugInfoOutputPath, mods))
+                {
+                    return 3;
+                }
+
+                if (args.DebugLogOutputPath != null)
+                {
+                    DebugDump(args.OutputPath, args.DebugLogOutputPath);
+                }
             }
 
-            var mods = new List<string>(args.Mods);
-            if (!modCompiler.Compile(args.OutputPath, args.DebugInfoOutputPath, mods))
-            {
-                Environment.Exit(3);
-            }
-
-            if (args.DebugLogOutputPath != null)
-            {
-                DebugDump(args.OutputPath, args.DebugLogOutputPath);
-            }
+            return 0;
         }
 
         static void Main(string[] args)
@@ -114,7 +118,8 @@ namespace LSTools.StoryCompiler
 
             if (parser.ParsingSucceeded)
             {
-                Run(argv);
+                var exitCode = Run(argv);
+                Environment.Exit(exitCode);
             }
         }
     }

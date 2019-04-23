@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace LSTools.StoryCompiler
 {
-    class ModCompiler
+    class ModCompiler : IDisposable
     {
         class GoalScript
         {
@@ -38,6 +38,11 @@ namespace LSTools.StoryCompiler
         {
             Logger = logger;
             GameDataPath = gameDataPath;
+        }
+
+        public void Dispose()
+        {
+            Mods.Dispose();
         }
 
         private void LoadStoryHeaders(Stream stream)
