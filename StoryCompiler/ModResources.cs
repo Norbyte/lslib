@@ -23,11 +23,13 @@ namespace LSTools.StoryCompiler
 
     public class ModResources : IDisposable
     {
-        private static Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static Regex orphanQueryIgnoresRe = new Regex("^Mods/(.*)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static Regex globalsRe = new Regex("^Mods/(.*)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static Regex levelObjectsRe = new Regex("^Mods/(.*)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        
+        private static readonly Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/(.*)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex globalsRe = new Regex("^Mods/(.*)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex levelObjectsRe = new Regex("^Mods/(.*)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        // Pattern for excluding subsequent parts of a multi-part archive
+        private static readonly Regex archivePartRe = new Regex("^(.*)_[1-9]\\.pak$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
         public AbstractFileInfo StoryHeaderFile;
         public TargetGame Game = TargetGame.DOS2;
@@ -96,89 +98,120 @@ namespace LSTools.StoryCompiler
             GetMod(modName).LevelObjects[path] = file;
         }
 
+        private void DiscoverPackagedFile(AbstractFileInfo file)
+        {
+
+            if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
+            {
+                var match = scriptRe.Match(file.Name);
+                if (match != null && match.Success)
+                {
+                    AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                }
+            }
+
+            if (file.Name.EndsWith("/Story/story_orphanqueries_ignore_local.txt", StringComparison.Ordinal))
+            {
+                var match = orphanQueryIgnoresRe.Match(file.Name);
+                if (match != null && match.Success)
+                {
+                    GetMod(match.Groups[1].Value).OrphanQueryIgnoreList = file;
+                }
+            }
+
+            if (CollectNames)
+            {
+                if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
+                {
+                    var match = globalsRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
+                    }
+                }
+
+                if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Levels/"))
+                {
+                    var match = levelObjectsRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        AddLevelObjectsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
+                    }
+                }
+            }
+
+            if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
+            {
+                StoryHeaderFile = new FilesystemFileInfo
+                {
+                    FilesystemPath = @"C:\Program Files (x86)\Steam\steamapps\common\Divinity Original Sin 2\DefEd\Data\Mods\DebugDummy_fbe41258-13a8-4f1c-b5ae-c47aa18607be\Story\RawFiles\story_header.div",
+                    Name = @"C:\Program Files (x86)\Steam\steamapps\common\Divinity Original Sin 2\DefEd\Data\Mods\DebugDummy_fbe41258-13a8-4f1c-b5ae-c47aa18607be\Story\RawFiles\story_header.div"
+                };
+            }
+        }
+
         private void DiscoverPackage(string packagePath)
         {
             var reader = new PackageReader(packagePath);
+            LoadedPackages.Add(reader);
             var package = reader.Read();
 
             foreach (var file in package.Files)
             {
-                if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
-                {
-                    var match = scriptRe.Match(file.Name);
-                    if (match != null && match.Success)
-                    {
-                        AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
-                    }
-                }
-
-                if (file.Name.EndsWith("/Story/story_orphanqueries_ignore_local.txt", StringComparison.Ordinal))
-                {
-                    var match = orphanQueryIgnoresRe.Match(file.Name);
-                    if (match != null && match.Success)
-                    {
-                        GetMod(match.Groups[1].Value).OrphanQueryIgnoreList = file;
-                    }
-                }
-
-                if (CollectNames)
-                {
-                    if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
-                    {
-                        var match = globalsRe.Match(file.Name);
-                        if (match != null && match.Success)
-                        {
-                            AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
-                        }
-                    }
-
-                    if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Levels/"))
-                    {
-                        var match = levelObjectsRe.Match(file.Name);
-                        if (match != null && match.Success)
-                        {
-                            AddLevelObjectsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
-                        }
-                    }
-                }
-
-                if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
-                {
-                    StoryHeaderFile = file;
-                }
+                DiscoverPackagedFile(file);
             }
         }
 
         private void DiscoverPackages(string gameDataPath)
         {
-            // We load main packages first
-            List<string> packagePaths = new List<string>
+            // List of packages we won't ever load
+            // These packages don't contain any mod resources, but have a large
+            // file table that makes loading unneccessarily slow.
+            HashSet<string> packageBlacklist = new HashSet<string>
             {
-                "Arena.pak",
-                "GameMaster.pak",
-                "Origins.pak",
-                "Shared.pak"
+                "Effects.pak",
+                "Engine.pak",
+                "EngineShaders.pak",
+                "Game.pak",
+                "GamePlatform.pak",
+                "Icons.pak",
+                "LowTex.pak",
+                "Materials.pak",
+                "Minimaps.pak",
+                "SharedSoundBanks.pak",
+                "SharedSounds.pak",
+                "Textures.pak"
             };
-
-            if (Game == TargetGame.DOS2DE)
+            
+            // Load non-patch packages first
+            foreach (var path in Directory.GetFiles(gameDataPath, "*.pak"))
             {
-                packagePaths.Add("SharedDOS.pak");
+                var baseName = Path.GetFileName(path);
+                if (!baseName.StartsWith("Patch")
+                    && !packageBlacklist.Contains(baseName)
+                    // Don't load 2nd, 3rd, ... parts of a multi-part archive
+                    && !archivePartRe.IsMatch(baseName))
+                {
+                    DiscoverPackage(path);
+                }
             }
 
             // ... and add patch files later
             foreach (var path in Directory.GetFiles(gameDataPath, "Patch*.pak"))
             {
-                packagePaths.Add(Path.GetFileName(path));
+                DiscoverPackage(path);
             }
+        }
 
-            foreach (var relativePath in packagePaths)
+        public void DiscoverUserPackages(string gameDataPath)
+        {
+            foreach (var packagePath in Directory.GetFiles(gameDataPath, "*.pak"))
             {
-                var baseName = Path.GetFileNameWithoutExtension(relativePath);
-                // Skip parts 2, 3, etc. of multi-part packages
-                if (baseName[baseName.Length - 2] == '_') continue;
-
-                var packagePath = gameDataPath + "\\" + relativePath;
-                DiscoverPackage(packagePath);
+                // Don't load 2nd, 3rd, ... parts of a multi-part archive
+                if (!archivePartRe.IsMatch(packagePath))
+                {
+                    DiscoverPackage(packagePath);
+                }
             }
         }
 
