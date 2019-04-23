@@ -157,11 +157,7 @@ namespace LSTools.StoryCompiler
 
             if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
             {
-                StoryHeaderFile = new FilesystemFileInfo
-                {
-                    FilesystemPath = @"C:\Program Files (x86)\Steam\steamapps\common\Divinity Original Sin 2\DefEd\Data\Mods\DebugDummy_fbe41258-13a8-4f1c-b5ae-c47aa18607be\Story\RawFiles\story_header.div",
-                    Name = @"C:\Program Files (x86)\Steam\steamapps\common\Divinity Original Sin 2\DefEd\Data\Mods\DebugDummy_fbe41258-13a8-4f1c-b5ae-c47aa18607be\Story\RawFiles\story_header.div"
-                };
+                StoryHeaderFile = file;
             }
         }
 
