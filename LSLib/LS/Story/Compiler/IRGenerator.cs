@@ -132,6 +132,7 @@ namespace LSLib.LS.Story.Compiler
                     Func = new IRSymbolRef(new FunctionNameAndArity(astFunc.Name, astFunc.Params.Count)),
                     Not = astFunc.Not,
                     Params = new List<IRValue>(astFunc.Params.Count),
+                    TupleSize = -1,
                     Location = astCondition.Location
                 };
 
@@ -150,6 +151,7 @@ namespace LSLib.LS.Story.Compiler
                     LValue = ASTValueToIR(rule, astBin.LValue),
                     Op = astBin.Op,
                     RValue = ASTValueToIR(rule, astBin.RValue),
+                    TupleSize = -1,
                     Location = astCondition.Location
                 };
             }

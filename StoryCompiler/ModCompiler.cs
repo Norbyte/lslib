@@ -353,12 +353,21 @@ namespace LSTools.StoryCompiler
             Logger.TaskFinished();
 
 
-            Logger.TaskStarted("Propagating rule types");
-            // TODO - this should be changed to dynamic pass count detection
-            Compiler.PropagateRuleTypes();
-            Compiler.PropagateRuleTypes();
-            Compiler.PropagateRuleTypes();
-            Logger.TaskFinished();
+            bool updated;
+            var iter = 1;
+            do
+            {
+                Logger.TaskStarted($"Propagating rule types {iter}");
+                updated = Compiler.PropagateRuleTypes();
+                Logger.TaskFinished();
+
+                if (iter++ > 10)
+                {
+                    Compiler.Context.Log.Error(null, DiagnosticCode.InternalError, 
+                        "Maximal number of rule propagation retries exceeded");
+                    break;
+                }
+            } while (updated);
 
             Logger.TaskStarted("Checking for unresolved references");
             Compiler.VerifyIR();

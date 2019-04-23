@@ -894,7 +894,8 @@ namespace LSLib.LS.Story.Compiler
             return signature.FullyTyped;
         }
 
-        private bool TryPropagateSignature(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, bool allowPartial)
+        private bool TryPropagateSignature(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, 
+            bool allowPartial, ref bool updated)
         {
             // Build a signature with all parameters to make sure that all types can be resolved
             var sig = new List<ValueType>(parameters.Count);
@@ -919,10 +920,11 @@ namespace LSLib.LS.Story.Compiler
             }
 
             // Apply signature to symbol
+            updated = true;
             return ApplySignature(name, type, sig);
         }
 
-        private bool TryPropagateSignature(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters)
+        private bool PropagateSignature(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters)
         {
             // Build a signature with all parameters to make sure that all types can be resolved
             var sig = new List<ValueType>(parameters.Count);
@@ -938,11 +940,11 @@ namespace LSLib.LS.Story.Compiler
             return true;
         }
 
-        private bool PropagateSignatureIfRequired(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, bool allowPartial)
+        private bool PropagateSignatureIfRequired(IRRule rule, FunctionNameAndArity name, FunctionType? type, List<IRValue> parameters, bool allowPartial, ref bool updated)
         {
             var signature = Context.LookupSignature(name);
             bool signatureOk = (signature != null && signature.FullyTyped);
-            if (!signatureOk && TryPropagateSignature(rule, name, type, parameters, allowPartial))
+            if (!signatureOk && TryPropagateSignature(rule, name, type, parameters, allowPartial, ref updated))
             {
                 signature = Context.LookupSignature(name);
                 signatureOk = signature.FullyTyped;
@@ -950,18 +952,22 @@ namespace LSLib.LS.Story.Compiler
 
             if (signatureOk)
             {
-                PropagateRuleTypesFromParamList(rule, parameters, signature);
+                if (PropagateRuleTypesFromParamList(rule, parameters, signature))
+                {
+                    updated = true;
+                }
             }
 
             return signatureOk;
         }
 
-        private bool PropagateSignatureIfRequired(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters)
+        private bool PropagateSignatureIfRequired(FunctionNameAndArity name, FunctionType? type, List<IRConstant> parameters, ref bool updated)
         {
             var signature = Context.LookupSignature(name);
             if (signature == null || !signature.FullyTyped)
             {
-                return TryPropagateSignature(name, type, parameters);
+                updated = true;
+                return PropagateSignature(name, type, parameters);
             }
             else
             {
@@ -969,12 +975,14 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void PropagateIRVariableType(IRRule rule, IRVariable variable, ValueType type)
+        private bool PropagateIRVariableType(IRRule rule, IRVariable variable, ValueType type)
         {
+            bool updated = false;
             var ruleVar = rule.Variables[variable.Index];
             if (ruleVar.Type == null)
             {
                 ruleVar.Type = type;
+                updated = true;
             }
 
             if (variable.Type == null)
@@ -989,31 +997,44 @@ namespace LSLib.LS.Story.Compiler
                 {
                     variable.Type = type;
                 }
+
+                updated = true;
             }
+
+            return updated;
         }
 
-        private void PropagateRuleTypesFromParamList(IRRule rule, List<IRValue> parameters, FunctionSignature signature)
+        private bool PropagateRuleTypesFromParamList(IRRule rule, List<IRValue> parameters, FunctionSignature signature)
         {
+            bool updated = false;
             Int32 index = 0;
             foreach (var param in parameters)
             {
                 if (param is IRVariable)
                 {
                     var irVar = param as IRVariable;
-                    PropagateIRVariableType(rule, param as IRVariable, signature.Params[index].Type);
+                    if (PropagateIRVariableType(rule, param as IRVariable, signature.Params[index].Type))
+                    {
+                        updated = true;
+                    }
                 }
 
                 index++;
             }
+
+            return updated;
         }
 
-        private void PropagateRuleTypes(IRFact fact)
+        private bool PropagateRuleTypes(IRFact fact)
         {
-            PropagateSignatureIfRequired(fact.Database.Name, FunctionType.Database, fact.Elements);
+            bool updated = false;
+            PropagateSignatureIfRequired(fact.Database.Name, FunctionType.Database, fact.Elements, ref updated);
+            return updated;
         }
 
-        private void PropagateRuleTypes(IRRule rule, IRBinaryCondition condition)
+        private bool PropagateRuleTypes(IRRule rule, IRBinaryCondition condition)
         {
+            bool updated = false;
             if (condition.LValue.Type == null
                 && condition.LValue is IRVariable)
             {
@@ -1022,6 +1043,7 @@ namespace LSLib.LS.Story.Compiler
                 if (ruleVariable.Type != null)
                 {
                     lval.Type = ruleVariable.Type;
+                    updated = true;
                 }
             }
 
@@ -1033,15 +1055,18 @@ namespace LSLib.LS.Story.Compiler
                 if (ruleVariable.Type != null)
                 {
                     rval.Type = ruleVariable.Type;
+                    updated = true;
                 }
             }
 
             // TODO - handle implicit re-typing of rule variables?
+
+            return updated;
         }
 
-        private UInt32 ComputeTupleSize(IRRule rule, IRFuncCondition condition, UInt32 lastTupleSize)
+        private Int32 ComputeTupleSize(IRRule rule, IRFuncCondition condition, Int32 lastTupleSize)
         {
-            UInt32 tupleSize = lastTupleSize;
+            Int32 tupleSize = lastTupleSize;
             foreach (var param in condition.Params)
             {
                 if (param is IRVariable)
@@ -1049,7 +1074,7 @@ namespace LSLib.LS.Story.Compiler
                     var variable = param as IRVariable;
                     if (variable.Index >= tupleSize)
                     {
-                        tupleSize = (UInt32)variable.Index + 1;
+                        tupleSize = variable.Index + 1;
                     }
                 }
             }
@@ -1057,15 +1082,15 @@ namespace LSLib.LS.Story.Compiler
             return tupleSize;
         }
 
-        private UInt32 ComputeTupleSize(IRRule rule, IRBinaryCondition condition, UInt32 lastTupleSize)
+        private Int32 ComputeTupleSize(IRRule rule, IRBinaryCondition condition, Int32 lastTupleSize)
         {
-            UInt32 tupleSize = lastTupleSize;
+            Int32 tupleSize = lastTupleSize;
             if (condition.LValue is IRVariable)
             {
                 var variable = condition.LValue as IRVariable;
                 if (variable.Index >= tupleSize)
                 {
-                    tupleSize = (UInt32)variable.Index + 1;
+                    tupleSize = variable.Index + 1;
                 }
             }
 
@@ -1074,7 +1099,7 @@ namespace LSLib.LS.Story.Compiler
                 var variable = condition.RValue as IRVariable;
                 if (variable.Index >= tupleSize)
                 {
-                    tupleSize = (UInt32)variable.Index + 1;
+                    tupleSize = variable.Index + 1;
                 }
             }
 
@@ -1083,25 +1108,33 @@ namespace LSLib.LS.Story.Compiler
 
         private bool PropagateRuleTypes(IRRule rule)
         {
-            UInt32 lastTupleSize = 0;
+            bool updated = false;
+
+            Int32 lastTupleSize = 0;
             foreach (var condition in rule.Conditions)
             {
                 if (condition is IRFuncCondition)
                 {
                     var func = condition as IRFuncCondition;
-                    PropagateSignatureIfRequired(rule, func.Func.Name, null, func.Params, false);
-                    if (func.TupleSize == 0)
+                    PropagateSignatureIfRequired(rule, func.Func.Name, null, func.Params, false, ref updated);
+                    if (func.TupleSize == -1)
                     {
                         func.TupleSize = ComputeTupleSize(rule, func, lastTupleSize);
+                        updated = true;
                     }
                 }
                 else
                 {
                     var bin = condition as IRBinaryCondition;
-                    PropagateRuleTypes(rule, bin);
-                    if (bin.TupleSize == 0)
+                    if (PropagateRuleTypes(rule, bin))
+                    {
+                        updated = true;
+                    }
+
+                    if (bin.TupleSize == -1)
                     {
                         bin.TupleSize = ComputeTupleSize(rule, bin, lastTupleSize);
+                        updated = true;
                     }
                 }
 
@@ -1112,32 +1145,45 @@ namespace LSLib.LS.Story.Compiler
             {
                 if (action.Func != null)
                 {
-                    PropagateSignatureIfRequired(rule, action.Func.Name, null, action.Params, false);
+                    PropagateSignatureIfRequired(rule, action.Func.Name, null, action.Params, false, ref updated);
                 }
             }
 
-            return true;
+            return updated;
         }
 
-        public void PropagateRuleTypes()
+        public bool PropagateRuleTypes()
         {
+            bool updated = false;
+
             foreach (var goal in Context.GoalsByName.Values)
             {
                 foreach (var fact in goal.InitSection)
                 {
-                    PropagateRuleTypes(fact);
+                    if (PropagateRuleTypes(fact))
+                    {
+                        updated = true;
+                    }
                 }
 
                 foreach (var rule in goal.KBSection)
                 {
-                    PropagateRuleTypes(rule);
-                }
-                foreach (var fact in goal.ExitSection)
-                {
-                    PropagateRuleTypes(fact);
+                    if (PropagateRuleTypes(rule))
+                    {
+                        updated = true;
+                    }
                 }
 
+                foreach (var fact in goal.ExitSection)
+                {
+                    if (PropagateRuleTypes(fact))
+                    {
+                        updated = true;
+                    }
+                }
             }
+
+            return updated;
         }
 
         private void AddQueryOrProc(IRRule rule)
@@ -1155,7 +1201,8 @@ namespace LSLib.LS.Story.Compiler
                     default: throw new InvalidOperationException("Cannot register this type as a PROC or QUERY");
                 }
 
-                if (!PropagateSignatureIfRequired(rule, def.Func.Name, type, def.Params, true))
+                bool updated = false;
+                if (!PropagateSignatureIfRequired(rule, def.Func.Name, type, def.Params, true, ref updated))
                 {
                     // TODO - possibly a warning?
                     /*Context.Log.Error(procDefn.Location, 

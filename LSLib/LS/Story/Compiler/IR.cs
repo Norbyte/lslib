@@ -218,7 +218,7 @@ namespace LSLib.LS.Story.Compiler
     public class IRCondition
     {
         // Number of columns in the output tuple of this condition.
-        public UInt32 TupleSize;
+        public Int32 TupleSize;
         // Location of node in source code
         public CodeLocation Location;
     }
