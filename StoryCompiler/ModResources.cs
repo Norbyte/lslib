@@ -10,6 +10,7 @@ namespace LSTools.StoryCompiler
     public class ModInfo
     {
         public String Name;
+        public AbstractFileInfo Meta;
         public Dictionary<string, AbstractFileInfo> Scripts = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> Globals = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> LevelObjects = new Dictionary<string, AbstractFileInfo>();
@@ -23,6 +24,7 @@ namespace LSTools.StoryCompiler
 
     public class ModResources : IDisposable
     {
+        private static readonly Regex metaRe = new Regex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/(.*)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex globalsRe = new Regex("^Mods/(.*)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -83,6 +85,11 @@ namespace LSTools.StoryCompiler
             return mod;
         }
 
+        private void AddMetadataToMod(string modName, AbstractFileInfo file)
+        {
+            GetMod(modName).Meta = file;
+        }
+
         private void AddScriptToMod(string modName, string scriptName, AbstractFileInfo file)
         {
             GetMod(modName).Scripts[scriptName] = file;
@@ -100,6 +107,14 @@ namespace LSTools.StoryCompiler
 
         private void DiscoverPackagedFile(AbstractFileInfo file)
         {
+            if (file.Name.EndsWith("meta.lsx", StringComparison.Ordinal))
+            {
+                var match = metaRe.Match(file.Name);
+                if (match != null && match.Success)
+                {
+                    AddMetadataToMod(match.Groups[1].Value, file);
+                }
+            }
 
             if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
             {
