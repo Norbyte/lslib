@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Story.GoalParser;
+using System;
 using System.Collections.Generic;
 
 namespace LSLib.LS.Stats.StatParser
@@ -25,7 +26,9 @@ namespace LSLib.LS.Stats.StatParser
     /// </summary>
     public class StatDeclaration : StatNode
     {
+        public CodeLocation Location;
         public Dictionary<String, object> Properties = new Dictionary<String, object>();
+        public Dictionary<String, CodeLocation> PropertyLocations = new Dictionary<String, CodeLocation>();
     }
 
     /// <summary>
@@ -41,6 +44,7 @@ namespace LSLib.LS.Stats.StatParser
     /// </summary>
     public class StatProperty : StatNode
     {
+        public CodeLocation Location;
         public String Key;
         public object Value;
     }

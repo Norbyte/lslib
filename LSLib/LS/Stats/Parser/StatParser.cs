@@ -1,20 +1,17 @@
-﻿using QUT.Gppg;
+﻿using LSLib.LS.Story.GoalParser;
+using QUT.Gppg;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS.Stats.StatParser
 {
-    public partial class StatScanner
+    public abstract class StatScanBase : AbstractScanner<StatNode, CodeLocation>
     {
-        public LexLocation LastLocation()
-        {
-            return new LexLocation(tokLin, tokCol, tokELin, tokECol);
-        }
-    }
+        protected String fileName;
 
-    public abstract class StatScanBase : AbstractScanner<StatNode, LexLocation>
-    {
+        public override CodeLocation yylloc { get; set; }
+        
         protected virtual bool yywrap() { return true; }
 
         protected StatLiteral MakeLiteral(string lit) => new StatLiteral()
@@ -27,7 +24,7 @@ namespace LSLib.LS.Stats.StatParser
             return MakeLiteral(Regex.Unescape(lit.Substring(1, lit.Length - 2)));
         }
 
-        protected StatProperty MakeDataProperty(string lit)
+        protected StatProperty MakeDataProperty(CodeLocation location, string lit)
         {
             var re = new Regex(@"data\s+""([^""]+)""\s+""(.*)""\s*", RegexOptions.CultureInvariant);
             var matches = re.Match(lit);
@@ -39,8 +36,22 @@ namespace LSLib.LS.Stats.StatParser
             return new StatProperty
             {
                 Key = matches.Groups[1].Value,
-                Value = matches.Groups[2].Value
+                Value = matches.Groups[2].Value,
+                Location = location
             };
+        }
+    }
+
+    public partial class StatScanner
+    {
+        public StatScanner(String fileName)
+        {
+            this.fileName = fileName;
+        }
+
+        public CodeLocation LastLocation()
+        {
+            return new CodeLocation(null, tokLin, tokCol, tokELin, tokECol);
         }
     }
 
@@ -67,15 +78,28 @@ namespace LSLib.LS.Stats.StatParser
 
         private StatDeclaration MakeDeclaration() => new StatDeclaration();
 
-        private StatDeclaration MakeDeclaration(StatProperty[] properties)
+        private StatDeclaration MakeDeclaration(CodeLocation location) => new StatDeclaration()
         {
-            var decl = new StatDeclaration();
+            Location = location
+        };
+
+        private StatDeclaration MakeDeclaration(CodeLocation location, StatProperty[] properties)
+        {
+            var decl = new StatDeclaration()
+            {
+                Location = location
+            };
             foreach (var prop in properties)
             {
                 AddProperty(decl, prop);
             }
 
             return decl;
+        }
+
+        private StatDeclaration MakeDeclaration(StatProperty[] properties)
+        {
+            return MakeDeclaration(null, properties);
         }
 
         private StatWrappedDeclaration WrapDeclaration(StatNode node) => new StatWrappedDeclaration
@@ -105,6 +129,10 @@ namespace LSLib.LS.Stats.StatParser
             {
                 var prop = property as StatProperty;
                 decl.Properties[prop.Key] = prop.Value;
+                if (prop.Location != null)
+                {
+                    decl.PropertyLocations[prop.Key] = prop.Location;
+                }
             }
             else if (property is StatElement)
             {
@@ -124,6 +152,11 @@ namespace LSLib.LS.Stats.StatParser
                 foreach (var kv in otherDecl.Properties)
                 {
                     decl.Properties[kv.Key] = kv.Value;
+                }
+
+                foreach (var kv in otherDecl.PropertyLocations)
+                {
+                    decl.PropertyLocations[kv.Key] = kv.Value;
                 }
             }
             else
@@ -150,6 +183,27 @@ namespace LSLib.LS.Stats.StatParser
         {
             Key = key,
             Value = value
+        };
+
+        private StatProperty MakeProperty(CodeLocation location, StatNode key, StatNode value) => new StatProperty()
+        {
+            Key = (key as StatLiteral).Literal,
+            Value = (value as StatLiteral).Literal,
+            Location = location
+        };
+
+        private StatProperty MakeProperty(CodeLocation location, String key, StatNode value) => new StatProperty()
+        {
+            Key = key,
+            Value = (value as StatLiteral).Literal,
+            Location = location
+        };
+
+        private StatProperty MakeProperty(CodeLocation location, String key, String value) => new StatProperty()
+        {
+            Key = key,
+            Value = value,
+            Location = location
         };
 
         private StatElement MakeElement(String key, StatNode value)

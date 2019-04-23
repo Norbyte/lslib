@@ -4,6 +4,7 @@
 %parsertype StatParser
 %tokentype StatTokens
 %YYSTYPE LSLib.LS.Stats.StatParser.StatNode
+%YYLTYPE LSLib.LS.Story.GoalParser.CodeLocation
 
 %start StatFile
 
@@ -105,7 +106,7 @@ Declaration : DataDeclaration;
 
 DataDeclaration : EntryHeader EntryProperties { $$ = AddProperty($2, $1); };
 
-EntryProperties : /* empty */ { $$ = MakeDeclaration(); }
+EntryProperties : /* empty */ { $$ = MakeDeclaration(@$); }
                 | EntryProperties EntryProperty { $$ = AddProperty($1, $2); }
                 ;
 
@@ -126,100 +127,100 @@ EntryHeader : EntryStdHeader
             | TreasureGroupHeader
             | TreasureTableHeader;
 
-EntryStdHeader : NEW ENTRY STRING { $$ = MakeProperty("Name", $3); };
+EntryStdHeader : NEW ENTRY STRING { $$ = MakeProperty(@3, "Name", $3); };
 
 DataKeyHeader : KEY STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Key", $2),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@2, "Key", $2),
 					MakeProperty("EntityType", "Data"),
-					MakeProperty("Value", $4)
+					MakeProperty(@4, "Value", $4)
 				}); };
 
 /* TODO - integer params are unknown */
 AbilityHeader : ABILITY NAME ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $2),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@2, "Name", $2),
 					MakeProperty("EntityType", "Ability")
 				}); };
 
 RequirementsHeader : REQUIREMENT STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $2),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@2, "Name", $2),
 					MakeProperty("EntityType", "Requirement"),
-					MakeProperty("Requirements", $4)
+					MakeProperty(@4, "Requirements", $4)
 				}); };
 
 DeltaModHeader : NEW DELTAMOD STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "DeltaModifier")
 				}); };
 
 ItemCombinationHeader : NEW ITEM_COMBINATION STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "ItemCombination")
 				}); };
 
 ItemCombinationResultHeader : NEW ITEM_COMBINATION_RESULT STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "ItemCombinationResult")
 				}); };
 
 ItemColorHeader : NEW ITEMCOLOR STRING ',' STRING ',' STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("ItemColorName", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "ItemColorName", $3),
 					MakeProperty("EntityType", "ItemColor"),
-					MakeProperty("PrimaryColor", $5),
-					MakeProperty("SecondaryColor", $7),
-					MakeProperty("TertiaryColor", $9),
+					MakeProperty(@5, "PrimaryColor", $5),
+					MakeProperty(@7, "SecondaryColor", $7),
+					MakeProperty(@9, "TertiaryColor", $9),
 				}); };
 
 ItemProgressionNamesHeader : NEW NAMEGROUP STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "ItemProgressionNames")
 				}); };
 
 ItemProgressionVisualsHeader : NEW ITEMGROUP STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "ItemProgressionVisuals")
 				}); };
 
 EquipmentHeader : NEW EQUIPMENT STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "Equipment")
 				}); };
 
 ItemComboPropertyHeader : NEW ITEMCOMBOPROPERTY STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "ItemComboProperties")
 				}); };
 
 ObjectCategoryItemComboPreviewDataHeader : NEW CRAFTING_PREVIEW_DATA STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3)
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3)
 				}); };
 
 SkillSetHeader : NEW SKILLSET STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $3),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@3, "Name", $3),
 					MakeProperty("EntityType", "SkillSet")
 				}); };
 
 TreasureGroupHeader : CATEGORY_MAP STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
-					MakeProperty("Name", $2),
-					MakeProperty("TreasureGroup", $4),
+                { $$ = MakeDeclaration(@$, new [] {
+					MakeProperty(@2, "Name", $2),
+					MakeProperty(@4, "TreasureGroup", $4),
 					MakeProperty("EntityType", "TreasureGroups")
 				}); };
 
 TreasureTableHeader : NEW TREASURE_TABLE STRING
-                { $$ = MakeDeclaration(new [] {
+                { $$ = MakeDeclaration(@$, new [] {
 					MakeProperty("Name", $3),
 					MakeProperty("EntityType", "TreasureTable")
 				}); };
@@ -248,15 +249,15 @@ EntryProperty : EntryType
               | TreasureTableUseTreasureGroups
               ;
 
-EntryType : TYPE STRING { $$ = MakeProperty("EntityType", $2); };
+EntryType : TYPE STRING { $$ = MakeProperty(@$, "EntityType", $2); };
 
-EntryUsing : USING STRING { $$ = MakeProperty("Using", $2); };
+EntryUsing : USING STRING { $$ = MakeProperty(@$, "Using", $2); };
 
-EntryData : DATA STRING STRING { $$ = MakeProperty($2, $3); };
+EntryData : DATA STRING STRING { $$ = MakeProperty(@$, $2, $3); };
 
 EntryDataHack : DATA_ITEM;
 
-EntryParam : PARAM STRING STRING { $$ = MakeProperty($2, $3); };
+EntryParam : PARAM STRING STRING { $$ = MakeProperty(@$, $2, $3); };
 
 ItemProgressionName : ADD NAME STRING ',' STRING
                 { $$ = MakeElement("Names", new Dictionary<String, object> {
@@ -314,37 +315,37 @@ SkillSetSkill : ADD SKILL STRING { $$ = MakeElement("NameGroups", $3); };
 
 TreasureGroupWeaponCounter : WEAPON_COUNTER STRING ',' STRING
                 { $$ = MakeDeclaration(new [] {
-					MakeProperty("WeaponTreasureGroup", $2),
-					MakeProperty("WeaponDefaultCounter", $4)
+					MakeProperty(@2, "WeaponTreasureGroup", $2),
+					MakeProperty(@4, "WeaponDefaultCounter", $4)
 				}); };
 
 TreasureGroupSkillbookCounter : SKILLBOOK_COUNTER STRING ',' STRING
                 { $$ = MakeDeclaration(new [] {
-					MakeProperty("SkillbookTreasureGroup", $2),
-					MakeProperty("SkillbookDefaultCounter", $4)
+					MakeProperty(@2, "SkillbookTreasureGroup", $2),
+					MakeProperty(@4, "SkillbookDefaultCounter", $4)
 				}); };
 
 TreasureGroupArmorCounter : ARMOR_COUNTER STRING ',' STRING
                 { $$ = MakeDeclaration(new [] {
-					MakeProperty("ArmorTreasureGroup", $2),
-					MakeProperty("ArmorDefaultCounter", $4)
+					MakeProperty(@2, "ArmorTreasureGroup", $2),
+					MakeProperty(@4, "ArmorDefaultCounter", $4)
 				}); };
 				
 TreasureSubtable : NEW_SUBTABLE STRING TreasureTableObjects
                 { $$ = MakeElement("Subtables", 
 					AddProperty(
-						MakeDeclaration(new [] { MakeProperty("DropCount", $2) }),
+						MakeDeclaration(new [] { MakeProperty(@2, "DropCount", $2) }),
 						$3
 					));
 				};
 
-TreasureTableMinLevel : MIN_LEVEL STRING { $$ = MakeProperty("MinLevel", $2); };
+TreasureTableMinLevel : MIN_LEVEL STRING { $$ = MakeProperty(@$, "MinLevel", $2); };
 
-TreasureTableMaxLevel : MAX_LEVEL STRING { $$ = MakeProperty("MaxLevel", $2); };
+TreasureTableMaxLevel : MAX_LEVEL STRING { $$ = MakeProperty(@$, "MaxLevel", $2); };
 
-TreasureTableIgnoreLevelDiff : IGNORE_LEVEL_DIFF INTEGER { $$ = MakeProperty("IgnoreLevelDiff", $2); };
+TreasureTableIgnoreLevelDiff : IGNORE_LEVEL_DIFF INTEGER { $$ = MakeProperty(@$, "IgnoreLevelDiff", $2); };
 
-TreasureTableUseTreasureGroups : USE_TREASURE_GROUPS INTEGER { $$ = MakeProperty("UseTreasureGroups", $2); };
+TreasureTableUseTreasureGroups : USE_TREASURE_GROUPS INTEGER { $$ = MakeProperty(@$, "UseTreasureGroups", $2); };
 
 TreasureTableObjects : /* empty */ { $$ = MakeDeclaration(); }
                 | TreasureTableObjects TreasureTableEntry { $$ = AddProperty($1, $2); }
@@ -355,9 +356,9 @@ TreasureTableEntry : TreasureTableObject
                    | TreasureTableObjectEndLevel
 				   ;
 
-TreasureTableObjectStartLevel : START_LEVEL STRING { $$ = MakeProperty("StartLevel", $2); };
+TreasureTableObjectStartLevel : START_LEVEL STRING { $$ = MakeProperty(@$, "StartLevel", $2); };
 
-TreasureTableObjectEndLevel : END_LEVEL STRING { $$ = MakeProperty("EndLevel", $2); };
+TreasureTableObjectEndLevel : END_LEVEL STRING { $$ = MakeProperty(@$, "EndLevel", $2); };
 
 TreasureTableObject : OBJECT_CATEGORY STRING ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER
                 { $$ = MakeElement("Objects", MakeDeclaration(new [] {

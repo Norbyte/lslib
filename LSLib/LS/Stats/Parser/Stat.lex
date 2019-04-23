@@ -10,7 +10,7 @@ namechar [a-zA-Z_]
 
 %%
 
-data([ ]+)\"([^\"]+)\"([ ]+)\"(.*)\" { yylval = MakeDataProperty(yytext); return (int)StatTokens.DATA_ITEM; }
+data([ ]+)\"([^\"]+)\"([ ]+)\"(.*)\" { yylval = MakeDataProperty(yylloc, yytext); return (int)StatTokens.DATA_ITEM; }
 
 /* Reserved words */
 "new"        return (int)StatTokens.NEW;
@@ -97,3 +97,7 @@ data([ ]+)\"([^\"]+)\"([ ]+)\"(.*)\" { yylval = MakeDataProperty(yytext); return
 L?\"(\\.|[^\\"])*\" { yylval = MakeString(yytext); return (int)StatTokens.STRING; }
 
 . return ((int)StatTokens.BAD);
+
+%{
+    yylloc = new LSLib.LS.Story.GoalParser.CodeLocation(fileName, tokLin, tokCol, tokELin, tokECol);
+%}
