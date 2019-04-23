@@ -724,7 +724,7 @@ namespace LSLib.Granny.Model
                             bool hasHighIndex = false;
                             foreach (var index in topology.Indices)
                             {
-                                if (index > 0x7fff)
+                                if (index > 0xffff)
                                 {
                                     hasHighIndex = true;
                                     break;
