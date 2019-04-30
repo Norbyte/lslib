@@ -591,7 +591,7 @@ namespace LSLib.Granny.Model
         {
             var trackGroup = new TrackGroup
             {
-                Name = skeleton.Name,
+                Name = (skeleton != null) ? skeleton.Name : "Dummy_Root",
                 TransformTracks = new List<TransformTrack>(),
                 InitialPlacement = new Transform(),
                 AccumulationFlags = 2,
@@ -777,9 +777,9 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (collAnimations.Count > 0 && root.Skeletons.Count > 0)
+            if (collAnimations.Count > 0)
             {
-                ImportAnimations(collAnimations, root, root.Skeletons[0]);
+                ImportAnimations(collAnimations, root, root.Skeletons.FirstOrDefault());
             }
 
             var rootModel = new Model();

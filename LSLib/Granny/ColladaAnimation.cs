@@ -14,7 +14,7 @@ namespace LSLib.Granny
         private Dictionary<String, ColladaSource> Sources;
         private List<Matrix4> Transforms;
         private List<Single> Times;
-        private Bone Bone;
+        private string BoneName;
 
         public Single Duration
         {
@@ -123,14 +123,21 @@ namespace LSLib.Granny
             if (parts.Length != 2)
                 throw new ParsingException("Unsupported channel target format: " + channel.target);
 
-            Bone bone = null;
-            if (!skeleton.BonesByID.TryGetValue(parts[0], out bone))
-                throw new ParsingException("Animation channel references nonexistent bone: " + parts[0]);
+            if (skeleton != null)
+            {
+                Bone bone = null;
+                if (!skeleton.BonesByID.TryGetValue(parts[0], out bone))
+                    throw new ParsingException("Animation channel references nonexistent bone: " + parts[0]);
 
-            if (bone.TransformSID != parts[1])
-                throw new ParsingException("Animation channel references nonexistent transform or transform is not float4x4: " + channel.target);
+                if (bone.TransformSID != parts[1])
+                    throw new ParsingException("Animation channel references nonexistent transform or transform is not float4x4: " + channel.target);
 
-            Bone = bone;
+                BoneName = bone.Name;
+            }
+            else
+            {
+                BoneName = parts[0];
+            }
         }
 
         public bool ImportFromCollada(animation colladaAnim, Skeleton skeleton)
@@ -157,7 +164,7 @@ namespace LSLib.Granny
 
             var track = TransformTrack.FromKeyframes(keyframes);
             track.Flags = 0;
-            track.Name = Bone.Name;
+            track.Name = BoneName;
 
             return track;
         }
