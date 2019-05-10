@@ -677,7 +677,6 @@ namespace LSLib.Granny.Model
             if (Options.DisabledSkeletons.Count > 0)
             {
                 Root.Skeletons = Root.Skeletons.Where(a => !Options.DisabledSkeletons.Contains(a.Name)).ToList();
-                Utils.Info($"Exported skeletons: {string.Join(", ", Root.Skeletons.Select((s) => s.Name))}");
             }
 
             if (Options.DeduplicateVertices)
