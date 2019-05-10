@@ -102,6 +102,10 @@ namespace LSLib.Granny.Model
         // Apply Y-up transforms on skeletons?
         public bool TransformSkeletons = true;
 
+        public List<string> DisabledAnimations = new List<string>();
+        public List<string> DisabledModels = new List<string>();
+        public List<string> DisabledSkeletons = new List<string>();
+
         public void LoadGameSettings(LSLib.LS.Enums.Game game)
         {
             switch (game)
@@ -659,7 +663,23 @@ namespace LSLib.Granny.Model
 
                 Root = Options.Input;
             }
-            
+
+            if(Options.DisabledAnimations.Count > 0)
+            {
+                Root.Animations = Root.Animations.Where(a => !Options.DisabledAnimations.Contains(a.Name)).ToList();
+            }
+
+            if (Options.DisabledModels.Count > 0)
+            {
+                Root.Models = Root.Models.Where(a => !Options.DisabledModels.Contains(a.Name)).ToList();
+            }
+
+            if (Options.DisabledSkeletons.Count > 0)
+            {
+                Root.Skeletons = Root.Skeletons.Where(a => !Options.DisabledSkeletons.Contains(a.Name)).ToList();
+                Utils.Info($"Exported skeletons: {string.Join(", ", Root.Skeletons.Select((s) => s.Name))}");
+            }
+
             if (Options.DeduplicateVertices)
             {
                 if (Root.VertexDatas != null)
@@ -671,12 +691,13 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (Options.ApplyBasisTransforms)
+
+            if (Options.ApplyBasisTransforms && Root.Skeletons.Count > 0)
             {
                 Root.ConvertToYUp(Options.TransformSkeletons);
             }
 
-            if (Options.RecalculateIWT && Root.Skeletons != null)
+            if (Options.RecalculateIWT && Root.Skeletons != null && Root.Skeletons.Count > 0)
             {
                 foreach (var skeleton in Root.Skeletons)
                 {

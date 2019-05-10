@@ -457,7 +457,7 @@
             this.exportableObjects.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.exportableName,
             this.exportableType});
-            this.exportableObjects.Enabled = false;
+            this.exportableObjects.Enabled = true;
             this.exportableObjects.FullRowSelect = true;
             this.exportableObjects.Location = new System.Drawing.Point(9, 201);
             this.exportableObjects.Name = "exportableObjects";

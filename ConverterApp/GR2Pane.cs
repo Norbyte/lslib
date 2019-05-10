@@ -34,12 +34,11 @@ namespace ConverterApp
             gr2BatchInputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchInputPath");
             gr2BatchOutputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchOutputPath");
 
-            gr2BatchInputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
-            gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchInputFormat.DataBindings.Add("SelectedIndex", _form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", _form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
 
-            gr2ExtraProps.SelectedIndex = 0;
 
-            if(File.Exists(inputPath.Text))
+            if (File.Exists(inputPath.Text))
             {
                 loadInputBtn_Click(loadInputBtn, EventArgs.Empty);
             }
@@ -232,6 +231,28 @@ namespace ConverterApp
             var outputExtension = Path.GetExtension(settings.OutputPath)?.ToLower();
             bool outputIsGr2 = outputExtension == ".gr2" || outputExtension == ".lsm";
             settings.OutputFormat = outputIsGr2 ? ExportFormat.GR2 : ExportFormat.DAE;
+
+            foreach (ListViewItem item in exportableObjects.Items)
+            {
+                if(!item.Checked)
+                {
+                    var name = item.SubItems[0].Text;
+                    var itemType = item.SubItems[1].Text;
+
+                    if (itemType == "Model")
+                    {
+                        settings.DisabledModels.Add(name);
+                    }
+                    else if (itemType == "Skeleton")
+                    {
+                        settings.DisabledSkeletons.Add(name);
+                    }
+                    else if (itemType == "Animation")
+                    {
+                        settings.DisabledAnimations.Add(name);
+                    }
+                }
+            }
 
             foreach (ListViewItem setting in from object item in resourceFormats.Items select item as ListViewItem)
             {

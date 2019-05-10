@@ -457,7 +457,7 @@ namespace LSLib.Granny.Model
             foreach (var model in root.Models)
             {
                 string skelRef = null;
-                if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1)
+                if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1 && root.Skeletons.Any(s => s.Name == model.Skeleton.Name))
                 {
                     var skeleton = ExportSkeleton(model.Skeleton, model.Name);
                     geomNodes.Add(skeleton);
