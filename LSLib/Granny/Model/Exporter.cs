@@ -92,7 +92,7 @@ namespace LSLib.Granny.Model
         // Extended model info format to use when exporting to D:OS
         public DivinityModelInfoFormat ModelInfoFormat = DivinityModelInfoFormat.None;
         // Model flags to use when exporting
-        public DivinityModelType ModelType = DivinityModelType.Undefined;
+        public DivinityModelFlag ModelType = 0;
         // Remove unused metadata from the GR2 file
         public bool StripMetadata = true;
         // Flip mesh on X axis

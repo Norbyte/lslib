@@ -4,15 +4,6 @@ using System.Collections.Generic;
 
 namespace LSLib.Granny.Model
 {
-    public enum DivinityModelType
-    {
-        Undefined,
-        Normal,
-        Rigid,
-        Cloth,
-        MeshProxy
-    };
-
     [Flags]
     public enum DivinityModelFlag
     {
@@ -23,6 +14,24 @@ namespace LSLib.Granny.Model
         Skinned = 0x10,
         Rigid = 0x20
     };
+
+    public static class DivinityModelFlagMethods
+    {
+        public static bool IsMeshProxy(this DivinityModelFlag flag)
+        {
+            return (flag & DivinityModelFlag.MeshProxy) == DivinityModelFlag.MeshProxy;
+        }
+
+        public static bool IsCloth(this DivinityModelFlag flag)
+        {
+            return (flag & DivinityModelFlag.Cloth) == DivinityModelFlag.Cloth;
+        }
+
+        public static bool IsRigid(this DivinityModelFlag flag)
+        {
+            return (flag & DivinityModelFlag.Rigid) == DivinityModelFlag.Rigid;
+        }
+    }
 
     public enum DivinityVertexUsage
     {
@@ -218,137 +227,129 @@ namespace LSLib.Granny.Model
         public const string UserDefinedProperties_Cloth = "Cloth=true";
         public const string UserDefinedProperties_MeshProxy = "MeshProxy=true";
 
-        public static string ModelTypeToUserDefinedProperties(DivinityModelType modelType)
+        public static string ModelFlagsToUserDefinedProperties(DivinityModelFlag modelFlags)
         {
-            switch (modelType)
+            string properties = "";
+            if (modelFlags.IsRigid())
             {
-                case DivinityModelType.Rigid: return UserDefinedProperties_Rigid;
-                case DivinityModelType.Cloth: return UserDefinedProperties_Cloth;
-                case DivinityModelType.MeshProxy: return UserDefinedProperties_MeshProxy;
-                case DivinityModelType.Normal: 
-                default: return "";
+                properties += UserDefinedProperties_Rigid + "\n";
             }
+
+            if (modelFlags.IsCloth())
+            {
+                properties += UserDefinedProperties_Cloth + "\n";
+            }
+
+            if (modelFlags.IsMeshProxy())
+            {
+                properties += UserDefinedProperties_MeshProxy + "\n";
+            }
+
+            return properties;
         }
 
-        public static DivinityModelType UserDefinedPropertiesToModelType(string userDefinedProperties)
+        public static DivinityModelFlag UserDefinedPropertiesToModelType(string userDefinedProperties)
         {
             // The D:OS 2 editor uses the ExtendedData attribute to determine whether a model can be 
             // bound to a character.
             // The "Rigid = true" user defined property is checked for rigid bodies (e.g. weapons), the "Cloth=true"
             // user defined property is checked for clothes.
+            DivinityModelFlag flags = 0;
             if (userDefinedProperties.Contains("Rigid"))
             {
-                return DivinityModelType.Rigid;
+                flags |= DivinityModelFlag.Rigid;
             }
 
             if (userDefinedProperties.Contains("Cloth"))
             {
-                return DivinityModelType.Cloth;
+                flags |= DivinityModelFlag.Cloth;
             }
 
             if (userDefinedProperties.Contains("MeshProxy"))
             {
-                return DivinityModelType.MeshProxy;
+                flags |= DivinityModelFlag.MeshProxy | DivinityModelFlag.HasProxyGeometry;
             }
 
-            return DivinityModelType.Normal;
+            return flags;
         }
-
-        public static DivinityModelType UserMeshFlagsToModelType(DivinityModelFlag flags)
+        
+        public static DivinityModelFlag DetermineModelFlags(Mesh mesh)
         {
-            if ((flags & DivinityModelFlag.Rigid) == DivinityModelFlag.Rigid)
+            DivinityModelFlag flags = 0;
+
+            if (mesh.ModelType != 0)
             {
-                return DivinityModelType.Rigid;
+                flags = mesh.ModelType;
             }
-
-            if ((flags & DivinityModelFlag.MeshProxy) == DivinityModelFlag.MeshProxy)
-            {
-                return DivinityModelType.MeshProxy;
-            }
-
-            if ((flags & DivinityModelFlag.Cloth) == DivinityModelFlag.Cloth)
-            {
-                return DivinityModelType.Cloth;
-            }
-
-            return DivinityModelType.Normal;
-        }
-
-        public static DivinityModelType DetermineModelType(Mesh mesh)
-        {
-            if (mesh.ModelType != DivinityModelType.Undefined)
-            {
-                return mesh.ModelType;
-            }
-
-            if (mesh.ExtendedData != null
+            else if (mesh.ExtendedData != null
                 && mesh.ExtendedData.LSMVersion >= 1
                 && mesh.ExtendedData.UserMeshProperties != null)
             {
-                return UserMeshFlagsToModelType(mesh.ExtendedData.UserMeshProperties.MeshFlags);
+                flags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
             }
             else if (mesh.ExtendedData != null
                 && mesh.ExtendedData.UserDefinedProperties != null)
             {
-                return UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
+                flags = UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
             }
-            // Only mark model as cloth if it has colored vertices
-            else if (mesh.VertexFormat.ColorMaps > 0)
+            else
             {
-                return DivinityModelType.Cloth;
-            }
-            else if (!mesh.VertexFormat.HasBoneWeights)
-            {
-                return DivinityModelType.Rigid;
-            }
+                // Only mark model as cloth if it has colored vertices
+                if (mesh.VertexFormat.ColorMaps > 0)
+                {
+                    flags |= DivinityModelFlag.Cloth;
+                }
 
-            return DivinityModelType.Normal;
+                if (!mesh.VertexFormat.HasBoneWeights)
+                {
+                    flags |= DivinityModelFlag.Rigid;
+                }
+            }
+            
+            return flags;
         }
 
-        public static DivinityModelType DetermineModelType(Root root)
+        public static DivinityModelFlag DetermineModelFlags(Root root)
         {
-            var modelType = DivinityModelType.Undefined;
+            DivinityModelFlag flags = 0;
 
             if (root.Meshes != null)
             {
                 foreach (var mesh in root.Meshes)
                 {
-                    var meshType = DetermineModelType(mesh);
-                    if (modelType == DivinityModelType.Undefined
-                        || (modelType == DivinityModelType.Normal && 
-                            (meshType == DivinityModelType.Cloth || meshType == DivinityModelType.MeshProxy)))
-                    {
-                        modelType = meshType;
-                    }
+                    flags |= DetermineModelFlags(mesh);
                 }
             }
 
-            return modelType;
+            return flags;
         }
 
         public static DivinityMeshExtendedData MakeMeshExtendedData(Mesh mesh, DivinityModelInfoFormat format,
-            DivinityModelType meshModelType)
+            DivinityModelFlag modelFlags)
         {
             var extendedData = DivinityMeshExtendedData.Make();
-
-            if (mesh.ModelType != DivinityModelType.Undefined)
+            
+            if (modelFlags == 0)
             {
-                meshModelType = mesh.ModelType;
+                modelFlags = DetermineModelFlags(mesh);
             }
 
-            if (meshModelType == DivinityModelType.Cloth
-                && mesh.VertexFormat.ColorMaps == 0)
+            if (mesh.VertexFormat.HasBoneWeights)
             {
-                meshModelType = DivinityModelType.Normal;
+                modelFlags |= DivinityModelFlag.Skinned;
             }
 
-            if (meshModelType == DivinityModelType.Undefined)
+            if (mesh.VertexFormat.ColorMaps > 0)
             {
-                meshModelType = DivinityHelpers.DetermineModelType(mesh);
+                modelFlags |= DivinityModelFlag.HasColor;
+            }
+            else
+            {
+                modelFlags &= ~DivinityModelFlag.Cloth;
             }
 
             extendedData.UserDefinedProperties =
-               DivinityHelpers.ModelTypeToUserDefinedProperties(meshModelType);
+               DivinityHelpers.ModelFlagsToUserDefinedProperties(modelFlags);
 
             if (format == DivinityModelInfoFormat.UserDefinedProperties)
             {
@@ -357,41 +358,7 @@ namespace LSLib.Granny.Model
             }
             else
             {
-                DivinityModelFlag flags = 0;
-
-                if (mesh.VertexFormat.HasBoneWeights)
-                {
-                    flags |= DivinityModelFlag.Skinned;
-                }
-
-                if (mesh.VertexFormat.ColorMaps > 0)
-                {
-                    flags |= DivinityModelFlag.HasColor;
-                }
-                
-                switch (meshModelType)
-                {
-                    case DivinityModelType.Normal:
-                        // No special flag should be set here
-                        break;
-
-                    case DivinityModelType.Cloth:
-                        flags |= DivinityModelFlag.Cloth;
-                        break;
-
-                    case DivinityModelType.Rigid:
-                        flags |= DivinityModelFlag.Rigid;
-                        break;
-
-                    case DivinityModelType.MeshProxy:
-                        flags |= DivinityModelFlag.MeshProxy;
-                        break;
-
-                    default:
-                        throw new NotImplementedException();
-                }
-
-                extendedData.UserMeshProperties.MeshFlags = flags;
+                extendedData.UserMeshProperties.MeshFlags = modelFlags;
 
                 if (format == DivinityModelInfoFormat.LSMv1)
                 {

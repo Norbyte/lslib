@@ -54,6 +54,7 @@
             this.label20 = new System.Windows.Forms.Label();
             this.gr2BatchOutputDir = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.transfomSkeletons = new System.Windows.Forms.CheckBox();
             this.flipMeshes = new System.Windows.Forms.CheckBox();
             this.flipSkeletons = new System.Windows.Forms.CheckBox();
             this.exportColors = new System.Windows.Forms.CheckBox();
@@ -71,8 +72,6 @@
             this.deduplicateVertices = new System.Windows.Forms.CheckBox();
             this.recalculateNormals = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.gr2ExtraProps = new System.Windows.Forms.ComboBox();
-            this.label3 = new System.Windows.Forms.Label();
             this.applyBasisTransforms = new System.Windows.Forms.CheckBox();
             this.conformantGR2BrowseBtn = new System.Windows.Forms.Button();
             this.conformantGR2Path = new System.Windows.Forms.TextBox();
@@ -80,14 +79,16 @@
             this.buildDummySkeleton = new System.Windows.Forms.CheckBox();
             this.use16bitIndex = new System.Windows.Forms.CheckBox();
             this.forceLegacyVersion = new System.Windows.Forms.CheckBox();
+            this.resourceFormats = new ConverterApp.ExportItemSelection();
             this.label1 = new System.Windows.Forms.Label();
             this.gr2OutputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.gr2InputDirDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
-            this.transfomSkeletons = new System.Windows.Forms.CheckBox();
-            this.resourceFormats = new ConverterApp.ExportItemSelection();
+            this.meshRigid = new System.Windows.Forms.CheckBox();
+            this.meshCloth = new System.Windows.Forms.CheckBox();
+            this.meshProxy = new System.Windows.Forms.CheckBox();
             this.gr2ModeTabControl.SuspendLayout();
             this.gr2SingleFileTab.SuspendLayout();
             this.gr2BatchTab.SuspendLayout();
@@ -393,6 +394,18 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Export Options";
             // 
+            // transfomSkeletons
+            // 
+            this.transfomSkeletons.AutoSize = true;
+            this.transfomSkeletons.Checked = true;
+            this.transfomSkeletons.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.transfomSkeletons.Location = new System.Drawing.Point(9, 156);
+            this.transfomSkeletons.Name = "transfomSkeletons";
+            this.transfomSkeletons.Size = new System.Drawing.Size(121, 17);
+            this.transfomSkeletons.TabIndex = 27;
+            this.transfomSkeletons.Text = "Transform skeletons";
+            this.transfomSkeletons.UseVisualStyleBackColor = true;
+            // 
             // flipMeshes
             // 
             this.flipMeshes.AutoSize = true;
@@ -569,8 +582,9 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.gr2ExtraProps);
-            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.meshProxy);
+            this.groupBox1.Controls.Add(this.meshCloth);
+            this.groupBox1.Controls.Add(this.meshRigid);
             this.groupBox1.Controls.Add(this.applyBasisTransforms);
             this.groupBox1.Controls.Add(this.conformantGR2BrowseBtn);
             this.groupBox1.Controls.Add(this.conformantGR2Path);
@@ -586,29 +600,6 @@
             this.groupBox1.TabIndex = 36;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "GR2 Export Options";
-            // 
-            // gr2ExtraProps
-            // 
-            this.gr2ExtraProps.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.gr2ExtraProps.FormattingEnabled = true;
-            this.gr2ExtraProps.Items.AddRange(new object[] {
-            "None",
-            "Rigid",
-            "Cloth",
-            "MeshProxy"});
-            this.gr2ExtraProps.Location = new System.Drawing.Point(245, 62);
-            this.gr2ExtraProps.Name = "gr2ExtraProps";
-            this.gr2ExtraProps.Size = new System.Drawing.Size(140, 21);
-            this.gr2ExtraProps.TabIndex = 28;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(242, 45);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(83, 13);
-            this.label3.TabIndex = 27;
-            this.label3.Text = "Extra properties:";
             // 
             // applyBasisTransforms
             // 
@@ -685,6 +676,19 @@
             this.forceLegacyVersion.Text = "Force legacy GR2 version tag";
             this.forceLegacyVersion.UseVisualStyleBackColor = true;
             // 
+            // resourceFormats
+            // 
+            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.resourceFormats.FullRowSelect = true;
+            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
+            this.resourceFormats.Name = "resourceFormats";
+            this.resourceFormats.Size = new System.Drawing.Size(445, 271);
+            this.resourceFormats.TabIndex = 16;
+            this.resourceFormats.UseCompatibleStateImageBehavior = false;
+            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -709,30 +713,35 @@
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.inputFileDlg.Title = "Select Input File";
             // 
-            // transfomSkeletons
+            // meshRigid
             // 
-            this.transfomSkeletons.AutoSize = true;
-            this.transfomSkeletons.Checked = true;
-            this.transfomSkeletons.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.transfomSkeletons.Location = new System.Drawing.Point(9, 156);
-            this.transfomSkeletons.Name = "transfomSkeletons";
-            this.transfomSkeletons.Size = new System.Drawing.Size(121, 17);
-            this.transfomSkeletons.TabIndex = 27;
-            this.transfomSkeletons.Text = "Transform skeletons";
-            this.transfomSkeletons.UseVisualStyleBackColor = true;
+            this.meshRigid.AutoSize = true;
+            this.meshRigid.Location = new System.Drawing.Point(245, 45);
+            this.meshRigid.Name = "meshRigid";
+            this.meshRigid.Size = new System.Drawing.Size(94, 17);
+            this.meshRigid.TabIndex = 27;
+            this.meshRigid.Text = "(D:OS 2) Rigid";
+            this.meshRigid.UseVisualStyleBackColor = true;
             // 
-            // resourceFormats
+            // meshCloth
             // 
-            this.resourceFormats.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.resourceFormats.FullRowSelect = true;
-            this.resourceFormats.Location = new System.Drawing.Point(15, 160);
-            this.resourceFormats.Name = "resourceFormats";
-            this.resourceFormats.Size = new System.Drawing.Size(445, 271);
-            this.resourceFormats.TabIndex = 16;
-            this.resourceFormats.UseCompatibleStateImageBehavior = false;
-            this.resourceFormats.View = System.Windows.Forms.View.Details;
+            this.meshCloth.AutoSize = true;
+            this.meshCloth.Location = new System.Drawing.Point(245, 68);
+            this.meshCloth.Name = "meshCloth";
+            this.meshCloth.Size = new System.Drawing.Size(94, 17);
+            this.meshCloth.TabIndex = 28;
+            this.meshCloth.Text = "(D:OS 2) Cloth";
+            this.meshCloth.UseVisualStyleBackColor = true;
+            // 
+            // meshProxy
+            // 
+            this.meshProxy.AutoSize = true;
+            this.meshProxy.Location = new System.Drawing.Point(245, 91);
+            this.meshProxy.Name = "meshProxy";
+            this.meshProxy.Size = new System.Drawing.Size(125, 17);
+            this.meshProxy.TabIndex = 29;
+            this.meshProxy.Text = "(D:OS 2) Mesh Proxy";
+            this.meshProxy.UseVisualStyleBackColor = true;
             // 
             // GR2Pane
             // 
@@ -807,8 +816,6 @@
         internal System.Windows.Forms.CheckBox use16bitIndex;
         private System.Windows.Forms.CheckBox flipUVs;
         private System.Windows.Forms.CheckBox exportColors;
-        private System.Windows.Forms.ComboBox gr2ExtraProps;
-        private System.Windows.Forms.Label label3;
         internal System.Windows.Forms.CheckBox flipMeshes;
         internal System.Windows.Forms.CheckBox flipSkeletons;
         private System.Windows.Forms.Label label2;
@@ -818,5 +825,8 @@
         private ExportItemSelection resourceFormats;
         private System.Windows.Forms.Label label1;
         internal System.Windows.Forms.CheckBox transfomSkeletons;
+        private System.Windows.Forms.CheckBox meshProxy;
+        private System.Windows.Forms.CheckBox meshCloth;
+        private System.Windows.Forms.CheckBox meshRigid;
     }
 }

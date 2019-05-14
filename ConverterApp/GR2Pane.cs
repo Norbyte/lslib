@@ -37,8 +37,6 @@ namespace ConverterApp
             gr2BatchInputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
             gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
 
-            gr2ExtraProps.SelectedIndex = 0;
-
             if(File.Exists(inputPath.Text))
             {
                 loadInputBtn_Click(loadInputBtn, EventArgs.Empty);
@@ -186,27 +184,11 @@ namespace ConverterApp
                 buildDummySkeleton.Checked = true;
             }
 
-            var modelType = DivinityHelpers.DetermineModelType(_root);
-            switch (modelType)
-            {
-                case DivinityModelType.Undefined:
-                case DivinityModelType.Normal:
-                    gr2ExtraProps.SelectedIndex = 0;
-                    break;
-
-                case DivinityModelType.Rigid:
-                    gr2ExtraProps.SelectedIndex = 1;
-                    break;
-
-                case DivinityModelType.Cloth:
-                    gr2ExtraProps.SelectedIndex = 2;
-                    break;
-
-                case DivinityModelType.MeshProxy:
-                    gr2ExtraProps.SelectedIndex = 3;
-                    break;
-            }
-
+            var modelFlags = DivinityHelpers.DetermineModelFlags(_root);
+            meshRigid.Checked = modelFlags.IsRigid();
+            meshCloth.Checked = modelFlags.IsCloth();
+            meshProxy.Checked = modelFlags.IsMeshProxy();
+            
             UpdateExportableObjects();
             UpdateResourceFormats();
 
@@ -271,15 +253,22 @@ namespace ConverterApp
 
             settings.LoadGameSettings(game);
 
-            switch (gr2ExtraProps.SelectedIndex)
+            settings.ModelType = 0;
+            if (meshRigid.Checked)
             {
-                case 0: settings.ModelType = DivinityModelType.Normal; break;
-                case 1: settings.ModelType = DivinityModelType.Rigid; break;
-                case 2: settings.ModelType = DivinityModelType.Cloth; break;
-                case 3: settings.ModelType = DivinityModelType.MeshProxy; break;
-                default: throw new Exception("Unknown model type selected");
+                settings.ModelType |= DivinityModelFlag.Rigid;
             }
 
+            if (meshCloth.Checked)
+            {
+                settings.ModelType |= DivinityModelFlag.Cloth;
+            }
+
+            if (meshProxy.Checked)
+            {
+                settings.ModelType |= DivinityModelFlag.MeshProxy | DivinityModelFlag.HasProxyGeometry;
+            }
+            
             settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;
         }
 
@@ -336,16 +325,20 @@ namespace ConverterApp
             var exporter = new Exporter();
             UpdateExporterSettings(exporter.Options);
             lastExporterSettings = exporter.Options;
+#if !DEBUG
             try
             {
+#endif
                 exporter.Export();
 
                 MessageBox.Show("Export completed successfully.");
+#if !DEBUG
             }
             catch (Exception exc)
             {
                 GR2ConversionError(exporter.Options.InputPath, exporter.Options.OutputPath, exc);
             }
+#endif
         }
 
         private void GR2BatchInputBrowseBtn_Click(object sender, EventArgs e)

@@ -598,7 +598,7 @@ namespace LSLib.Granny.Model
         public VertexDescriptor VertexFormat;
 
         [Serialization(Kind = SerializationKind.None)]
-        public DivinityModelType ModelType = DivinityModelType.Undefined;
+        public DivinityModelFlag ModelType = 0;
 
         public void PostLoad()
         {
