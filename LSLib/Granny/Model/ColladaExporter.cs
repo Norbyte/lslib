@@ -454,11 +454,12 @@ namespace LSLib.Granny.Model
                 return;
             }
 
-            foreach (var model in root.Models)
-            {
+            foreach(var model in root.Models.Where(m => m.MeshBindings != null && m.MeshBindings.Count > 0))
+			{
                 string skelRef = null;
                 if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1 && root.Skeletons.Any(s => s.Name == model.Skeleton.Name))
                 {
+					Utils.Info($"Exporting model {model.Name} with skeleton {model.Skeleton.Name}");
                     var skeleton = ExportSkeleton(model.Skeleton, model.Name);
                     geomNodes.Add(skeleton);
                     skelRef = skeleton.id;

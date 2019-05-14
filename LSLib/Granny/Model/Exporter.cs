@@ -147,6 +147,7 @@ namespace LSLib.Granny.Model
 
         private Root LoadGR2(string inPath)
         {
+			Utils.Info($"Reading file: {inPath}");
             var root = new LSLib.Granny.Model.Root();
             FileStream fs = File.Open(inPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
             var gr2 = new LSLib.Granny.GR2.GR2Reader(fs);
@@ -304,9 +305,65 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void ConformAddRootBones(Bone bone, Skeleton skeleton, Skeleton conformToSkeleton)
+        {
+            Utils.Info($"Checking bone {bone.Name}");
+            var conformBone = conformToSkeleton.Bones.Where(cb => cb.Name == bone.Name).FirstOrDefault();
+            if (conformBone != null)
+            {
+                var parentBone = conformToSkeleton.Bones[conformBone.ParentIndex];
+                if (skeleton.Bones.Any(b => b.Name == parentBone.Name))
+                {
+                    bone.ParentIndex = skeleton.Bones.IndexOf(skeleton.Bones.Where(b => b.Name == parentBone.Name).FirstOrDefault());
+                    Utils.Info($"Set ParentIndex for {bone.Name} to [{bone.ParentIndex}].");
+                }
+                else
+                {
+                    skeleton.Bones.Add(parentBone);
+                    bone.ParentIndex = skeleton.Bones.Count - 1;
+                    Utils.Info($"Added bone '{parentBone.Name}' to bones. Set ParentIndex for {bone.Name} to [{bone.ParentIndex}].");
+
+                    if (parentBone.ParentIndex != -1)
+                    {
+                        ConformAddRootBones(parentBone, skeleton, conformToSkeleton);
+                    }
+                }
+            }
+        }
+
         private void ConformSkeleton(Skeleton skeleton, Skeleton conformToSkeleton)
         {
             skeleton.LODType = conformToSkeleton.LODType;
+
+            Utils.Info($"Skeleton bones: '{string.Join(", ", skeleton.Bones.Select((bone) => bone.Name))}");
+            Utils.Info($"Skeleton root bones: '{string.Join(", ", skeleton.Bones.Where(b => b.IsRoot).Select((bone) => bone.Name))}");
+
+            var rootBones = skeleton.Bones.Where(b => b.IsRoot);
+            //var rootConformBones = conformToSkeleton.Bones.Where(cb => rootBones.Any(b => b.Name == cb.Name));
+
+            foreach(var bone in rootBones.ToList())
+            {
+                ConformAddRootBones(bone, skeleton, conformToSkeleton);
+            }
+
+            foreach(var bone in rootBones)
+            {
+                if (conformToSkeleton.Bones.Any(cb => cb.Name == bone.Name && !cb.IsRoot))
+                {
+                    bone.ParentIndex = -1;
+                }
+            }
+
+            var root = skeleton.Bones.Where(b => b.IsRoot).FirstOrDefault();
+            if (root != null)
+            {
+                foreach (var model in Root.Models)
+                {
+                    if (model.Name == skeleton.Name) model.Name = root.Name;
+                }
+                Utils.Info($"Setting skeleton name to root bone name. '{skeleton.Name}' to '{root.Name}'");
+                skeleton.Name = root.Name;
+            }
 
             // TODO: Tolerate missing bones?
             foreach (var conformBone in conformToSkeleton.Bones)
@@ -323,22 +380,16 @@ namespace LSLib.Granny.Model
 
                 if (inputBone == null)
                 {
-                    string msg = String.Format(
-                        "No matching bone found for conforming bone '{1}' in skeleton '{0}'.",
-                        skeleton.Name, conformBone.Name
-                    );
-                    throw new ExportException(msg);
+                    continue;
+                    throw new ExportException($"No matching bone found for conforming bone '{conformBone.Name}' in skeleton '{skeleton.Name}'.");
                 }
 
                 // Bones must have the same parent. We check this in two steps:
                 // 1) Either both of them are root bones (no parent index) or none of them are.
                 if (conformBone.IsRoot != inputBone.IsRoot)
                 {
-                    string msg = String.Format(
-                        "Cannot map non-root bones to root bone '{1}' for skeleton '{0}'.",
-                        skeleton.Name, conformBone.Name
-                    );
-                    throw new ExportException(msg);
+                    continue;
+                    throw new ExportException($"Cannot map non-root bones to root bone '{conformBone.Name}' for skeleton '{skeleton.Name}'.");
                 }
 
                 // 2) The name of their parent bones is the same (index may differ!)
@@ -348,11 +399,9 @@ namespace LSLib.Granny.Model
                     var inputParent = skeleton.Bones[inputBone.ParentIndex];
                     if (conformParent.Name != inputParent.Name)
                     {
-                        string msg = String.Format(
-                            "Conforming parent ({1}) for bone '{2}' differs from input parent ({3}) for skeleton '{0}'.",
-                            skeleton.Name, conformParent.Name, conformBone.Name, inputParent.Name
-                        );
-                        throw new ExportException(msg);
+                        continue;
+                        throw new ExportException($"Conforming parent ({conformParent.Name}) for bone '{conformBone.Name}' " +
+                            $"differs from input parent ({inputParent.Name}) for bone '{inputBone.Name}' and skeleton '{skeleton.Name}'.");
                     }
                 }
 
@@ -556,7 +605,7 @@ namespace LSLib.Granny.Model
                 var skeleton = Root.Skeletons.Where(skel => skel.Name == original.Skeleton.Name).FirstOrDefault();
                 if (skeleton == null)
                 {
-                    string msg = String.Format("Model '{0}' references skeleton '{0}' that does not exist in the source file.", original.Name, original.Skeleton.Name);
+                    string msg = String.Format($"Model '{original.Name}' references skeleton '{original.Skeleton.Name}' that does not exist in the source file.");
                     throw new ExportException(msg);
                 }
 
@@ -604,6 +653,7 @@ namespace LSLib.Granny.Model
                 Model newModel = null;
                 foreach (var model2 in originalModels)
                 {
+                    Utils.Info($"Check model {model.Name} against {model2.Name}");
                     if (model.Name == model2.Name)
                     {
                         newModel = model2;
@@ -615,6 +665,7 @@ namespace LSLib.Granny.Model
                 {
                     newModel = MakeDummyModel(model);
                     Root.Models.Add(newModel);
+                    Utils.Info($"Adding model {newModel.Name} to list.");
                 }
             }
 
@@ -634,7 +685,19 @@ namespace LSLib.Granny.Model
                     throw new ExportException("Source file contains no skeletons.");
                 }
 
-                ConformSkeletons(conformRoot.Skeletons);
+                Root.Skeletons = conformRoot.Skeletons;
+                if (Root.Models != null)
+                {
+                    foreach (var model in Root.Models)
+                    {
+                        model.Skeleton = Root.Skeletons.First();
+                    }
+                }
+                else
+                {
+                    Root.Models = conformRoot.Models;
+                }
+                //ConformSkeletons(conformRoot.Skeletons);
             }
 
             if (Options.ConformModels && conformRoot.Models != null)
@@ -690,8 +753,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-
-            if (Options.ApplyBasisTransforms && Root.Skeletons.Count > 0)
+            if (Options.ApplyBasisTransforms && Root.Skeletons != null && Root.Skeletons.Count > 0)
             {
                 Root.ConvertToYUp(Options.TransformSkeletons);
             }
