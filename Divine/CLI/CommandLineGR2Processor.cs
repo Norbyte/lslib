@@ -66,16 +66,20 @@ namespace Divine.CLI
                 exporter.Options.InputPath = file;
             }
 
+#if !DEBUG
             try
             {
+#endif
                 exporter.Export();
 
                 CommandLineLogger.LogInfo("Export completed successfully.");
-            }
+#if !DEBUG
+        }
             catch (Exception e)
             {
                 CommandLineLogger.LogFatal($"Export failed: {e.Message + Environment.NewLine + e.StackTrace}", 2);
             }
+#endif
         }
 
         private static void BatchConvertResources(string sourcePath, string inputFormat)
