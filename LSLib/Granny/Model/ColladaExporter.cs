@@ -454,7 +454,7 @@ namespace LSLib.Granny.Model
                 return;
             }
 
-            foreach(var model in root.Models.Where(m => m.MeshBindings != null && m.MeshBindings.Count > 0))
+            foreach(var model in root.Models)
 			{
                 string skelRef = null;
                 if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1 && root.Skeletons.Any(s => s.Name == model.Skeleton.Name))
