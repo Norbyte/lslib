@@ -282,15 +282,21 @@ namespace LSLib.Granny.Model
                 {
                     var track = trackGroup.TransformTracks[i];
                     var bone = skeleton.GetBoneByName(track.Name);
+                    if(bone == null)
+                    {
+                        //Dummy_Foot -> Dummy_Foot_01
+                        bone = skeleton.GetBoneByName(track.Name + "_01");
+                    }
+
                     if (bone == null)
                     {
                         throw new ExportException($"Animation track references bone '{track.Name}' that cannot be found in the skeleton '{skeleton.Name}'.");
                     }
 
-                    var conformingBone = conformToSkeleton.GetBoneByName(track.Name);
+                    var conformingBone = conformToSkeleton.GetBoneByName(bone.Name);
                     if (conformingBone == null)
                     {
-                        throw new ExportException($"Animation track references bone '{track.Name}' that cannot be found in the conforming skeleton '{conformToSkeleton.Name}'.");
+                        throw new ExportException($"Animation track references bone '{bone.Name}' that cannot be found in the conforming skeleton '{conformToSkeleton.Name}'.");
                     }
 
                     var keyframes = track.ToKeyframes();
@@ -367,7 +373,8 @@ namespace LSLib.Granny.Model
                 foreach (var track in trackGroup.TransformTracks)
                 {
                     var bone = skeleton.GetBoneByName(track.Name);
-                    //if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
+                    //Dummy_Foot -> Dummy_Foot_01
+                    if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
                     if (bone == null)
                     {
                         throw new ExportException($"Animation track references bone '{track.Name}' that cannot be found in the skeleton '{skeleton.Name}'.");
