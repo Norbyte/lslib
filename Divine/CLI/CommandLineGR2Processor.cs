@@ -44,10 +44,19 @@ namespace Divine.CLI
                 ApplyBasisTransforms = GR2Options["apply-basis-transforms"],
                 UseObsoleteVersionTag = GR2Options["force-legacy-version"],
                 ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
-                FlipSkeleton = GR2Options["x-flip-skeletons"],
+				FlipSkeleton = GR2Options["x-flip-skeletons"],
                 FlipMesh = GR2Options["x-flip-meshes"],
                 TransformSkeletons = GR2Options["y-up-skeletons"]
             };
+
+			if (exporterOptions.ConformGR2Path != null)
+			{
+				if(GR2Options["conform_copy"])
+				{
+					exporterOptions.ConformSkeletons = false;
+					exporterOptions.ConformSkeletonsCopy = true;
+				}
+			}
 
             exporterOptions.LoadGameSettings(CommandLineActions.Game);
 
