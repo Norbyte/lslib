@@ -102,6 +102,7 @@ namespace LSLib.Granny.Model
         public bool FlipSkeleton = false;
         // Apply Y-up transforms on skeletons?
         public bool TransformSkeletons = true;
+        public bool IgnoreUVNaN = false;
 
         public List<string> DisabledAnimations = new List<string>();
         public List<string> DisabledModels = new List<string>();

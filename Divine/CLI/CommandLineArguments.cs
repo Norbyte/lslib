@@ -111,7 +111,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
             Description = "Set extra options for GR2/DAE conversion",
             AllowMultiple = true,
-            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform;conform_copy",
+            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;ignore-uv-nan;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform;conform-copy",
             ValueOptional = false,
             Optional = true
         )]
@@ -353,6 +353,7 @@ namespace Divine.CLI
                 { "recalculate-tangents", false },
                 { "recalculate-iwt", false },
                 { "flip-uvs", true },
+                { "ignore-uv-nan", true },
                 { "y-up-skeletons", true },
                 { "force-legacy-version", false },
                 { "compact-tris", true },
@@ -361,7 +362,7 @@ namespace Divine.CLI
                 { "x-flip-skeletons", false },
                 { "x-flip-meshes", false },
                 { "conform", false },
-                { "conform_copy", false }
+                { "conform-copy", false }
             };
 
             if (options == null)

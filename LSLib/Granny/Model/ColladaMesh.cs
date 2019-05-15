@@ -124,7 +124,7 @@ namespace LSLib.Granny.Model
 
                 float r = 1.0F / (s1 * t2 - s2 * t1);
 
-                if (Single.IsNaN(r) || Single.IsInfinity(r))
+                if ((Single.IsNaN(r) || Single.IsInfinity(r)) && !Options.IgnoreUVNaN)
                 {
                     throw new Exception($"NaN tangent - possible UV coordinate reuse? UV1{w1.ToString()} UV2{w2.ToString()} UV3{w3.ToString()}");
                 }
