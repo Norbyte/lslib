@@ -105,6 +105,12 @@ namespace LSLib.Granny.Model
         }
     }
 
+    class RootBoneInfo
+    {
+        public node Bone;
+        public List<node> Parents;
+    };
+
     public class ColladaImporter
     {
         [Serialization(Kind = SerializationKind.None)]
@@ -224,25 +230,26 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private void FindRootBones(node parent, node node, List<node> rootBones)
+        private void FindRootBones(List<node> parents, node node, List<RootBoneInfo> rootBones)
         {
             if (node.type == NodeType.JOINT)
             {
-                if (parent != null)
+                rootBones.Add(new RootBoneInfo
                 {
-                    Utils.Warn(String.Format("Joint {0} is not a top level node; parent transformations will be ignored!", node.name != null ? node.name : "(UNNAMED)"));
-                }
-
-                rootBones.Add(node);
+                    Bone = node,
+                    Parents = parents.Select(a => a).ToList()
+                });
             }
             else if (node.type == NodeType.NODE)
             {
                 if (node.node1 != null)
                 {
+                    parents.Add(node);
                     foreach (var child in node.node1)
                     {
-                        FindRootBones(node, child, rootBones);
+                        FindRootBones(parents, child, rootBones);
                     }
+                    parents.RemoveAt(parents.Count - 1);
                 }
             }
         }
@@ -680,7 +687,7 @@ namespace LSLib.Granny.Model
             var collGeometries = new List<geometry>();
             var collSkins = new List<skin>();
             var collAnimations = new List<animation>();
-            var rootBones = new List<node>();
+            var rootBones = new List<RootBoneInfo>();
 
             // Import skinning controllers after skeleton and geometry loading has finished, as
             // we reference both of them during skin import
@@ -716,7 +723,7 @@ namespace LSLib.Granny.Model
                             {
                                 foreach (var node in scene.node)
                                 {
-                                    FindRootBones(null, node, rootBones);
+                                    FindRootBones(new List<node>(), node, rootBones);
                                 }
                             }
                         }
@@ -756,7 +763,9 @@ namespace LSLib.Granny.Model
 
             foreach (var bone in rootBones)
             {
-                var skeleton = Skeleton.FromCollada(bone);
+                var skeleton = Skeleton.FromCollada(bone.Bone);
+                var rootTransform = NodeHelpers.GetTransformHierarchy(bone.Parents);
+                skeleton.TransformRoots(rootTransform.Inverted());
                 root.Skeletons.Add(skeleton);
             }
 

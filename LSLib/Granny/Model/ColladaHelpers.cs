@@ -5,6 +5,87 @@ using System.Collections.Generic;
 
 namespace LSLib.Granny.Model
 {
+    static class NodeHelpers
+    {
+        public static Matrix4 GetTransformHierarchy(IEnumerable<node> nodes)
+        {
+            var accum = Matrix4.Identity;
+            foreach (var node in nodes)
+            {
+                accum = node.GetLocalTransform() * accum;
+            }
+
+            return accum;
+        }
+
+        public static Matrix4 ToMatrix4(this matrix m)
+        {
+            var v = m.Values;
+            return new Matrix4(
+                (float)v[0], (float)v[1], (float)v[2], (float)v[3],
+                (float)v[4], (float)v[5], (float)v[6], (float)v[7],
+                (float)v[8], (float)v[9], (float)v[10], (float)v[11],
+                (float)v[12], (float)v[13], (float)v[14], (float)v[15]
+            );
+        }
+
+        public static Matrix4 ToMatrix4(this rotate r)
+        {
+            var axis = new Vector3((float)r.Values[0], (float)r.Values[1], (float)r.Values[2]);
+            var rot = Quaternion.FromAxisAngle(axis, (float)r.Values[3]);
+            return Matrix4.CreateFromQuaternion(rot);
+        }
+
+        public static Matrix4 TranslationToMatrix4(this TargetableFloat3 t)
+        {
+            Matrix4 trans;
+            Matrix4.CreateTranslation((float)t.Values[0], (float)t.Values[1], (float)t.Values[2], out trans);
+            return trans;
+        }
+
+        public static Matrix4 ScaleToMatrix4(this TargetableFloat3 t)
+        {
+            Matrix4 scale;
+            Matrix4.CreateScale((float)t.Values[0], (float)t.Values[1], (float)t.Values[2], out scale);
+            return scale;
+        }
+
+        public static Matrix4 GetLocalTransform(this node n)
+        {
+            var accum = Matrix4.Identity;
+
+            if (n.ItemsElementName != null)
+            {
+                for (var i = 0; i < n.ItemsElementName.Length; i++)
+                {
+                    var name = n.ItemsElementName[i];
+                    switch (name)
+                    {
+                        case ItemsChoiceType2.matrix:
+                            accum = (n.Items[i] as matrix).ToMatrix4() * Matrix4.Identity;
+                            break;
+
+                        case ItemsChoiceType2.translate:
+                            accum = (n.Items[i] as TargetableFloat3).TranslationToMatrix4() * Matrix4.Identity;
+                            break;
+
+                        case ItemsChoiceType2.rotate:
+                            accum = (n.Items[i] as rotate).ToMatrix4() * Matrix4.Identity;
+                            break;
+
+                        case ItemsChoiceType2.scale:
+                            accum = (n.Items[i] as TargetableFloat3).ScaleToMatrix4() * Matrix4.Identity;
+                            break;
+
+                        default:
+                            throw new Exception("Unsupported Collada NODE transform: " + name);
+                    }
+                }
+            }
+
+            return accum;
+        }
+    }
 
     class ColladaHelpers
     {
