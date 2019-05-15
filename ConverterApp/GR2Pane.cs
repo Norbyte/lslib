@@ -181,6 +181,7 @@ namespace ConverterApp
             {
                 conformToOriginal.Enabled = false;
                 conformToOriginal.Checked = false;
+                conformCopySkeletons.Enabled = false;
                 buildDummySkeleton.Enabled = true;
                 buildDummySkeleton.Checked = true;
             }
@@ -302,6 +303,7 @@ namespace ConverterApp
             }
 
             settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;
+            settings.ConformSkeletonsCopy = conformCopySkeletons.Checked;
         }
 
         private void inputFileBrowseBtn_Click(object sender, EventArgs e)
@@ -334,6 +336,7 @@ namespace ConverterApp
         {
             conformantGR2Path.Enabled = conformToOriginal.Checked;
             conformantGR2BrowseBtn.Enabled = conformToOriginal.Checked;
+            conformCopySkeletons.Enabled = conformToOriginal.Checked;
         }
 
         private void outputFileBrowserBtn_Click(object sender, EventArgs e)
