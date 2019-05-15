@@ -360,7 +360,8 @@ namespace Divine.CLI
                 { "apply-basis-transforms", true },
                 { "x-flip-skeletons", false },
                 { "x-flip-meshes", false },
-                { "conform", false }
+                { "conform", false },
+                { "conform_copy", false }
             };
 
             if (options == null)
