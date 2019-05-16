@@ -185,10 +185,30 @@ namespace ConverterApp
                 buildDummySkeleton.Checked = true;
             }
 
-            var modelFlags = DivinityHelpers.DetermineModelFlags(_root);
-            meshRigid.Checked = modelFlags.IsRigid();
-            meshCloth.Checked = modelFlags.IsCloth();
-            meshProxy.Checked = modelFlags.IsMeshProxy();
+            bool hasUndeterminedModelTypes = false;
+            DivinityModelFlag accumulatedModelFlags = 0;
+            if (_root.Meshes != null)
+            {
+                foreach (var mesh in _root.Meshes)
+                {
+                    if (!mesh.HasDefiniteModelType)
+                    {
+                        hasUndeterminedModelTypes = true;
+                    }
+
+                    accumulatedModelFlags |= mesh.ModelType;
+                }
+            }
+
+            // If the type of all models are known, either via LSMv1 ExtendedData
+            // or via Collada <extra> properties, there is nothing to override.
+            meshRigid.Enabled = hasUndeterminedModelTypes;
+            meshCloth.Enabled = hasUndeterminedModelTypes;
+            meshProxy.Enabled = hasUndeterminedModelTypes;
+
+            meshRigid.Checked = accumulatedModelFlags.IsRigid();
+            meshCloth.Checked = accumulatedModelFlags.IsCloth();
+            meshProxy.Checked = accumulatedModelFlags.IsMeshProxy();
             
             UpdateExportableObjects();
             UpdateResourceFormats();

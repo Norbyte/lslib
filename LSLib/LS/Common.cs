@@ -5,8 +5,8 @@ namespace LSLib.LS
     public static class Common
     {
         public const int MajorVersion = 1;
-        public const int MinorVersion = 12;
-        public const int PatchVersion = 4;
+        public const int MinorVersion = 13;
+        public const int PatchVersion = 0;
 
         /// <summary>
         /// Returns the version number of the LSLib library

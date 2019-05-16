@@ -273,24 +273,27 @@ namespace LSLib.Granny.Model
             return flags;
         }
         
-        public static DivinityModelFlag DetermineModelFlags(Mesh mesh)
+        public static DivinityModelFlag DetermineModelFlags(Mesh mesh, out bool hasDefiniteModelType)
         {
             DivinityModelFlag flags = 0;
 
-            if (mesh.ModelType != 0)
+            if (mesh.HasDefiniteModelType)
             {
                 flags = mesh.ModelType;
+                hasDefiniteModelType = true;
             }
             else if (mesh.ExtendedData != null
                 && mesh.ExtendedData.LSMVersion >= 1
                 && mesh.ExtendedData.UserMeshProperties != null)
             {
                 flags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
+                hasDefiniteModelType = true;
             }
             else if (mesh.ExtendedData != null
                 && mesh.ExtendedData.UserDefinedProperties != null)
             {
                 flags = UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
+                hasDefiniteModelType = true;
             }
             else
             {
@@ -304,34 +307,22 @@ namespace LSLib.Granny.Model
                 {
                     flags |= DivinityModelFlag.Rigid;
                 }
-            }
-            
-            return flags;
-        }
 
-        public static DivinityModelFlag DetermineModelFlags(Root root)
-        {
-            DivinityModelFlag flags = 0;
-
-            if (root.Meshes != null)
-            {
-                foreach (var mesh in root.Meshes)
-                {
-                    flags |= DetermineModelFlags(mesh);
-                }
+                hasDefiniteModelType = false;
             }
 
             return flags;
         }
 
         public static DivinityMeshExtendedData MakeMeshExtendedData(Mesh mesh, DivinityModelInfoFormat format,
-            DivinityModelFlag modelFlags)
+            DivinityModelFlag modelFlagOverrides)
         {
             var extendedData = DivinityMeshExtendedData.Make();
-            
-            if (modelFlags == 0)
+            DivinityModelFlag modelFlags = modelFlagOverrides;
+
+            if (mesh.HasDefiniteModelType)
             {
-                modelFlags = DetermineModelFlags(mesh);
+                modelFlags = mesh.ModelType;
             }
 
             if (mesh.VertexFormat.HasBoneWeights)

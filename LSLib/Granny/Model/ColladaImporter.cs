@@ -184,6 +184,37 @@ namespace LSLib.Granny.Model
             return exporterInfo;
         }
 
+        private DivinityModelFlag DetermineSkeletonModelFlagsFromModels(Root root, Skeleton skeleton, DivinityModelFlag modelFlagOverrides)
+        {
+            DivinityModelFlag accumulatedFlags = 0;
+            if (root.Meshes != null)
+            {
+                foreach (var model in root.Models)
+                {
+                    if (model.Skeleton == skeleton)
+                    {
+                        if (model.MeshBindings != null)
+                        {
+                            foreach (var meshBinding in model.MeshBindings)
+                            {
+                                var mesh = meshBinding.Mesh;
+                                if (mesh.HasDefiniteModelType)
+                                {
+                                    accumulatedFlags |= mesh.ModelType;
+                                }
+                                else
+                                {
+                                    accumulatedFlags |= modelFlagOverrides;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return accumulatedFlags;
+        }
+
         private void UpdateUserDefinedProperties(Root root)
         {
             if (Options.ModelInfoFormat == DivinityModelInfoFormat.None)
@@ -191,20 +222,19 @@ namespace LSLib.Granny.Model
                 return;
             }
 
-            var modelFlags = Options.ModelType;
-            if (modelFlags == 0)
-            {
-                modelFlags = DivinityHelpers.DetermineModelFlags(root);
-            }
-
-            var userDefinedProperties = "";
+            var modelFlagOverrides = Options.ModelType;
 
             if (root.Meshes != null)
             {
-                userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(modelFlags);
-
                 foreach (var mesh in root.Meshes)
                 {
+                    DivinityModelFlag modelFlags = modelFlagOverrides;
+                    if (mesh.HasDefiniteModelType)
+                    {
+                        modelFlags = mesh.ModelType;
+                    }
+
+                    var userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(modelFlags);
                     mesh.ExtendedData = DivinityHelpers.MakeMeshExtendedData(mesh, Options.ModelInfoFormat, Options.ModelType);
                 }
             }
@@ -215,15 +245,18 @@ namespace LSLib.Granny.Model
                 {
                     if (skeleton.Bones != null)
                     {
+                        var accumulatedFlags = DetermineSkeletonModelFlagsFromModels(root, skeleton, modelFlagOverrides);
+
                         foreach (var bone in skeleton.Bones)
                         {
                             if (bone.ExtendedData == null)
                             {
                                 bone.ExtendedData = new DivinityBoneExtendedData();
                             }
-                            
+
+                            var userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(accumulatedFlags);
                             bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
-                            bone.ExtendedData.IsRigid = (modelFlags.IsRigid()) ? 1 : 0;
+                            bone.ExtendedData.IsRigid = (accumulatedFlags.IsRigid()) ? 1 : 0;
                         }
                     }
                 }
@@ -279,6 +312,7 @@ namespace LSLib.Granny.Model
         private DivinityModelFlag FindDivModelType(mesh mesh)
         {
             DivinityModelFlag flags = 0;
+
             var technique = FindExporterExtraData(mesh.extra);
             if (technique != null)
             {
@@ -350,6 +384,7 @@ namespace LSLib.Granny.Model
             if (divModelType != 0)
             {
                 m.ModelType = divModelType;
+                m.HasDefiniteModelType = true;
             }
 
             Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 

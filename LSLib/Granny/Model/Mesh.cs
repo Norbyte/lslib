@@ -600,11 +600,21 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public DivinityModelFlag ModelType = 0;
 
+        // Is the model type inferred, or was the exact model type flag imported from the resource file?
+        // (Determines how the exporter reacts to model type override flags)
+        [Serialization(Kind = SerializationKind.None)]
+        public bool HasDefiniteModelType = false;
+
         public void PostLoad()
         {
             if (PrimaryVertexData.Vertices.Count > 0)
             {
                 VertexFormat = PrimaryVertexData.Vertices[0].Format;
+            }
+
+            if (HasDefiniteModelType == false)
+            {
+                ModelType = DivinityHelpers.DetermineModelFlags(this, out HasDefiniteModelType);
             }
         }
 
