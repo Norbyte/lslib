@@ -117,7 +117,6 @@ namespace ConverterApp
             Game game = GetGame();
             if (gr2Tab.Controls[0] is GR2Pane pane)
             {
-                pane.use16bitIndex.Checked = game == Game.DivinityOriginalSinEE || game.IsDOS2();
                 pane.flipMeshes.Checked = game.IsDOS2();
             }
 

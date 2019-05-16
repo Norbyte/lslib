@@ -77,7 +77,7 @@ namespace LSLib.Granny.Model
         // Some games will crash if they encounter a mesh without a skeleton
         public bool BuildDummySkeleton = false;
         // Save 16-bit vertex indices, if possible
-        public bool CompactIndices = false;
+        public bool CompactIndices = true;
         public bool DeduplicateVertices = true; // TODO: Add Collada conforming vert. handling as well
         public bool DeduplicateUVs = true; // TODO: UNHANDLED
         public bool ApplyBasisTransforms = true;

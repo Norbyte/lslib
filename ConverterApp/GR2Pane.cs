@@ -255,24 +255,13 @@ namespace ConverterApp
         private void UpdateCommonExporterSettings(ExporterOptions settings)
         {
             Game game = _form.GetGame();
-
-            settings.ExportNormals = exportNormals.Checked;
-            settings.ExportTangents = exportTangents.Checked;
-            settings.ExportUVs = exportUVs.Checked;
-            settings.ExportColors = exportColors.Checked;
+            
             settings.FlipUVs = flipUVs.Checked;
-            settings.RecalculateNormals = recalculateNormals.Checked;
-            settings.RecalculateTangents = recalculateTangents.Checked;
-            settings.RecalculateIWT = recalculateJointIWT.Checked;
             settings.BuildDummySkeleton = buildDummySkeleton.Checked;
-            settings.CompactIndices = use16bitIndex.Checked;
-            settings.DeduplicateVertices = deduplicateVertices.Checked;
             settings.DeduplicateUVs = filterUVs.Checked;
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
-            settings.UseObsoleteVersionTag = forceLegacyVersion.Checked;
             settings.FlipMesh = flipMeshes.Checked;
             settings.FlipSkeleton = flipSkeletons.Checked;
-            settings.TransformSkeletons = transfomSkeletons.Checked;
 
             settings.LoadGameSettings(game);
 
