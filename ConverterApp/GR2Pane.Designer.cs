@@ -86,6 +86,7 @@
             this.conformSkeletonFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.outputFileDlg = new System.Windows.Forms.SaveFileDialog();
             this.inputFileDlg = new System.Windows.Forms.OpenFileDialog();
+            this.conformCopySkeletons = new System.Windows.Forms.CheckBox();
             this.meshRigid = new System.Windows.Forms.CheckBox();
             this.meshCloth = new System.Windows.Forms.CheckBox();
             this.meshProxy = new System.Windows.Forms.CheckBox();
@@ -582,6 +583,7 @@
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.conformCopySkeletons);
             this.groupBox1.Controls.Add(this.meshProxy);
             this.groupBox1.Controls.Add(this.meshCloth);
             this.groupBox1.Controls.Add(this.meshRigid);
@@ -713,6 +715,17 @@
             this.inputFileDlg.Filter = "COLLADA/GR2 files|*.dae;*.gr2;*.lsm";
             this.inputFileDlg.Title = "Select Input File";
             // 
+            // conformCopySkeletons
+            // 
+            this.conformCopySkeletons.AutoSize = true;
+            this.conformCopySkeletons.Enabled = false;
+            this.conformCopySkeletons.Location = new System.Drawing.Point(162, 91);
+            this.conformCopySkeletons.Name = "conformCopySkeletons";
+            this.conformCopySkeletons.Size = new System.Drawing.Size(95, 17);
+            this.conformCopySkeletons.TabIndex = 29;
+            this.conformCopySkeletons.Text = "Copy Skeleton";
+            this.conformCopySkeletons.UseVisualStyleBackColor = true;
+            // 
             // meshRigid
             // 
             this.meshRigid.AutoSize = true;
@@ -762,7 +775,6 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
-
         }
 
         #endregion
@@ -825,6 +837,7 @@
         private ExportItemSelection resourceFormats;
         private System.Windows.Forms.Label label1;
         internal System.Windows.Forms.CheckBox transfomSkeletons;
+        private System.Windows.Forms.CheckBox conformCopySkeletons;
         private System.Windows.Forms.CheckBox meshProxy;
         private System.Windows.Forms.CheckBox meshCloth;
         private System.Windows.Forms.CheckBox meshRigid;

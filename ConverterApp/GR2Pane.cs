@@ -34,10 +34,10 @@ namespace ConverterApp
             gr2BatchInputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchInputPath");
             gr2BatchOutputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchOutputPath");
 
-            gr2BatchInputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
-            gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchInputFormat.DataBindings.Add("SelectedIndex", _form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", _form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
 
-            if(File.Exists(inputPath.Text))
+            if (File.Exists(inputPath.Text))
             {
                 loadInputBtn_Click(loadInputBtn, EventArgs.Empty);
             }
@@ -180,6 +180,7 @@ namespace ConverterApp
             {
                 conformToOriginal.Enabled = false;
                 conformToOriginal.Checked = false;
+                conformCopySkeletons.Enabled = false;
                 buildDummySkeleton.Enabled = true;
                 buildDummySkeleton.Checked = true;
             }
@@ -214,6 +215,28 @@ namespace ConverterApp
             var outputExtension = Path.GetExtension(settings.OutputPath)?.ToLower();
             bool outputIsGr2 = outputExtension == ".gr2" || outputExtension == ".lsm";
             settings.OutputFormat = outputIsGr2 ? ExportFormat.GR2 : ExportFormat.DAE;
+
+            foreach (ListViewItem item in exportableObjects.Items)
+            {
+                if(!item.Checked)
+                {
+                    var name = item.SubItems[0].Text;
+                    var itemType = item.SubItems[1].Text;
+
+                    if (itemType == "Model")
+                    {
+                        settings.DisabledModels.Add(name);
+                    }
+                    else if (itemType == "Skeleton")
+                    {
+                        settings.DisabledSkeletons.Add(name);
+                    }
+                    else if (itemType == "Animation")
+                    {
+                        settings.DisabledAnimations.Add(name);
+                    }
+                }
+            }
 
             foreach (ListViewItem setting in from object item in resourceFormats.Items select item as ListViewItem)
             {
@@ -270,6 +293,7 @@ namespace ConverterApp
             }
             
             settings.ConformGR2Path = conformToOriginal.Checked && conformantGR2Path.Text.Length > 0 ? conformantGR2Path.Text : null;
+            settings.ConformSkeletonsCopy = conformCopySkeletons.Checked;
         }
 
         private void inputFileBrowseBtn_Click(object sender, EventArgs e)
@@ -302,6 +326,7 @@ namespace ConverterApp
         {
             conformantGR2Path.Enabled = conformToOriginal.Checked;
             conformantGR2BrowseBtn.Enabled = conformToOriginal.Checked;
+            conformCopySkeletons.Enabled = conformToOriginal.Checked;
         }
 
         private void outputFileBrowserBtn_Click(object sender, EventArgs e)

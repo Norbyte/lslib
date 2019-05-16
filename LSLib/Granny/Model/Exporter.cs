@@ -85,6 +85,7 @@ namespace LSLib.Granny.Model
         public bool UseObsoleteVersionTag = false;
         public string ConformGR2Path;
         public bool ConformSkeletons = true;
+        public bool ConformSkeletonsCopy = false;
         public bool ConformAnimations = true;
         public bool ConformMeshBoneBindings = true;
         public bool ConformModels = true;
@@ -101,6 +102,11 @@ namespace LSLib.Granny.Model
         public bool FlipSkeleton = false;
         // Apply Y-up transforms on skeletons?
         public bool TransformSkeletons = true;
+        public bool IgnoreUVNaN = false;
+
+        public List<string> DisabledAnimations = new List<string>();
+        public List<string> DisabledModels = new List<string>();
+        public List<string> DisabledSkeletons = new List<string>();
 
         public void LoadGameSettings(LSLib.LS.Enums.Game game)
         {
@@ -231,7 +237,7 @@ namespace LSLib.Granny.Model
             {
                 if (model.Skeleton == null)
                 {
-                    Utils.Info(String.Format("Generating dummy skeleton for model '{0}'", model.Name));
+                    Utils.Info($"Generating dummy skeleton for model '{model.Name}'");
                     var skeleton = new Skeleton();
                     skeleton.Name = model.Name;
                     skeleton.LODType = 0;
@@ -276,19 +282,23 @@ namespace LSLib.Granny.Model
                 {
                     var track = trackGroup.TransformTracks[i];
                     var bone = skeleton.GetBoneByName(track.Name);
-                    if (bone == null)
+                    if(bone == null)
                     {
-                        string msg = String.Format("Animation track references bone '{0}' that cannot be found in the skeleton.", track.Name);
-                        throw new ExportException(msg);
+                        //Dummy_Foot -> Dummy_Foot_01
+                        bone = skeleton.GetBoneByName(track.Name + "_01");
                     }
 
-                    var conformingBone = conformToSkeleton.GetBoneByName(track.Name);
+                    if (bone == null)
+                    {
+                        throw new ExportException($"Animation track references bone '{track.Name}' that cannot be found in the skeleton '{skeleton.Name}'.");
+                    }
+
+                    var conformingBone = conformToSkeleton.GetBoneByName(bone.Name);
                     if (conformingBone == null)
                     {
-                        string msg = String.Format("Animation track references bone '{0}' that cannot be found in the conforming skeleton.", track.Name);
-                        throw new ExportException(msg);
+                        throw new ExportException($"Animation track references bone '{bone.Name}' that cannot be found in the conforming skeleton '{conformToSkeleton.Name}'.");
                     }
-                    
+
                     var keyframes = track.ToKeyframes();
                     keyframes.SwapBindPose(bone.OriginalTransform, conformingBone.Transform.ToMatrix4());
                     var newTrack = TransformTrack.FromKeyframes(keyframes);
@@ -319,22 +329,14 @@ namespace LSLib.Granny.Model
 
                 if (inputBone == null)
                 {
-                    string msg = String.Format(
-                        "No matching bone found for conforming bone '{1}' in skeleton '{0}'.",
-                        skeleton.Name, conformBone.Name
-                    );
-                    throw new ExportException(msg);
+                    throw new ExportException($"No matching bone found for conforming bone '{conformBone.Name}' in skeleton '{skeleton.Name}'.");
                 }
 
                 // Bones must have the same parent. We check this in two steps:
                 // 1) Either both of them are root bones (no parent index) or none of them are.
                 if (conformBone.IsRoot != inputBone.IsRoot)
                 {
-                    string msg = String.Format(
-                        "Cannot map non-root bones to root bone '{1}' for skeleton '{0}'.",
-                        skeleton.Name, conformBone.Name
-                    );
-                    throw new ExportException(msg);
+                    throw new ExportException($"Cannot map non-root bones to root bone '{conformBone.Name}' for skeleton '{skeleton.Name}'.");
                 }
 
                 // 2) The name of their parent bones is the same (index may differ!)
@@ -344,11 +346,8 @@ namespace LSLib.Granny.Model
                     var inputParent = skeleton.Bones[inputBone.ParentIndex];
                     if (conformParent.Name != inputParent.Name)
                     {
-                        string msg = String.Format(
-                            "Conforming parent ({1}) for bone '{2}' differs from input parent ({3}) for skeleton '{0}'.",
-                            skeleton.Name, conformParent.Name, conformBone.Name, inputParent.Name
-                        );
-                        throw new ExportException(msg);
+                        throw new ExportException($"Conforming parent ({conformParent.Name}) for bone '{conformBone.Name}' " +
+                            $"differs from input parent ({inputParent.Name}) for skeleton '{skeleton.Name}'.");
                     }
                 }
 
@@ -374,11 +373,11 @@ namespace LSLib.Granny.Model
                 foreach (var track in trackGroup.TransformTracks)
                 {
                     var bone = skeleton.GetBoneByName(track.Name);
-                    //if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
+                    //Dummy_Foot -> Dummy_Foot_01
+                    if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
                     if (bone == null)
                     {
-                        string msg = String.Format("Animation track references bone '{0}' that cannot be found in the skeleton.", track.Name);
-                        throw new ExportException(msg);
+                        throw new ExportException($"Animation track references bone '{track.Name}' that cannot be found in the skeleton '{skeleton.Name}'.");
                     }
                 }
             }
@@ -396,8 +395,7 @@ namespace LSLib.Granny.Model
                     Root.Skeletons = skeletons.ToList();
                     if (Root.Skeletons.Count != 1)
                     {
-                        string msg = String.Format("Skeleton source file should contain exactly one skeleton.");
-                        throw new ExportException(msg);
+                        throw new ExportException($"Skeleton source file should contain exactly one skeleton. Skeleton Count: '{Root.Skeletons.Count}'.");
                     }
 
                     var skeleton = Root.Skeletons.First();
@@ -441,8 +439,7 @@ namespace LSLib.Granny.Model
 
                 if (conformingSkel == null)
                 {
-                    string msg = String.Format("No matching skeleton found in source file for skeleton '{0}'.", skeleton.Name);
-                    throw new ExportException(msg);
+                    throw new ExportException($"No matching skeleton found in source file for skeleton '{skeleton.Name}'.");
                 }
 
                 ConformSkeleton(skeleton, conformingSkel);
@@ -498,8 +495,7 @@ namespace LSLib.Granny.Model
 
                 if (conformingMesh == null)
                 {
-                    string msg = String.Format("No matching mesh found in source file for mesh '{0}'.", mesh.Name);
-                    throw new ExportException(msg);
+                    throw new ExportException($"No matching mesh found in source file for mesh '{mesh.Name}'.");
                 }
 
                 ConformMeshBoneBindings(mesh, conformingMesh);
@@ -552,8 +548,7 @@ namespace LSLib.Granny.Model
                 var skeleton = Root.Skeletons.Where(skel => skel.Name == original.Skeleton.Name).FirstOrDefault();
                 if (skeleton == null)
                 {
-                    string msg = String.Format("Model '{0}' references skeleton '{0}' that does not exist in the source file.", original.Name, original.Skeleton.Name);
-                    throw new ExportException(msg);
+                    throw new ExportException($"Model '{original.Name}' references skeleton '{original.Skeleton.Name}' that does not exist in the source file.");
                 }
 
                 newModel.Skeleton = skeleton;
@@ -623,7 +618,22 @@ namespace LSLib.Granny.Model
         {
             var conformRoot = LoadGR2(inPath);
 
-            if (Options.ConformSkeletons)
+            if (Options.ConformSkeletonsCopy)
+            {
+                Root.Skeletons = conformRoot.Skeletons;
+                if (Root.Models != null)
+                {
+                    foreach (var model in Root.Models)
+                    {
+                        model.Skeleton = Root.Skeletons.First();
+                    }
+                }
+                else
+                {
+                    Root.Models = conformRoot.Models;
+                }
+            }
+            else if (Options.ConformSkeletons)
             {
                 if (conformRoot.Skeletons == null || conformRoot.Skeletons.Count == 0)
                 {
@@ -659,7 +669,22 @@ namespace LSLib.Granny.Model
 
                 Root = Options.Input;
             }
-            
+
+            if (Options.DisabledAnimations.Count > 0)
+            {
+                Root.Animations = Root.Animations.Where(a => !Options.DisabledAnimations.Contains(a.Name)).ToList();
+            }
+
+            if (Options.DisabledModels.Count > 0)
+            {
+                Root.Models = Root.Models.Where(a => !Options.DisabledModels.Contains(a.Name)).ToList();
+            }
+
+            if (Options.DisabledSkeletons.Count > 0)
+            {
+                Root.Skeletons = Root.Skeletons.Where(a => !Options.DisabledSkeletons.Contains(a.Name)).ToList();
+            }
+
             if (Options.DeduplicateVertices)
             {
                 if (Root.VertexDatas != null)
@@ -703,7 +728,7 @@ namespace LSLib.Granny.Model
                 GenerateDummySkeleton(Root);
             }
 
-            if (Options.OutputFormat == ExportFormat.GR2 && 
+            if (Options.OutputFormat == ExportFormat.GR2 &&
                 (Options.FlipMesh || Options.FlipSkeleton))
             {
                 Root.Flip(Options.FlipMesh, Options.FlipSkeleton);

@@ -46,8 +46,18 @@ namespace Divine.CLI
                 ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
                 FlipSkeleton = GR2Options["x-flip-skeletons"],
                 FlipMesh = GR2Options["x-flip-meshes"],
-                TransformSkeletons = GR2Options["y-up-skeletons"]
+                TransformSkeletons = GR2Options["y-up-skeletons"],
+                IgnoreUVNaN = GR2Options["ignore-uv-nan"]
             };
+
+            if (exporterOptions.ConformGR2Path != null)
+            {
+                if(GR2Options["conform-copy"])
+                {
+                    exporterOptions.ConformSkeletons = false;
+                    exporterOptions.ConformSkeletonsCopy = true;
+                }
+            }
 
             exporterOptions.LoadGameSettings(CommandLineActions.Game);
 
