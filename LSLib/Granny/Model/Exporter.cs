@@ -758,10 +758,10 @@ namespace LSLib.Granny.Model
 
                             if (!hasHighIndex)
                             {
-                                topology.Indices16 = new List<short>(topology.Indices.Count);
+                                topology.Indices16 = new List<ushort>(topology.Indices.Count);
                                 foreach (var index in topology.Indices)
                                 {
-                                    topology.Indices16.Add((short)index);
+                                    topology.Indices16.Add((ushort)index);
                                 }
 
                                 topology.Indices = null;
