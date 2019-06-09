@@ -23,7 +23,7 @@ namespace Divine.CLI
 
         public static ExporterOptions UpdateExporterSettings()
         {
-            ExporterOptions exporterOptions = new ExporterOptions ()
+            var exporterOptions = new ExporterOptions()
             {
                 InputPath = CommandLineActions.SourcePath,
                 OutputPath = CommandLineActions.DestinationPath,
@@ -66,7 +66,7 @@ namespace Divine.CLI
 
         private static void ConvertResource(string file)
         {
-            Exporter exporter = new Exporter
+            var exporter = new Exporter
             {
                 Options = UpdateExporterSettings()
             };

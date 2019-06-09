@@ -117,6 +117,15 @@ namespace Divine.CLI
         )]
         public string[] Options;
 
+		// @formatter:off
+		[ValueArgument(typeof(string), 'x', "expression",
+            Description = "Set glob expression for extract and list actions",
+            DefaultValue = "*",
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string Expression;
+
         // @formatter:off
         [ValueArgument(typeof(string), "conform-path",
             Description = "Set conform to original path",
@@ -132,6 +141,13 @@ namespace Divine.CLI
             Optional = true
         )]
         public bool UsePackageName;
+
+		// @formatter:off
+        [SwitchArgument("use-regex", false,
+            Description = "Use Regular Expressions for expression type",
+            Optional = true
+        )]
+        public bool UseRegex;
 
         // @formatter:on
 
@@ -220,7 +236,7 @@ namespace Divine.CLI
 
         public static ExportFormat GetModelFormatByPath(string path)
         {
-            var extension = Path.GetExtension(path);
+            string extension = Path.GetExtension(path);
             if (extension != null)
             {
                 return GetModelFormatByString(extension.Substring(1));
@@ -284,7 +300,7 @@ namespace Divine.CLI
         public static Dictionary<string, object> GetCompressionOptions(string compressionOption, PackageVersion packageVersion)
         {
             CompressionMethod compression;
-            bool fastCompression = true;
+            var fastCompression = true;
 
             switch (compressionOption)
             {
@@ -330,7 +346,7 @@ namespace Divine.CLI
                 fastCompression = false;
             }
 
-            Dictionary<string, object> compressionOptions = new Dictionary<string, object>
+            var compressionOptions = new Dictionary<string, object>
             {
                 { "Compression", compression },
                 { "FastCompression", fastCompression }
@@ -341,7 +357,7 @@ namespace Divine.CLI
 
         public static Dictionary<string, bool> GetGR2Options(string[] options)
         {
-            Dictionary<string, bool> results = new Dictionary<string, bool>
+            var results = new Dictionary<string, bool>
             {
                 { "export-normals", true },
                 { "export-tangents", true },

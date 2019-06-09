@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
@@ -15,7 +16,7 @@ namespace Divine.CLI
             CreatePackageResource();
         }
 
-        public static void ListFiles()
+        public static void ListFiles(Func<AbstractFileInfo, bool> filter = null)
         {
             if (CommandLineActions.SourcePath == null)
             {
@@ -23,7 +24,7 @@ namespace Divine.CLI
             }
             else
             {
-                ListPackageFiles(CommandLineActions.SourcePath);
+                ListPackageFiles(CommandLineActions.SourcePath, filter);
             }
         }
 
@@ -38,13 +39,13 @@ namespace Divine.CLI
             {
                 using (var reader = new PackageReader(packagePath))
                 {
-                    var package = reader.Read();
+                    Package package = reader.Read();
                     // Try to match by full path
-                    var file = package.Files.Find(fileInfo => String.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
+                    AbstractFileInfo file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
                     if (file == null)
                     {
                         // Try to match by filename only
-                        file = package.Files.Find(fileInfo => String.Compare(Path.GetFileName(fileInfo.Name), packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
+                        file = package.Files.Find(fileInfo => string.Compare(Path.GetFileName(fileInfo.Name), packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
                         if (file == null)
                         {
                             CommandLineLogger.LogError($"Package doesn't contain file named '{packagedPath}'");
@@ -56,7 +57,7 @@ namespace Divine.CLI
                     {
                         try
                         {
-                            var stream = file.MakeStream();
+                            Stream stream = file.MakeStream();
                             stream.CopyTo(fs);
                         }
                         finally
@@ -78,14 +79,22 @@ namespace Divine.CLI
             }
         }
 
-        private static void ListPackageFiles(string packagePath)
+        private static void ListPackageFiles(string packagePath, Func<AbstractFileInfo, bool> filter = null)
         {
             try
             {
                 using (var reader = new PackageReader(packagePath))
                 {
-                    var package = reader.Read();
-                    foreach (var fileInfo in package.Files)
+                    Package package = reader.Read();
+
+	                List<AbstractFileInfo> files = package.Files;
+
+	                if (filter != null)
+	                {
+		                files = files.FindAll(obj => filter(obj));
+	                }
+
+                    foreach (AbstractFileInfo fileInfo in files.OrderBy(obj => obj.Name))
                     {
                         Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.CRC()}");
                     }
@@ -102,7 +111,7 @@ namespace Divine.CLI
             }
         }
 
-        public static void Extract()
+        public static void Extract(Func<AbstractFileInfo, bool> filter = null)
         {
             if (CommandLineActions.SourcePath == null)
             {
@@ -114,11 +123,11 @@ namespace Divine.CLI
 
                 CommandLineLogger.LogInfo($"Extracting package: {CommandLineActions.SourcePath}");
 
-                ExtractPackageResource(CommandLineActions.SourcePath, extractionPath);
+                ExtractPackageResource(CommandLineActions.SourcePath, extractionPath, filter);
             }
         }
 
-        public static void BatchExtract()
+        public static void BatchExtract(Func<AbstractFileInfo, bool> filter = null)
         {
             string[] files = Directory.GetFiles(CommandLineActions.SourcePath, $"*.{Args.InputFormat}");
 
@@ -128,7 +137,7 @@ namespace Divine.CLI
 
                 CommandLineLogger.LogInfo($"Extracting package: {file}");
 
-                ExtractPackageResource(file, extractionPath);
+                ExtractPackageResource(file, extractionPath, filter);
             }
         }
 
@@ -148,19 +157,19 @@ namespace Divine.CLI
             PackageVersion packageVersion = CommandLineActions.PackageVersion;
             Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, packageVersion);
 
-            CompressionMethod compressionMethod = (CompressionMethod) compressionOptions["Compression"];
-            bool compressionSpeed = (bool) compressionOptions["FastCompression"];
+            var compressionMethod = (CompressionMethod) compressionOptions["Compression"];
+            var compressionSpeed = (bool) compressionOptions["FastCompression"];
 
             CommandLineLogger.LogDebug($"Using compression method: {compressionMethod.ToString()}");
             CommandLineLogger.LogDebug($"Using fast compression: {compressionSpeed}");
 
-            Packager packager = new Packager();
+            var packager = new Packager();
             packager.CreatePackage(file, CommandLineActions.SourcePath, packageVersion, compressionMethod, compressionSpeed);
 
             CommandLineLogger.LogInfo("Package created successfully.");
         }
 
-        private static void ExtractPackageResource(string file = "", string folder = "")
+        private static void ExtractPackageResource(string file = "", string folder = "", Func<AbstractFileInfo, bool> filter = null)
         {
             if (string.IsNullOrEmpty(file))
             {
@@ -170,13 +179,13 @@ namespace Divine.CLI
 
             try
             {
-                Packager packager = new Packager();
+                var packager = new Packager();
 
                 string extractionPath = GetExtractionPath(folder, CommandLineActions.DestinationPath);
 
                 CommandLineLogger.LogDebug($"Using extraction path: {extractionPath}");
 
-                packager.UncompressPackage(file, extractionPath);
+                packager.UncompressPackage(file, extractionPath, filter);
 
                 CommandLineLogger.LogInfo($"Extracted package to: {extractionPath}");
             }

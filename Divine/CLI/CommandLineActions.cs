@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using LSLib.LS.Enums;
+using System.Text.RegularExpressions;
 using Alphaleonis.Win32.Filesystem;
+using LSLib.LS;
+using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
@@ -88,15 +90,15 @@ namespace Divine.CLI
             {
                 GR2Options = CommandLineArguments.GetGR2Options(args.Options);
 
-                if(CommandLineActions.LogLevel == LogLevel.DEBUG || CommandLineActions.LogLevel == LogLevel.ALL)
+                if(LogLevel == LogLevel.DEBUG || LogLevel == LogLevel.ALL)
                 {
                     CommandLineLogger.LogDebug("Using graphics options:");
 
-                    foreach (var x in GR2Options)
+                    foreach (KeyValuePair<string, bool> x in GR2Options)
                     {
                         CommandLineLogger.LogDebug($"   {x.Key} = {x.Value}");
                     }
-                    
+
                 }
 
                 if (GR2Options["conform"])
@@ -118,7 +120,23 @@ namespace Divine.CLI
 
         private static void Process(CommandLineArguments args)
         {
-            switch (args.Action)
+	        var expression = new Regex("^" + Regex.Escape(args.Expression).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.Singleline | RegexOptions.Compiled);
+
+	        if (args.UseRegex)
+	        {
+		        try
+		        {
+			        expression = new Regex(args.Expression, RegexOptions.Singleline | RegexOptions.Compiled);
+		        }
+		        catch (ArgumentException)
+		        {
+			        CommandLineLogger.LogFatal($"Cannot parse RegEx expression: {args.Expression}", -1);
+		        }
+	        }
+
+	        Func<AbstractFileInfo, bool> filter = obj => obj.Name.Like(expression);
+
+	        switch (args.Action)
             {
                 case "create-package":
                 {
@@ -128,7 +146,7 @@ namespace Divine.CLI
 
                 case "extract-package":
                 {
-                    CommandLinePackageProcessor.Extract();
+                    CommandLinePackageProcessor.Extract(filter);
                     break;
                 }
 
@@ -140,7 +158,7 @@ namespace Divine.CLI
 
                 case "list-package":
                 {
-                    CommandLinePackageProcessor.ListFiles();
+                    CommandLinePackageProcessor.ListFiles(filter);
                     break;
                 }
 
@@ -159,7 +177,7 @@ namespace Divine.CLI
 
                 case "extract-packages":
                 {
-                    CommandLinePackageProcessor.BatchExtract();
+                    CommandLinePackageProcessor.BatchExtract(filter);
                     break;
                 }
 
