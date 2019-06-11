@@ -337,9 +337,9 @@ namespace LSLib.LS
             ProgressUpdate(file.Name, numerator, denominator, file);
         }
 
-        public void UncompressPackage(string packagePath, string outputPath)
+        public void UncompressPackage(string packagePath, string outputPath, Func<AbstractFileInfo, bool> filter = null)
         {
-            if (outputPath.Length > 0 && !outputPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            if (outputPath.Length > 0 && !outputPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
             {
                 outputPath += Path.DirectorySeparatorChar;
             }
@@ -348,11 +348,18 @@ namespace LSLib.LS
             var reader = new PackageReader(packagePath);
             Package package = reader.Read();
 
-            long totalSize = package.Files.Sum(p => (long) p.Size());
+	        List<AbstractFileInfo> files = package.Files;
+
+	        if (filter != null)
+	        {
+		        files = files.FindAll(obj => filter(obj));
+	        }
+
+            long totalSize = files.Sum(p => p.Size());
             long currentSize = 0;
 
             var buffer = new byte[32768];
-            foreach (AbstractFileInfo file in package.Files)
+            foreach (AbstractFileInfo file in files.OrderBy(obj => obj.Size()))
             {
                 ProgressUpdate(file.Name, currentSize, totalSize, file);
                 currentSize += file.Size();
@@ -367,7 +374,7 @@ namespace LSLib.LS
                 {
                     using (var inReader = new BinaryReader(inStream))
                     {
-                        using (var outFile = File.Open(outPath, FileMode.Create, FileAccess.Write))
+                        using (FileStream outFile = File.Open(outPath, FileMode.Create, FileAccess.Write))
                         {
                             int read;
                             while ((read = inReader.Read(buffer, 0, buffer.Length)) > 0)
@@ -390,21 +397,22 @@ namespace LSLib.LS
         {
             var package = new Package();
 
-            if (!path.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            if (!path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
             {
                 path += Path.DirectorySeparatorChar;
             }
 
             Dictionary<string, string> files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
-                .ToDictionary(k => k.Replace(path, String.Empty), v => v);
+                .ToDictionary(k => k.Replace(path, string.Empty), v => v);
 
             foreach (KeyValuePair<string, string> file in files)
-            {
-                FilesystemFileInfo fileInfo = FilesystemFileInfo.CreateFromEntry(file.Value, file.Key);
-                package.Files.Add(fileInfo);
-            }
+			{
+				FilesystemFileInfo fileInfo = FilesystemFileInfo.CreateFromEntry(file.Value, file.Key);
+				package.Files.Add(fileInfo);
+				fileInfo.Dispose();
+			}
 
-            return package;
+			return package;
         }
 
         public void CreatePackage(string packagePath, string inputPath, PackageVersion version = Package.CurrentVersion, CompressionMethod compression = CompressionMethod.None, bool fastCompression = true)
