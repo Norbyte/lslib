@@ -151,6 +151,7 @@
     <Compile Include="LS\Resource.cs" />
     <Compile Include="LS\ResourceUtils.cs" />
     <Compile Include="LS\Save\VariableManager.cs" />
+    <Compile Include="LS\Stats\Parser\PropertyDefinitions.cs" />
     <Compile Include="LS\Stats\Parser\Stat.lex.cs" />
     <Compile Include="LS\Stats\Parser\Stat.yy.cs" />
     <Compile Include="LS\Stats\Parser\StatNodes.cs" />

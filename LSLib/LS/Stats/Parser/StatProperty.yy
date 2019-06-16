@@ -1,9 +1,9 @@
-﻿%namespace LSLib.LS.Stats.StatPropertyParser
+﻿%namespace LSLib.LS.Stats.Properties
 %partial 
 %visibility public
 %parsertype StatPropertyParser
 %tokentype StatPropertyTokens
-%YYSTYPE LSLib.LS.Stats.StatPropertyParser.StatPropertyNode
+%YYSTYPE System.Object
 
 %start Root
 
@@ -44,11 +44,6 @@
 %token ACT_SURFACEBOOST
 
 /* Misc Constants */
-%token SURFACE_TYPE
-%token SURFACE_TYPE_EX
-%token SURFACE_STATE
-%token SURFACE_TYPE_OR_STATE
-%token SKILL_CONDITION
 %token SKILL_CONDITION_1ARG
 %token SKILL_CONDITION_SURFACE
 %token SKILL_CONDITION_IN_SURFACE
@@ -68,9 +63,9 @@
 %%
 
 /* A special "trigger word" is prepended to support parsing multiple types from the same lexer/parser */
-Root : EXPR_PROPERTIES Properties
-     | EXPR_CONDITIONS Conditions
-     | EXPR_REQUIREMENTS Requirements
+Root : EXPR_PROPERTIES Properties { $$ = $2; }
+     | EXPR_CONDITIONS Conditions { $$ = $2; }
+     | EXPR_REQUIREMENTS Requirements { $$ = $2; }
      ;
 
 
@@ -82,17 +77,17 @@ Root : EXPR_PROPERTIES Properties
  *
  ******************************************************************/
  
-Requirements : /* empty */
-             | UnaryRequirement
+Requirements : /* empty */ { $$ = MakeRequirements(); }
+             | UnaryRequirement { $$ = AddRequirement(MakeRequirements(), $1); }
              | Requirements ';'
-             | Requirements ';' UnaryRequirement
+             | Requirements ';' UnaryRequirement { $$ = AddRequirement($1, $3); }
              ;
 
 UnaryRequirement : Requirement
-                 | '!' Requirement
+                 | '!' Requirement { $$ = MakeNotRequirement($2); }
                  ;
 
-Requirement : RequirementNoArg
+Requirement : RequirementNoArg { $$ = MakeRequirement($1); }
             | RequirementIntArg
             | RequirementTag
             ;
@@ -101,12 +96,12 @@ RequirementNoArg : REQUIREMENT_NO_ARG
                  | COMBAT /* Token conflict between requirements and the skill condition "Combat" */
                  ;
 
-RequirementIntArg : REQUIREMENT_INT_ARG
-                  | REQUIREMENT_INT_ARG INTEGER
+RequirementIntArg : NAME { $$ = MakeIntRequirement($1); } /* FIXME - recheck for REQUIREMENT_INT_ARG list! */
+                  | NAME INTEGER { $$ = MakeIntRequirement($1, $2); }
                   ;
 				  
-RequirementTag : REQUIREMENT_TAG TEXT
-               | REQUIREMENT_TAG NAME
+RequirementTag : REQUIREMENT_TAG TEXT { $$ = MakeTagRequirement($1, $2); }
+               | REQUIREMENT_TAG NAME { $$ = MakeTagRequirement($1, $2); }
                ;
 
 
@@ -118,27 +113,27 @@ RequirementTag : REQUIREMENT_TAG TEXT
  *
  ******************************************************************/
  
-Properties : /* empty */
-           | Property
+Properties : /* empty */ { $$ = MakePropertyList(); }
+           | Property { $$ = AddProperty(MakePropertyList(), $1); }
            | Properties ';'
-           | Properties ';' Property
+           | Properties ';' Property { $$ = AddProperty($1, $3); }
            ;
 
-Property : PropContext PropCondition PropAction;
+Property : PropContext PropCondition PropAction { $$ = MakeProperty($1, $2, $3); };
 
-PropContext : /* empty */
-            | CTX_SELF ':'
-            | CTX_SELF ':' PropSelfContext ':'
-            | CTX_TARGET ':'
-            | CTX_AOE ':'
+PropContext : { $$ = PropertyContext.None; } /* empty */
+            | CTX_SELF ':' { $$ = PropertyContext.Self; }
+            | CTX_SELF ':' PropSelfContext ':' { $$ = $3; }
+            | CTX_TARGET ':' { $$ = PropertyContext.Target; }
+            | CTX_AOE ':' { $$ = PropertyContext.AoE; }
             ;
 
-PropSelfContext : CTX_ON_HIT
-                | CTX_ON_EQUIP
+PropSelfContext : CTX_ON_HIT { $$ = PropertyContext.SelfOnHit; }
+                | CTX_ON_EQUIP { $$ = PropertyContext.SelfOnEquip; }
                 ;
 
 PropCondition : /* empty */
-              | IF '(' ConditionExpr ')' ':'
+              | IF '(' ConditionExpr ')' ':' { $$ = $3; }
               ;
 
 PropAction : ActCustomProperty
@@ -156,86 +151,86 @@ PropAction : ActCustomProperty
            | ActStatus
            ;
 
-ActCustomProperty : ACT_CUSTOM_PROPERTY;
-ActSurfaceChange : ACT_SURFACE_CHANGE SurfaceChangeArgs;
-ActGameAction : ACT_GAME_ACTION GameActionArgs;
-ActCreateSurface : ACT_CREATE_SURFACE CreateSurfaceArgs;
-ActSwapPlaces : ACT_SWAP_PLACES SwapPlacesArgs;
-ActPickup : ACT_PICKUP PickupArgs;
+ActCustomProperty : ACT_CUSTOM_PROPERTY { $$ = MakeAction($1, MakeArgumentList()); };
+ActSurfaceChange : ACT_SURFACE_CHANGE SurfaceChangeArgs { $$ = MakeAction($1, $2); };
+ActGameAction : ACT_GAME_ACTION GameActionArgs { $$ = MakeAction($1, $2); };
+ActCreateSurface : ACT_CREATE_SURFACE CreateSurfaceArgs { $$ = MakeAction($1, $2); };
+ActSwapPlaces : ACT_SWAP_PLACES SwapPlacesArgs { $$ = MakeAction($1, $2); };
+ActPickup : ACT_PICKUP PickupArgs { $$ = MakeAction($1, $2); };
 /* Args: HealType */
-ActEqualize : ACT_EQUALIZE ',' TextArg;
-ActResurrect : ACT_RESURRECT ResurrectArgs;
-ActSabotage : ACT_SABOTAGE SabotageArgs;
-ActSummon : ACT_SUMMON ',' TextArg SummonOptArgs;
-ActForce : ACT_FORCE ',' IntArg;
-ActCleanse : ACT_CLEANSE ':' NAME;
-ActStatus : StatusBoost StatusName StatusArgs;
+ActEqualize : ACT_EQUALIZE ',' TextArg { $$ = MakeAction($1, MakeArgumentList($3)); };
+ActResurrect : ACT_RESURRECT ResurrectArgs { $$ = MakeAction($1, $2); };
+ActSabotage : ACT_SABOTAGE SabotageArgs { $$ = MakeAction($1, $2); };
+ActSummon : ACT_SUMMON ',' TextArg SummonOptArgs { $$ = MakeAction($1, PrependArgumentList($3, $4)); };
+ActForce : ACT_FORCE ',' IntArg { $$ = MakeAction($1, MakeArgumentList($3)); };
+ActCleanse : ACT_CLEANSE ':' NAME { $$ = MakeAction($1, MakeArgumentList($3)); };
+ActStatus : StatusBoost StatusName StatusArgs { $$ = MakeStatusBoost($1, $2, $3); };
 
-SurfaceChangeArgs : /* empty */
-                  | ',' IntArg
-                  | ',' IntArg ',' OptionalIntArg
-                  | ',' IntArg ',' OptionalIntArg ',' IntArg
-                  | ',' IntArg ',' OptionalIntArg ',' IntArg ',' IntArg
+SurfaceChangeArgs : /* empty */ { $$ = MakeArgumentList(); }
+                  | ',' IntArg { $$ = MakeArgumentList($2); }
+                  | ',' IntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4); }
+                  | ',' IntArg ',' OptionalIntArg ',' IntArg { $$ = MakeArgumentList($2, $4, $6); }
+                  | ',' IntArg ',' OptionalIntArg ',' IntArg ',' IntArg { $$ = MakeArgumentList($2, $4, $6, $8); }
                   ;
 
 /* TODO -- specific arg checks for each action !!! */
-GameActionArgs : /* empty */
-               | ',' IntArg
-               | ',' IntArg ',' OptionalIntArg
-               | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg
-               | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg
-               | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg ',' OptionalIntArg
+GameActionArgs : /* empty */ { $$ = MakeArgumentList(); }
+               | ',' IntArg { $$ = MakeArgumentList($2); }
+               | ',' IntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4); }
+               | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg { $$ = MakeArgumentList($2, $4, $6); }
+               | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg { $$ = MakeArgumentList($2, $4, $6, $8); }
+               | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4, $6, $8, $10); }
                ;
 
 /* Radius; Duration; SurfaceType/DamageType; %Chance */
-CreateSurfaceArgs : /* empty */
-                  | ',' IntArg
-                  | ',' IntArg ',' OptionalIntArg
-                  | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg
-                  | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg
-                  | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg ',' OptionalIntArg
+CreateSurfaceArgs : /* empty */ { $$ = MakeArgumentList(); }
+                  | ',' IntArg { $$ = MakeArgumentList($2); }
+                  | ',' IntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4); }
+                  | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg { $$ = MakeArgumentList($2, $4, $6); }
+                  | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg { $$ = MakeArgumentList($2, $4, $6, $8); }
+                  | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4, $6, $8, $10); }
                   ;
 
 /* -; -; CasterEffect:TargetEffect */
-SwapPlacesArgs : /* empty */
-               | ',' OptionalIntArg
-               | ',' OptionalIntArg ',' OptionalIntArg
-               | ',' OptionalIntArg ',' OptionalIntArg ','
-               | ',' OptionalIntArg ',' OptionalIntArg ',' OptionalTextArg ':' OptionalTextArg
+SwapPlacesArgs : /* empty */ { $$ = MakeArgumentList(); }
+               | ',' OptionalIntArg { $$ = MakeArgumentList($2); }
+               | ',' OptionalIntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4); }
+               | ',' OptionalIntArg ',' OptionalIntArg ',' OptionalTextArg { $$ = MakeArgumentList($2, $4, $6); }
+               | ',' OptionalIntArg ',' OptionalIntArg ',' OptionalTextArg ':' OptionalTextArg { $$ = MakeArgumentList($2, $4, $6, $8); }
                ;
 
 /* -; -; TargetEffect */
-PickupArgs : /* empty */
-           | ',' OptionalIntArg
-           | ',' OptionalIntArg ',' OptionalIntArg
-           | ',' OptionalIntArg ',' OptionalIntArg ',' OptionalTextArg
+PickupArgs : /* empty */ { $$ = MakeArgumentList(); }
+           | ',' OptionalIntArg { $$ = MakeArgumentList($2); }
+           | ',' OptionalIntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4); }
+           | ',' OptionalIntArg ',' OptionalIntArg ',' OptionalTextArg { $$ = MakeArgumentList($2, $4, $6); }
            ;
 
-ResurrectArgs : /* empty */
-              | ',' IntArg
-              | ',' IntArg ',' IntArg
+ResurrectArgs : /* empty */ { $$ = MakeArgumentList(); }
+              | ',' IntArg { $$ = MakeArgumentList($2); }
+              | ',' IntArg ',' IntArg { $$ = MakeArgumentList($2, $4); }
               ;
 
-SabotageArgs : /* empty */
-             | ',' IntArg
+SabotageArgs : /* empty */ { $$ = MakeArgumentList(); }
+             | ',' IntArg { $$ = MakeArgumentList($2); }
              ;
 			 
 /* TODO - Arg #2 - TotemArg */
-SummonOptArgs : /* empty */
-              | ',' IntArg
-              | ',' IntArg ',' OptionalTextArg
-              | ',' IntArg ',' OptionalTextArg ',' TextArg
+SummonOptArgs : /* empty */ { $$ = MakeArgumentList(); }
+              | ',' IntArg { $$ = MakeArgumentList($2); }
+              | ',' IntArg ',' OptionalTextArg { $$ = MakeArgumentList($2, $4); }
+              | ',' IntArg ',' OptionalTextArg ',' TextArg { $$ = MakeArgumentList($2, $4, $6); }
               ;
 
-StatusArgs : /* empty */
-           | ',' IntArg
-           | ',' IntArg ',' OptionalIntArg
-           | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg
-           | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg
-           | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg ',' IntArg
+StatusArgs : /* empty */ { $$ = MakeArgumentList(); }
+           | ',' IntArg { $$ = MakeArgumentList($2); }
+           | ',' IntArg ',' OptionalIntArg { $$ = MakeArgumentList($2, $4); }
+           | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg { $$ = MakeArgumentList($2, $4, $6); }
+           | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg { $$ = MakeArgumentList($2, $4, $6, $8); }
+           | ',' IntArg ',' OptionalIntArg ',' OptionalTextArg ',' IntArg ',' IntArg { $$ = MakeArgumentList($2, $4, $6, $8, $10); }
            ;
 
-IntArg : INTEGER;
+IntArg : INTEGER { $$ = Int32.Parse($1 as string); };
 
 OptionalIntArg : /* empty */
                | IntArg
@@ -244,45 +239,33 @@ OptionalIntArg : /* empty */
 TextArg : INTEGER
         | NAME
         | TEXT
-		| SURFACE_TYPE
-		| SURFACE_STATE
-		| SURFACE_TYPE_OR_STATE
-		| SKILL_CONDITION
 		| COMBAT
 		| ACT_SURFACE_CHANGE
 		| REQUIREMENT_NO_ARG
-		| REQUIREMENT_INT_ARG
 		| REQUIREMENT_TAG
         ;
 
-OptionalTextArg : /* empty */
+OptionalTextArg : /* empty */ { $$ = ""; }
                 | TextArg
                 ;
 
-StatusName : NAME
-/* TODO - Disabled to track down common errors
-           | SURFACE_TYPE_OR_STATE
-           | SURFACE_TYPE
-           | SURFACE_STATE */
-           ;
+StatusName : NAME;
 
-StatusBoost : /* empty */
-            | ACT_AOEBOOST ':'
-            | ACT_SURFACEBOOST '(' SurfaceList ')' ':'
+StatusBoost : /* empty */ { $$ = MakeStatusBoostType(StatusBoostType.None, null); }
+            | ACT_AOEBOOST ':' { $$ = MakeStatusBoostType(StatusBoostType.AoE, null); }
+            | ACT_SURFACEBOOST '(' SurfaceList ')' ':' { $$ = MakeStatusBoostType(StatusBoostType.Surface, $3); }
             ;
 
-SurfaceList : SurfaceType
-            | SurfaceList '|' SurfaceType
+SurfaceList : SurfaceType { $$ = AddSurface(MakeSurfaceList(), $1); }
+            | SurfaceList '|' SurfaceType { $$ = AddSurface($1, $3); }
             ;
 
 
-SurfaceState : SURFACE_STATE
-             | SURFACE_TYPE_OR_STATE
-             ;
+SurfaceState : NAME { $$ = MakeSurfaceState($1); }; /* FIXME - recheck SURFACE_STATE or SURFACE_TYPE_OR_STATE */
 			
-SurfaceType : SURFACE_TYPE
-            | SURFACE_TYPE_OR_STATE
-            ;
+SurfaceType : NAME { $$ = MakeSurfaceType($1); }; /* FIXME - recheck SURFACE_TYPE or SURFACE_TYPE_OR_STATE */
+			
+Surface : NAME { $$ = MakeSurface($1); }; /* FIXME - recheck SURFACE_TYPE_EX */
 
 /******************************************************************
  *
@@ -296,30 +279,30 @@ Conditions : /* empty */
            | ConditionExpr
            ;
 
-Condition : SKILL_CONDITION
-          | COMBAT /* Token conflict between requirements and the condition "Combat" */
-          | ACT_SUMMON /* Token conflict between actions and the condition "Summon" */
-          | SKILL_CONDITION_1ARG ':' TextArg
-          | SKILL_CONDITION_IN_SURFACE ':' SURFACE_TYPE_EX
-          | SKILL_CONDITION_SURFACE ':' SurfaceState
+Condition : NAME { $$ = MakeCondition($1, null); } /* FIXME - recheck for SKILL_CONDITION */
+          | COMBAT { $$ = MakeCondition($1, null); } /* Token conflict between requirements and the condition "Combat" */
+          | ACT_SUMMON { $$ = MakeCondition($1, null); } /* Token conflict between actions and the condition "Summon" */
+          | SKILL_CONDITION_1ARG ':' TextArg { $$ = MakeCondition($1, $3); }
+          | SKILL_CONDITION_IN_SURFACE ':' Surface { $$ = MakeCondition($1, $3); }
+          | SKILL_CONDITION_SURFACE ':' SurfaceState { $$ = MakeCondition($1, $3); }
           ;
 
 UnaryCondition : ConditionBlock
-               | UnaryOperator ConditionBlock
+               | UnaryOperator ConditionBlock { $$ = MakeNotCondition($2); }
                ;
 
 ConditionBlock : BracketedConditionExpr
                | Condition
                ;
 
-BracketedConditionExpr : '(' ConditionExpr ')';
+BracketedConditionExpr : '(' ConditionExpr ')' { $$ = $2; };
 
 UnaryOperator : '!';
 
 ConditionExpr : UnaryCondition
-              | ConditionExpr BinaryOperator UnaryCondition
+              | ConditionExpr BinaryOperator UnaryCondition { $$ = MakeBinaryCondition($1, $2, $3); }
               ;
 
-BinaryOperator : '|'
-               | '&'
+BinaryOperator : '|' { $$ = ConditionOperator.Or; }
+               | '&' { $$ = ConditionOperator.And; }
                ;
