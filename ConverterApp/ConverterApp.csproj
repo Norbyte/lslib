@@ -120,6 +120,7 @@
     <Compile Include="ResourcePane.Designer.cs">
       <DependentUpon>ResourcePane.cs</DependentUpon>
     </Compile>
+    <Compile Include="VariableDumper.cs" />
     <EmbeddedResource Include="ExportItemSelection.resx">
       <DependentUpon>ExportItemSelection.cs</DependentUpon>
     </EmbeddedResource>

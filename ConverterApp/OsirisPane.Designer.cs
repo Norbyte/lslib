@@ -44,6 +44,7 @@
             this.storyPathDlg = new System.Windows.Forms.OpenFileDialog();
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.btnDebugExport = new System.Windows.Forms.Button();
+            this.dumpVariablesBtn = new System.Windows.Forms.Button();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).BeginInit();
             this.SuspendLayout();
@@ -201,10 +202,21 @@
             this.btnDebugExport.UseVisualStyleBackColor = true;
             this.btnDebugExport.Click += new System.EventHandler(this.btnDebugExport_Click);
             // 
+            // dumpVariablesBtn
+            // 
+            this.dumpVariablesBtn.Location = new System.Drawing.Point(570, 119);
+            this.dumpVariablesBtn.Name = "dumpVariablesBtn";
+            this.dumpVariablesBtn.Size = new System.Drawing.Size(154, 23);
+            this.dumpVariablesBtn.TabIndex = 71;
+            this.dumpVariablesBtn.Text = "Dump VariableManager";
+            this.dumpVariablesBtn.UseVisualStyleBackColor = true;
+            this.dumpVariablesBtn.Click += new System.EventHandler(this.dumpVariablesBtn_Click);
+            // 
             // OsirisPane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.dumpVariablesBtn);
             this.Controls.Add(this.btnDebugExport);
             this.Controls.Add(this.saveStoryBtn);
             this.Controls.Add(this.groupBox3);
@@ -244,5 +256,6 @@
         private System.Windows.Forms.OpenFileDialog storyPathDlg;
         private System.Windows.Forms.FolderBrowserDialog goalPathDlg;
         private System.Windows.Forms.Button btnDebugExport;
+        private System.Windows.Forms.Button dumpVariablesBtn;
     }
 }

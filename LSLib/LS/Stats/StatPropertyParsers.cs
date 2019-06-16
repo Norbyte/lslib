@@ -1,5 +1,4 @@
-﻿using LSLib.LS.Stats.StatParser;
-using LSLib.LS.Stats.StatPropertyParser;
+﻿using LSLib.LS.Stats.Properties;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -120,8 +119,7 @@ namespace LSLib.LS.Stats
                 if (!succeeded)
                 {
                     errorText = $"Value '{item}' not supported; {errorText}";
-                    // Keep the value in the database even if it's incorrect
-                    return value;
+                    return null;
                 }
             }
 
@@ -154,17 +152,19 @@ namespace LSLib.LS.Stats
             {
                 var scanner = new StatPropertyScanner();
                 scanner.SetSource(buf);
-                var parser = new StatPropertyParser.StatPropertyParser(scanner);
+                var parser = new StatPropertyParser(scanner);
                 succeeded = parser.Parse();
                 if (!succeeded)
                 {
                     var location = scanner.LastLocation();
                     var column = location.StartColumn - 10 - ExpressionType.Length + 1;
                     errorText = $"Syntax error at or near character {column}";
+                    return null;
                 }
-
-                // Keep the value in the database even if it's incorrect
-                return value;
+                else
+                {
+                    return parser.GetParsedObject();
+                }
             }
         }
     }
