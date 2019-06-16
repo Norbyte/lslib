@@ -42,7 +42,7 @@ namespace Divine.CLI
             {
                 CommandLineLogger.LogDebug($"Using destination extension: {outputFormat}");
 
-                ResourceUtils resourceUtils = new ResourceUtils();
+                var resourceUtils = new ResourceUtils();
                 resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, fileVersion);
 
                 CommandLineLogger.LogInfo($"Wrote resources to: {destinationPath}");
