@@ -4,9 +4,59 @@ using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using QUT.Gppg;
+using System.Collections.Generic;
 
 namespace LSLib.LS.Story.GoalParser
 {
+    /// <summary>
+    /// Parameter list of a statement in the THEN part of a rule.
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTStatementParamList = List<ASTRValue>;
+
+    /// <summary>
+    /// List of parent goals.
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTParentTargetEdgeList = List<ASTParentTargetEdge>;
+
+    /// <summary>
+    /// List of facts in an INIT or EXIT section.
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTFactList = List<ASTFact>;
+
+    /// <summary>
+    /// List of scalar values in a fact tuple
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTFactElementList = List<ASTConstantValue>;
+
+    /// <summary>
+    /// List of production rules in the KB section
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTRuleList = List<ASTRule>;
+
+    /// <summary>
+    /// List of conditions/predicates in a production rule
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTConditionList = List<ASTCondition>;
+
+    /// <summary>
+    /// Condition query parameter / database tuple column list
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTConditionParamList = List<ASTRValue>;
+
+    /// <summary>
+    /// List of actions in the THEN part of a rule
+    /// This is discarded during parsing and does not appear in the final AST.
+    /// </summary>
+    using ASTActionList = List<ASTAction>;
+
+
     internal class ParserConstants
     {
         public static CultureInfo ParserCulture = new CultureInfo("en-US");
@@ -79,7 +129,7 @@ namespace LSLib.LS.Story.GoalParser
         }
     }
 
-    public abstract class GoalScanBase : AbstractScanner<ASTNode, CodeLocation>
+    public abstract class GoalScanBase : AbstractScanner<Object, CodeLocation>
     {
         protected String fileName;
 
@@ -87,12 +137,9 @@ namespace LSLib.LS.Story.GoalParser
 
         protected virtual bool yywrap() { return true; }
 
-        protected ASTLiteral MakeLiteral(string lit) => new ASTLiteral()
-        {
-            Literal = lit
-        };
+        protected string MakeLiteral(string lit) => lit;
 
-        protected ASTLiteral MakeString(string lit)
+        protected string MakeString(string lit)
         {
             return MakeLiteral(Regex.Unescape(lit.Substring(1, lit.Length - 2)));
         }
@@ -114,136 +161,135 @@ namespace LSLib.LS.Story.GoalParser
 
         public ASTGoal GetGoal()
         {
-            return CurrentSemanticValue as ASTGoal;
+            return (ASTGoal)CurrentSemanticValue;
         }
 
-        private ASTGoal MakeGoal(CodeLocation location, ASTNode version, ASTNode subGoalCombiner, ASTNode initSection,
-            ASTNode kbSection, ASTNode exitSection, ASTNode parentTargetEdges) => new ASTGoal()
+        private ASTGoal MakeGoal(CodeLocation location, object version, object subGoalCombiner, object initSection,
+            object kbSection, object exitSection, object parentTargetEdges) => new ASTGoal()
         {
             // TODO verison, SGC
-            InitSection = (initSection as ASTFactList).Facts,
-            KBSection = (kbSection as ASTRuleList).Rules,
-            ExitSection = (exitSection as ASTFactList).Facts,
-            ParentTargetEdges = (parentTargetEdges as ASTParentTargetEdgeList).TargetEdges,
+            InitSection = (ASTFactList)initSection,
+            KBSection = (ASTRuleList)kbSection,
+            ExitSection = (ASTFactList)exitSection,
+            ParentTargetEdges = (ASTParentTargetEdgeList)parentTargetEdges,
             Location = location
         };
 
         private ASTParentTargetEdgeList MakeParentTargetEdgeList() => new ASTParentTargetEdgeList();
 
-        private ASTParentTargetEdgeList MakeParentTargetEdgeList(ASTNode parentTargetEdgeList, ASTNode edge)
+        private ASTParentTargetEdgeList MakeParentTargetEdgeList(object parentTargetEdgeList, object edge)
         {
-            var edges = parentTargetEdgeList as ASTParentTargetEdgeList;
-            edges.TargetEdges.Add(edge as ASTParentTargetEdge);
+            var edges = (ASTParentTargetEdgeList)parentTargetEdgeList;
+            edges.Add((ASTParentTargetEdge)edge);
             return edges;
         }
 
-        private ASTParentTargetEdge MakeParentTargetEdge(CodeLocation location, ASTNode goal) => new ASTParentTargetEdge()
+        private ASTParentTargetEdge MakeParentTargetEdge(CodeLocation location, object goal) => new ASTParentTargetEdge()
         {
             Location = location,
-            Goal = (goal as ASTLiteral).Literal
+            Goal = (string)goal
         };
 
         private ASTFactList MakeFactList() => new ASTFactList();
         
-        private ASTFactList MakeFactList(ASTNode factList, ASTNode fact)
+        private ASTFactList MakeFactList(object factList, object fact)
         {
-            var facts = factList as ASTFactList;
-            facts.Facts.Add(fact as ASTFact);
+            var facts = (ASTFactList)factList;
+            facts.Add((ASTFact)fact);
             return facts;
         }
 
-        private ASTFact MakeNotFact(CodeLocation location, ASTNode fact)
+        private ASTFact MakeNotFact(CodeLocation location, object fact)
         {
-            var factStmt = fact as ASTFact;
+            var factStmt = (ASTFact)fact;
             factStmt.Location = location;
             factStmt.Not = true;
             return factStmt;
         }
 
-        private ASTFact MakeFactStatement(CodeLocation location, ASTNode database, ASTNode elements) => new ASTFact()
+        private ASTFact MakeFactStatement(CodeLocation location, object database, object elements) => new ASTFact()
         {
             Location = location,
-            Database = (database as ASTLiteral).Literal,
+            Database = (string)database,
             Not = false,
-            Elements = (elements as ASTFactElementList).Elements
+            Elements = (ASTFactElementList)elements
         };
 
         private ASTFactElementList MakeFactElementList() => new ASTFactElementList();
 
-        private ASTFactElementList MakeFactElementList(ASTNode element)
+        private ASTFactElementList MakeFactElementList(object element)
         {
             var elements = new ASTFactElementList();
-            elements.Elements.Add(element as ASTConstantValue);
+            elements.Add((ASTConstantValue)element);
             return elements;
         }
 
-        private ASTFactElementList MakeFactElementList(ASTNode elementList, ASTNode element)
+        private ASTFactElementList MakeFactElementList(object elementList, object element)
         {
-            var elements = elementList as ASTFactElementList;
-            elements.Elements.Add(element as ASTConstantValue);
+            var elements = (ASTFactElementList)elementList;
+            elements.Add((ASTConstantValue)element);
             return elements;
         }
 
         private ASTRuleList MakeRuleList() => new ASTRuleList();
 
-        private ASTRuleList MakeRuleList(ASTNode ruleList, ASTNode rule)
+        private ASTRuleList MakeRuleList(object ruleList, object rule)
         {
-            var rules = ruleList as ASTRuleList;
-            rules.Rules.Add(rule as ASTRule);
+            var rules = (ASTRuleList)ruleList;
+            rules.Add((ASTRule)rule);
             return rules;
         }
 
-        private ASTRule MakeRule(CodeLocation location, ASTNode ruleType, ASTNode conditions, ASTNode actions) => new ASTRule()
+        private ASTRule MakeRule(CodeLocation location, object ruleType, object conditions, object actions) => new ASTRule()
         {
             Location = location,
-            Type = (ruleType as ASTRuleType).Type,
-            Conditions = (conditions as ASTConditionList).Conditions,
-            Actions = (actions as ASTActionList).Actions
+            Type = (RuleType)ruleType,
+            Conditions = (ASTConditionList)conditions,
+            Actions = (ASTActionList)actions
         };
 
-        private ASTRuleType MakeRuleType(RuleType type) => new ASTRuleType()
-        {
-            Type = type
-        };
+        private RuleType MakeRuleType(RuleType type) => type;
 
         private ASTConditionList MakeConditionList() => new ASTConditionList();
 
-        private ASTConditionList MakeConditionList(ASTNode condition)
+        private ASTConditionList MakeConditionList(object condition)
         {
-            var conditions = new ASTConditionList();
-            conditions.Conditions.Add(condition as ASTCondition);
+            var conditions = new ASTConditionList
+            {
+                (ASTCondition)condition
+            };
             return conditions;
         }
 
-        private ASTConditionList MakeConditionList(ASTNode conditionList, ASTNode condition)
+        private ASTConditionList MakeConditionList(object conditionList, object condition)
         {
-            var conditions = conditionList as ASTConditionList;
-            conditions.Conditions.Add(condition as ASTCondition);
+            var conditions = (ASTConditionList)conditionList;
+            conditions.Add((ASTCondition)condition);
             return conditions;
         }
 
-        private ASTFuncCondition MakeFuncCondition(CodeLocation location, ASTNode name, ASTNode paramList, bool not) => new ASTFuncCondition()
+        private ASTFuncCondition MakeFuncCondition(CodeLocation location, object name, object paramList, bool not) => new ASTFuncCondition()
         {
             Location = location,
-            Name = (name as ASTLiteral).Literal,
+            Name = (string)name,
             Not = not,
-            Params = (paramList as ASTConditionParamList).Params
+            Params = (ASTConditionParamList)paramList
         };
 
-        private ASTFuncCondition MakeObjectFuncCondition(CodeLocation location, ASTNode thisValue, ASTNode name, ASTNode paramList, bool not)
+        private ASTFuncCondition MakeObjectFuncCondition(CodeLocation location, object thisValue, object name, object paramList, bool not)
         {
-            var condParams = paramList as ASTConditionParamList;
-            condParams.Params.Insert(0, thisValue as ASTRValue);
+            var condParams = (ASTConditionParamList)paramList;
+            condParams.Insert(0, (ASTRValue)thisValue);
             return new ASTFuncCondition()
             {
                 Location = location,
-                Name = (name as ASTLiteral).Literal,
+                Name = (string)name,
                 Not = not,
-                Params = condParams.Params
+                Params = condParams
             };
         }
 
-        private ASTBinaryCondition MakeNegatedBinaryCondition(CodeLocation location, ASTNode lvalue, ASTNode op, ASTNode rvalue)
+        private ASTBinaryCondition MakeNegatedBinaryCondition(CodeLocation location, object lvalue, object op, object rvalue)
         {
             var cond = MakeBinaryCondition(location, lvalue, op, rvalue);
             switch (cond.Op)
@@ -260,41 +306,40 @@ namespace LSLib.LS.Story.GoalParser
             return cond;
         }
 
-        private ASTBinaryCondition MakeBinaryCondition(CodeLocation location, ASTNode lvalue, ASTNode op, ASTNode rvalue) => new ASTBinaryCondition()
+        private ASTBinaryCondition MakeBinaryCondition(CodeLocation location, object lvalue, object op, object rvalue) => new ASTBinaryCondition()
         {
             Location = location,
-            LValue = lvalue as ASTRValue,
-            Op = (op as ASTOperator).Op,
-            RValue = rvalue as ASTRValue
+            LValue = (ASTRValue)lvalue,
+            Op = (RelOpType)op,
+            RValue = (ASTRValue)rvalue
         };
 
         private ASTConditionParamList MakeConditionParamList() => new ASTConditionParamList();
 
-        private ASTConditionParamList MakeConditionParamList(ASTNode param)
+        private ASTConditionParamList MakeConditionParamList(object param)
         {
-            var list = new ASTConditionParamList();
-            list.Params.Add(param as ASTRValue);
+            var list = new ASTConditionParamList
+            {
+                (ASTRValue)param
+            };
             return list;
         }
 
-        private ASTConditionParamList MakeConditionParamList(ASTNode list, ASTNode param)
+        private ASTConditionParamList MakeConditionParamList(object list, object param)
         {
-            var conditionParamList = list as ASTConditionParamList;
-            conditionParamList.Params.Add(param as ASTRValue);
+            var conditionParamList = (ASTConditionParamList)list;
+            conditionParamList.Add((ASTRValue)param);
             return conditionParamList;
         }
 
-        private ASTOperator MakeOperator(RelOpType op) => new ASTOperator()
-        {
-            Op = op
-        };
+        private RelOpType MakeOperator(RelOpType op) => op;
 
         private ASTActionList MakeActionList() => new ASTActionList();
 
-        private ASTActionList MakeActionList(ASTNode actionList, ASTNode action)
+        private ASTActionList MakeActionList(object actionList, object action)
         {
-            var actions = actionList as ASTActionList;
-            actions.Actions.Add(action as ASTAction);
+            var actions = (ASTActionList)actionList;
+            actions.Add((ASTAction)action);
             return actions;
         }
 
@@ -303,63 +348,65 @@ namespace LSLib.LS.Story.GoalParser
             Location = location
         };
 
-        private ASTStatement MakeActionStatement(CodeLocation location, ASTNode name, ASTNode paramList, bool not) => new ASTStatement
+        private ASTStatement MakeActionStatement(CodeLocation location, object name, object paramList, bool not) => new ASTStatement
         {
             Location = location,
-            Name = (name as ASTLiteral).Literal,
+            Name = (string)name,
             Not = not,
-            Params = (paramList as ASTStatementParamList).Params
+            Params = (ASTStatementParamList)paramList
         };
 
-        private ASTStatement MakeActionStatement(CodeLocation location, ASTNode thisValue, ASTNode name, ASTNode paramList, bool not)
+        private ASTStatement MakeActionStatement(CodeLocation location, object thisValue, object name, object paramList, bool not)
         {
             var stmt = new ASTStatement
             {
                 Location = location,
-                Name = (name as ASTLiteral).Literal,
+                Name = (string)name,
                 Not = not,
-                Params = (paramList as ASTStatementParamList).Params
+                Params = (ASTStatementParamList)paramList
             };
-            stmt.Params.Insert(0, thisValue as ASTRValue);
+            stmt.Params.Insert(0, (ASTRValue)thisValue);
             return stmt;
         }
 
         private ASTStatementParamList MakeActionParamList() => new ASTStatementParamList();
 
-        private ASTStatementParamList MakeActionParamList(ASTNode param)
+        private ASTStatementParamList MakeActionParamList(object param)
         {
-            var list = new ASTStatementParamList();
-            list.Params.Add(param as ASTRValue);
+            var list = new ASTStatementParamList
+            {
+                (ASTRValue)param
+            };
             return list;
         }
 
-        private ASTStatementParamList MakeActionParamList(ASTNode list, ASTNode param)
+        private ASTStatementParamList MakeActionParamList(object list, object param)
         {
-            var actionParamList = list as ASTStatementParamList;
-            actionParamList.Params.Add(param as ASTRValue);
+            var actionParamList = (ASTStatementParamList)list;
+            actionParamList.Add((ASTRValue)param);
             return actionParamList;
         }
 
-        private ASTLocalVar MakeLocalVar(CodeLocation location, ASTNode varName) => new ASTLocalVar()
+        private ASTLocalVar MakeLocalVar(CodeLocation location, object varName) => new ASTLocalVar()
         {
             Location = location,
-            Name = (varName as ASTLiteral).Literal
+            Name = (string)varName
         };
 
-        private ASTLocalVar MakeLocalVar(CodeLocation location, ASTNode typeName, ASTNode varName) => new ASTLocalVar()
+        private ASTLocalVar MakeLocalVar(CodeLocation location, object typeName, object varName) => new ASTLocalVar()
         {
             Location = location,
-            Type = (typeName as ASTLiteral).Literal,
-            Name = (varName as ASTLiteral).Literal
+            Type = (string)typeName,
+            Name = (string)varName
         };
 
-        private ASTConstantValue MakeTypedConstant(CodeLocation location, ASTNode typeName, ASTNode constant)
+        private ASTConstantValue MakeTypedConstant(CodeLocation location, object typeName, object constant)
         {
-            var c = constant as ASTConstantValue;
+            var c = (ASTConstantValue)constant;
             return new ASTConstantValue()
             {
                 Location = location,
-                TypeName = (typeName as ASTLiteral).Literal,
+                TypeName = (string)typeName,
                 Type = c.Type,
                 StringValue = c.StringValue,
                 FloatValue = c.FloatValue,
@@ -367,32 +414,32 @@ namespace LSLib.LS.Story.GoalParser
             };
         }
 
-        private ASTConstantValue MakeConstGuidString(CodeLocation location, ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstGuidString(CodeLocation location, object val) => new ASTConstantValue()
         {
             Location = location,
             Type = IRConstantType.Name,
-            StringValue = (val as ASTLiteral).Literal
+            StringValue = (string)val
         };
 
-        private ASTConstantValue MakeConstString(CodeLocation location, ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstString(CodeLocation location, object val) => new ASTConstantValue()
         {
             Location = location,
             Type = IRConstantType.String,
-            StringValue = (val as ASTLiteral).Literal
+            StringValue = (string)val
         };
 
-        private ASTConstantValue MakeConstInteger(CodeLocation location, ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstInteger(CodeLocation location, object val) => new ASTConstantValue()
         {
             Location = location,
             Type = IRConstantType.Integer,
-            IntegerValue = Int64.Parse((val as ASTLiteral).Literal, ParserConstants.ParserCulture.NumberFormat)
+            IntegerValue = Int64.Parse((string)val, ParserConstants.ParserCulture.NumberFormat)
         };
 
-        private ASTConstantValue MakeConstFloat(CodeLocation location, ASTNode val) => new ASTConstantValue()
+        private ASTConstantValue MakeConstFloat(CodeLocation location, object val) => new ASTConstantValue()
         {
             Location = location,
             Type = IRConstantType.Float,
-            FloatValue = Single.Parse((val as ASTLiteral).Literal, ParserConstants.ParserCulture.NumberFormat)
+            FloatValue = Single.Parse((string)val, ParserConstants.ParserCulture.NumberFormat)
         };
     }
 }

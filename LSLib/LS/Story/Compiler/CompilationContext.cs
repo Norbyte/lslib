@@ -105,13 +105,13 @@ namespace LSLib.LS.Story.Compiler
 
         public bool Equals(FunctionNameAndArity fun)
         {
-            return Name.ToLower() == fun.Name.ToLower()
+            return Name.ToLowerInvariant() == fun.Name.ToLowerInvariant()
                 && Arity == fun.Arity;
         }
 
         public override int GetHashCode()
         {
-            return Name.ToLower().GetHashCode() | Arity;
+            return Name.ToLowerInvariant().GetHashCode() | Arity;
         }
 
         public override string ToString()

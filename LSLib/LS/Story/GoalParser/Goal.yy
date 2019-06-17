@@ -3,7 +3,7 @@
 %visibility public
 %parsertype GoalParser
 %tokentype GoalTokens
-%YYSTYPE LSLib.LS.Story.GoalParser.ASTNode
+%YYSTYPE System.Object
 %YYLTYPE LSLib.LS.Story.GoalParser.CodeLocation
 
 %start GoalFile

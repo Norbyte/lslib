@@ -5,18 +5,9 @@ using System.Collections.Generic;
 namespace LSLib.LS.Story.GoalParser
 {
     /// <summary>
-    /// Base class for all AST nodes.
-    /// (This doesn't do anything meaningful, it is needed only to 
-    /// provide the GPPG parser a semantic value base class.)
-    /// </summary>
-    public class ASTNode
-    {
-    }
-
-    /// <summary>
     /// Goal node - contains everything from a goal file.
     /// </summary>
-    public class ASTGoal : ASTNode
+    public class ASTGoal
     {
         // Facts in the INITSECTION part
         public List<ASTFact> InitSection;
@@ -31,19 +22,10 @@ namespace LSLib.LS.Story.GoalParser
     }
 
     /// <summary>
-    /// List of parent goals.
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTParentTargetEdgeList : ASTNode
-    {
-        public List<ASTParentTargetEdge> TargetEdges = new List<ASTParentTargetEdge>();
-    }
-
-    /// <summary>
     /// Name of a single parent target edge (i.e. parent goal name).
     /// This is discarded during parsing and does not appear in the final AST.
     /// </summary>
-    public class ASTParentTargetEdge : ASTNode
+    public class ASTParentTargetEdge
     {
         // Location of node in source code
         public CodeLocation Location;
@@ -52,18 +34,9 @@ namespace LSLib.LS.Story.GoalParser
     }
 
     /// <summary>
-    /// List of facts in an INIT or EXIT section.
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTFactList : ASTNode
-    {
-        public List<ASTFact> Facts = new List<ASTFact>();
-    }
-
-    /// <summary>
     /// Osiris fact statement from the INIT or EXIT section.
     /// </summary>
-    public class ASTFact : ASTNode
+    public class ASTFact
     {
         // Location of fact in source code
         public CodeLocation Location;
@@ -76,27 +49,9 @@ namespace LSLib.LS.Story.GoalParser
     }
 
     /// <summary>
-    /// List of scalar values in a fact tuple
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTFactElementList : ASTNode
-    {
-        public List<ASTConstantValue> Elements = new List<ASTConstantValue>();
-    }
-
-    /// <summary>
-    /// List of production rules in the KB section
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTRuleList : ASTNode
-    {
-        public List<ASTRule> Rules = new List<ASTRule>();
-    }
-
-    /// <summary>
     /// Describes a production rule in the KB section
     /// </summary>
-    public class ASTRule : ASTNode
+    public class ASTRule
     {
         // Location of rule in source code
         public CodeLocation Location;
@@ -109,27 +64,9 @@ namespace LSLib.LS.Story.GoalParser
     }
 
     /// <summary>
-    /// Type of rule (if, proc or query)
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTRuleType : ASTNode
-    {
-        public RuleType Type;
-    }
-
-    /// <summary>
-    /// List of conditions/predicates in a production rule
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTConditionList : ASTNode
-    {
-        public List<ASTCondition> Conditions = new List<ASTCondition>();
-    }
-
-    /// <summary>
     /// Production rule condition/predicate.
     /// </summary>
-    public class ASTCondition : ASTNode
+    public class ASTCondition
     {
         // Location of condition in source code
         public CodeLocation Location;
@@ -164,34 +101,7 @@ namespace LSLib.LS.Story.GoalParser
         public ASTRValue RValue;
     }
 
-    /// <summary>
-    /// Condition query parameter / database tuple column list
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTConditionParamList : ASTNode
-    {
-        public List<ASTRValue> Params = new List<ASTRValue>();
-    }
-
-    /// <summary>
-    /// Binary predicate operator
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTOperator : ASTNode
-    {
-        public RelOpType Op;
-    }
-
-    /// <summary>
-    /// List of actions in the THEN part of a rule
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTActionList : ASTNode
-    {
-        public List<ASTAction> Actions = new List<ASTAction>();
-    }
-
-    public class ASTAction : ASTNode
+    public class ASTAction
     {
         // Location of action in source code
         public CodeLocation Location;
@@ -199,15 +109,6 @@ namespace LSLib.LS.Story.GoalParser
     
     public class ASTGoalCompletedAction : ASTAction
     {
-    }
-
-    /// <summary>
-    /// Parameter list of a statement in the THEN part of a rule.
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTStatementParamList : ASTNode
-    {
-        public List<ASTRValue> Params = new List<ASTRValue>();
     }
 
     /// <summary>
@@ -226,7 +127,7 @@ namespace LSLib.LS.Story.GoalParser
         public List<ASTRValue> Params;
     }
 
-    public class ASTRValue : ASTNode
+    public class ASTRValue
     {
         // Location of node in source code
         public CodeLocation Location;
@@ -265,14 +166,5 @@ namespace LSLib.LS.Story.GoalParser
         public String Type;
         // Name of variable.
         public String Name;
-    }
-
-    /// <summary>
-    /// String literal from lexing stage (yytext).
-    /// This is discarded during parsing and does not appear in the final AST.
-    /// </summary>
-    public class ASTLiteral : ASTNode
-    {
-        public String Literal;
     }
 }

@@ -162,7 +162,7 @@ namespace LSLib.LS.Story.Compiler
             // to a separate variable "slot"
             if (name.Length > 1)
             {
-                VariablesByName.TryGetValue(name.ToLower(), out v);
+                VariablesByName.TryGetValue(name.ToLowerInvariant(), out v);
             }
 
             if (v == null)
@@ -180,7 +180,7 @@ namespace LSLib.LS.Story.Compiler
 
                 if (name.Length > 1)
                 {
-                    VariablesByName.Add(name.ToLower(), v);
+                    VariablesByName.Add(name.ToLowerInvariant(), v);
                 }
             }
 
