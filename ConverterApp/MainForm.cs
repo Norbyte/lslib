@@ -64,6 +64,13 @@ namespace ConverterApp
             };
             osirisTab.Controls.Add(osirisPane);
 
+            var debugPane = new DebugPane(this)
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Size = debugTab.ClientSize
+            };
+            debugTab.Controls.Add(debugPane);
+
             Text += $" (LSLib v{Common.LibraryVersion()})";
 
             gr2Game.SelectedIndex = gr2Game.Items.Count - 1;

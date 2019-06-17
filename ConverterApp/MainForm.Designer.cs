@@ -35,6 +35,7 @@
             this.osirisTab = new System.Windows.Forms.TabPage();
             this.gr2Game = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.debugTab = new System.Windows.Forms.TabPage();
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -47,6 +48,7 @@
             this.tabControl.Controls.Add(this.packageTab);
             this.tabControl.Controls.Add(this.resourceTab);
             this.tabControl.Controls.Add(this.osirisTab);
+            this.tabControl.Controls.Add(this.debugTab);
             this.tabControl.Location = new System.Drawing.Point(12, 42);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
@@ -117,6 +119,15 @@
             this.label7.TabIndex = 29;
             this.label7.Text = "Game:";
             // 
+            // debugTab
+            // 
+            this.debugTab.Location = new System.Drawing.Point(4, 22);
+            this.debugTab.Name = "debugTab";
+            this.debugTab.Size = new System.Drawing.Size(909, 594);
+            this.debugTab.TabIndex = 4;
+            this.debugTab.Text = "Debugging";
+            this.debugTab.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -141,6 +152,7 @@
         private System.Windows.Forms.TabPage osirisTab;
         private System.Windows.Forms.ComboBox gr2Game;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TabPage debugTab;
     }
 }
 

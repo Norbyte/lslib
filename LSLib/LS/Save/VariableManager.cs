@@ -316,13 +316,13 @@ namespace LSLib.LS.Save
             VariableHelper = variableHelper;
         }
 
-        public Dictionary<string, object> GetAll()
+        public Dictionary<string, object> GetAll(bool includeDeleted = false)
         {
             var variables = new Dictionary<string, object>();
             foreach (var key in Keys.Values)
             {
                 var name = VariableHelper.GetName((int)key.NameIndex);
-                var value = Get(key.ValueType, key.ValueIndex);
+                var value = includeDeleted ? GetRaw(key.ValueType, key.ValueIndex) : Get(key.ValueType, key.ValueIndex);
                 if (value != null)
                 {
                     variables.Add(name, value);
@@ -349,6 +349,27 @@ namespace LSLib.LS.Save
                 case VariableType.String: return StringList.Get(index);
                 case VariableType.FixedString: return FixedStringList.Get(index);
                 case VariableType.Float3: return Float3List.Get(index);
+                default: throw new ArgumentException("Unsupported variable type");
+            }
+        }
+
+        public object GetRaw(string name)
+        {
+            var index = VariableHelper.GetKey(name);
+            var key = Keys[index];
+            return GetRaw(key.ValueType, key.ValueIndex);
+        }
+
+        private object GetRaw(VariableType type, int index)
+        {
+            switch (type)
+            {
+                case VariableType.Int: return IntList.GetRaw(index);
+                case VariableType.Int64: return Int64List.GetRaw(index);
+                case VariableType.Float: return FloatList.GetRaw(index);
+                case VariableType.String: return StringList.GetRaw(index);
+                case VariableType.FixedString: return FixedStringList.GetRaw(index);
+                case VariableType.Float3: return Float3List.GetRaw(index);
                 default: throw new ArgumentException("Unsupported variable type");
             }
         }

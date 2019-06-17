@@ -61,6 +61,14 @@ namespace ConverterApp
             set { storySettings = value; }
         }
 
+        private DebugPaneSettings debugSettings;
+
+        public DebugPaneSettings Debugging
+        {
+            get { return debugSettings; }
+            set { debugSettings = value; }
+        }
+
         private Game selectedGame = Game.DivinityOriginalSin2DE;
 
         public int SelectedGame
@@ -92,6 +100,7 @@ namespace ConverterApp
             PAK = new PackagePaneSettings();
             Resources = new ResourcePaneSettings();
             Story = new OsirisPaneSettings();
+            Debugging = new DebugPaneSettings();
         }
     }
 
@@ -276,6 +285,17 @@ namespace ConverterApp
         {
             get { return outputPath; }
             set { outputPath = value; OnPropertyChanged(); }
+        }
+    }
+
+    public class DebugPaneSettings : SettingsBase
+    {
+        private string savePath = "";
+
+        public string SavePath
+        {
+            get { return savePath; }
+            set { savePath = value; OnPropertyChanged(); }
         }
     }
 

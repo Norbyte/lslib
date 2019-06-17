@@ -5,7 +5,6 @@ using System.Linq;
 using System.Windows.Forms;
 using LSLib.LS;
 using LSLib.LS.Enums;
-using LSLib.LS.Save;
 using LSLib.LS.Story;
 using Node = LSLib.LS.Story.Node;
 
@@ -65,9 +64,9 @@ namespace ConverterApp
             }
         }
 
-        private Resource loadResourceFromSave(string path)
+        public static Resource LoadResourceFromSave(string path)
         {
-            var packageReader = new PackageReader(storyFilePath.Text);
+            var packageReader = new PackageReader(path);
             Package package = packageReader.Read();
 
             AbstractFileInfo abstractFileInfo = package.Files.FirstOrDefault(p => p.Name == "globals.lsf");
@@ -102,7 +101,7 @@ namespace ConverterApp
             {
                 case ".lsv":
                 {
-                    var resource = loadResourceFromSave(storyFilePath.Text);
+                    var resource = LoadResourceFromSave(storyFilePath.Text);
                     if (resource == null) return;
 
                     LSLib.LS.Node storyNode = resource.Regions["Story"].Children["Story"][0];
@@ -333,34 +332,6 @@ namespace ConverterApp
                 var sev = new StoryDebugExportVisitor(debugFileStream);
                 sev.Visit(_story);
             }
-        }
-
-        private void dumpVariablesBtn_Click(object sender, EventArgs e)
-        {
-            string extension = Path.GetExtension(storyFilePath.Text)?.ToLower();
-
-            if (extension != ".lsv")
-            {
-                MessageBox.Show($"Story variable dump is only supported on .LSV savegame files.", "Dump failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            var resource = loadResourceFromSave(storyFilePath.Text);
-            if (resource == null) return;
-
-            string dumpPath;
-            if (goalPath.Text.Length > 0)
-            {
-                dumpPath = goalPath.Text + "\\Variables.log";
-            }
-            else
-            {
-                dumpPath = Path.GetDirectoryName(storyFilePath.Text) + "\\" + Path.GetFileNameWithoutExtension(storyFilePath.Text) + ".Variables.log";
-            }
-            
-            var dumper = new VariableDumper(dumpPath);
-            dumper.Dump(resource);
-            MessageBox.Show($"Variables dumped to {dumpPath}.");
         }
     }
 }

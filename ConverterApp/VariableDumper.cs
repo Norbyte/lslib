@@ -1,30 +1,31 @@
 ﻿using LSLib.LS;
 using LSLib.LS.Save;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ConverterApp
 {
     class VariableDumper : IDisposable
     {
-        private FileStream File;
         private StreamWriter Writer;
+        private Resource Rsrc;
         private OsirisVariableHelper VariablesHelper;
 
-        public VariableDumper(string outputPath)
+        public bool IncludeDeletedVars { get; set; }
+        public bool IncludeLocalScopes { get; set; }
+
+        public VariableDumper(Stream outputStream)
         {
-            File = new FileStream(outputPath, FileMode.Create, FileAccess.Write);
-            Writer = new StreamWriter(File, Encoding.UTF8);
+            Writer = new StreamWriter(outputStream, Encoding.UTF8);
+            IncludeDeletedVars = false;
+            IncludeLocalScopes = false;
         }
 
         public void Dispose()
         {
             Writer.Dispose();
-            File.Dispose();
         }
 
         private void DumpCharacter(Node characterNode)
@@ -76,7 +77,15 @@ namespace ConverterApp
 
         private void DumpVariables(string label, VariableManager variableMgr)
         {
-            var variables = variableMgr.GetAll();
+            var variables = variableMgr.GetAll(IncludeDeletedVars);
+
+            if (!IncludeLocalScopes)
+            {
+                variables = variables
+                    .Where(kv => !kv.Key.Contains('.'))
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+            }
+
             if (variables.Count > 0)
             {
                 Writer.WriteLine($"{label}:");
@@ -89,27 +98,39 @@ namespace ConverterApp
             }
         }
 
-        public void Dump(Resource resource)
+        public void Load(Resource resource)
         {
+            Rsrc = resource;
             Node osiHelper = resource.Regions["OsirisVariableHelper"];
             VariablesHelper = new OsirisVariableHelper();
             VariablesHelper.Load(osiHelper);
+        }
 
+        public void DumpGlobals()
+        {
+            Node osiHelper = Rsrc.Regions["OsirisVariableHelper"];
             var globalVarsNode = osiHelper.Children["VariableManager"][0];
+
             Writer.WriteLine(" === DUMP OF GLOBALS === ");
             DumpGlobals(globalVarsNode);
+        }
 
+        public void DumpCharacters()
+        {
             Writer.WriteLine();
             Writer.WriteLine(" === DUMP OF CHARACTERS === ");
-            var characters = resource.Regions["Characters"].Children["CharacterFactory"][0].Children["Characters"][0].Children["Character"];
+            var characters = Rsrc.Regions["Characters"].Children["CharacterFactory"][0].Children["Characters"][0].Children["Character"];
             foreach (var character in characters)
             {
                 DumpCharacter(character);
             }
+        }
 
+        public void DumpItems()
+        {
             Writer.WriteLine();
             Writer.WriteLine(" === DUMP OF ITEMS === ");
-            var items = resource.Regions["Items"].Children["ItemFactory"][0].Children["Items"][0].Children["Item"];
+            var items = Rsrc.Regions["Items"].Children["ItemFactory"][0].Children["Items"][0].Children["Item"];
             foreach (var item in items)
             {
                 DumpItem(item);

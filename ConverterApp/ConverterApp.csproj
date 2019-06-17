@@ -82,6 +82,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConverterAppSettings.cs" />
+    <Compile Include="DatabaseDumper.cs" />
+    <Compile Include="DebugPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="DebugPane.Designer.cs">
+      <DependentUpon>DebugPane.cs</DependentUpon>
+    </Compile>
     <Compile Include="ExportItemSelection.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -121,6 +128,9 @@
       <DependentUpon>ResourcePane.cs</DependentUpon>
     </Compile>
     <Compile Include="VariableDumper.cs" />
+    <EmbeddedResource Include="DebugPane.resx">
+      <DependentUpon>DebugPane.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ExportItemSelection.resx">
       <DependentUpon>ExportItemSelection.cs</DependentUpon>
     </EmbeddedResource>
