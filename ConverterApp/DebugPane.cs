@@ -1,23 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using LSLib.LS.Story;
-using LSLib.LS;
 using System.IO;
 
 namespace ConverterApp
 {
     public partial class DebugPane : UserControl
     {
-        private Resource SaveRoot;
-        private Story SaveStory;
-
         public DebugPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
@@ -25,10 +14,36 @@ namespace ConverterApp
             saveFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Debugging.SavePath");
         }
 
-        private void loadSaveBtn_Click(object sender, EventArgs e)
+        private DebugDumperTask CreateDumperFromSettings()
         {
-            dumpVariablesBtn.Enabled = false;
+            string dumpPath = Path.GetDirectoryName(saveFilePath.Text) + "\\" + Path.GetFileNameWithoutExtension(saveFilePath.Text) + "\\";
 
+            var dumper = new DebugDumperTask
+            {
+                ExtractionPath = dumpPath + "SaveArchive",
+                DataDumpPath = dumpPath + "Dumps",
+
+                SaveFilePath = saveFilePath.Text,
+
+                ExtractAll = extractPackage.Checked,
+                ConvertToLsx = convertLsf.Checked,
+                DumpModList = exportModList.Checked,
+
+                DumpGlobalVars = dumpGlobalVars.Checked,
+                DumpCharacterVars = dumpCharacterVars.Checked,
+                DumpItemVars = dumpItemVars.Checked,
+                IncludeDeletedVars = includeDeleted.Checked,
+                IncludeLocalScopes = includeLocalScopes.Checked,
+
+                DumpStoryDatabases = dumpDatabases.Checked,
+                IncludeUnnamedDatabases = includeUnnamedDbs.Checked
+            };
+
+            return dumper;
+        }
+        
+        private void dumpVariablesBtn_Click(object sender, EventArgs e)
+        {
             string extension = Path.GetExtension(saveFilePath.Text)?.ToLower();
 
             if (extension != ".lsv")
@@ -37,53 +52,41 @@ namespace ConverterApp
                 return;
             }
 
-            // TODO - move save utilities to shared NS
-            SaveRoot = OsirisPane.LoadResourceFromSave(saveFilePath.Text);
-            if (SaveRoot == null) return;
-            
-            LSLib.LS.Node storyNode = SaveRoot.Regions["Story"].Children["Story"][0];
-            var storyStream = new MemoryStream(storyNode.Attributes["Story"].Value as byte[]);
-            var reader = new StoryReader();
-            SaveStory = reader.Read(storyStream);
+            dumpVariablesBtn.Enabled = false;
 
-            dumpVariablesBtn.Enabled = true;
-        }
+            var dumper = CreateDumperFromSettings();
 
-        private void dumpVariablesBtn_Click(object sender, EventArgs e)
-        {
-            string dumpPath = Path.GetDirectoryName(saveFilePath.Text) + "\\" + Path.GetFileNameWithoutExtension(saveFilePath.Text) + ".Variables.log";
-
-            using (var outputFile = new FileStream(dumpPath, FileMode.Create, FileAccess.Write))
+            var worker = new BackgroundWorker();
+            dumper.ReportProgress += (percent, statusText) => worker.ReportProgress(percent, statusText);
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += (pSender, pEvent) =>
             {
-                var varDumper = new VariableDumper(outputFile);
-                varDumper.IncludeDeletedVars = includeDeleted.Checked;
-                varDumper.IncludeLocalScopes = includeLocalScopes.Checked;
-                varDumper.Load(SaveRoot);
-
-                if (dumpGlobalVars.Checked)
+#if !DEBUG
+                try
                 {
-                    varDumper.DumpGlobals();
-                }
+#endif
+                    dumper.Run();
 
-                if (dumpCharacterVars.Checked)
+#if !DEBUG
+                }
+                catch (Exception exc)
                 {
-                    varDumper.DumpCharacters();
+                    string nl = Environment.NewLine;
+                    MessageBox.Show($"Internal error!{nl}{nl}{exc}", "Dump Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
-                if (dumpItemVars.Checked)
-                {
-                    varDumper.DumpItems();
-                }
-
-                if (dumpDatabases.Checked)
-                {
-                    var dbDumper = new DatabaseDumper(outputFile);
-                    dbDumper.DumpUnnamedDbs = includeUnnamedDbs.Checked;
-                    dbDumper.DumpAll(SaveStory);
-                }
-            }
-
-            MessageBox.Show($"Variables dumped to {dumpPath}.");
+#endif
+            };
+            worker.ProgressChanged += (pSender, pEvent) => {
+                dumpProgressBar.Value = pEvent.ProgressPercentage;
+                lblProgressStatus.Text = (string)pEvent.UserState;
+            };
+            worker.RunWorkerCompleted += (pSender, pEvent) =>
+            {
+                dumpProgressBar.Value = 0;
+                lblProgressStatus.Text = "";
+                dumpVariablesBtn.Enabled = true;
+            };
+            worker.RunWorkerAsync();
         }
 
         private void saveFileBrowseBtn_Click(object sender, EventArgs e)

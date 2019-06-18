@@ -3,7 +3,7 @@ using Alphaleonis.Win32.Filesystem;
 
 namespace LSLib.LS
 {
-    internal class FileManager
+    public class FileManager
     {
         public static void TryToCreateDirectory(string path)
         {

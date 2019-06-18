@@ -337,23 +337,19 @@ namespace LSLib.LS
             ProgressUpdate(file.Name, numerator, denominator, file);
         }
 
-        public void UncompressPackage(string packagePath, string outputPath, Func<AbstractFileInfo, bool> filter = null)
+        public void UncompressPackage(Package package, string outputPath, Func<AbstractFileInfo, bool> filter = null)
         {
             if (outputPath.Length > 0 && !outputPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
             {
                 outputPath += Path.DirectorySeparatorChar;
             }
 
-            ProgressUpdate("Reading package headers ...", 0, 1, null);
-            var reader = new PackageReader(packagePath);
-            Package package = reader.Read();
+            List<AbstractFileInfo> files = package.Files;
 
-	        List<AbstractFileInfo> files = package.Files;
-
-	        if (filter != null)
-	        {
-		        files = files.FindAll(obj => filter(obj));
-	        }
+            if (filter != null)
+            {
+                files = files.FindAll(obj => filter(obj));
+            }
 
             long totalSize = files.Sum(p => p.Size());
             long currentSize = 0;
@@ -389,8 +385,16 @@ namespace LSLib.LS
                     file.ReleaseStream();
                 }
             }
+        }
 
-            reader.Dispose();
+        public void UncompressPackage(string packagePath, string outputPath, Func<AbstractFileInfo, bool> filter = null)
+        {
+            ProgressUpdate("Reading package headers ...", 0, 1, null);
+            using (var reader = new PackageReader(packagePath))
+            {
+                Package package = reader.Read();
+                UncompressPackage(package, outputPath, filter);
+            }
         }
 
         private static Package CreatePackageFromPath(string path)

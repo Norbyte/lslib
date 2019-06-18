@@ -83,6 +83,7 @@
   <ItemGroup>
     <Compile Include="ConverterAppSettings.cs" />
     <Compile Include="DatabaseDumper.cs" />
+    <Compile Include="DebugDumper.cs" />
     <Compile Include="DebugPane.cs">
       <SubType>UserControl</SubType>
     </Compile>

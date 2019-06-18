@@ -11,6 +11,25 @@ namespace LSLib.LS
         { }
     }
 
+    public struct PackedVersion
+    {
+        public Byte Major;
+        public Byte Minor;
+        public Byte Revision;
+        public UInt16 Build;
+
+        public static PackedVersion FromInt(Int32 packed)
+        {
+            return new PackedVersion
+            {
+                Major = (byte)((packed >> 28) & 0x0f),
+                Minor = (byte)((packed >> 24) & 0x0f),
+                Revision = (byte)((packed >> 20) & 0xff),
+                Build = (UInt16)(packed & 0xffff),
+            };
+        }
+    }
+
     public struct LSMetadata
     {
         public const uint CurrentMajorVersion = 33;
