@@ -79,8 +79,25 @@ namespace LSLib.LS.Story
                 // If a logical index is present, emit a column from the input tuple
                 if (index != -1)
                 {
-                    var value = columns.Logical[index];
-                    result.Physical.Add(value);
+                    if (columns.Logical.ContainsKey(index))
+                    {
+                        var value = columns.Logical[index];
+                        result.Physical.Add(value);
+                    }
+                    else if (index == 0)
+                    {
+                        // Special case for savegames where adapters are padded with 0 logical indices
+                        var nullValue = new Variable
+                        {
+                            TypeId = (uint)Value.Type.None,
+                            Unused = true
+                        };
+                        result.Physical.Add(nullValue);
+                    }
+                    else
+                    {
+                        throw new InvalidDataException($"Logical column index {index} does not exist in tuple.");
+                    }
                 }
                 // Otherwise check if a constant is mapped to the specified logical index
                 else if (Constants.Logical.ContainsKey(i))
