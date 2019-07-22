@@ -6,7 +6,18 @@ using System.Text.RegularExpressions;
 
 namespace LSLib.LS.Stats.StatParser
 {
-    public abstract class StatScanBase : AbstractScanner<StatNode, CodeLocation>
+    /// <summary>
+    /// A collection of sub-stats.
+    /// </summary>
+    using StatCollection = List<object>;
+
+    /// <summary>
+    /// Declarations node - contains every declaration from the story header file.
+    /// </summary>
+    using StatDeclarations = List<StatDeclaration>;
+
+
+    public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
     {
         protected String fileName;
 
@@ -14,12 +25,9 @@ namespace LSLib.LS.Stats.StatParser
         
         protected virtual bool yywrap() { return true; }
 
-        protected StatLiteral MakeLiteral(string lit) => new StatLiteral()
-        {
-            Literal = lit
-        };
+        protected string MakeLiteral(string lit) => lit;
 
-        protected StatLiteral MakeString(string lit)
+        protected string MakeString(string lit)
         {
             return MakeLiteral(Regex.Unescape(lit.Substring(1, lit.Length - 2)));
         }
@@ -63,16 +71,15 @@ namespace LSLib.LS.Stats.StatParser
 
         public StatDeclarations GetDeclarations()
         {
-            return CurrentSemanticValue as StatDeclarations;
+            return (StatDeclarations)CurrentSemanticValue;
         }
 
         private StatDeclarations MakeDeclarationList() => new StatDeclarations();
 
-        private StatDeclarations AddDeclaration(StatNode declarations, StatNode declaration)
+        private StatDeclarations AddDeclaration(object declarations, object declaration)
         {
-            var decls = declarations as StatDeclarations;
-            var decl = declaration as StatDeclaration;
-            decls.Declarations.Add(decl);
+            var decls = (StatDeclarations)declarations;
+            decls.Add((StatDeclaration)declaration);
             return decls;
         }
 
@@ -102,15 +109,10 @@ namespace LSLib.LS.Stats.StatParser
             return MakeDeclaration(null, properties);
         }
 
-        private StatWrappedDeclaration WrapDeclaration(StatNode node) => new StatWrappedDeclaration
+        private StatDeclaration MergeItemCombo(object comboNode, object resultNode)
         {
-            Declaration = node as StatDeclaration
-        };
-
-        private StatDeclaration MergeItemCombo(StatNode comboNode, StatNode resultNode)
-        {
-            var combo = comboNode as StatDeclaration;
-            var result = resultNode as StatDeclaration;
+            var combo = (StatDeclaration)comboNode;
+            var result = (StatDeclaration)resultNode;
             foreach (var kv in result.Properties)
             {
                 if (kv.Key != "EntityType" && kv.Key != "Name")
@@ -122,12 +124,12 @@ namespace LSLib.LS.Stats.StatParser
             return combo;
         }
 
-        private StatDeclaration AddProperty(StatNode declaration, StatNode property)
+        private StatDeclaration AddProperty(object declaration, object property)
         {
-            var decl = declaration as StatDeclaration;
+            var decl = (StatDeclaration)declaration;
             if (property is StatProperty)
             {
-                var prop = property as StatProperty;
+                var prop = (StatProperty)property;
                 decl.Properties[prop.Key] = prop.Value;
                 if (prop.Location != null)
                 {
@@ -136,7 +138,7 @@ namespace LSLib.LS.Stats.StatParser
             }
             else if (property is StatElement)
             {
-                var ele = property as StatElement;
+                var ele = (StatElement)property;
                 object cont;
                 if (!decl.Properties.TryGetValue(ele.Collection, out cont))
                 {
@@ -148,7 +150,7 @@ namespace LSLib.LS.Stats.StatParser
             }
             else if (property is StatDeclaration)
             {
-                var otherDecl = property as StatDeclaration;
+                var otherDecl = (StatDeclaration)property;
                 foreach (var kv in otherDecl.Properties)
                 {
                     decl.Properties[kv.Key] = kv.Value;
@@ -167,16 +169,16 @@ namespace LSLib.LS.Stats.StatParser
             return decl;
         }
 
-        private StatProperty MakeProperty(StatNode key, StatNode value) => new StatProperty()
+        private StatProperty MakeProperty(object key, object value) => new StatProperty()
         {
-            Key = (key as StatLiteral).Literal,
-            Value = (value as StatLiteral).Literal
+            Key = (string)key,
+            Value = (string)value
         };
 
-        private StatProperty MakeProperty(String key, StatNode value) => new StatProperty()
+        private StatProperty MakeProperty(String key, object value) => new StatProperty()
         {
             Key = key,
-            Value = (value as StatLiteral).Literal
+            Value = (string)value
         };
 
         private StatProperty MakeProperty(String key, String value) => new StatProperty()
@@ -185,17 +187,17 @@ namespace LSLib.LS.Stats.StatParser
             Value = value
         };
 
-        private StatProperty MakeProperty(CodeLocation location, StatNode key, StatNode value) => new StatProperty()
+        private StatProperty MakeProperty(CodeLocation location, object key, object value) => new StatProperty()
         {
-            Key = (key as StatLiteral).Literal,
-            Value = (value as StatLiteral).Literal,
+            Key = (string)key,
+            Value = (string)value,
             Location = location
         };
 
-        private StatProperty MakeProperty(CodeLocation location, String key, StatNode value) => new StatProperty()
+        private StatProperty MakeProperty(CodeLocation location, String key, object value) => new StatProperty()
         {
             Key = key,
-            Value = (value as StatLiteral).Literal,
+            Value = (string)value,
             Location = location
         };
 
@@ -206,14 +208,14 @@ namespace LSLib.LS.Stats.StatParser
             Location = location
         };
 
-        private StatElement MakeElement(String key, StatNode value)
+        private StatElement MakeElement(String key, object value)
         {
-            if (value is StatLiteral)
+            if (value is string)
             {
                 return new StatElement()
                 {
                     Collection = key,
-                    Value = (value as StatLiteral).Literal
+                    Value = (string)value
                 };
             }
             else if (value is StatCollection)
@@ -221,7 +223,7 @@ namespace LSLib.LS.Stats.StatParser
                 return new StatElement()
                 {
                     Collection = key,
-                    Value = (value as StatCollection).Collection
+                    Value = (StatCollection)value
                 };
             }
             else if (value is StatDeclaration)
@@ -238,26 +240,17 @@ namespace LSLib.LS.Stats.StatParser
             }
         }
 
-        private StatElement MakeElement(String key, object value) => new StatElement()
-        {
-            Collection = key,
-            Value = value
-        };
+        private StatCollection MakeCollection() => new List<object>();
 
-        private StatCollection MakeCollection() => new StatCollection
+        private StatCollection AddElement(object collection, object element)
         {
-            Collection = new List<object>()
-        };
-
-        private StatCollection AddElement(StatNode collection, StatNode element)
-        {
-            var coll = collection as StatCollection;
-            var ele = element as StatLiteral;
-            coll.Collection.Add(ele.Literal);
+            var coll = (StatCollection)collection;
+            var ele = (string)element;
+            coll.Add(ele);
 
             return coll;
         }
 
-        private string Unwrap(StatNode node) => (node as StatLiteral).Literal;
+        private string Unwrap(object node) => (string)node;
     }
 }

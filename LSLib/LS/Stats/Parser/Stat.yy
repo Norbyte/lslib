@@ -3,7 +3,7 @@
 %visibility public
 %parsertype StatParser
 %tokentype StatTokens
-%YYSTYPE LSLib.LS.Stats.StatParser.StatNode
+%YYSTYPE System.Object
 %YYLTYPE LSLib.LS.Story.GoalParser.CodeLocation
 
 %start StatFile
