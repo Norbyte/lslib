@@ -17,7 +17,7 @@ nonseparator [^,;:()|!& ]
 "__TYPE_Requirements__" return (int)StatPropertyTokens.EXPR_REQUIREMENTS;
 
 /* Property Contexts */
-"SELF"       return (int)StatPropertyTokens.CTX_SELF;
+[Ss][Ee][Ll][Ff] return (int)StatPropertyTokens.CTX_SELF;
 "TARGET"     return (int)StatPropertyTokens.CTX_TARGET;
 "AOE"        return (int)StatPropertyTokens.CTX_AOE;
 "OnHit"      return (int)StatPropertyTokens.CTX_ON_HIT;

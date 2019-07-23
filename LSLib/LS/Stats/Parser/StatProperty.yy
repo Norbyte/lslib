@@ -280,6 +280,7 @@ Conditions : /* empty */
            ;
 
 Condition : NAME { $$ = MakeCondition($1, null); } /* FIXME - recheck for SKILL_CONDITION */
+          | CTX_SELF { $$ = MakeCondition($1, null); } /* Conflict with "SELF" action context token */
           | COMBAT { $$ = MakeCondition($1, null); } /* Token conflict between requirements and the condition "Combat" */
           | ACT_SUMMON { $$ = MakeCondition($1, null); } /* Token conflict between actions and the condition "Summon" */
           | SKILL_CONDITION_1ARG ':' TextArg { $$ = MakeCondition($1, $3); }
