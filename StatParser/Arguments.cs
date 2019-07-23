@@ -31,5 +31,13 @@ namespace LSTools.StatParser
             Optional = true
         )]
         public string SODPath;
+
+        [ValueArgument(typeof(string), "package-paths",
+            Description = "Additional package path(s)",
+            AllowMultiple = true,
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string[] PackagePaths;
     }
 }

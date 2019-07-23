@@ -3,6 +3,7 @@ using LSLib.LS.Stats;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace LSTools.StatParser
 {
@@ -87,7 +88,7 @@ namespace LSTools.StatParser
             Console.ResetColor();
         }
 
-        public void Check(List<string> mods)
+        public void Check(List<string> mods, List<string> packagePaths)
         {
             Context = new StatLoadingContext();
 
@@ -95,21 +96,25 @@ namespace LSTools.StatParser
             Context.Definitions = Definitions;
 
             Loader = new StatLoader(Context);
-
-            if (mods.Count > 0)
+            
+            var visitor = new ModPathVisitor(Mods)
             {
-                var visitor = new ModPathVisitor(Mods)
-                {
-                    Game = LSLib.LS.Story.Compiler.TargetGame.DOS2DE,
-                    CollectStats = true,
-                    LoadPackages = LoadPackages
-                };
-                visitor.Discover(GameDataPath);
+                Game = LSLib.LS.Story.Compiler.TargetGame.DOS2DE,
+                CollectStats = true,
+                LoadPackages = LoadPackages
+            };
+            visitor.Discover(GameDataPath);
+            packagePaths.ForEach(path => visitor.DiscoverUserPackages(path));
+
+            // Wildcard value "*" means "all mods"
+            if (mods.Count == 1 && mods[0] == "*")
+            {
+                mods = Mods.Mods.Keys.ToList();
+            }
                 
-                foreach (var modName in mods)
-                {
-                    LoadMod(modName);
-                }
+            foreach (var modName in mods)
+            {
+                LoadMod(modName);
             }
             
             Loader.ResolveBaseClasses();

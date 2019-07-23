@@ -199,7 +199,7 @@ namespace LSLib.LS
             }
         }
 
-        private void DiscoverPackage(string packagePath)
+        public void DiscoverPackage(string packagePath)
         {
             var reader = new PackageReader(packagePath);
             Resources.LoadedPackages.Add(reader);
@@ -211,7 +211,7 @@ namespace LSLib.LS
             }
         }
 
-        private void DiscoverPackages(string gameDataPath)
+        private void DiscoverBuiltinPackages(string gameDataPath)
         {
             // List of packages we won't ever load
             // These packages don't contain any mod resources, but have a large
@@ -341,7 +341,7 @@ namespace LSLib.LS
             }
         }
 
-        private void DiscoverModDirectory(string modName, string modPath)
+        public void DiscoverModDirectory(string modName, string modPath)
         {
             if (CollectStoryGoals)
             {
@@ -389,7 +389,7 @@ namespace LSLib.LS
             }
         }
 
-        private void DiscoverMods(string gameDataPath)
+        public void DiscoverMods(string gameDataPath)
         {
             var modPaths = Directory.GetDirectories(gameDataPath + @"\\Mods");
 
@@ -407,7 +407,7 @@ namespace LSLib.LS
         {
             if (LoadPackages)
             {
-                DiscoverPackages(gameDataPath);
+                DiscoverBuiltinPackages(gameDataPath);
             }
 
             DiscoverMods(gameDataPath);
