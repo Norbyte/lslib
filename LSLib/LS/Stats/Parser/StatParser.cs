@@ -226,12 +226,20 @@ namespace LSLib.LS.Stats.StatParser
                     Value = (StatCollection)value
                 };
             }
+            else if (value is Dictionary<string, object>)
+            {
+                return new StatElement()
+                {
+                    Collection = key,
+                    Value = (Dictionary<string, object>)value
+                };
+            }
             else if (value is StatDeclaration)
             {
                 return new StatElement()
                 {
                     Collection = key,
-                    Value = (value as StatDeclaration).Properties
+                    Value = ((StatDeclaration)value).Properties
                 };
             }
             else

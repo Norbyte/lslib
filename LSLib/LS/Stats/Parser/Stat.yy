@@ -172,9 +172,9 @@ ItemColorHeader : NEW ITEMCOLOR STRING ',' STRING ',' STRING ',' STRING
                 { $$ = MakeDeclaration(@$, new [] {
 					MakeProperty(@3, "ItemColorName", $3),
 					MakeProperty("EntityType", "ItemColor"),
-					MakeProperty(@5, "PrimaryColor", $5),
-					MakeProperty(@7, "SecondaryColor", $7),
-					MakeProperty(@9, "TertiaryColor", $9),
+					MakeProperty(@5, "Primary Color", $5),
+					MakeProperty(@7, "Secondary Color", $7),
+					MakeProperty(@9, "Tertiary Color", $9),
 				}); };
 
 ItemProgressionNamesHeader : NEW NAMEGROUP STRING
