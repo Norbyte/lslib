@@ -99,12 +99,6 @@ namespace LSLib.LS.Stats
                 succeeded = true;
                 return value;
             }
-            else if (Int32.TryParse(value, out int valueIndex)
-                && valueIndex >= 0 && valueIndex < Enumeration.Values.Count)
-            {
-                succeeded = true;
-                return Enumeration.Values[valueIndex];
-            }
             else
             {
                 succeeded = false;
@@ -212,10 +206,14 @@ namespace LSLib.LS.Stats
 
             foreach (var item in value.Split(new char[] { ';' }))
             {
-                Parser.Parse(item.Trim(new char[] { ' ' }), ref succeeded, ref errorText);
-                if (!succeeded)
+                var trimmed = item.Trim(new char[] { ' ' });
+                if (trimmed.Length > 0)
                 {
-                    return null;
+                    Parser.Parse(trimmed, ref succeeded, ref errorText);
+                    if (!succeeded)
+                    {
+                        return null;
+                    }
                 }
             }
 
