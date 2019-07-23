@@ -183,13 +183,57 @@ namespace LSLib.LS.Stats
         }
     }
 
+    class StatLoaderReferenceValidator : IStatReferenceValidator
+    {
+        private readonly StatLoadingContext Context;
+
+        public StatLoaderReferenceValidator(StatLoadingContext ctx)
+        {
+            Context = ctx;
+        }
+
+        public bool IsValidReference(string reference, string statType, string statSubtype)
+        {
+            if (Context.DeclarationsByType.TryGetValue(statType, out var stats))
+            {
+                if (stats.TryGetValue(reference, out var stat))
+                {
+                    if (statSubtype == null)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        var subtypeProperty = Context.Definitions.Definitions[statType].SubtypeProperty;
+                        if (subtypeProperty == null)
+                        {
+                            throw new Exception($"Reference constraint found for stat type '{statType}' that has no subtype.");
+                        }
+
+                        var subtype = (string)stat.Properties[subtypeProperty];
+                        if (statSubtype == subtype)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+    }
+
     public class StatLoader
     {
         private readonly StatLoadingContext Context;
+        private StatValueParserFactory ParserFactory;
+        private StatLoaderReferenceValidator ReferenceValidator;
 
         public StatLoader(StatLoadingContext ctx)
         {
             Context = ctx;
+            ReferenceValidator = new StatLoaderReferenceValidator(ctx);
+            ParserFactory = new StatValueParserFactory(ReferenceValidator);
         }
 
         private List<StatDeclaration> ParseStatStream(string path, Stream stream)
@@ -317,7 +361,7 @@ namespace LSLib.LS.Stats
 
             if (field.Type != "Passthrough")
             {
-                parsed = field.Parser.Parse((string)value, ref succeeded, ref errorText);
+                parsed = field.GetParser(ParserFactory).Parse((string)value, ref succeeded, ref errorText);
             }
             else
             {

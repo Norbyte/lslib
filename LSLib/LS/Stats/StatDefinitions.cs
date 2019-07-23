@@ -34,20 +34,18 @@ namespace LSLib.LS.Stats
         public string Name;
         public string Type;
         public StatEnumeration EnumType;
+        public List<StatReferenceConstraint> ReferenceTypes;
 
         private IStatValueParser parser;
 
-        public IStatValueParser Parser
+        public IStatValueParser GetParser(StatValueParserFactory factory)
         {
-            get
+            if (parser == null)
             {
-                if (parser == null)
-                {
-                    parser = StatValueParserFactory.CreateParser(this);
-                }
-
-                return parser;
+                parser = factory.CreateParser(this);
             }
+
+            return parser;
         }
     }
 
@@ -106,6 +104,7 @@ namespace LSLib.LS.Stats
             var fieldName = field.Attribute("export_name").Value;
             var typeName = field.Attribute("type").Value;
             StatEnumeration enumeration = null;
+            List<StatReferenceConstraint> referenceConstraints = null;
 
             switch (typeName)
             {
@@ -137,6 +136,28 @@ namespace LSLib.LS.Stats
                     }
                     break;
 
+                case "StatReference":
+                case "StatReferences":
+                    referenceConstraints = new List<StatReferenceConstraint>();
+                    var descriptions = field.Element("stat_descriptions");
+                    if (descriptions == null)
+                    {
+                        throw new Exception("Field of type 'StatReference' must have a list of stat types in the <stat_descriptions> node");
+                    }
+
+                    var descs = descriptions.Elements("description");
+                    foreach (var desc in descs)
+                    {
+                        var constraint = new StatReferenceConstraint
+                        {
+                            StatType = desc.Attribute("stat_type").Value,
+                            StatSubtype = desc.Attribute("stat_subtype")?.Value ?? null
+                        };
+                        referenceConstraints.Add(constraint);
+                    }
+
+                    break;
+
                 case "Boolean":
                 case "Integer":
                 case "Float":
@@ -144,12 +165,12 @@ namespace LSLib.LS.Stats
                 case "TranslatedString":
                 case "RootTemplate":
                 case "Comment":
-                case "StatReference":
                 case "Color":
                 case "Requirements":
                 case "Properties":
                 case "Conditions":
                 case "Passthrough":
+                case "UUID":
                     break;
 
                 default:
@@ -160,7 +181,8 @@ namespace LSLib.LS.Stats
             {
                 Name = fieldName,
                 Type = typeName,
-                EnumType = enumeration
+                EnumType = enumeration,
+                ReferenceTypes = referenceConstraints
             };
             subtype.Fields.Add(fieldName, statField);
 

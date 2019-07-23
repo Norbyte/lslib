@@ -12,7 +12,18 @@ namespace LSLib.LS.Stats
     {
         object Parse(string value, ref bool succeeded, ref string errorText);
     }
-    
+
+    public class StatReferenceConstraint
+    {
+        public string StatType;
+        public string StatSubtype;
+    }
+
+    public interface IStatReferenceValidator
+    {
+        bool IsValidReference(string reference, string statType, string statSubtype);
+    }
+
     public class BooleanParser : IStatValueParser
     {
         public object Parse(string value, ref bool succeeded, ref string errorText)
@@ -139,6 +150,79 @@ namespace LSLib.LS.Stats
         }
     }
 
+    public class UUIDParser : IStatValueParser
+    {
+        public object Parse(string value, ref bool succeeded, ref string errorText)
+        {
+            if (Guid.TryParseExact(value, "D", out Guid parsed))
+            {
+                succeeded = true;
+                return parsed;
+            }
+            else
+            {
+                errorText = $"'{value}' is not a valid UUID";
+                succeeded = false;
+                return null;
+            }
+        }
+    }
+
+    public class StatReferenceParser : IStatValueParser
+    {
+        private IStatReferenceValidator Validator;
+        private List<StatReferenceConstraint> Constraints;
+
+        public StatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints)
+        {
+            Validator = validator;
+            Constraints = constraints;
+        }
+        
+        public object Parse(string value, ref bool succeeded, ref string errorText)
+        {
+            foreach (var constraint in Constraints)
+            {
+                if (Validator.IsValidReference(value, constraint.StatType, constraint.StatSubtype))
+                {
+                    succeeded = true;
+                    return value;
+                }
+            }
+
+            var refTypes = String.Join("/", Constraints.Select(c => c.StatType));
+            errorText = $"'{value}' is not a valid reference of type {refTypes}";
+            succeeded = false;
+            return null;
+        }
+    }
+
+    public class MultiValueStatReferenceParser : IStatValueParser
+    {
+        private readonly StatReferenceParser Parser;
+
+        public MultiValueStatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints)
+        {
+            Parser = new StatReferenceParser(validator, constraints);
+        }
+
+        public object Parse(string value, ref bool succeeded, ref string errorText)
+        {
+            succeeded = true;
+
+            foreach (var item in value.Split(new char[] { ';' }))
+            {
+                Parser.Parse(item.Trim(new char[] { ' ' }), ref succeeded, ref errorText);
+                if (!succeeded)
+                {
+                    return null;
+                }
+            }
+
+            return value;
+        }
+    }
+
     public class ExpressionParser : IStatValueParser
     {
         private readonly String ExpressionType;
@@ -187,9 +271,16 @@ namespace LSLib.LS.Stats
         }
     }
 
-    public static class StatValueParserFactory
+    public class StatValueParserFactory
     {
-        public static IStatValueParser CreateParser(StatField field)
+        private readonly IStatReferenceValidator ReferenceValidator;
+
+        public StatValueParserFactory(IStatReferenceValidator referenceValidator)
+        {
+            ReferenceValidator = referenceValidator;
+        }
+
+        public IStatValueParser CreateParser(StatField field)
         {
             switch (field.Type)
             {
@@ -217,13 +308,21 @@ namespace LSLib.LS.Stats
                 case "Float":
                     return new FloatParser();
 
+                case "UUID":
+                case "RootTemplate":
+                    return new UUIDParser();
+
+                case "StatReference":
+                    return new StatReferenceParser(ReferenceValidator, field.ReferenceTypes);
+
+                case "StatReferences":
+                    return new MultiValueStatReferenceParser(ReferenceValidator, field.ReferenceTypes);
+
                 case "BaseClass":
                 case "Name":
                 case "String":
                 case "TranslatedString":
-                case "RootTemplate": // TODO - validate as NameGUID
                 case "Comment":
-                case "StatReference":
                 case "Color":
                     return new StringParser();
 
