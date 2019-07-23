@@ -144,6 +144,7 @@
     <Compile Include="LS\LSXReader.cs" />
     <Compile Include="LS\LSXWriter.cs" />
     <Compile Include="LS\Matrix.cs" />
+    <Compile Include="LS\Mods\ModResources.cs" />
     <Compile Include="LS\NodeAttribute.cs" />
     <Compile Include="LS\PackageReader.cs" />
     <Compile Include="LS\PackageWriter.cs" />
@@ -159,6 +160,8 @@
     <Compile Include="LS\Stats\Parser\StatProperty.lex.cs" />
     <Compile Include="LS\Stats\Parser\StatProperty.yy.cs" />
     <Compile Include="LS\Stats\Parser\StatPropertyParser.cs" />
+    <Compile Include="LS\Stats\StatDefinitions.cs" />
+    <Compile Include="LS\Stats\StatFileParser.cs" />
     <Compile Include="LS\Stats\StatPropertyParsers.cs" />
     <Compile Include="LS\Story\Adapter.cs" />
     <Compile Include="LS\Story\Call.cs" />

@@ -298,14 +298,19 @@ namespace LSTools.StoryCompiler
             Logger.CompilationStarted();
             HasErrors = false;
             Compiler.Game = Game;
-            Mods.Game = Game;
 
             if (mods.Count > 0)
             {
                 Logger.TaskStarted("Discovering module files");
-                Mods.CollectNames = CheckGameObjects;
-                Mods.LoadPackages = LoadPackages;
-                Mods.Discover(GameDataPath);
+                var visitor = new ModPathVisitor(Mods)
+                {
+                    Game = Game,
+                    CollectStoryGoals = true,
+                    CollectGlobals = CheckGameObjects,
+                    CollectLevels = CheckGameObjects,
+                    LoadPackages = LoadPackages
+                };
+                visitor.Discover(GameDataPath);
                 Logger.TaskFinished();
 
                 Logger.TaskStarted("Loading module files");

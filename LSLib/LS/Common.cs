@@ -7,7 +7,7 @@ namespace LSLib.LS
 	{
 		public const int MajorVersion = 1;
 
-		public const int MinorVersion = 13;
+		public const int MinorVersion = 14;
 
 		public const int PatchVersion = 0;
 

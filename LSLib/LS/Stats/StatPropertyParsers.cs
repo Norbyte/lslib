@@ -12,7 +12,7 @@ namespace LSLib.LS.Stats
     {
         object Parse(string value, ref bool succeeded, ref string errorText);
     }
-
+    
     public class BooleanParser : IStatValueParser
     {
         public object Parse(string value, ref bool succeeded, ref string errorText)
@@ -69,14 +69,11 @@ namespace LSLib.LS.Stats
 
     public class EnumParser : IStatValueParser
     {
-        private readonly ISet<string> EnumLabels;
-        private readonly Type EnumType;
+        private readonly StatEnumeration Enumeration;
 
-        public EnumParser(Type enumType)
+        public EnumParser(StatEnumeration enumeration)
         {
-            string[] names = Enum.GetNames(enumType);
-            EnumLabels = new HashSet<string>(names);
-            EnumType = enumType;
+            Enumeration = enumeration ?? throw new ArgumentNullException();
         }
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
@@ -86,15 +83,21 @@ namespace LSLib.LS.Stats
                 value = "None";
             }
 
-            if (EnumLabels.Contains(value))
+            if (Enumeration.ValueToIndexMap.ContainsKey(value))
             {
                 succeeded = true;
-                return Enum.Parse(EnumType, value);
+                return value;
+            }
+            else if (Int32.TryParse(value, out int valueIndex)
+                && valueIndex >= 0 && valueIndex < Enumeration.Values.Count)
+            {
+                succeeded = true;
+                return Enumeration.Values[valueIndex];
             }
             else
             {
                 succeeded = false;
-                errorText = "expected one of: " + String.Join(", ", EnumLabels.Take(4)) + ", ...";
+                errorText = "expected one of: " + String.Join(", ", Enumeration.Values.Take(4)) + ", ...";
                 return null;
             }
         }
@@ -104,9 +107,9 @@ namespace LSLib.LS.Stats
     {
         private readonly EnumParser Parser;
 
-        public MultiValueEnumParser(Type enumType)
+        public MultiValueEnumParser(StatEnumeration enumeration)
         {
-            Parser = new EnumParser(enumType);
+            Parser = new EnumParser(enumeration);
         }
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
@@ -186,46 +189,46 @@ namespace LSLib.LS.Stats
 
     public static class StatValueParserFactory
     {
-        public static IStatValueParser CreateParser(Type type, String parserName = null)
+        public static IStatValueParser CreateParser(StatField field)
         {
-            if (parserName != null)
+            switch (field.Type)
             {
-                switch (parserName)
-                {
-                    case "Requirements": return new ExpressionParser("Requirements");
-                    case "MemorizationRequirements": return new ExpressionParser("Requirements");
-                    case "Properties": return new ExpressionParser("Properties");
-                    case "Conditions": return new ConditionsParser();
-                    case "AttributeFlags": return new MultiValueEnumParser(type);
-                    case "AIFlags": return new EnumParser(type);
-                    default:
-                        throw new ArgumentException($"Parser not supported: {parserName}");
-                }
-            }
+                case "Requirements":
+                    return new ExpressionParser("Requirements");
 
-            if (type.IsEnum)
-            {
-                return new EnumParser(type);
-            }
-            else if (type == typeof(Boolean) || type == typeof(Boolean?))
-            {
-                return new BooleanParser();
-            }
-            else if (type == typeof(Int32) || type == typeof(Int32?))
-            {
-                return new Int32Parser();
-            }
-            else if (type == typeof(Single) || type == typeof(Single?))
-            {
-                return new FloatParser();
-            }
-            else if (type == typeof(String))
-            {
-                return new StringParser();
-            }
-            else
-            {
-                throw new ArgumentException($"Could not create parser for type {type.Name}");
+                case "Properties":
+                    return new ExpressionParser("Properties");
+
+                case "Conditions":
+                    return new ConditionsParser();
+
+                case "Enumeration":
+                    return new EnumParser(field.EnumType);
+
+                case "EnumerationList":
+                    return new MultiValueEnumParser(field.EnumType);
+                    
+                case "Boolean":
+                    return new BooleanParser();
+
+                case "Integer":
+                    return new Int32Parser();
+
+                case "Float":
+                    return new FloatParser();
+
+                case "BaseClass":
+                case "Name":
+                case "String":
+                case "TranslatedString":
+                case "RootTemplate": // TODO - validate as NameGUID
+                case "Comment":
+                case "StatReference":
+                case "Color":
+                    return new StringParser();
+
+                default:
+                    throw new ArgumentException($"Could not create parser for type '{field.Type}'");
             }
         }
     }

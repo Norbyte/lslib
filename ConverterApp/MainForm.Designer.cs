@@ -33,9 +33,9 @@
             this.packageTab = new System.Windows.Forms.TabPage();
             this.resourceTab = new System.Windows.Forms.TabPage();
             this.osirisTab = new System.Windows.Forms.TabPage();
+            this.debugTab = new System.Windows.Forms.TabPage();
             this.gr2Game = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.debugTab = new System.Windows.Forms.TabPage();
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -95,6 +95,15 @@
             this.osirisTab.Text = "Story (OSI) tools";
             this.osirisTab.UseVisualStyleBackColor = true;
             // 
+            // debugTab
+            // 
+            this.debugTab.Location = new System.Drawing.Point(4, 22);
+            this.debugTab.Name = "debugTab";
+            this.debugTab.Size = new System.Drawing.Size(909, 594);
+            this.debugTab.TabIndex = 4;
+            this.debugTab.Text = "Savegame Debugging";
+            this.debugTab.UseVisualStyleBackColor = true;
+            // 
             // gr2Game
             // 
             this.gr2Game.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -118,15 +127,6 @@
             this.label7.Size = new System.Drawing.Size(38, 13);
             this.label7.TabIndex = 29;
             this.label7.Text = "Game:";
-            // 
-            // debugTab
-            // 
-            this.debugTab.Location = new System.Drawing.Point(4, 22);
-            this.debugTab.Name = "debugTab";
-            this.debugTab.Size = new System.Drawing.Size(909, 594);
-            this.debugTab.TabIndex = 4;
-            this.debugTab.Text = "Debugging";
-            this.debugTab.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 

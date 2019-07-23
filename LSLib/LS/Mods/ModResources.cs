@@ -1,22 +1,22 @@
-﻿using LSLib.LS;
-using LSLib.LS.Story.Compiler;
+﻿using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace LSTools.StoryCompiler
+namespace LSLib.LS
 {
     public class ModInfo
     {
-        public String Name;
+        public string Name;
         public AbstractFileInfo Meta;
         public Dictionary<string, AbstractFileInfo> Scripts = new Dictionary<string, AbstractFileInfo>();
+        public Dictionary<string, AbstractFileInfo> Stats = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> Globals = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> LevelObjects = new Dictionary<string, AbstractFileInfo>();
         public AbstractFileInfo OrphanQueryIgnoreList;
 
-        public ModInfo(String name)
+        public ModInfo(string name)
         {
             Name = name;
         }
@@ -24,25 +24,40 @@ namespace LSTools.StoryCompiler
 
     public class ModResources : IDisposable
     {
-        private static readonly Regex metaRe = new Regex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex scriptRe = new Regex("^Mods/(.*)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/(.*)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex globalsRe = new Regex("^Mods/(.*)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex levelObjectsRe = new Regex("^Mods/(.*)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        // Pattern for excluding subsequent parts of a multi-part archive
-        private static readonly Regex archivePartRe = new Regex("^(.*)_[1-9]\\.pak$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
         public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
         public AbstractFileInfo StoryHeaderFile;
-        public TargetGame Game = TargetGame.DOS2;
-        public bool CollectNames = false;
-        public bool LoadPackages = true;
-        private List<PackageReader> LoadedPackages = new List<PackageReader>();
+        public List<PackageReader> LoadedPackages = new List<PackageReader>();
 
         public void Dispose()
         {
             LoadedPackages.ForEach(p => p.Dispose());
             LoadedPackages.Clear();
+        }
+    }
+
+    public class ModPathVisitor
+    {
+        private static readonly Regex metaRe = new Regex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex scriptRe = new Regex("^Mods/([^/]+)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex statRe = new Regex("^Public/([^/]+)/Stats/Generated/Data/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/([^/]+)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex globalsRe = new Regex("^Mods/([^/]+)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex levelObjectsRe = new Regex("^Mods/([^/]+)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        // Pattern for excluding subsequent parts of a multi-part archive
+        private static readonly Regex archivePartRe = new Regex("^(.*)_[1-9]\\.pak$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+        private readonly ModResources Resources;
+
+        public bool CollectStoryGoals = false;
+        public bool CollectStats = false;
+        public bool CollectGlobals = false;
+        public bool CollectLevels = false;
+        public bool LoadPackages = true;
+        public TargetGame Game = TargetGame.DOS2;
+
+        public ModPathVisitor(ModResources resources)
+        {
+            Resources = resources;
         }
 
         private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string pattern)
@@ -76,10 +91,10 @@ namespace LSTools.StoryCompiler
 
         private ModInfo GetMod(string modName)
         {
-            if (!Mods.TryGetValue(modName, out ModInfo mod))
+            if (!Resources.Mods.TryGetValue(modName, out ModInfo mod))
             {
                 mod = new ModInfo(modName);
-                Mods[modName] = mod;
+                Resources.Mods[modName] = mod;
             }
 
             return mod;
@@ -88,6 +103,11 @@ namespace LSTools.StoryCompiler
         private void AddMetadataToMod(string modName, AbstractFileInfo file)
         {
             GetMod(modName).Meta = file;
+        }
+
+        private void AddStatToMod(string modName, string path, AbstractFileInfo file)
+        {
+            GetMod(modName).Stats[path] = file;
         }
 
         private void AddScriptToMod(string modName, string scriptName, AbstractFileInfo file)
@@ -116,25 +136,45 @@ namespace LSTools.StoryCompiler
                 }
             }
 
-            if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
+            if (CollectStoryGoals)
             {
-                var match = scriptRe.Match(file.Name);
-                if (match != null && match.Success)
+                if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
                 {
-                    AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                    var match = scriptRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                    }
+                }
+
+                if (file.Name.EndsWith("/Story/story_orphanqueries_ignore_local.txt", StringComparison.Ordinal))
+                {
+                    var match = orphanQueryIgnoresRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        GetMod(match.Groups[1].Value).OrphanQueryIgnoreList = file;
+                    }
+                }
+
+                if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
+                {
+                    Resources.StoryHeaderFile = file;
                 }
             }
 
-            if (file.Name.EndsWith("/Story/story_orphanqueries_ignore_local.txt", StringComparison.Ordinal))
+            if (CollectStats)
             {
-                var match = orphanQueryIgnoresRe.Match(file.Name);
-                if (match != null && match.Success)
+                if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Stats/Generated/Data"))
                 {
-                    GetMod(match.Groups[1].Value).OrphanQueryIgnoreList = file;
+                    var match = statRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        AddStatToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                    }
                 }
             }
 
-            if (CollectNames)
+            if (CollectGlobals)
             {
                 if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
                 {
@@ -144,7 +184,10 @@ namespace LSTools.StoryCompiler
                         AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
                     }
                 }
+            }
 
+            if (CollectLevels)
+            {
                 if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Levels/"))
                 {
                     var match = levelObjectsRe.Match(file.Name);
@@ -154,17 +197,12 @@ namespace LSTools.StoryCompiler
                     }
                 }
             }
-
-            if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
-            {
-                StoryHeaderFile = file;
-            }
         }
 
         private void DiscoverPackage(string packagePath)
         {
             var reader = new PackageReader(packagePath);
-            LoadedPackages.Add(reader);
+            Resources.LoadedPackages.Add(reader);
             var package = reader.Read();
 
             foreach (var file in package.Files)
@@ -193,7 +231,7 @@ namespace LSTools.StoryCompiler
                 "SharedSounds.pak",
                 "Textures.pak"
             };
-            
+
             // Load non-patch packages first
             foreach (var path in Directory.GetFiles(gameDataPath, "*.pak"))
             {
@@ -245,6 +283,25 @@ namespace LSTools.StoryCompiler
             }
         }
 
+        private void DiscoverModStats(string modName, string modPublicPath)
+        {
+            var statsPath = modPublicPath + @"\Shared\Stats\Generated\Data";
+            if (!Directory.Exists(statsPath)) return;
+
+            List<string> statFiles = new List<string>();
+            EnumerateFiles(statFiles, statsPath, statsPath, "*.txt");
+
+            foreach (var statFile in statFiles)
+            {
+                var fileInfo = new FilesystemFileInfo
+                {
+                    FilesystemPath = statsPath + "\\" + statFile,
+                    Name = statFile
+                };
+                AddStatToMod(modName, statFile, fileInfo);
+            }
+        }
+
         private void DiscoverModGlobals(string modName, string modPath)
         {
             var globalsPath = modPath + @"\Globals";
@@ -286,36 +343,49 @@ namespace LSTools.StoryCompiler
 
         private void DiscoverModDirectory(string modName, string modPath)
         {
-            DiscoverModGoals(modName, modPath);
-            if (CollectNames)
+            if (CollectStoryGoals)
             {
-                DiscoverModGlobals(modName, modPath);
-                DiscoverModLevelObjects(modName, modPath);
-            }
+                DiscoverModGoals(modName, modPath);
 
-            if (!LoadPackages)
-            {
-                var headerPath = modPath + @"\Story\RawFiles\story_header.div";
-                if (File.Exists(headerPath))
+                if (!LoadPackages)
+                {
+                    var headerPath = modPath + @"\Story\RawFiles\story_header.div";
+                    if (File.Exists(headerPath))
+                    {
+                        var fileInfo = new FilesystemFileInfo
+                        {
+                            FilesystemPath = headerPath,
+                            Name = headerPath
+                        };
+                        Resources.StoryHeaderFile = fileInfo;
+                    }
+                }
+
+                var orphanQueryIgnoresPath = modPath + @"\Story\story_orphanqueries_ignore_local.txt";
+                if (File.Exists(orphanQueryIgnoresPath))
                 {
                     var fileInfo = new FilesystemFileInfo
                     {
-                        FilesystemPath = headerPath,
-                        Name = headerPath
+                        FilesystemPath = orphanQueryIgnoresPath,
+                        Name = orphanQueryIgnoresPath
                     };
-                    StoryHeaderFile = fileInfo;
+                    GetMod(modName).OrphanQueryIgnoreList = fileInfo;
                 }
             }
 
-            var orphanQueryIgnoresPath = modPath + @"\Story\story_orphanqueries_ignore_local.txt";
-            if (File.Exists(orphanQueryIgnoresPath))
+            if (CollectStats)
             {
-                var fileInfo = new FilesystemFileInfo
-                {
-                    FilesystemPath = orphanQueryIgnoresPath,
-                    Name = orphanQueryIgnoresPath
-                };
-                GetMod(modName).OrphanQueryIgnoreList = fileInfo;
+                DiscoverModStats(modName, modPath);
+            }
+
+            if (CollectGlobals)
+            {
+                DiscoverModGlobals(modName, modPath);
+            }
+
+            if (CollectLevels)
+            {
+                DiscoverModLevelObjects(modName, modPath);
             }
         }
 
