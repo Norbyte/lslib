@@ -373,7 +373,7 @@ namespace LSLib.Granny.Model
             var transforms = Keyframes.Where(f => f.Value.HasScaleShear).Select(f => f.Value.ScaleShear).ToList();
 
             var i = 2;
-            while (i < transforms.Count)
+            while (i < transforms.Count - 1)
             {
                 Matrix3 t0 = transforms[i - 2],
                     t1 = transforms[i - 1],
@@ -402,19 +402,27 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (transforms.Count == 2)
+            if (transforms.Count == 3)
             {
+                Matrix3 t0 = transforms[0],
+                    t1 = transforms[1],
+                    t2 = transforms[2];
                 float diff = 0.0f;
                 for (var x = 0; x < 3; x++)
                 {
                     for (var y = 0; y < 3; y++)
                     {
-                        diff += Math.Abs(transforms[0][x, y] - transforms[1][x, y]);
+                        diff += Math.Abs(t0[x, y] - t1[x, y]) + Math.Abs(t0[x, y] - t2[x, y]);
                     }
                 }
 
                 if (diff < 0.001f)
                 {
+                    Keyframes[times[2]].HasScaleShear = false;
+                    Keyframes[times[2]].ScaleShear = Matrix3.Identity;
+                    times.RemoveAt(2);
+                    transforms.RemoveAt(2);
+
                     Keyframes[times[1]].HasScaleShear = false;
                     Keyframes[times[1]].ScaleShear = Matrix3.Identity;
                     times.RemoveAt(1);
