@@ -688,7 +688,7 @@ namespace LSLib.Granny.Model
                 if (importAnim.ImportFromCollada(colladaAnim, skeleton))
                 {
                     duration = Math.Max(duration, importAnim.Duration);
-                    var track = importAnim.MakeTrack();
+                    var track = importAnim.MakeTrack(Options.RemoveTrivialAnimationKeys);
                     trackGroup.TransformTracks.Add(track);
                 }
             }

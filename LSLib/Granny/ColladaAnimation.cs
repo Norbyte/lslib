@@ -154,13 +154,17 @@ namespace LSLib.Granny
             return true;
         }
         
-        public TransformTrack MakeTrack()
+        public TransformTrack MakeTrack(bool removeTrivialKeys)
         {
             var keyframes = KeyframeTrack.FromMatrices(Times, Transforms);
-            keyframes.RemoveTrivialTranslations();
-            keyframes.RemoveTrivialRotations();
-            keyframes.RemoveTrivialScales();
-            keyframes.RemoveTrivialFrames();
+
+            if (removeTrivialKeys)
+            {
+                keyframes.RemoveTrivialTranslations();
+                keyframes.RemoveTrivialRotations();
+                keyframes.RemoveTrivialScales();
+                keyframes.RemoveTrivialFrames();
+            }
 
             var track = TransformTrack.FromKeyframes(keyframes);
             track.Flags = 0;
