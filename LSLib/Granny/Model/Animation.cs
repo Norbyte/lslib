@@ -7,6 +7,24 @@ using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
 {
+    public static class QuatHelpers
+    {
+        public static Quaternion Product(Quaternion r, Quaternion q)
+        {
+            return new Quaternion(
+                r.W * q.W - r.X * q.X - r.Y * q.Y - r.Z * q.Z,
+                r.W * q.X + r.X * q.W - r.Y * q.Z + r.Z * q.Y,
+                r.W * q.Y + r.X * q.Z + r.Y * q.W - r.Z * q.X,
+                r.W * q.Z - r.X * q.Y + r.Y * q.X + r.Z * q.W
+            );
+        }
+
+        public static float Dot(Quaternion r, Quaternion q)
+        {
+            return Vector3.Dot(r.Xyz, q.Xyz) + r.W * q.W;
+        }
+    }
+
     public class AnimationCurve
     {
         [Serialization(TypeSelector = typeof(AnimationCurveDataTypeSelector), Type = MemberType.VariantReference, MinVersion = 0x80000011)]
@@ -469,18 +487,21 @@ namespace LSLib.Granny.Model
             // The same rotation can be represented by both q and -q. However the Slerp path
             // will be different; one will go the long away around, the other the short away around.
             // Replace quaterions to ensure that Slerp will take the short path.
-            for (var i = 1; i < rotations.Count; i++)
+            float flip = 1.0f;
+            for (var i = 0; i < rotations.Count - 1; i++)
             {
-                var r0 = rotations[i - 1];
-                var r1 = rotations[i];
-                var dot = Vector3.Dot(r0.Xyz, r1.Xyz);
-                var ang = Math.Acos(dot);
-                if (dot < -0.0001f)
+                var r0 = rotations[i];
+                var r1 = rotations[i + 1];
+                var dot = QuatHelpers.Dot(r0, r1 * flip);
+                
+                if (dot < 0.0f)
                 {
-                    rotations[i] = new Quaternion(-r1.X, -r1.Y, -r1.Z, -r1.W);
+                    flip = -flip;
                 }
-            }
 
+                rotations[i + 1] *= flip;
+            }
+            
             for (var i = 0; i < times.Count; i++)
             {
                 track.AddTranslation(times[i], translations[i]);
