@@ -285,7 +285,7 @@ namespace LSLib.LS
 
         private void DiscoverModStats(string modName, string modPublicPath)
         {
-            var statsPath = modPublicPath + @"\Shared\Stats\Generated\Data";
+            var statsPath = modPublicPath + @"\Stats\Generated\Data";
             if (!Directory.Exists(statsPath)) return;
 
             List<string> statFiles = new List<string>();
@@ -341,8 +341,11 @@ namespace LSLib.LS
             }
         }
 
-        public void DiscoverModDirectory(string modName, string modPath)
+        public void DiscoverModDirectory(string modName, string modPath, string publicPath)
         {
+            // Trigger mod entry creation even if there are no resources
+            GetMod(modName);
+
             if (CollectStoryGoals)
             {
                 DiscoverModGoals(modName, modPath);
@@ -375,7 +378,7 @@ namespace LSLib.LS
 
             if (CollectStats)
             {
-                DiscoverModStats(modName, modPath);
+                DiscoverModStats(modName, publicPath);
             }
 
             if (CollectGlobals)
@@ -391,14 +394,17 @@ namespace LSLib.LS
 
         public void DiscoverMods(string gameDataPath)
         {
-            var modPaths = Directory.GetDirectories(gameDataPath + @"\\Mods");
+            var modsPath = Path.Combine(gameDataPath, "Mods");
+            var publicPath = Path.Combine(gameDataPath, "Public");
+            var modPaths = Directory.GetDirectories(modsPath);
 
             foreach (var modPath in modPaths)
             {
-                if (Directory.Exists(modPath + @"\Story\RawFiles\Goals"))
+                if (File.Exists(Path.Combine(modPath, "meta.lsx")))
                 {
                     var modName = Path.GetFileNameWithoutExtension(modPath);
-                    DiscoverModDirectory(modName, modPath);
+                    var modPublicPath = Path.Combine(publicPath, Path.GetFileName(modPath));
+                    DiscoverModDirectory(modName, modPath, modPublicPath);
                 }
             }
         }
