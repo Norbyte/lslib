@@ -102,7 +102,7 @@ namespace LSLib.LS.Stats.Properties
 
             if (!RequirementsWithArgument.ValueToIndexMap.ContainsKey(reqmtName))
             {
-                OnError($"Requirement '{reqmtName}' doesn't need any arguments");
+                OnError?.Invoke($"Requirement '{reqmtName}' doesn't need any arguments");
             }
 
             return new Requirement
@@ -187,8 +187,7 @@ namespace LSLib.LS.Stats.Properties
                 parser.Parse(value, ref succeeded, ref errorText);
                 if (!succeeded)
                 {
-                    var loc = StatScanner.LastLocation();
-                    errorText = $"At character {loc.StartColumn}-{loc.EndColumn} (value '{value}'): {errorText}";
+                    errorText = $"'{value}': {errorText}";
                     OnError?.Invoke(errorText);
                 }
             }
@@ -225,11 +224,11 @@ namespace LSLib.LS.Stats.Properties
             var hasArg = SkillConditionsWithArgument.ValueToIndexMap.ContainsKey(conditionType);
             if (hasArg && arg == null)
             {
-                OnError($"Condition '{conditionType}' needs an argument");
+                OnError?.Invoke($"Condition '{conditionType}' needs an argument");
             }
             else if (!hasArg && arg != null)
             {
-                OnError($"Condition '{conditionType}' doesn't need any arguments");
+                OnError?.Invoke($"Condition '{conditionType}' doesn't need any arguments");
             }
             else
             {

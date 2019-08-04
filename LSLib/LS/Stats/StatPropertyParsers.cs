@@ -185,7 +185,7 @@ namespace LSLib.LS.Stats
             }
 
             var refTypes = String.Join("/", Constraints.Select(c => c.StatType));
-            errorText = $"'{value}' is not a valid reference of type {refTypes}";
+            errorText = $"'{value}' is not a valid {refTypes} reference";
             succeeded = false;
             return null;
         }
