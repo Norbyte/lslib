@@ -91,6 +91,9 @@ namespace LSLib.LS.Stats
 
     public class StatDefinitionRepository
     {
+        // Version of modified Enumerations.xml and StatObjectDefinitions.sod we expect
+        public const string CustomizationsVersion = "1";
+
         public readonly Dictionary<string, StatEnumeration> Enumerations = new Dictionary<string, StatEnumeration>();
         public readonly Dictionary<string, StatTypeDefinition> Definitions = new Dictionary<string, StatTypeDefinition>();
 
@@ -258,8 +261,20 @@ namespace LSLib.LS.Stats
             // 2) Fix export_type of ExtraData to Data
             // 3) Add SkillType and StatusType fields to StatusData and SkillData types
             // 4) Add type="Passthrough" fields for subobjects where required
+            // 5) Adjusted fields to use proper enumeration labels in many places
+            // etc etc.
 
             var root = XElement.Load(definitionsPath);
+            var customizationVer = root.Attribute("lslib_customizations")?.Value;
+            if (customizationVer == null)
+            {
+                throw new Exception("Can only load StatObjectDefinitions.sod with LSLib-specific modifications");
+            }
+            else if (customizationVer != CustomizationsVersion)
+            {
+                throw new Exception($"Needs StatObjectDefinitions.sod with customization version '{CustomizationsVersion}'; got version '{customizationVer}'");
+            }
+
             var defnRoot = root.Element("stat_object_definitions");
             var defns = defnRoot.Elements("stat_object_definition");
 
@@ -272,6 +287,16 @@ namespace LSLib.LS.Stats
         public void LoadEnumerations(string enumsPath)
         {
             var root = XElement.Load(enumsPath);
+            var customizationVer = root.Attribute("lslib_customizations")?.Value;
+            if (customizationVer == null)
+            {
+                throw new Exception("Can only load Enumerations.xml with LSLib-specific modifications");
+            }
+            else if (customizationVer != CustomizationsVersion)
+            {
+                throw new Exception($"Needs Enumerations.xml with customization version '{CustomizationsVersion}'; got version '{customizationVer}'");
+            }
+
             var defnRoot = root.Element("enumerations");
             var enums = defnRoot.Elements("enumeration");
 
