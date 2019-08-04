@@ -53,17 +53,14 @@ nonseparator [^,;:()|!& ]
 "Equalize"      { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.ACT_EQUALIZE; }
 "Pickup"        { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.ACT_PICKUP; }
 
-(Tagged|HasStatus) { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.SKILL_CONDITION_1ARG; }
-"InSurface" { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.SKILL_CONDITION_IN_SURFACE; }
-"Surface"   { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.SKILL_CONDITION_SURFACE; }
-
 "Tag" { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.REQUIREMENT_TAG; }
-(TALENT_[a-zA-Z]+|TRAIT_[a-zA-Z]+|Immobile) { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.REQUIREMENT_NO_ARG; }
-
-"Combat" { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.COMBAT; }
 
 {letter}({namechar})+ { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.NAME; }
 (-)?{digit}({digit})* { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.INTEGER; }
 ({nonseparator})+     { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.TEXT; }
 
 . return ((int)StatPropertyTokens.BAD);
+
+%{
+    yylloc = new QUT.Gppg.LexLocation(tokLin, tokCol, tokELin, tokECol);
+%}

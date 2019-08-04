@@ -13,8 +13,6 @@
 %token EXPR_REQUIREMENTS
 
 /* Requirements */
-%token REQUIREMENT_NO_ARG
-%token REQUIREMENT_INT_ARG
 %token REQUIREMENT_TAG
 
 /* Reserved words */
@@ -42,13 +40,6 @@
 %token ACT_CLEANSE
 %token ACT_AOEBOOST
 %token ACT_SURFACEBOOST
-
-/* Misc Constants */
-%token SKILL_CONDITION_1ARG
-%token SKILL_CONDITION_SURFACE
-%token SKILL_CONDITION_IN_SURFACE
-
-%token COMBAT
 
 /* Special token for invalid characters */
 %token BAD
@@ -87,22 +78,11 @@ UnaryRequirement : Requirement
                  | '!' Requirement { $$ = MakeNotRequirement($2); }
                  ;
 
-Requirement : RequirementNoArg { $$ = MakeRequirement($1); }
-            | RequirementIntArg
-            | RequirementTag
+Requirement : NAME { $$ = MakeRequirement($1); }
+            | NAME INTEGER { $$ = MakeIntRequirement($1, $2); }
+            | REQUIREMENT_TAG TEXT { $$ = MakeTagRequirement($1, $2); }
+            | REQUIREMENT_TAG NAME { $$ = MakeTagRequirement($1, $2); }
             ;
-
-RequirementNoArg : REQUIREMENT_NO_ARG
-                 | COMBAT /* Token conflict between requirements and the skill condition "Combat" */
-                 ;
-
-RequirementIntArg : NAME { $$ = MakeIntRequirement($1); } /* FIXME - recheck for REQUIREMENT_INT_ARG list! */
-                  | NAME INTEGER { $$ = MakeIntRequirement($1, $2); }
-                  ;
-				  
-RequirementTag : REQUIREMENT_TAG TEXT { $$ = MakeTagRequirement($1, $2); }
-               | REQUIREMENT_TAG NAME { $$ = MakeTagRequirement($1, $2); }
-               ;
 
 
 /******************************************************************
@@ -239,9 +219,7 @@ OptionalIntArg : /* empty */
 TextArg : INTEGER
         | NAME
         | TEXT
-		| COMBAT
 		| ACT_SURFACE_CHANGE
-		| REQUIREMENT_NO_ARG
 		| REQUIREMENT_TAG
         ;
 
@@ -256,16 +234,11 @@ StatusBoost : /* empty */ { $$ = MakeStatusBoostType(StatusBoostType.None, null)
             | ACT_SURFACEBOOST '(' SurfaceList ')' ':' { $$ = MakeStatusBoostType(StatusBoostType.Surface, $3); }
             ;
 
-SurfaceList : SurfaceType { $$ = AddSurface(MakeSurfaceList(), $1); }
-            | SurfaceList '|' SurfaceType { $$ = AddSurface($1, $3); }
+SurfaceList : Surface { $$ = AddSurface(MakeSurfaceList(), $1); }
+            | SurfaceList '|' Surface { $$ = AddSurface($1, $3); }
             ;
 
-
-SurfaceState : NAME { $$ = MakeSurfaceState($1); }; /* FIXME - recheck SURFACE_STATE or SURFACE_TYPE_OR_STATE */
-			
-SurfaceType : NAME { $$ = MakeSurfaceType($1); }; /* FIXME - recheck SURFACE_TYPE or SURFACE_TYPE_OR_STATE */
-			
-Surface : NAME { $$ = MakeSurface($1); }; /* FIXME - recheck SURFACE_TYPE_EX */
+Surface : NAME { $$ = MakeSurface($1); };
 
 /******************************************************************
  *
@@ -279,13 +252,10 @@ Conditions : /* empty */
            | ConditionExpr
            ;
 
-Condition : NAME { $$ = MakeCondition($1, null); } /* FIXME - recheck for SKILL_CONDITION */
-          | CTX_SELF { $$ = MakeCondition($1, null); } /* Conflict with "SELF" action context token */
-          | COMBAT { $$ = MakeCondition($1, null); } /* Token conflict between requirements and the condition "Combat" */
+Condition : NAME { $$ = MakeCondition($1, null); }
+          | CTX_SELF { $$ = MakeCondition("Self", null); } /* Conflict with "SELF" action context token */
           | ACT_SUMMON { $$ = MakeCondition($1, null); } /* Token conflict between actions and the condition "Summon" */
-          | SKILL_CONDITION_1ARG ':' TextArg { $$ = MakeCondition($1, $3); }
-          | SKILL_CONDITION_IN_SURFACE ':' Surface { $$ = MakeCondition($1, $3); }
-          | SKILL_CONDITION_SURFACE ':' SurfaceState { $$ = MakeCondition($1, $3); }
+          | NAME ':' TextArg { $$ = MakeCondition($1, $3); }
           ;
 
 UnaryCondition : ConditionBlock

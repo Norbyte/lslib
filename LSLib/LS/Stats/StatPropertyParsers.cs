@@ -224,10 +224,12 @@ namespace LSLib.LS.Stats
     public class ExpressionParser : IStatValueParser
     {
         private readonly String ExpressionType;
+        private readonly StatDefinitionRepository Definitions;
 
-        public ExpressionParser(String expressionType)
+        public ExpressionParser(String expressionType, StatDefinitionRepository definitions)
         {
             ExpressionType = expressionType;
+            Definitions = definitions;
         }
 
         public virtual object Parse(string value, ref bool succeeded, ref string errorText)
@@ -235,9 +237,12 @@ namespace LSLib.LS.Stats
             var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + ExpressionType + "__ " + value);
             using (var buf = new MemoryStream(valueBytes))
             {
+                List<string> errorTexts = new List<string>();
+
                 var scanner = new StatPropertyScanner();
                 scanner.SetSource(buf);
-                var parser = new StatPropertyParser(scanner);
+                var parser = new StatPropertyParser(scanner, Definitions);
+                parser.OnError += (string message) => errorTexts.Add(message);
                 succeeded = parser.Parse();
                 if (!succeeded)
                 {
@@ -246,8 +251,15 @@ namespace LSLib.LS.Stats
                     errorText = $"Syntax error at or near character {column}";
                     return null;
                 }
+                else if (errorTexts.Count > 0)
+                {
+                    succeeded = false;
+                    errorText = String.Join("; ", errorTexts);
+                    return null;
+                }
                 else
                 {
+                    succeeded = true;
                     return parser.GetParsedObject();
                 }
             }
@@ -256,7 +268,12 @@ namespace LSLib.LS.Stats
 
     public class ConditionsParser : IStatValueParser
     {
-        private readonly ExpressionParser ExprParser = new ExpressionParser("Conditions");
+        private readonly ExpressionParser ExprParser;
+
+        public ConditionsParser(StatDefinitionRepository definitions)
+        {
+            ExprParser = new ExpressionParser("Conditions", definitions);
+        }
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
         {
@@ -278,18 +295,18 @@ namespace LSLib.LS.Stats
             ReferenceValidator = referenceValidator;
         }
 
-        public IStatValueParser CreateParser(StatField field)
+        public IStatValueParser CreateParser(StatField field, StatDefinitionRepository definitions)
         {
             switch (field.Type)
             {
                 case "Requirements":
-                    return new ExpressionParser("Requirements");
+                    return new ExpressionParser("Requirements", definitions);
 
                 case "Properties":
-                    return new ExpressionParser("Properties");
+                    return new ExpressionParser("Properties", definitions);
 
                 case "Conditions":
-                    return new ConditionsParser();
+                    return new ConditionsParser(definitions);
 
                 case "Enumeration":
                     return new EnumParser(field.EnumType);

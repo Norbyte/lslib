@@ -38,11 +38,11 @@ namespace LSLib.LS.Stats
 
         private IStatValueParser parser;
 
-        public IStatValueParser GetParser(StatValueParserFactory factory)
+        public IStatValueParser GetParser(StatValueParserFactory factory, StatDefinitionRepository definitions)
         {
             if (parser == null)
             {
-                parser = factory.CreateParser(this);
+                parser = factory.CreateParser(this, definitions);
             }
 
             return parser;

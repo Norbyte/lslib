@@ -361,7 +361,8 @@ namespace LSLib.LS.Stats
 
             if (field.Type != "Passthrough")
             {
-                parsed = field.GetParser(ParserFactory).Parse((string)value, ref succeeded, ref errorText);
+                var parser = field.GetParser(ParserFactory, Context.Definitions);
+                parsed = parser.Parse((string)value, ref succeeded, ref errorText);
             }
             else
             {

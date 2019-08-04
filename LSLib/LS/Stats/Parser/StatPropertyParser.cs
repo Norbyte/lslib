@@ -21,8 +21,44 @@ namespace LSLib.LS.Stats.Properties
 
     public partial class StatPropertyParser
     {
-        public StatPropertyParser(StatPropertyScanner scnr) : base(scnr)
+        private IStatValueParser SurfaceTypeParser;
+        private IStatValueParser ConditionSurfaceTypeParser;
+        private IStatValueParser SurfaceStateParser;
+        private IStatValueParser SkillTargetConditionParser;
+        private StatEnumeration SkillConditionsWithArgument;
+        private IStatValueParser RequirementParser;
+        private StatEnumeration RequirementsWithArgument;
+
+        public delegate void ErrorReportingDelegate(string message);
+        public event ErrorReportingDelegate OnError;
+
+        private StatPropertyScanner StatScanner;
+
+        public StatPropertyParser(StatPropertyScanner scnr, StatDefinitionRepository definitions) : base(scnr)
         {
+            StatScanner = scnr;
+
+            if (definitions != null)
+            {
+                var surfaceTypeEnum = definitions.Enumerations["Surface Type"];
+                SurfaceTypeParser = new EnumParser(surfaceTypeEnum);
+
+                var conditionSurfaceTypeEnum = definitions.Enumerations["CUSTOM_ConditionSurfaceType"];
+                ConditionSurfaceTypeParser = new EnumParser(conditionSurfaceTypeEnum);
+
+                var surfaceStateEnum = definitions.Enumerations["CUSTOM_SurfaceState"];
+                SurfaceStateParser = new EnumParser(surfaceStateEnum);
+
+                var skillTargetConditionEnum = definitions.Enumerations["SkillTargetCondition"];
+                SkillTargetConditionParser = new EnumParser(skillTargetConditionEnum);
+
+                SkillConditionsWithArgument = definitions.Enumerations["CUSTOM_SkillCondition_1arg"];
+
+                var requirementEnum = definitions.Enumerations["CUSTOM_Requirement"];
+                RequirementParser = new EnumParser(requirementEnum);
+
+                RequirementsWithArgument = definitions.Enumerations["CUSTOM_Requirement_1arg"];
+            }
         }
 
         public object GetParsedObject()
@@ -48,6 +84,8 @@ namespace LSLib.LS.Stats.Properties
 
         private Requirement MakeRequirement(object name)
         {
+            Validate(RequirementParser, name as string);
+
             return new Requirement
             {
                 Not = false,
@@ -59,22 +97,19 @@ namespace LSLib.LS.Stats.Properties
 
         private Requirement MakeIntRequirement(object name, object intArg)
         {
-            return new Requirement
-            {
-                Not = false,
-                RequirementName = name as string,
-                IntParam = Int32.Parse(intArg as string),
-                TagParam = ""
-            };
-        }
+            var reqmtName = name as string;
+            Validate(RequirementParser, reqmtName);
 
-        private Requirement MakeIntRequirement(object name)
-        {
+            if (!RequirementsWithArgument.ValueToIndexMap.ContainsKey(reqmtName))
+            {
+                OnError($"Requirement '{reqmtName}' doesn't need any arguments");
+            }
+
             return new Requirement
             {
                 Not = false,
-                RequirementName = name as string,
-                IntParam = 0,
+                RequirementName = reqmtName,
+                IntParam = Int32.Parse(intArg as string),
                 TagParam = ""
             };
         }
@@ -143,20 +178,83 @@ namespace LSLib.LS.Stats.Properties
             return surfs;
         }
 
-        // FIXME - validate
-        private string MakeSurfaceType(object type) => type as string;
-
-        // FIXME - validate
-        private string MakeSurfaceState(object type) => type as string;
-
-        // FIXME - validate
-        private string MakeSurface(object type) => type as string;
-
-        private UnaryCondition MakeCondition(object type, object arg) => new UnaryCondition
+        private void Validate(IStatValueParser parser, string value)
         {
-            ConditionType = type as string,
-            Argument = arg as string
-        };
+            if (parser != null)
+            {
+                bool succeeded = false;
+                string errorText = null;
+                parser.Parse(value, ref succeeded, ref errorText);
+                if (!succeeded)
+                {
+                    var loc = StatScanner.LastLocation();
+                    errorText = $"At character {loc.StartColumn}-{loc.EndColumn} (value '{value}'): {errorText}";
+                    OnError?.Invoke(errorText);
+                }
+            }
+        }
+        
+        private string MakeSurfaceType(object type)
+        {
+            var surfaceType = type as string;
+            Validate(ConditionSurfaceTypeParser, surfaceType);
+            return surfaceType;
+        }
+        
+        private string MakeSurfaceState(object state)
+        {
+            var surfaceState = state as string;
+            Validate(SurfaceStateParser, surfaceState);
+            return surfaceState;
+        }
+
+        private string MakeSurface(object type)
+        {
+            var surfaceType = type as string;
+            Validate(SurfaceTypeParser, surfaceType);
+            return surfaceType;
+        }
+
+        private UnaryCondition MakeCondition(object type, object arg)
+        {
+            var conditionType = type as string;
+            var conditionArg = arg as string;
+
+            Validate(SkillTargetConditionParser, conditionType);
+
+            var hasArg = SkillConditionsWithArgument.ValueToIndexMap.ContainsKey(conditionType);
+            if (hasArg && arg == null)
+            {
+                OnError($"Condition '{conditionType}' needs an argument");
+            }
+            else if (!hasArg && arg != null)
+            {
+                OnError($"Condition '{conditionType}' doesn't need any arguments");
+            }
+            else
+            {
+                switch (conditionType)
+                {
+                    case "InSurface":
+                        Validate(ConditionSurfaceTypeParser, conditionArg);
+                        break;
+
+                    case "Surface":
+                        Validate(SurfaceStateParser, conditionArg);
+                        break;
+
+                    case "HasStatus":
+                        // FIXME - add status name validation
+                        break;
+                }
+            }
+
+            return new UnaryCondition
+            {
+                ConditionType = conditionType,
+                Argument = conditionArg
+            };
+        }
 
         private Condition MakeNotCondition(object condition)
         {
