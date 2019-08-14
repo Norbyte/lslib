@@ -276,6 +276,17 @@ namespace LSLib.LS.Story
                 {
                     story.Types[2] = OsirisType.MakeBuiltin(2, "FLOAT");
                     story.Types[3] = OsirisType.MakeBuiltin(3, "STRING");
+
+                    // Populate custom type IDs for versions that had no type alias map
+                    if (reader.Ver < OsiVersion.VerAddTypeMap)
+                    {
+                        for (byte typeId = 4; typeId <= 17; typeId++)
+                        {
+                            story.Types[typeId] = OsirisType.MakeBuiltin(typeId, $"TYPE{typeId}");
+                            story.Types[typeId].Alias = 3;
+                            reader.TypeAliases.Add(typeId, 3);
+                        }
+                    }
                 }
 
                 story.DivObjects = reader.ReadList<OsirisDivObject>();
