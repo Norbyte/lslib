@@ -24,14 +24,18 @@ namespace Divine
 
             parser.ExtractArgumentAttributes(argv);
 
+#if !DEBUG
             try
             {
+#endif
                 parser.ParseCommandLine(args);
+#if !DEBUG
             }
             catch (Exception e)
             {
                 Console.WriteLine($"[FATAL] {e.Message}");
             }
+#endif
 
             if (parser.ParsingSucceeded)
             {

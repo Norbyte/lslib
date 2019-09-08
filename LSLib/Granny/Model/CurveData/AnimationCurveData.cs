@@ -202,7 +202,7 @@ namespace LSLib.Granny.Model.CurveData
         [Serialization(Kind = SerializationKind.None)]
         public Animation ParentAnimation;
 
-        protected float ConvertOneOverKnotScaleTrunc(float oneOverKnotScaleTrunc)
+        protected float ConvertOneOverKnotScaleTrunc(UInt16 oneOverKnotScaleTrunc)
         {
             UInt32[] i = new UInt32[] { (UInt32)oneOverKnotScaleTrunc << 16 };
             float[] f = new float[1];
