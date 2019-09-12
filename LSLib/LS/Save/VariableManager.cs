@@ -46,6 +46,11 @@ namespace LSLib.LS.Save
         
         public TValue GetRaw(int index)
         {
+            if (index == 0)
+            {
+                return default(TValue);
+            }
+
             var valueSlot = Remaps[index - 1];
             return Values[valueSlot];
         }
