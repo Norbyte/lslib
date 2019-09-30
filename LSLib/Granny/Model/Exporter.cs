@@ -453,6 +453,11 @@ namespace LSLib.Granny.Model
 
         private void ConformMeshBoneBindings(Mesh mesh, Mesh conformToMesh)
         {
+            if (mesh.BoneBindings == null)
+            {
+                mesh.BoneBindings = new List<BoneBinding>();
+            }
+
             foreach (var conformBone in conformToMesh.BoneBindings)
             {
                 BoneBinding inputBone = null;
