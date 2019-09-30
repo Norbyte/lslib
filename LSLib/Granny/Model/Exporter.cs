@@ -267,8 +267,10 @@ namespace LSLib.Granny.Model
                         var binding = new BoneBinding();
                         binding.BoneName = bone.Name;
                         // TODO: Calculate bounding box!
-                        binding.OBBMin = new float[] { -10, -10, -10 };
-                        binding.OBBMax = new float[] { 10, 10, 10 };
+                        // Use small bounding box values, as it interferes with object placement
+                        // in D:OS 2 (after the Gift Bag 2 update)
+                        binding.OBBMin = new float[] { -0.1f, -0.1f, -0.1f };
+                        binding.OBBMax = new float[] { 0.1f, 0.1f, 0.1f };
                         mesh.Mesh.BoneBindings = new List<BoneBinding> { binding };
                     }
                 }

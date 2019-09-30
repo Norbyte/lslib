@@ -566,8 +566,10 @@ namespace LSLib.Granny.Model
                     var binding = new BoneBinding();
                     binding.BoneName = joints[i].Name;
                     // TODO
-                    binding.OBBMin = new float[] { -10, -10, -10 };
-                    binding.OBBMax = new float[] { 10, 10, 10 };
+                    // Use small bounding box values, as it interferes with object placement
+                    // in D:OS 2 (after the Gift Bag 2 update)
+                    binding.OBBMin = new float[] { -0.1f, -0.1f, -0.1f };
+                    binding.OBBMax = new float[] { 0.1f, 0.1f, 0.1f };
                     mesh.BoneBindings.Add(binding);
                     boneToIndexMaps.Add(joints[i], boneToIndexMaps.Count);
                 }
