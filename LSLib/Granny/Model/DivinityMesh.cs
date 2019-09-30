@@ -229,23 +229,23 @@ namespace LSLib.Granny.Model
 
         public static string ModelFlagsToUserDefinedProperties(DivinityModelFlag modelFlags)
         {
-            string properties = "";
+            List<string> properties = new List<string>();
             if (modelFlags.IsRigid())
             {
-                properties += UserDefinedProperties_Rigid + "\n";
+                properties.Add(UserDefinedProperties_Rigid);
             }
 
             if (modelFlags.IsCloth())
             {
-                properties += UserDefinedProperties_Cloth + "\n";
+                properties.Add(UserDefinedProperties_Cloth);
             }
 
             if (modelFlags.IsMeshProxy())
             {
-                properties += UserDefinedProperties_MeshProxy + "\n";
+                properties.Add(UserDefinedProperties_MeshProxy);
             }
 
-            return properties;
+            return String.Join("\n", properties);
         }
 
         public static DivinityModelFlag UserDefinedPropertiesToModelType(string userDefinedProperties)

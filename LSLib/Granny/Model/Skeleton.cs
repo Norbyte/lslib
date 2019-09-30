@@ -139,7 +139,7 @@ namespace LSLib.Granny.Model
         {
             var skeleton = new Skeleton();
             skeleton.Bones = new List<Bone>();
-            skeleton.LODType = 0;
+            skeleton.LODType = 1;
             skeleton.Name = root.name;
             skeleton.BonesBySID = new Dictionary<string, Bone>();
             skeleton.BonesByID = new Dictionary<string, Bone>();

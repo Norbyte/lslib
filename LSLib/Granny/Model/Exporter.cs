@@ -243,7 +243,7 @@ namespace LSLib.Granny.Model
                     Utils.Info($"Generating dummy skeleton for model '{model.Name}'");
                     var skeleton = new Skeleton();
                     skeleton.Name = model.Name;
-                    skeleton.LODType = 0;
+                    skeleton.LODType = 1;
                     skeleton.IsDummy = true;
                     root.Skeletons.Add(skeleton);
 
@@ -616,6 +616,10 @@ namespace LSLib.Granny.Model
                 {
                     newModel = MakeDummyModel(model);
                     Root.Models.Add(newModel);
+                }
+                else
+                {
+                    newModel.InitialPlacement = model.InitialPlacement;
                 }
             }
 
