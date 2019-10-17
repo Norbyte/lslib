@@ -32,6 +32,7 @@ namespace LSTools.StoryCompiler
         public bool CheckOnly = false;
         public bool CheckGameObjects = false;
         public bool LoadPackages = true;
+        public bool AllowTypeCoercion = false;
         public TargetGame Game = TargetGame.DOS2;
 
         public ModCompiler(Logger logger, String gameDataPath)
@@ -298,6 +299,7 @@ namespace LSTools.StoryCompiler
             Logger.CompilationStarted();
             HasErrors = false;
             Compiler.Game = Game;
+            Compiler.AllowTypeCoercion = AllowTypeCoercion;
 
             if (mods.Count > 0)
             {
@@ -328,12 +330,25 @@ namespace LSTools.StoryCompiler
                 {
                     LoadMod(modName);
                 }
+
+                AbstractFileInfo storyHeaderFile = null;
+                var modsSearchPath = mods.ToList();
+                modsSearchPath.Reverse();
+                foreach (var modName in modsSearchPath)
+                {
+                    if (Mods.Mods[modName].StoryHeaderFile != null)
+                    {
+                        storyHeaderFile = Mods.Mods[modName].StoryHeaderFile;
+                        break;
+                    }
+                }
+
+                var stream = storyHeaderFile.MakeStream();
+                LoadStoryHeaders(stream);
+                storyHeaderFile.ReleaseStream();
+
                 Logger.TaskFinished();
             }
-
-            var stream = Mods.StoryHeaderFile.MakeStream();
-            LoadStoryHeaders(stream);
-            Mods.StoryHeaderFile.ReleaseStream();
 
             if (CheckGameObjects)
             {

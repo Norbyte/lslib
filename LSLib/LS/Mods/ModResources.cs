@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS
@@ -15,6 +16,7 @@ namespace LSLib.LS
         public Dictionary<string, AbstractFileInfo> Globals = new Dictionary<string, AbstractFileInfo>();
         public Dictionary<string, AbstractFileInfo> LevelObjects = new Dictionary<string, AbstractFileInfo>();
         public AbstractFileInfo OrphanQueryIgnoreList;
+        public AbstractFileInfo StoryHeaderFile;
 
         public ModInfo(string name)
         {
@@ -25,7 +27,6 @@ namespace LSLib.LS
     public class ModResources : IDisposable
     {
         public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
-        public AbstractFileInfo StoryHeaderFile;
         public List<PackageReader> LoadedPackages = new List<PackageReader>();
 
         public void Dispose()
@@ -41,6 +42,7 @@ namespace LSLib.LS
         private static readonly Regex scriptRe = new Regex("^Mods/([^/]+)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex statRe = new Regex("^Public/([^/]+)/Stats/Generated/Data/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/([^/]+)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex storyDefinitionsRe = new Regex("^Mods/([^/]+)/Story/RawFiles/story_header\\.div$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex globalsRe = new Regex("^Mods/([^/]+)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex levelObjectsRe = new Regex("^Mods/([^/]+)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         // Pattern for excluding subsequent parts of a multi-part archive
@@ -158,7 +160,11 @@ namespace LSLib.LS
 
                 if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
                 {
-                    Resources.StoryHeaderFile = file;
+                    var match = storyDefinitionsRe.Match(file.Name);
+                    if (match != null && match.Success)
+                    {
+                        GetMod(match.Groups[1].Value).StoryHeaderFile = file;
+                    }
                 }
             }
 
@@ -350,18 +356,16 @@ namespace LSLib.LS
             {
                 DiscoverModGoals(modName, modPath);
 
-                if (!LoadPackages)
+                var headerPath = modPath + @"\Story\RawFiles\story_header.div";
+                Console.WriteLine($"New storyinfo @ {headerPath}");
+                if (File.Exists(headerPath))
                 {
-                    var headerPath = modPath + @"\Story\RawFiles\story_header.div";
-                    if (File.Exists(headerPath))
+                    var fileInfo = new FilesystemFileInfo
                     {
-                        var fileInfo = new FilesystemFileInfo
-                        {
-                            FilesystemPath = headerPath,
-                            Name = headerPath
-                        };
-                        Resources.StoryHeaderFile = fileInfo;
-                    }
+                        FilesystemPath = headerPath,
+                        Name = headerPath
+                    };
+                    GetMod(modName).StoryHeaderFile = fileInfo;
                 }
 
                 var orphanQueryIgnoresPath = modPath + @"\Story\story_orphanqueries_ignore_local.txt";

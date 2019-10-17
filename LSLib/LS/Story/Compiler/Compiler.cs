@@ -10,6 +10,7 @@ namespace LSLib.LS.Story.Compiler
         public CompilationContext Context = new CompilationContext();
         public HashSet<FunctionNameAndArity> IgnoreUnusedDatabases = new HashSet<FunctionNameAndArity>();
         public TargetGame Game = TargetGame.DOS2;
+        public bool AllowTypeCoercion = false;
 
         private string TypeToName(uint typeId)
         {
@@ -193,30 +194,33 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
-            if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
+            if (!AllowTypeCoercion)
             {
-                Context.Log.Error(variable.Location, 
-                    DiagnosticCode.CastToUnrelatedType,
-                    "Cannot cast {1} variable {0} to unrelated type {2}",
-                    ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
-                return;
-            }
+                if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
+                {
+                    Context.Log.Error(variable.Location,
+                        DiagnosticCode.CastToUnrelatedType,
+                        "Cannot cast {1} variable {0} to unrelated type {2}",
+                        ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
+                    return;
+                }
 
-            if (IsRiskyComparison(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
-            {
-                Context.Log.Error(variable.Location,
-                    DiagnosticCode.RiskyComparison,
-                    "Coercion of {1} variable {0} to {2} may trigger incorrect behavior",
-                    ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
-                return;
-            }
+                if (IsRiskyComparison(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
+                {
+                    Context.Log.Error(variable.Location,
+                        DiagnosticCode.RiskyComparison,
+                        "Coercion of {1} variable {0} to {2} may trigger incorrect behavior",
+                        ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
+                    return;
+                }
 
-            if (IsGuidAliasToAliasCast(ruleVar.Type, variable.Type))
-            {
-                Context.Log.Error(variable.Location, 
-                    DiagnosticCode.CastToUnrelatedGuidAlias,
-                    "{1} variable {0} converted to unrelated type {2}",
-                    ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
+                if (IsGuidAliasToAliasCast(ruleVar.Type, variable.Type))
+                {
+                    Context.Log.Error(variable.Location,
+                        DiagnosticCode.CastToUnrelatedGuidAlias,
+                        "{1} variable {0} converted to unrelated type {2}",
+                        ruleVar.Name, ruleVar.Type.Name, variable.Type.Name);
+                }
             }
         }
 

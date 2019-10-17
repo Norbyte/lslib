@@ -83,6 +83,12 @@ namespace LSTools.StoryCompiler
         )]
         public string DebugLogOutputPath;
 
+        [SwitchArgument("allow-type-coercion", false,
+            Description = "Allow \"casting\" between unrelated types",
+            Optional = true
+        )]
+        public bool AllowTypeCoercion;
+
         public static Dictionary<string, bool> GetWarningOptions(string[] options)
         {
             Dictionary<string, string> codeMaps = new Dictionary<string, string>

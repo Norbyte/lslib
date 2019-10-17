@@ -45,6 +45,7 @@ namespace LSTools.StoryCompiler
                 modCompiler.CheckGameObjects = args.CheckGameObjects;
                 modCompiler.CheckOnly = args.CheckOnly;
                 modCompiler.LoadPackages = !args.NoPackages;
+                modCompiler.AllowTypeCoercion = args.AllowTypeCoercion;
                 if (args.Game == "dos2")
                 {
                     modCompiler.Game = TargetGame.DOS2;
@@ -88,6 +89,7 @@ namespace LSTools.StoryCompiler
                 Console.WriteLine("    --check-only            - Only check scripts for errors, don't generate compiled story file");
                 Console.WriteLine("    --check-names           - Verify game object names (slow!)");
                 Console.WriteLine("    --no-packages           - Don't load files from packages");
+                Console.WriteLine("    --allow-type-coercion   - Allow \"casting\" between unrelated types");
                 Environment.Exit(1);
             }
 
