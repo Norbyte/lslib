@@ -631,6 +631,72 @@ namespace LSLib.Granny.Model
                 // Deform geometries that were affected by our bind shape matrix
                 mesh.PrimaryVertexData.Transform(bindShapeMat);
             }
+
+            if (Options.RecalculateOBBs)
+            {
+                UpdateOBBs(root.Skeletons.Single(), mesh);
+            }
+        }
+
+        class OBB
+        {
+            public Vector3 Min, Max;
+            public int NumVerts = 0;
+        }
+
+        private void UpdateOBBs(Skeleton skeleton, Mesh mesh)
+        {
+            if (mesh.BoneBindings == null || mesh.BoneBindings.Count == 0) return;
+            
+            var obbs = new List<OBB>(mesh.BoneBindings.Count);
+            for (var i = 0; i < mesh.BoneBindings.Count; i++)
+            {
+                obbs.Add(new OBB
+                {
+                    Min = new Vector3(1000.0f, 1000.0f, 1000.0f),
+                    Max = new Vector3(-1000.0f, -1000.0f, -1000.0f),
+                });
+            }
+            
+            foreach (var vert in mesh.PrimaryVertexData.Vertices)
+            {
+                for (var i = 0; i < 4; i++)
+                {
+                    if (vert.BoneWeights[i] > 0)
+                    {
+                        var bi = vert.BoneIndices[i];
+                        var obb = obbs[bi];
+                        obb.NumVerts++;
+
+                        var bone = skeleton.GetBoneByName(mesh.BoneBindings[bi].BoneName);
+                        var invWorldTransform = ColladaHelpers.FloatsToMatrix(bone.InverseWorldTransform);
+                        var transformed = Vector3.Transform(vert.Position, invWorldTransform);
+
+                        obb.Min.X = Math.Min(obb.Min.X, transformed.X);
+                        obb.Min.Y = Math.Min(obb.Min.Y, transformed.Y);
+                        obb.Min.Z = Math.Min(obb.Min.Z, transformed.Z);
+
+                        obb.Max.X = Math.Max(obb.Max.X, transformed.X);
+                        obb.Max.Y = Math.Max(obb.Max.Y, transformed.Y);
+                        obb.Max.Z = Math.Max(obb.Max.Z, transformed.Z);
+                    }
+                }
+            }
+
+            for (var i = 0; i < obbs.Count; i++)
+            {
+                var obb = obbs[i];
+                if (obb.NumVerts > 0)
+                {
+                    mesh.BoneBindings[i].OBBMin = new float[] { obb.Min.X, obb.Min.Y, obb.Min.Z };
+                    mesh.BoneBindings[i].OBBMax = new float[] { obb.Max.X, obb.Max.Y, obb.Max.Z };
+                }
+                else
+                {
+                    mesh.BoneBindings[i].OBBMin = new float[] { 0.0f, 0.0f, 0.0f };
+                    mesh.BoneBindings[i].OBBMax = new float[] { 0.0f, 0.0f, 0.0f };
+                }
+            }
         }
 
         public void ImportAnimations(IEnumerable<animation> anims, Root root, Skeleton skeleton)

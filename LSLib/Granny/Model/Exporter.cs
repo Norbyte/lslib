@@ -106,6 +106,8 @@ namespace LSLib.Granny.Model
         // Remove animation keys that are a linear interpolation of the preceding and following keys
         // Disabled by default, as D:OS doesn't support sparse knot values in anim curves.
         public bool RemoveTrivialAnimationKeys = false;
+        // Recalculate mesh bone binding OBBs (
+        public bool RecalculateOBBs = false;
 
         public List<string> DisabledAnimations = new List<string>();
         public List<string> DisabledModels = new List<string>();
