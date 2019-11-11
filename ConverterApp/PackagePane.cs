@@ -25,6 +25,11 @@ namespace ConverterApp
 
             packageVersion.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageVersion", true, DataSourceUpdateMode.OnPropertyChanged);
             compressionMethod.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageCompression", true, DataSourceUpdateMode.OnPropertyChanged);
+
+#if DEBUG
+            allowMemoryMapping.Visible = true;
+            preloadIntoCache.Visible = true;
+#endif
         }
 
         private void PackageProgressUpdate(string status, long numerator, long denominator, AbstractFileInfo file)
@@ -95,69 +100,84 @@ namespace ConverterApp
 
             try
             {
-                PackageVersion version = Package.CurrentVersion;
+                var options = new PackageCreationOptions();
                 switch (packageVersion.SelectedIndex)
                 {
                     case 0:
                     case 1:
                     {
-                        version = PackageVersion.V13;
+                        options.Version = PackageVersion.V13;
                         break;
                     }
                     case 2:
                     {
-                        version = PackageVersion.V10;
+                        options.Version = PackageVersion.V10;
                         break;
                     }
                     case 3:
                     {
-                        version = PackageVersion.V9;
+                        options.Version = PackageVersion.V9;
                         break;
                     }
                     case 4:
                     {
-                        version = PackageVersion.V7;
+                        options.Version = PackageVersion.V7;
                         break;
                     }
                 }
-
-                var compression = CompressionMethod.None;
-                var fastCompression = true;
+                
                 switch (compressionMethod.SelectedIndex)
                 {
                     case 1:
                     {
-                        compression = CompressionMethod.Zlib;
+                        options.Compression = CompressionMethod.Zlib;
                         break;
                     }
                     case 2:
                     {
-                        compression = CompressionMethod.Zlib;
-                        fastCompression = false;
+                        options.Compression = CompressionMethod.Zlib;
+                        options.FastCompression = false;
                         break;
                     }
                     case 3:
                     {
-                        compression = CompressionMethod.LZ4;
+                        options.Compression = CompressionMethod.LZ4;
                         break;
                     }
                     case 4:
                     {
-                        compression = CompressionMethod.LZ4;
-                        fastCompression = false;
+                        options.Compression = CompressionMethod.LZ4;
+                        options.FastCompression = false;
                         break;
                     }
                 }
 
                 // Fallback to Zlib, if the package version doesn't support LZ4
-                if (compression == CompressionMethod.LZ4 && version <= PackageVersion.V9)
+                if (options.Compression == CompressionMethod.LZ4 && options.Version <= PackageVersion.V9)
                 {
-                    compression = CompressionMethod.Zlib;
+                    options.Compression = CompressionMethod.Zlib;
                 }
+
+                if (solid.Checked)
+                {
+                    options.Flags |= PackageFlags.Solid;
+                }
+
+                if (allowMemoryMapping.Checked)
+                {
+                    options.Flags |= PackageFlags.AllowMemoryMapping;
+                }
+
+                if (preloadIntoCache.Checked)
+                {
+                    options.Flags |= PackageFlags.Preload;
+                }
+
+                options.Priority = (byte)packagePriority.Value;
 
                 var packager = new Packager();
                 packager.ProgressUpdate += PackageProgressUpdate;
-                packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, version, compression, fastCompression);
+                packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, options);
 
                 MessageBox.Show("Package created successfully.");
             }

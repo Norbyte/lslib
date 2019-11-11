@@ -33,9 +33,12 @@ namespace LSLib.LS
 
         public void Dispose()
         {
-            foreach (Stream stream in _streams)
+            if (_streams != null)
             {
-                stream.Dispose();
+                foreach (Stream stream in _streams)
+                {
+                    stream.Dispose();
+                }
             }
         }
 
@@ -58,6 +61,9 @@ namespace LSLib.LS
             mainStream.Seek(0, SeekOrigin.Begin);
             var header = BinUtils.ReadStruct<LSPKHeader7>(reader);
 
+            package.Metadata.Flags = 0;
+            package.Metadata.Priority = 0;
+
             OpenStreams(mainStream, (int) header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
             {
@@ -77,6 +83,9 @@ namespace LSLib.LS
             var package = new Package();
             mainStream.Seek(4, SeekOrigin.Begin);
             var header = BinUtils.ReadStruct<LSPKHeader10>(reader);
+
+            package.Metadata.Flags = (PackageFlags)header.Flags;
+            package.Metadata.Priority = header.Priority;
 
             OpenStreams(mainStream, header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
@@ -105,6 +114,9 @@ namespace LSLib.LS
                 string msg = $"Unsupported package version {header.Version}; this extractor only supports {Package.CurrentVersion}";
                 throw new InvalidDataException(msg);
             }
+
+            package.Metadata.Flags = (PackageFlags)header.Flags;
+            package.Metadata.Priority = header.Priority;
 
             OpenStreams(mainStream, header.NumParts);
             mainStream.Seek(header.FileListOffset, SeekOrigin.Begin);

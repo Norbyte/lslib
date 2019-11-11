@@ -44,7 +44,8 @@ namespace LSLib.LS
         public UInt32 DataOffset;
         public UInt32 FileListSize;
         public UInt16 NumParts;
-        public UInt16 SomePartVar;
+        public Byte Flags;
+        public Byte Priority;
         public UInt32 NumFiles;
     }
 
@@ -55,10 +56,40 @@ namespace LSLib.LS
         public UInt32 FileListOffset;
         public UInt32 FileListSize;
         public UInt16 NumParts;
-        public UInt16 SomePartVar;
+        public Byte Flags;
+        public Byte Priority;
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public byte[] Md5;
+    }
+
+    [Flags]
+    public enum PackageFlags
+    {
+        /// <summary>
+        /// Allow memory-mapped access to the files in this archive.
+        /// </summary>
+        AllowMemoryMapping = 0x02,
+        /// <summary>
+        /// 64-byte padding is removed from files in the archive.
+        /// </summary>
+        Solid = 0x04,
+        /// <summary>
+        /// Archive contents should be preloaded on game startup.
+        /// </summary>
+        Preload = 0x08
+    };
+
+    public class PackageMetadata
+    {
+        /// <summary>
+        /// Package flags bitmask. Allowed values are in the PackageFlags enumeration.
+        /// </summary>
+        public PackageFlags Flags = 0;
+        /// <summary>
+        /// Load priority. Packages with higher priority are loaded later (i.e. they override earlier packages).
+        /// </summary>
+        public Byte Priority = 0;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -315,6 +346,7 @@ namespace LSLib.LS
             0x4B
         };
 
+        public PackageMetadata Metadata = new PackageMetadata();
         public List<AbstractFileInfo> Files = new List<AbstractFileInfo>();
 
         public static string MakePartFilename(string path, int part)
@@ -324,6 +356,15 @@ namespace LSLib.LS
             string extension = Path.GetExtension(path);
             return $"{dirName}/{baseName}_{part}{extension}";
         }
+    }
+
+    public class PackageCreationOptions
+    {
+        public PackageVersion Version = Package.CurrentVersion;
+        public CompressionMethod Compression = CompressionMethod.None;
+        public bool FastCompression = true;
+        public PackageFlags Flags = 0;
+        public byte Priority = 0;
     }
 
     public class Packager
@@ -419,20 +460,22 @@ namespace LSLib.LS
 			return package;
         }
 
-        public void CreatePackage(string packagePath, string inputPath, PackageVersion version = Package.CurrentVersion, CompressionMethod compression = CompressionMethod.None, bool fastCompression = true)
+        public void CreatePackage(string packagePath, string inputPath, PackageCreationOptions options)
         {
             FileManager.TryToCreateDirectory(packagePath);
 
             ProgressUpdate("Enumerating files ...", 0, 1, null);
             Package package = CreatePackageFromPath(inputPath);
+            package.Metadata.Flags = options.Flags;
+            package.Metadata.Priority = options.Priority;
 
             ProgressUpdate("Creating archive ...", 0, 1, null);
             using (var writer = new PackageWriter(package, packagePath))
             {
                 writer.WriteProgress += WriteProgressUpdate;
-                writer.Version = version;
-                writer.Compression = compression;
-                writer.CompressionLevel = fastCompression ? CompressionLevel.FastCompression : CompressionLevel.DefaultCompression;
+                writer.Version = options.Version;
+                writer.Compression = options.Compression;
+                writer.CompressionLevel = options.FastCompression ? CompressionLevel.FastCompression : CompressionLevel.DefaultCompression;
                 writer.Write();
             }
         }

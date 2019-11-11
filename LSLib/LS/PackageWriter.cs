@@ -91,14 +91,17 @@ namespace LSLib.LS
                 return packaged;
             }
 
-            // Pad the file to a multiple of 64 bytes
-            var pad = new byte[padLength - stream.Position % padLength];
-            for (var i = 0; i < pad.Length; i++)
+            if ((_package.Metadata.Flags & PackageFlags.Solid) == 0)
             {
-                pad[i] = 0xAD;
-            }
+                // Pad the file to a multiple of 64 bytes
+                var pad = new byte[padLength - stream.Position % padLength];
+                for (var i = 0; i < pad.Length; i++)
+                {
+                    pad[i] = 0xAD;
+                }
 
-            stream.Write(pad, 0, pad.Length);
+                stream.Write(pad, 0, pad.Length);
+            }
 
             return packaged;
         }
@@ -193,7 +196,8 @@ namespace LSLib.LS
                 mainStream.Seek(0, SeekOrigin.Begin);
                 writer.Write(Package.Signature);
                 header.NumParts = (UInt16) _streams.Count;
-                header.SomePartVar = 0; // ???
+                header.Priority = _package.Metadata.Priority;
+                header.Flags = (byte)_package.Metadata.Flags;
                 BinUtils.WriteStruct(writer, ref header);
 
                 foreach (PackagedFileInfo file in writtenFiles)
@@ -250,7 +254,8 @@ namespace LSLib.LS
 
                 header.FileListSize = (UInt32) mainStream.Position - header.FileListOffset;
                 header.NumParts = (UInt16) _streams.Count;
-                header.SomePartVar = 0; // ???
+                header.Priority = _package.Metadata.Priority;
+                header.Flags = (byte)_package.Metadata.Flags;
                 header.Md5 = ComputeArchiveHash();
                 BinUtils.WriteStruct(writer, ref header);
 
