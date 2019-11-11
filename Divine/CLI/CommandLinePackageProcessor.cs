@@ -154,17 +154,19 @@ namespace Divine.CLI
                 CommandLineLogger.LogDebug($"Using destination path: {file}");
             }
 
-            PackageVersion packageVersion = CommandLineActions.PackageVersion;
-            Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, packageVersion);
+            var options = new PackageCreationOptions();
+            options.Version = CommandLineActions.PackageVersion;
 
-            var compressionMethod = (CompressionMethod) compressionOptions["Compression"];
-            var compressionSpeed = (bool) compressionOptions["FastCompression"];
+            Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, options.Version);
 
-            CommandLineLogger.LogDebug($"Using compression method: {compressionMethod.ToString()}");
-            CommandLineLogger.LogDebug($"Using fast compression: {compressionSpeed}");
+            options.Compression = (CompressionMethod)compressionOptions["Compression"];
+            options.FastCompression = (bool)compressionOptions["FastCompression"];
+
+            var fast = options.FastCompression ? "Fast" : "Normal";
+            CommandLineLogger.LogDebug($"Using compression method: {options.Compression.ToString()} ({fast})");
 
             var packager = new Packager();
-            packager.CreatePackage(file, CommandLineActions.SourcePath, packageVersion, compressionMethod, compressionSpeed);
+            packager.CreatePackage(file, CommandLineActions.SourcePath, options);
 
             CommandLineLogger.LogInfo("Package created successfully.");
         }
