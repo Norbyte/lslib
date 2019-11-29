@@ -28,13 +28,16 @@ namespace LSLib.LS.Stats.Properties
         private StatEnumeration SkillConditionsWithArgument;
         private IStatValueParser RequirementParser;
         private StatEnumeration RequirementsWithArgument;
+        private IStatValueParser StatusParser;
+        private StatEnumeration EngineStatuses;
 
         public delegate void ErrorReportingDelegate(string message);
         public event ErrorReportingDelegate OnError;
 
         private StatPropertyScanner StatScanner;
 
-        public StatPropertyParser(StatPropertyScanner scnr, StatDefinitionRepository definitions) : base(scnr)
+        public StatPropertyParser(StatPropertyScanner scnr, StatDefinitionRepository definitions,
+            StatValueParserFactory parserFactory) : base(scnr)
         {
             StatScanner = scnr;
 
@@ -58,6 +61,15 @@ namespace LSLib.LS.Stats.Properties
                 RequirementParser = new EnumParser(requirementEnum);
 
                 RequirementsWithArgument = definitions.Enumerations["CUSTOM_Requirement_1arg"];
+                EngineStatuses = definitions.Enumerations["CUSTOM_EngineStatus"];
+
+                StatusParser = parserFactory.CreateReferenceParser(new List<StatReferenceConstraint>
+                {
+                    new StatReferenceConstraint
+                    {
+                        StatType = "StatusData"
+                    }
+                });
             }
         }
 
@@ -147,12 +159,21 @@ namespace LSLib.LS.Stats.Properties
             Arguments = arguments as List<object>
         };
 
-        private PropertyAction MakeStatusBoost(object boost, object action, object arguments) => new PropertyStatusBoost
+        private PropertyAction MakeStatusBoost(object boost, object status, object arguments)
         {
-            Boost = boost as StatusBoost,
-            Action = action as string,
-            Arguments = arguments as List<object>
-        };
+            var statusName = status as string;
+            if (!EngineStatuses.ValueToIndexMap.ContainsKey(statusName))
+            {
+                Validate(StatusParser, statusName);
+            }
+
+            return new PropertyStatusBoost
+            {
+                Boost = boost as StatusBoost,
+                Action = statusName,
+                Arguments = arguments as List<object>
+            };
+        }
 
         private List<object> MakeArgumentList(params object[] args) => new List<object>(args);
 

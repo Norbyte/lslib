@@ -370,14 +370,18 @@ namespace LSLib.LS.Stats
                 succeeded = true;
             }
 
+            if (errorText != null)
+            {
+                Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{subtype.Name} '{declarationName}' has invalid {propertyName}: '{value}' ({errorText})",
+                    location?.FileName, location?.StartLine ?? 0, declarationName);
+            }
+
             if (succeeded)
             {
                 return parsed;
             }
             else
             {
-                Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{subtype.Name} '{declarationName}' has invalid {propertyName}: '{value}' ({errorText})",
-                    location?.FileName, location?.StartLine ?? 0, declarationName);
                 return null;
             }
         }

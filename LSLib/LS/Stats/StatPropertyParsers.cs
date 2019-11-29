@@ -225,13 +225,16 @@ namespace LSLib.LS.Stats
     {
         private readonly String ExpressionType;
         private readonly StatDefinitionRepository Definitions;
+        private readonly StatValueParserFactory ParserFactory;
 
-        public ExpressionParser(String expressionType, StatDefinitionRepository definitions)
+        public ExpressionParser(String expressionType, StatDefinitionRepository definitions,
+            StatValueParserFactory parserFactory)
         {
             ExpressionType = expressionType;
             Definitions = definitions;
+            ParserFactory = parserFactory;
         }
-
+        
         public virtual object Parse(string value, ref bool succeeded, ref string errorText)
         {
             var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + ExpressionType + "__ " + value);
@@ -241,7 +244,7 @@ namespace LSLib.LS.Stats
 
                 var scanner = new StatPropertyScanner();
                 scanner.SetSource(buf);
-                var parser = new StatPropertyParser(scanner, Definitions);
+                var parser = new StatPropertyParser(scanner, Definitions, ParserFactory);
                 parser.OnError += (string message) => errorTexts.Add(message);
                 succeeded = parser.Parse();
                 if (!succeeded)
@@ -270,9 +273,9 @@ namespace LSLib.LS.Stats
     {
         private readonly ExpressionParser ExprParser;
 
-        public ConditionsParser(StatDefinitionRepository definitions)
+        public ConditionsParser(StatDefinitionRepository definitions, StatValueParserFactory parserFactory)
         {
-            ExprParser = new ExpressionParser("Conditions", definitions);
+            ExprParser = new ExpressionParser("Conditions", definitions, parserFactory);
         }
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
@@ -295,18 +298,23 @@ namespace LSLib.LS.Stats
             ReferenceValidator = referenceValidator;
         }
 
+        public IStatValueParser CreateReferenceParser(List<StatReferenceConstraint> constraints)
+        {
+            return new StatReferenceParser(ReferenceValidator, constraints);
+        }
+
         public IStatValueParser CreateParser(StatField field, StatDefinitionRepository definitions)
         {
             switch (field.Type)
             {
                 case "Requirements":
-                    return new ExpressionParser("Requirements", definitions);
+                    return new ExpressionParser("Requirements", definitions, this);
 
                 case "Properties":
-                    return new ExpressionParser("Properties", definitions);
+                    return new ExpressionParser("Properties", definitions, this);
 
                 case "Conditions":
-                    return new ConditionsParser(definitions);
+                    return new ConditionsParser(definitions, this);
 
                 case "Enumeration":
                     return new EnumParser(field.EnumType);
