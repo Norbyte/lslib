@@ -238,23 +238,33 @@ namespace LSLib.LS
                 "Textures.pak"
             };
 
-            // Load non-patch packages first
+            // Collect priority value from headers
+            var packagePriorities = new List<Tuple<string, int>>();
+
             foreach (var path in Directory.GetFiles(gameDataPath, "*.pak"))
             {
                 var baseName = Path.GetFileName(path);
-                if (!baseName.StartsWith("Patch")
-                    && !packageBlacklist.Contains(baseName)
+                if (!packageBlacklist.Contains(baseName)
                     // Don't load 2nd, 3rd, ... parts of a multi-part archive
                     && !archivePartRe.IsMatch(baseName))
                 {
-                    DiscoverPackage(path);
+                    var reader = new PackageReader(path, true);
+                    var package = reader.Read();
+                    packagePriorities.Add(new Tuple<string, int>(path, package.Metadata.Priority));
                 }
             }
 
-            // ... and add patch files later
-            foreach (var path in Directory.GetFiles(gameDataPath, "Patch*.pak"))
+            packagePriorities.Sort(
+                delegate (Tuple<string, int> a, Tuple<string, int> b)
+                {
+                    return a.Item2.CompareTo(b.Item2);
+                }
+            );
+
+            // Load non-patch packages first
+            foreach (var package in packagePriorities)
             {
-                DiscoverPackage(path);
+                 DiscoverPackage(package.Item1);
             }
         }
 

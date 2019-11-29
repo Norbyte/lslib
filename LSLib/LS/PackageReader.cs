@@ -27,9 +27,14 @@ namespace LSLib.LS
     public class PackageReader : IDisposable
     {
         private readonly String _path;
+        private readonly bool _metadataOnly;
         private Stream[] _streams;
 
-        public PackageReader(string path) => this._path = path;
+        public PackageReader(string path, bool metadataOnly = false)
+        {
+            this._path = path;
+            this._metadataOnly = metadataOnly;
+        }
 
         public void Dispose()
         {
@@ -64,6 +69,8 @@ namespace LSLib.LS
             package.Metadata.Flags = 0;
             package.Metadata.Priority = 0;
 
+            if (_metadataOnly) return package;
+
             OpenStreams(mainStream, (int) header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
             {
@@ -86,6 +93,8 @@ namespace LSLib.LS
 
             package.Metadata.Flags = (PackageFlags)header.Flags;
             package.Metadata.Priority = header.Priority;
+
+            if (_metadataOnly) return package;
 
             OpenStreams(mainStream, header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
@@ -117,6 +126,8 @@ namespace LSLib.LS
 
             package.Metadata.Flags = (PackageFlags)header.Flags;
             package.Metadata.Priority = header.Priority;
+
+            if (_metadataOnly) return package;
 
             OpenStreams(mainStream, header.NumParts);
             mainStream.Seek(header.FileListOffset, SeekOrigin.Begin);
