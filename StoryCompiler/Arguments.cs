@@ -89,6 +89,12 @@ namespace LSTools.StoryCompiler
         )]
         public bool AllowTypeCoercion;
 
+        [SwitchArgument("osi-extender", false,
+            Description = "Compile using Osiris Extender features",
+            Optional = true
+        )]
+        public bool OsiExtender;
+
         public static Dictionary<string, bool> GetWarningOptions(string[] options)
         {
             Dictionary<string, string> codeMaps = new Dictionary<string, string>
