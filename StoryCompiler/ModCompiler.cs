@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -28,11 +29,13 @@ namespace LSTools.StoryCompiler
         private List<GoalScript> GoalScripts = new List<GoalScript>();
         private List<byte[]> GameObjectLSFs = new List<byte[]>();
         private bool HasErrors = false;
+        private HashSet<string> TypeCoercionWhitelist;
 
         public bool CheckOnly = false;
         public bool CheckGameObjects = false;
         public bool LoadPackages = true;
         public bool AllowTypeCoercion = false;
+        public bool OsiExtender = false;
         public TargetGame Game = TargetGame.DOS2;
 
         public ModCompiler(Logger logger, String gameDataPath)
@@ -57,7 +60,23 @@ namespace LSTools.StoryCompiler
 
             hdrLoader.LoadHeader(declarations);
         }
-        
+
+        private void LoadTypeCoercionWhitelist(Stream stream)
+        {
+            TypeCoercionWhitelist = new HashSet<string>();
+            using (var reader = new StreamReader(stream))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var func = reader.ReadLine().Trim();
+                    if (func.Length > 0)
+                    {
+                        TypeCoercionWhitelist.Add(func);
+                    }
+                }
+            }
+        }
+
         public void SetWarningOptions(Dictionary<string, bool> options)
         {
             foreach (var option in options)
@@ -115,6 +134,37 @@ namespace LSTools.StoryCompiler
             }
 
             return sorted.Values.ToList();
+        }
+
+        class PreprocessTasks
+        {
+            public ConcurrentQueue<GoalScript> Inputs = new ConcurrentQueue<GoalScript>();
+        }
+
+        private void Preprocess(PreprocessTasks tasks)
+        {
+            var preprocessor = new Preprocessor();
+            while (tasks.Inputs.TryDequeue(out GoalScript script))
+            {
+                var scriptText = Encoding.UTF8.GetString(script.ScriptBody);
+                string preprocessed = null;
+                if (preprocessor.Preprocess(scriptText, ref preprocessed))
+                {
+                    script.ScriptBody = Encoding.UTF8.GetBytes(preprocessed);
+                }
+            }
+        }
+
+        private void ParallelPreprocess()
+        {
+            var tasks = new PreprocessTasks();
+            foreach (var script in GoalScripts)
+            {
+                tasks.Inputs.Enqueue(script);
+            }
+
+            PreprocessTasks[] threadTasks = new[] { tasks, tasks, tasks, tasks };
+            Task.WhenAll(threadTasks.Select(task => Task.Run(() => { Preprocess(task); }))).Wait();
         }
 
         private void LoadGameObjects(Resource resource)
@@ -332,20 +382,33 @@ namespace LSTools.StoryCompiler
                 }
 
                 AbstractFileInfo storyHeaderFile = null;
+                AbstractFileInfo typeCoercionWhitelistFile = null;
                 var modsSearchPath = mods.ToList();
                 modsSearchPath.Reverse();
                 foreach (var modName in modsSearchPath)
                 {
-                    if (Mods.Mods[modName].StoryHeaderFile != null)
+                    if (storyHeaderFile == null && Mods.Mods[modName].StoryHeaderFile != null)
                     {
                         storyHeaderFile = Mods.Mods[modName].StoryHeaderFile;
-                        break;
+                    }
+
+                    if (typeCoercionWhitelistFile == null && Mods.Mods[modName].TypeCoercionWhitelistFile != null)
+                    {
+                        typeCoercionWhitelistFile = Mods.Mods[modName].TypeCoercionWhitelistFile;
                     }
                 }
 
-                var stream = storyHeaderFile.MakeStream();
-                LoadStoryHeaders(stream);
+                var storyStream = storyHeaderFile.MakeStream();
+                LoadStoryHeaders(storyStream);
                 storyHeaderFile.ReleaseStream();
+
+                if (typeCoercionWhitelistFile != null)
+                {
+                    var typeCoercionStream = typeCoercionWhitelistFile.MakeStream();
+                    LoadTypeCoercionWhitelist(typeCoercionStream);
+                    typeCoercionWhitelistFile.ReleaseStream();
+                    Compiler.TypeCoercionWhitelist = TypeCoercionWhitelist;
+                }
 
                 Logger.TaskFinished();
             }
@@ -359,6 +422,13 @@ namespace LSTools.StoryCompiler
             else
             {
                 Compiler.Context.Log.WarningSwitches[DiagnosticCode.UnresolvedGameObjectName] = false;
+            }
+
+            if (OsiExtender)
+            {
+                Logger.TaskStarted("Precompiling scripts");
+                ParallelPreprocess();
+                Logger.TaskFinished();
             }
 
             var asts = new Dictionary<String, ASTGoal>();

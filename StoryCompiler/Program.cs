@@ -46,6 +46,7 @@ namespace LSTools.StoryCompiler
                 modCompiler.CheckOnly = args.CheckOnly;
                 modCompiler.LoadPackages = !args.NoPackages;
                 modCompiler.AllowTypeCoercion = args.AllowTypeCoercion;
+                modCompiler.OsiExtender = args.OsiExtender;
                 if (args.Game == "dos2")
                 {
                     modCompiler.Game = TargetGame.DOS2;
@@ -90,6 +91,7 @@ namespace LSTools.StoryCompiler
                 Console.WriteLine("    --check-names           - Verify game object names (slow!)");
                 Console.WriteLine("    --no-packages           - Don't load files from packages");
                 Console.WriteLine("    --allow-type-coercion   - Allow \"casting\" between unrelated types");
+                Console.WriteLine("    --osi-extender          - Compile using Osiris Extender features");
                 Environment.Exit(1);
             }
 

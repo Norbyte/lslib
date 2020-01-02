@@ -169,6 +169,7 @@
     <Compile Include="LS\Story\Compiler\CompilationContext.cs" />
     <Compile Include="LS\Story\Compiler\DebugInfo.cs" />
     <Compile Include="LS\Story\Compiler\HeaderLoader.cs" />
+    <Compile Include="LS\Story\Compiler\Preprocessor.cs" />
     <Compile Include="LS\Story\Database.cs" />
     <Compile Include="LS\Story\DatabaseNode.cs" />
     <Compile Include="LS\Story\DataNode.cs" />

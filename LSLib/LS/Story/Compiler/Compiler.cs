@@ -11,6 +11,7 @@ namespace LSLib.LS.Story.Compiler
         public HashSet<FunctionNameAndArity> IgnoreUnusedDatabases = new HashSet<FunctionNameAndArity>();
         public TargetGame Game = TargetGame.DOS2;
         public bool AllowTypeCoercion = false;
+        public HashSet<string> TypeCoercionWhitelist;
 
         private string TypeToName(uint typeId)
         {
@@ -165,7 +166,7 @@ namespace LSLib.LS.Story.Compiler
                     continue;
                 }
                 
-                VerifyIRValue(rule, ele);
+                VerifyIRValue(rule, ele, func);
                 VerifyIRValueCall(rule, ele, func, index, -1, statement.Not);
                 VerifyParamCompatibility(func, index, param, ele);
 
@@ -173,7 +174,7 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void VerifyIRVariable(IRRule rule, IRVariable variable)
+        private void VerifyIRVariable(IRRule rule, IRVariable variable, FunctionSignature func)
         {
             var ruleVar = rule.Variables[variable.Index];
             if (variable.Type == null)
@@ -194,7 +195,8 @@ namespace LSLib.LS.Story.Compiler
                 return;
             }
 
-            if (!AllowTypeCoercion)
+            if ((func == null || TypeCoercionWhitelist == null || !TypeCoercionWhitelist.Contains(func.GetNameAndArity().ToString()))
+                && !AllowTypeCoercion)
             {
                 if (!AreIntrinsicTypesCompatible(ruleVar.Type.IntrinsicTypeId, variable.Type.IntrinsicTypeId))
                 {
@@ -290,7 +292,7 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private void VerifyIRValue(IRRule rule, IRValue value)
+        private void VerifyIRValue(IRRule rule, IRValue value, FunctionSignature func)
         {
             if (value is IRConstant)
             {
@@ -298,7 +300,7 @@ namespace LSLib.LS.Story.Compiler
             }
             else
             {
-                VerifyIRVariable(rule, value as IRVariable);
+                VerifyIRVariable(rule, value as IRVariable, func);
             }
         }
 
@@ -469,7 +471,7 @@ namespace LSLib.LS.Story.Compiler
                     continue;
                 }
 
-                VerifyIRValue(rule, condParam);
+                VerifyIRValue(rule, condParam, func);
                 VerifyIRValueCall(rule, condParam, func, index, conditionIndex, condition.Not);
                 VerifyParamCompatibility(func, index, param, condParam);
 
@@ -524,7 +526,7 @@ namespace LSLib.LS.Story.Compiler
 
         private void VerifyIRBinaryConditionValue(IRRule rule, IRValue value, Int32 conditionIndex)
         {
-            VerifyIRValue(rule, value);
+            VerifyIRValue(rule, value, null);
 
             if (value is IRVariable)
             {
