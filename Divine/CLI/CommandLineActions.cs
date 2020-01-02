@@ -120,23 +120,35 @@ namespace Divine.CLI
 
         private static void Process(CommandLineArguments args)
         {
-	        var expression = new Regex("^" + Regex.Escape(args.Expression).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.Singleline | RegexOptions.Compiled);
+			Func<AbstractFileInfo, bool> filter;
 
-	        if (args.UseRegex)
-	        {
-		        try
-		        {
-			        expression = new Regex(args.Expression, RegexOptions.Singleline | RegexOptions.Compiled);
-		        }
-		        catch (ArgumentException)
-		        {
-			        CommandLineLogger.LogFatal($"Cannot parse RegEx expression: {args.Expression}", -1);
-		        }
-	        }
+			if (args.Expression != null)
+			{
+				Regex expression = null;
+				if (args.UseRegex)
+				{
+					try
+					{
+						expression = new Regex(args.Expression, RegexOptions.Singleline | RegexOptions.Compiled);
+					}
+					catch (ArgumentException)
+					{
+						CommandLineLogger.LogFatal($"Cannot parse RegEx expression: {args.Expression}", -1);
+					}
+				}
+				else
+				{
+					expression = new Regex("^" + Regex.Escape(args.Expression).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.Singleline | RegexOptions.Compiled);
+				}
 
-	        Func<AbstractFileInfo, bool> filter = obj => obj.Name.Like(expression);
+				filter = obj => obj.Name.Like(expression);
+			}
+			else
+			{
+				filter = obj => true;
+			}
 
-	        switch (args.Action)
+			switch (args.Action)
             {
                 case "create-package":
                 {
