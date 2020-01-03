@@ -400,7 +400,7 @@ namespace LSLib.LS
                 }
 
                 var typeCoercionWhitelistPath = modPath + @"\Story\RawFiles\TypeCoercionWhitelist.txt";
-                if (File.Exists(headerPath))
+                if (File.Exists(typeCoercionWhitelistPath))
                 {
                     var fileInfo = new FilesystemFileInfo
                     {
