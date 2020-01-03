@@ -120,35 +120,35 @@ namespace Divine.CLI
 
         private static void Process(CommandLineArguments args)
         {
-			Func<AbstractFileInfo, bool> filter;
+            Func<AbstractFileInfo, bool> filter;
 
-			if (args.Expression != null)
-			{
-				Regex expression = null;
-				if (args.UseRegex)
-				{
-					try
-					{
-						expression = new Regex(args.Expression, RegexOptions.Singleline | RegexOptions.Compiled);
-					}
-					catch (ArgumentException)
-					{
-						CommandLineLogger.LogFatal($"Cannot parse RegEx expression: {args.Expression}", -1);
-					}
-				}
-				else
-				{
-					expression = new Regex("^" + Regex.Escape(args.Expression).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.Singleline | RegexOptions.Compiled);
-				}
+            if (args.Expression != null)
+            {
+                Regex expression = null;
+                if (args.UseRegex)
+                {
+                    try
+                    {
+                        expression = new Regex(args.Expression, RegexOptions.Singleline | RegexOptions.Compiled);
+                    }
+                    catch (ArgumentException)
+                    {
+                        CommandLineLogger.LogFatal($"Cannot parse RegEx expression: {args.Expression}", -1);
+                    }
+                }
+                else
+                {
+                    expression = new Regex("^" + Regex.Escape(args.Expression).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.Singleline | RegexOptions.Compiled);
+                }
 
-				filter = obj => obj.Name.Like(expression);
-			}
-			else
-			{
-				filter = obj => true;
-			}
+                filter = obj => obj.Name.Like(expression);
+            }
+            else
+            {
+                filter = obj => true;
+            }
 
-			switch (args.Action)
+            switch (args.Action)
             {
                 case "create-package":
                 {
