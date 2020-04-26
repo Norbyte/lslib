@@ -11,7 +11,7 @@ namespace ConverterApp
         {
             InitializeComponent();
 
-            saveFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Debugging.SavePath");
+            saveFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Debugging.SavePath", true, DataSourceUpdateMode.OnPropertyChanged);
         }
 
         private DebugDumperTask CreateDumperFromSettings()

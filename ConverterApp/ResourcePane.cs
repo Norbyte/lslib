@@ -19,10 +19,10 @@ namespace ConverterApp
             resourceInputFormatCb.SelectedIndex = 2;
             resourceOutputFormatCb.SelectedIndex = 0;
 
-            resourceInputPath.DataBindings.Add("Text", form, "Settings.Resources.InputPath");
-            resourceOutputPath.DataBindings.Add("Text", form, "Settings.Resources.OutputPath");
-            resourceInputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchInputPath");
-            resourceOutputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchOutputPath");
+            resourceInputPath.DataBindings.Add("Text", form, "Settings.Resources.InputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            resourceOutputPath.DataBindings.Add("Text", form, "Settings.Resources.OutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            resourceInputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            resourceOutputDir.DataBindings.Add("Text", form, "Settings.Resources.BatchOutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
 
             resourceInputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
             resourceOutputFormatCb.DataBindings.Add("SelectedIndex", form, "Settings.Resources.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);

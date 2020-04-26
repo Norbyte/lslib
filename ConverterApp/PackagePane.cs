@@ -18,10 +18,10 @@ namespace ConverterApp
             packageVersion.SelectedIndex = 0;
             compressionMethod.SelectedIndex = 3;
 
-            extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath");
-            extractionPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractOutputPath");
-            createSrcPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateInputPath");
-            createPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateOutputPath");
+            extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            extractionPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractOutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            createSrcPath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            createPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.CreateOutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
 
             packageVersion.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageVersion", true, DataSourceUpdateMode.OnPropertyChanged);
             compressionMethod.DataBindings.Add("SelectedIndex", settingsDataSource, "Settings.PAK.CreatePackageCompression", true, DataSourceUpdateMode.OnPropertyChanged);

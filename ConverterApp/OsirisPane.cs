@@ -18,8 +18,8 @@ namespace ConverterApp
         {
             InitializeComponent();
 
-            storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath");
-            goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath");
+            storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
         }
 
         private void storyFileBrowseBtn_Click(object sender, EventArgs e)

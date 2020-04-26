@@ -26,13 +26,13 @@ namespace ConverterApp
             gr2BatchInputFormat.SelectedIndex = 0;
             gr2BatchOutputFormat.SelectedIndex = 1;
 
-            inputPath.DataBindings.Add("Text", _form, "Settings.GR2.InputPath");
-            outputPath.DataBindings.Add("Text", _form, "Settings.GR2.OutputPath");
+            inputPath.DataBindings.Add("Text", _form, "Settings.GR2.InputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            outputPath.DataBindings.Add("Text", _form, "Settings.GR2.OutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
 
-            conformantGR2Path.DataBindings.Add("Text", _form, "Settings.GR2.ConformPath");
+            conformantGR2Path.DataBindings.Add("Text", _form, "Settings.GR2.ConformPath", true, DataSourceUpdateMode.OnPropertyChanged);
 
-            gr2BatchInputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchInputPath");
-            gr2BatchOutputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchOutputPath");
+            gr2BatchInputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            gr2BatchOutputDir.DataBindings.Add("Text", _form, "Settings.GR2.BatchOutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
 
             gr2BatchInputFormat.DataBindings.Add("SelectedIndex", _form, "Settings.GR2.BatchInputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
             gr2BatchOutputFormat.DataBindings.Add("SelectedIndex", _form, "Settings.GR2.BatchOutputFormat", true, DataSourceUpdateMode.OnPropertyChanged);
