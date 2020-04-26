@@ -503,6 +503,11 @@ namespace LSLib.Granny.Model
                         {
                             desc.ColorMapType = ColorMapType.Byte4;
                         }
+                        //Some Granny2 model formats report their color maps as UInt8 type instead of NormalUInt8, causing it to fail checks.
+                        else if (member.Type == MemberType.UInt8 && member.ArraySize == 4)
+                        {
+                            desc.ColorMapType = ColorMapType.Byte4;
+                        }
                         else
                         {
                             throw new Exception($"Unsupported color map type: {member.Type}, {member.ArraySize}");
