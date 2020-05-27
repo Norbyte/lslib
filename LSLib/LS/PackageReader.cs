@@ -148,9 +148,66 @@ namespace LSLib.LS
 
             var entries = new FileEntry13[numFiles];
             BinUtils.ReadStructs(msr, entries);
-            foreach (var entry in entries)
+
+            if ((package.Metadata.Flags & PackageFlags.Solid) == PackageFlags.Solid && numFiles > 0)
             {
-                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
+                // Calculate compressed frame offset and bounds
+                uint totalUncompressedSize = 0;
+                uint totalSizeOnDisk = 0;
+                uint firstOffset = 0xffffffff;
+                uint lastOffset = 0;
+
+                foreach (var entry in entries)
+                {
+                    totalUncompressedSize += entry.UncompressedSize;
+                    totalSizeOnDisk += entry.SizeOnDisk;
+                    if (entry.OffsetInFile < firstOffset)
+                    {
+                        firstOffset = entry.OffsetInFile;
+                    }
+                    if (entry.OffsetInFile + entry.SizeOnDisk > lastOffset)
+                    {
+                        lastOffset = entry.OffsetInFile + entry.SizeOnDisk;
+                    }
+                }
+
+                if (firstOffset != 7 || lastOffset - firstOffset != totalSizeOnDisk)
+                {
+                    string msg = $"Incorrectly compressed solid archive; offsets {firstOffset}/{lastOffset}, bytes {totalSizeOnDisk}";
+                    throw new InvalidDataException(msg);
+                }
+
+                // Decompress all files as a single frame (solid)
+                byte[] frame = new byte[lastOffset];
+                mainStream.Seek(0, SeekOrigin.Begin);
+                mainStream.Read(frame, 0, (int)lastOffset);
+
+                byte[] decompressed = Native.LZ4FrameCompressor.Decompress(frame);
+                var decompressedStream = new MemoryStream(decompressed);
+
+                // Update offsets to point to the decompressed chunk
+                uint offset = 7;
+                uint compressedOffset = 0;
+                foreach (var entry in entries)
+                {
+                    if (entry.OffsetInFile != offset)
+                    {
+                        throw new InvalidDataException("File list in solid archive not contiguous");
+                    }
+
+                    var file = PackagedFileInfo.CreateSolidFromEntry(entry, _streams[entry.ArchivePart], compressedOffset, decompressedStream);
+                    package.Files.Add(file);
+
+                    offset += entry.SizeOnDisk;
+                    compressedOffset += entry.UncompressedSize;
+                }
+            }
+            else
+            {
+                foreach (var entry in entries)
+                {
+                    package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
+                }
             }
 
             return package;

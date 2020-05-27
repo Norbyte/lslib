@@ -125,6 +125,9 @@ namespace LSLib.LS
         public Stream PackageStream;
         public UInt32 SizeOnDisk;
         public UInt32 UncompressedSize;
+        public bool Solid;
+        public UInt32 SolidOffset;
+        public Stream SolidStream;
         private Stream _uncompressedStream;
 
         public void Dispose()
@@ -163,8 +166,18 @@ namespace LSLib.LS
                 }
             }
 
-            byte[] uncompressed = BinUtils.Decompress(compressed, (int) Size(), (byte) Flags);
-            _uncompressedStream = new MemoryStream(uncompressed);
+            if (Solid)
+            {
+                SolidStream.Seek(SolidOffset, SeekOrigin.Begin);
+                byte[] uncompressed = new byte[UncompressedSize];
+                SolidStream.Read(uncompressed, 0, (int)UncompressedSize);
+                _uncompressedStream = new MemoryStream(uncompressed);
+            }
+            else
+            {
+                byte[] uncompressed = BinUtils.Decompress(compressed, (int)Size(), (byte)Flags);
+                _uncompressedStream = new MemoryStream(uncompressed);
+            }
 
             return _uncompressedStream;
         }
@@ -184,7 +197,14 @@ namespace LSLib.LS
         {
             var info = new PackagedFileInfo
             {
-                PackageStream = dataStream
+                PackageStream = dataStream,
+                OffsetInFile = entry.OffsetInFile,
+                SizeOnDisk = entry.SizeOnDisk,
+                UncompressedSize = entry.UncompressedSize,
+                ArchivePart = entry.ArchivePart,
+                Flags = entry.Flags,
+                Crc = entry.Crc,
+                Solid = false
             };
 
             int nameLen;
@@ -200,12 +220,15 @@ namespace LSLib.LS
                 throw new InvalidDataException(msg);
             }
 
-            info.OffsetInFile = entry.OffsetInFile;
-            info.SizeOnDisk = entry.SizeOnDisk;
-            info.UncompressedSize = entry.UncompressedSize;
-            info.ArchivePart = entry.ArchivePart;
-            info.Flags = entry.Flags;
-            info.Crc = entry.Crc;
+            return info;
+        }
+
+        internal static PackagedFileInfo CreateSolidFromEntry(FileEntry13 entry, Stream dataStream, uint solidOffset, Stream solidStream)
+        {
+            var info = CreateFromEntry(entry, dataStream);
+            info.Solid = true;
+            info.SolidOffset = solidOffset;
+            info.SolidStream = solidStream;
             return info;
         }
 
@@ -396,7 +419,7 @@ namespace LSLib.LS
             long currentSize = 0;
 
             var buffer = new byte[32768];
-            foreach (AbstractFileInfo file in files.OrderBy(obj => obj.Size()))
+            foreach (AbstractFileInfo file in files)
             {
                 ProgressUpdate(file.Name, currentSize, totalSize, file);
                 currentSize += file.Size();
