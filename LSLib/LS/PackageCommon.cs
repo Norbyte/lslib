@@ -63,6 +63,17 @@ namespace LSLib.LS
         public byte[] Md5;
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct LSPKHeader15
+    {
+        public UInt32 Version;
+        public UInt64 FileListOffset;
+        public UInt64 FileListSize;
+        public UInt64 Unknown;
+        public UInt32 Unknown2;
+        public UInt16 Unknown3;
+    }
+
     [Flags]
     public enum PackageFlags
     {
@@ -71,7 +82,7 @@ namespace LSLib.LS
         /// </summary>
         AllowMemoryMapping = 0x02,
         /// <summary>
-        /// 64-byte padding is removed from files in the archive.
+        /// All files are compressed into a single LZ4 stream
         /// </summary>
         Solid = 0x04,
         /// <summary>
@@ -106,11 +117,26 @@ namespace LSLib.LS
         public UInt32 Crc;
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct FileEntry15
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+        public byte[] Name;
+
+        public UInt64 OffsetInFile;
+        public UInt64 SizeOnDisk;
+        public UInt64 UncompressedSize;
+        public UInt32 Unknown1;
+        public UInt32 Flags;
+        public UInt32 Crc;
+        public UInt32 Unknown2;
+    }
+
     public abstract class AbstractFileInfo
     {
         public String Name;
 
-        public abstract UInt32 Size();
+        public abstract UInt64 Size();
         public abstract UInt32 CRC();
         public abstract Stream MakeStream();
         public abstract void ReleaseStream();
@@ -121,10 +147,10 @@ namespace LSLib.LS
         public UInt32 ArchivePart;
         public UInt32 Crc;
         public UInt32 Flags;
-        public UInt32 OffsetInFile;
+        public UInt64 OffsetInFile;
         public Stream PackageStream;
-        public UInt32 SizeOnDisk;
-        public UInt32 UncompressedSize;
+        public UInt64 SizeOnDisk;
+        public UInt64 UncompressedSize;
         public bool Solid;
         public UInt32 SolidOffset;
         public Stream SolidStream;
@@ -135,7 +161,7 @@ namespace LSLib.LS
             ReleaseStream();
         }
 
-        public override UInt32 Size() => (Flags & 0x0F) == 0 ? SizeOnDisk : UncompressedSize;
+        public override UInt64 Size() => (Flags & 0x0F) == 0 ? SizeOnDisk : UncompressedSize;
 
         public override UInt32 CRC() => Crc;
 
@@ -148,9 +174,14 @@ namespace LSLib.LS
 
             var compressed = new byte[SizeOnDisk];
 
-            PackageStream.Seek(OffsetInFile, SeekOrigin.Begin);
-            int readSize = PackageStream.Read(compressed, 0, (int) SizeOnDisk);
-            if (readSize != SizeOnDisk)
+            if (SizeOnDisk > 0x7fffffff)
+            {
+                throw new InvalidDataException($"File '{Name}' is over 2GB ({SizeOnDisk} bytes), which is not supported yet!");
+            }
+
+            PackageStream.Seek((long)OffsetInFile, SeekOrigin.Begin);
+            int readSize = PackageStream.Read(compressed, 0, (int)SizeOnDisk);
+            if (readSize != (long)SizeOnDisk)
             {
                 string msg = $"Failed to read {SizeOnDisk} bytes from archive (only got {readSize})";
                 throw new InvalidDataException(msg);
@@ -223,6 +254,36 @@ namespace LSLib.LS
             return info;
         }
 
+        internal static PackagedFileInfo CreateFromEntry(FileEntry15 entry, Stream dataStream)
+        {
+            var info = new PackagedFileInfo
+            {
+                PackageStream = dataStream,
+                OffsetInFile = entry.OffsetInFile,
+                SizeOnDisk = entry.SizeOnDisk,
+                UncompressedSize = entry.UncompressedSize,
+                ArchivePart = 0,
+                Flags = entry.Flags,
+                Crc = entry.Crc,
+                Solid = false
+            };
+
+            int nameLen;
+            for (nameLen = 0; nameLen < entry.Name.Length && entry.Name[nameLen] != 0; nameLen++)
+            {
+            }
+            info.Name = Encoding.UTF8.GetString(entry.Name, 0, nameLen);
+
+            uint compressionMethod = entry.Flags & 0x0F;
+            if (compressionMethod > 2 || (entry.Flags & ~0x7F) != 0)
+            {
+                string msg = $"File '{info.Name}' has unsupported flags: {entry.Flags}";
+                throw new InvalidDataException(msg);
+            }
+
+            return info;
+        }
+
         internal static PackagedFileInfo CreateSolidFromEntry(FileEntry13 entry, Stream dataStream, uint solidOffset, Stream solidStream)
         {
             var info = CreateFromEntry(entry, dataStream);
@@ -265,9 +326,9 @@ namespace LSLib.LS
             byte[] encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
             Array.Copy(encodedName, entry.Name, encodedName.Length);
 
-            entry.OffsetInFile = OffsetInFile;
-            entry.SizeOnDisk = SizeOnDisk;
-            entry.UncompressedSize = (Flags & 0x0F) == 0 ? 0 : UncompressedSize;
+            entry.OffsetInFile = (uint)OffsetInFile;
+            entry.SizeOnDisk = (uint)SizeOnDisk;
+            entry.UncompressedSize = (Flags & 0x0F) == 0 ? 0 : (uint)UncompressedSize;
             entry.ArchivePart = ArchivePart;
             return entry;
         }
@@ -281,12 +342,31 @@ namespace LSLib.LS
             byte[] encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
             Array.Copy(encodedName, entry.Name, encodedName.Length);
 
-            entry.OffsetInFile = OffsetInFile;
-            entry.SizeOnDisk = SizeOnDisk;
-            entry.UncompressedSize = (Flags & 0x0F) == 0 ? 0 : UncompressedSize;
+            entry.OffsetInFile = (uint)OffsetInFile;
+            entry.SizeOnDisk = (uint)SizeOnDisk;
+            entry.UncompressedSize = (Flags & 0x0F) == 0 ? 0 : (uint)UncompressedSize;
             entry.ArchivePart = ArchivePart;
             entry.Flags = Flags;
             entry.Crc = Crc;
+            return entry;
+        }
+
+        internal FileEntry15 MakeEntryV15()
+        {
+            var entry = new FileEntry15
+            {
+                Name = new byte[256],
+                OffsetInFile = OffsetInFile,
+                SizeOnDisk = SizeOnDisk,
+                UncompressedSize = (Flags & 0x0F) == 0 ? 0 : UncompressedSize,
+                Flags = Flags,
+                Crc = Crc,
+                Unknown1 = 0,
+                Unknown2 = 0
+            };
+            byte[] encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
+            Array.Copy(encodedName, entry.Name, encodedName.Length);
+
             return entry;
         }
     }
@@ -302,7 +382,7 @@ namespace LSLib.LS
             ReleaseStream();
         }
 
-        public override UInt32 Size() => (UInt32) CachedSize;
+        public override UInt64 Size() => (UInt64) CachedSize;
 
         public override UInt32 CRC() => throw new NotImplementedException("!");
 
@@ -336,7 +416,7 @@ namespace LSLib.LS
     {
         public Stream Stream;
 
-        public override UInt32 Size() => (UInt32) Stream.Length;
+        public override UInt64 Size() => (UInt64) Stream.Length;
 
         public override UInt32 CRC() => throw new NotImplementedException("!");
 
@@ -359,7 +439,7 @@ namespace LSLib.LS
 
     public class Package
     {
-        public const PackageVersion CurrentVersion = PackageVersion.V13;
+        public const PackageVersion CurrentVersion = PackageVersion.V15;
 
         public static byte[] Signature =
         {
@@ -383,7 +463,7 @@ namespace LSLib.LS
 
     public class PackageCreationOptions
     {
-        public PackageVersion Version = Package.CurrentVersion;
+        public PackageVersion Version = PackageVersion.V13;
         public CompressionMethod Compression = CompressionMethod.None;
         public bool FastCompression = true;
         public PackageFlags Flags = 0;
@@ -415,14 +495,14 @@ namespace LSLib.LS
                 files = files.FindAll(obj => filter(obj));
             }
 
-            long totalSize = files.Sum(p => p.Size());
+            long totalSize = files.Sum(p => (long)p.Size());
             long currentSize = 0;
 
             var buffer = new byte[32768];
             foreach (AbstractFileInfo file in files)
             {
                 ProgressUpdate(file.Name, currentSize, totalSize, file);
-                currentSize += file.Size();
+                currentSize += (long)file.Size();
 
                 string outPath = outputPath + file.Name;
 

@@ -39,8 +39,17 @@ namespace LSLib.LS
 
         public void Write(Resource resource)
         {
-            Compression = CompressionMethod.LZ4;
-            CompressionLevel = CompressionLevel.MaxCompression;
+            if (Version <= (uint)FileVersion.VerExtendedNodes)
+            {
+                Compression = CompressionMethod.LZ4;
+                CompressionLevel = CompressionLevel.MaxCompression;
+            }
+            else
+            {
+                // BG3 doesn't seem to compress LSFs anymore
+                Compression = CompressionMethod.None;
+                CompressionLevel = CompressionLevel.DefaultCompression;
+            }
 
             using (this.Writer = new BinaryWriter(Stream, Encoding.Default, true))
             using (this.NodeStream = new MemoryStream())
@@ -76,10 +85,10 @@ namespace LSLib.LS
                 var header = new Header();
                 header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
                 header.Version = Version;
-                header.EngineVersion = (resource.Metadata.majorVersion << 24) |
-                    (resource.Metadata.minorVersion << 16) |
-                    (resource.Metadata.revision << 8) |
-                    resource.Metadata.buildNumber;
+                header.EngineVersion = (resource.Metadata.MajorVersion << 28) |
+                    (resource.Metadata.MinorVersion << 24) |
+                    (resource.Metadata.Revision << 16) |
+                    resource.Metadata.BuildNumber;
 
                 bool chunked = header.Version >= (ulong) FileVersion.VerChunkedCompress;
                 byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
@@ -285,7 +294,15 @@ namespace LSLib.LS
                 case NodeAttribute.DataType.DT_TranslatedString:
                     {
                         var ts = (TranslatedString)attr.Value;
-                        WriteStringWithLength(writer, ts.Value);
+                        if (Version >= (uint)FileVersion.VerBG3)
+                        {
+                            writer.Write(ts.Version);
+                        }
+                        else
+                        {
+                            WriteStringWithLength(writer, ts.Value);
+                        }
+
                         WriteStringWithLength(writer, ts.Handle);
                         break;
                     }

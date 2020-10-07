@@ -208,6 +208,7 @@ namespace LSLib.LS
                                 break;
 
                             case NodeAttribute.DataType.DT_Long:
+                            case NodeAttribute.DataType.DT_Int64:
                                 attribute.Value = Convert.ToInt64(reader.Value);
                                 break;
 
@@ -217,10 +218,13 @@ namespace LSLib.LS
 
                             case NodeAttribute.DataType.DT_TranslatedString:
                                 {
-                                    var translatedString = new TranslatedString();
-                                    translatedString.Value = reader.Value.ToString();
-                                    translatedString.Handle = handle;
-                                    attribute.Value = translatedString;
+                                    if (attribute.Value == null)
+                                    {
+                                        attribute.Value = new TranslatedString();
+                                    }
+
+                                    var ts = (TranslatedString)attribute.Value;
+                                    ts.Value = reader.Value.ToString();
                                     break;
                                 }
 
@@ -290,15 +294,30 @@ namespace LSLib.LS
                     }
                     else if (key == "handle")
                     {
-                        if (attribute != null)
+                        if (attribute.Type == NodeAttribute.DataType.DT_TranslatedString)
                         {
-                            var ts = ((TranslatedString)attribute.Value);
+                            if (attribute.Value == null)
+                            {
+                                attribute.Value = new TranslatedString();
+                            }
+
+                            var ts = (TranslatedString)attribute.Value;
                             ts.Handle = reader.Value.ToString();
                         }
                         else
                         {
                             handle = reader.Value.ToString();
                         }
+                    }
+                    else if (key == "version")
+                    {
+                        if (attribute.Value == null)
+                        {
+                            attribute.Value = new TranslatedString();
+                        }
+
+                        var ts = (TranslatedString)attribute.Value;
+                        ts.Version = UInt16.Parse(reader.Value.ToString());
                     }
                     else
                     {
@@ -416,7 +435,7 @@ namespace LSLib.LS
                 {
                     if (key == "time")
                     {
-                        resource.Metadata.timestamp = Convert.ToUInt32(reader.Value);
+                        resource.Metadata.Timestamp = Convert.ToUInt32(reader.Value);
                     }
                     else if (key == "version")
                     {
@@ -425,10 +444,10 @@ namespace LSLib.LS
                         var match = re.Match(reader.Value.ToString());
                         if (match.Success)
                         {
-                            resource.Metadata.majorVersion = Convert.ToUInt32(match.Groups[1].Value);
-                            resource.Metadata.minorVersion = Convert.ToUInt32(match.Groups[2].Value);
-                            resource.Metadata.revision = Convert.ToUInt32(match.Groups[3].Value);
-                            resource.Metadata.buildNumber = Convert.ToUInt32(match.Groups[4].Value);
+                            resource.Metadata.MajorVersion = Convert.ToUInt32(match.Groups[1].Value);
+                            resource.Metadata.MinorVersion = Convert.ToUInt32(match.Groups[2].Value);
+                            resource.Metadata.Revision = Convert.ToUInt32(match.Groups[3].Value);
+                            resource.Metadata.BuildNumber = Convert.ToUInt32(match.Groups[4].Value);
                         }
                         else
                         {
@@ -509,12 +528,12 @@ namespace LSLib.LS
             writer.WritePropertyName("header");
             writer.WriteStartObject();
             writer.WritePropertyName("time");
-            writer.WriteValue(resource.Metadata.timestamp);
+            writer.WriteValue(resource.Metadata.Timestamp);
             writer.WritePropertyName("version");
-            var versionString = resource.Metadata.majorVersion.ToString() + "."
-                + resource.Metadata.minorVersion.ToString() + "."
-                + resource.Metadata.revision.ToString() + "."
-                + resource.Metadata.buildNumber.ToString();
+            var versionString = resource.Metadata.MajorVersion.ToString() + "."
+                + resource.Metadata.MinorVersion.ToString() + "."
+                + resource.Metadata.Revision.ToString() + "."
+                + resource.Metadata.BuildNumber.ToString();
             writer.WriteValue(versionString);
             writer.WriteEndObject();
 
@@ -572,7 +591,12 @@ namespace LSLib.LS
                 writer.WriteStartObject();
                 writer.WritePropertyName("type");
                 writer.WriteValue((int)attribute.Value.Type);
-                writer.WritePropertyName("value");
+
+                if (attribute.Value.Type != NodeAttribute.DataType.DT_TranslatedString)
+                {
+                    writer.WritePropertyName("value");
+                }
+
                 switch (attribute.Value.Type)
                 {
                     case NodeAttribute.DataType.DT_Byte:
@@ -626,6 +650,7 @@ namespace LSLib.LS
                         break;
 
                     case NodeAttribute.DataType.DT_Long:
+                    case NodeAttribute.DataType.DT_Int64:
                         writer.WriteValue(Convert.ToInt64(attribute.Value.Value));
                         break;
 
@@ -636,7 +661,19 @@ namespace LSLib.LS
                     case NodeAttribute.DataType.DT_TranslatedString:
                         {
                             var ts = (TranslatedString)attribute.Value.Value;
-                            writer.WriteValue(ts.Value);
+
+                            if (ts.Value != null)
+                            {
+                                writer.WritePropertyName("value");
+                                writer.WriteValue(ts.Value);
+                            }
+
+                            if (ts.Version > 0)
+                            {
+                                writer.WritePropertyName("version");
+                                writer.WriteValue(ts.Version);
+                            }
+
                             writer.WritePropertyName("handle");
                             writer.WriteValue(ts.Handle);
                             break;

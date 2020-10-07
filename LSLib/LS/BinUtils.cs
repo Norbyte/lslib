@@ -137,6 +137,7 @@ namespace LSLib.LS
                     break;
 
                 case NodeAttribute.DataType.DT_Long:
+                case NodeAttribute.DataType.DT_Int64:
                     attr.Value = reader.ReadInt64();
                     break;
 
@@ -236,6 +237,7 @@ namespace LSLib.LS
                     break;
 
                 case NodeAttribute.DataType.DT_Long:
+                case NodeAttribute.DataType.DT_Int64:
                     writer.Write((Int64)attr.Value);
                     break;
 

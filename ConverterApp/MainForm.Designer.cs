@@ -112,7 +112,8 @@
             "Divinity: Original Sin (32-bit)",
             "Divinity: Original Sin EE (64-bit)",
             "Divinity: Original Sin 2 (64-bit)",
-            "Divinity: Original Sin 2 DE (64-bit)"});
+            "Divinity: Original Sin 2 DE (64-bit)",
+            "Baldurs Gate 3"});
             this.gr2Game.Location = new System.Drawing.Point(74, 12);
             this.gr2Game.Name = "gr2Game";
             this.gr2Game.Size = new System.Drawing.Size(356, 21);

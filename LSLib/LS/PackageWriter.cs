@@ -46,7 +46,7 @@ namespace LSLib.LS
         public PackagedFileInfo WriteFile(AbstractFileInfo info)
         {
             // Assume that all files are written uncompressed (worst-case) when calculating package sizes
-            uint size = info.Size();
+            long size = (long)info.Size();
             if (_streams.Last().Position + size > MaxPackageSize)
             {
                 // Start a new package file if the current one is full.
@@ -60,7 +60,7 @@ namespace LSLib.LS
             {
                 PackageStream = stream,
                 Name = info.Name,
-                UncompressedSize = size,
+                UncompressedSize = (ulong)size,
                 ArchivePart = (UInt32) (_streams.Count - 1),
                 OffsetInFile = (UInt32) stream.Position,
                 Flags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel)
@@ -82,7 +82,7 @@ namespace LSLib.LS
                 info.ReleaseStream();
             }
 
-            packaged.SizeOnDisk = (UInt32) (stream.Position - packaged.OffsetInFile);
+            packaged.SizeOnDisk = (UInt64) (stream.Position - (long)packaged.OffsetInFile);
             packaged.Crc = Crc32.Compute(compressed, 0);
 
             int padLength = PaddingLength();
@@ -140,7 +140,7 @@ namespace LSLib.LS
                 {
                     WriteProgress(file, currentSize, totalSize);
                     writtenFiles.Add(WriteFile(file));
-                    currentSize += file.Size();
+                    currentSize += (long)file.Size();
                 }
 
                 mainStream.Seek(0, SeekOrigin.Begin);
@@ -190,7 +190,7 @@ namespace LSLib.LS
                 {
                     WriteProgress(file, currentSize, totalSize);
                     writtenFiles.Add(WriteFile(file));
-                    currentSize += file.Size();
+                    currentSize += (long)file.Size();
                 }
 
                 mainStream.Seek(0, SeekOrigin.Begin);
@@ -225,7 +225,7 @@ namespace LSLib.LS
             {
                 WriteProgress(file, currentSize, totalSize);
                 writtenFiles.Add(WriteFile(file));
-                currentSize += file.Size();
+                currentSize += (long)file.Size();
             }
 
             using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
@@ -261,6 +261,61 @@ namespace LSLib.LS
 
                 writer.Write((UInt32) (8 + Marshal.SizeOf(typeof(LSPKHeader13))));
                 writer.Write(Package.Signature);
+            }
+        }
+
+        public void WriteV15(FileStream mainStream)
+        {
+            var header = new LSPKHeader15
+            {
+                Version = (uint)Version
+            };
+
+            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            {
+                writer.Write(Package.Signature);
+                BinUtils.WriteStruct(writer, ref header);
+            }
+
+            long totalSize = _package.Files.Sum(p => (long)p.Size());
+            long currentSize = 0;
+
+            var writtenFiles = new List<PackagedFileInfo>();
+            foreach (AbstractFileInfo file in _package.Files)
+            {
+                WriteProgress(file, currentSize, totalSize);
+                writtenFiles.Add(WriteFile(file));
+                currentSize += (long)file.Size();
+            }
+
+            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            {
+                byte[] fileListBuf;
+                using (var fileList = new MemoryStream())
+                using (var fileListWriter = new BinaryWriter(fileList))
+                {
+                    foreach (PackagedFileInfo file in writtenFiles)
+                    {
+                        FileEntry15 entry = file.MakeEntryV15();
+                        BinUtils.WriteStruct(fileListWriter, ref entry);
+                    }
+
+                    fileListBuf = fileList.ToArray();
+                }
+
+                byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
+
+                header.FileListOffset = (UInt64)mainStream.Position;
+                writer.Write((UInt32)writtenFiles.Count);
+                writer.Write((UInt32)compressedFileList.Length);
+                writer.Write(compressedFileList);
+
+                header.FileListSize = (UInt64)mainStream.Position - header.FileListOffset;
+                header.Unknown = 0;
+                header.Unknown2 = 0;
+                header.Unknown3 = 0;
+                mainStream.Seek(4, SeekOrigin.Begin);
+                BinUtils.WriteStruct(writer, ref header);
             }
         }
 
@@ -309,6 +364,11 @@ namespace LSLib.LS
 
             switch (Version)
             {
+                case PackageVersion.V15:
+                {
+                    WriteV15(mainStream);
+                    break;
+                }
                 case PackageVersion.V13:
                 {
                     WriteV13(mainStream);

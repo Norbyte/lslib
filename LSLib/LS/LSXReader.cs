@@ -9,11 +9,47 @@ namespace LSLib.LS
 {
     public class LSXReader : IDisposable
     {
-        public const string InitialVersion = "1";
-        public const string CurrentVersion = "2";
+        private static Dictionary<string, NodeAttribute.DataType> TypeNames = new Dictionary<string, NodeAttribute.DataType>
+        {
+            { "None", NodeAttribute.DataType.DT_None },
+            { "uint8", NodeAttribute.DataType.DT_Byte },
+            { "int16", NodeAttribute.DataType.DT_Short },
+            { "uint16", NodeAttribute.DataType.DT_UShort },
+            { "int32", NodeAttribute.DataType.DT_Int },
+            { "uint32", NodeAttribute.DataType.DT_UInt },
+            { "float", NodeAttribute.DataType.DT_Float },
+            { "double", NodeAttribute.DataType.DT_Double },
+            { "ivec2", NodeAttribute.DataType.DT_IVec2 },
+            { "ivec3", NodeAttribute.DataType.DT_IVec3 },
+            { "ivec4", NodeAttribute.DataType.DT_IVec4 },
+            { "fvec2", NodeAttribute.DataType.DT_Vec2 },
+            { "fvec3", NodeAttribute.DataType.DT_Vec3 },
+            { "fvec4", NodeAttribute.DataType.DT_Vec4 },
+            { "mat2x2", NodeAttribute.DataType.DT_Mat2 },
+            { "mat3x3", NodeAttribute.DataType.DT_Mat3 },
+            { "mat3x4", NodeAttribute.DataType.DT_Mat3x4 },
+            { "mat4x3", NodeAttribute.DataType.DT_Mat4x3 },
+            { "mat4x4", NodeAttribute.DataType.DT_Mat4 },
+            { "bool", NodeAttribute.DataType.DT_Bool },
+            { "string", NodeAttribute.DataType.DT_String },
+            { "path", NodeAttribute.DataType.DT_Path },
+            { "FixedString", NodeAttribute.DataType.DT_FixedString },
+            { "LSString", NodeAttribute.DataType.DT_LSString },
+            { "uint64", NodeAttribute.DataType.DT_ULongLong },
+            { "ScratchBuffer", NodeAttribute.DataType.DT_ScratchBuffer },
+            { "old_int64", NodeAttribute.DataType.DT_Long },
+            { "int8", NodeAttribute.DataType.DT_Int8 },
+            { "TranslatedString", NodeAttribute.DataType.DT_TranslatedString },
+            { "WString", NodeAttribute.DataType.DT_WString },
+            { "LSWString", NodeAttribute.DataType.DT_LSWString },
+            { "guid", NodeAttribute.DataType.DT_UUID },
+            { "int64", NodeAttribute.DataType.DT_Int64 },
+            { "TranslatedFSString", NodeAttribute.DataType.DT_TranslatedFSString },
+        };
 
         private Stream stream;
         private XmlReader reader;
+        private uint Version;
 
         public LSXReader(Stream stream)
         {
@@ -100,19 +136,16 @@ namespace LSLib.LS
 
                             case "header":
                                 // LSX metadata part 1
-                                string version = reader["version"];
-                                if (version != InitialVersion && version != CurrentVersion)
-                                    throw new InvalidFormatException(String.Format("Unsupported LSX version; expected {0}, found {1}", CurrentVersion, version));
-
-                                rsrc.Metadata.timestamp = Convert.ToUInt64(reader["time"]);
+                                rsrc.Metadata.Timestamp = Convert.ToUInt64(reader["time"]);
                                 break;
 
                             case "version":
                                 // LSX metadata part 2
-                                rsrc.Metadata.majorVersion = Convert.ToUInt32(reader["major"]);
-                                rsrc.Metadata.minorVersion = Convert.ToUInt32(reader["minor"]);
-                                rsrc.Metadata.revision = Convert.ToUInt32(reader["revision"]);
-                                rsrc.Metadata.buildNumber = Convert.ToUInt32(reader["build"]);
+                                rsrc.Metadata.MajorVersion = Convert.ToUInt32(reader["major"]);
+                                rsrc.Metadata.MinorVersion = Convert.ToUInt32(reader["minor"]);
+                                rsrc.Metadata.Revision = Convert.ToUInt32(reader["revision"]);
+                                rsrc.Metadata.BuildNumber = Convert.ToUInt32(reader["build"]);
+                                Version = rsrc.Metadata.MajorVersion;
                                 break;
 
                             case "region":
@@ -154,21 +187,44 @@ namespace LSLib.LS
                                 break;
 
                             case "attribute":
-                                var attrTypeId = Convert.ToUInt32(reader["type"]);
+                                UInt32 attrTypeId;
+                                if (Version >= 4)
+                                {
+                                    attrTypeId = (uint)TypeNames[reader["type"]];
+                                }
+                                else
+                                {
+                                    attrTypeId = Convert.ToUInt32(reader["type"]);
+                                }
+
                                 var attrName = reader["id"];
-                                var attrValue = reader["value"];
                                 if (attrTypeId > (int)NodeAttribute.DataType.DT_Max)
                                     throw new InvalidFormatException(String.Format("Unsupported attribute data type: {0}", attrTypeId));
 
                                 Debug.Assert(attrName != null);
-                                Debug.Assert(attrValue != null);
                                 var attr = new NodeAttribute((NodeAttribute.DataType)attrTypeId);
-                                attr.FromString(attrValue);
+
+                                var attrValue = reader["value"];
+                                if (attrValue != null)
+                                {
+                                    attr.FromString(attrValue);
+                                }
+
                                 if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)
                                 {
+                                    if (attr.Value == null)
+                                    {
+                                        attr.Value = new TranslatedString();
+                                    }
+
                                     var ts = ((TranslatedString)attr.Value);
                                     ts.Handle = reader["handle"];
                                     Debug.Assert(ts.Handle != null);
+
+                                    if (attrValue == null)
+                                    {
+                                        ts.Version = UInt16.Parse(reader["version"]);
+                                    }
                                 }
                                 else if (attr.Type == NodeAttribute.DataType.DT_TranslatedFSString)
                                 {

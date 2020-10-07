@@ -10,6 +10,7 @@ namespace LSLib.LS
         private BinaryWriter writer;
         private Dictionary<string, UInt32> staticStrings = new Dictionary<string, UInt32>();
         private UInt32 nextStaticStringId = 0;
+        private UInt32 Version;
 
         public LSBWriter(Stream stream)
         {
@@ -18,27 +19,36 @@ namespace LSLib.LS
 
         public void Write(Resource rsrc)
         {
+            Version = rsrc.Metadata.MajorVersion;
             using (this.writer = new BinaryWriter(stream))
             {
-                writer.Write(LSBHeader.Signature);
-                var sizeOffset = stream.Position;
-                writer.Write((UInt32)0); // Total size of file, will be updater after we finished serializing
-                writer.Write((UInt32)0); // Little-endian format
-                writer.Write((UInt32)0); // Unknown
-                writer.Write(rsrc.Metadata.timestamp);
-                writer.Write(rsrc.Metadata.majorVersion);
-                writer.Write(rsrc.Metadata.minorVersion);
-                writer.Write(rsrc.Metadata.revision);
-                writer.Write(rsrc.Metadata.buildNumber);
+                var header = new LSBHeader
+                {
+                    TotalSize = 0, // Total size of file, will be updater after we finished serializing
+                    BigEndian = 0, // Little-endian format
+                    Unknown = 0, // Unknown
+                    Metadata = rsrc.Metadata
+                };
+
+                if (rsrc.Metadata.MajorVersion >= 4)
+                {
+                    header.Signature = BitConverter.ToUInt32(LSBHeader.SignatureBG3, 0);
+                }
+                else
+                {
+                    header.Signature = LSBHeader.SignatureFW3;
+                }
+
+                BinUtils.WriteStruct(writer, ref header);
 
                 CollectStaticStrings(rsrc);
                 WriteStaticStrings();
 
                 WriteRegions(rsrc);
 
-                UInt32 fileSize = (UInt32)stream.Position;
-                stream.Seek(sizeOffset, SeekOrigin.Begin);
-                writer.Write(fileSize);
+                header.TotalSize = (UInt32)stream.Position;
+                stream.Seek(0, SeekOrigin.Begin);
+                BinUtils.WriteStruct(writer, ref header);
             }
         }
 
@@ -109,7 +119,15 @@ namespace LSLib.LS
                 case NodeAttribute.DataType.DT_TranslatedString:
                     {
                         var str = (TranslatedString)attr.Value;
-                        WriteString(str.Value, true);
+                        if (Version >= 4 && str.Value == null)
+                        {
+                            writer.Write(str.Version);
+                        }
+                        else
+                        {
+                            WriteString(str.Value, true);
+                        }
+
                         WriteString(str.Handle, true);
                         break;
                     }

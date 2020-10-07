@@ -112,6 +112,10 @@ namespace ConverterApp
                 {
                     return Game.DivinityOriginalSin2DE;
                 }
+                case 4:
+                {
+                    return Game.BaldursGate3;
+                }
                 default:
                 {
                     throw new InvalidOperationException();
@@ -124,7 +128,7 @@ namespace ConverterApp
             Game game = GetGame();
             if (gr2Tab.Controls[0] is GR2Pane pane)
             {
-                pane.flipMeshes.Checked = game.IsDOS2();
+                pane.flipMeshes.Checked = game.IsFW3();
             }
 
             packagePane.SetGame(game);

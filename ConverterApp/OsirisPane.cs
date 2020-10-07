@@ -170,7 +170,7 @@ namespace ConverterApp
             // Save globals.lsf
             var rewrittenStream = new MemoryStream();
             // TODO: Resave using original version
-            var rsrcWriter = new LSFWriter(rewrittenStream, FileVersion.CurrentVersion);
+            var rsrcWriter = new LSFWriter(rewrittenStream, FileVersion.VerExtendedNodes);
             rsrcWriter.Write(resource);
             rewrittenStream.Seek(0, SeekOrigin.Begin);
 

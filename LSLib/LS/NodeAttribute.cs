@@ -5,6 +5,7 @@ namespace LSLib.LS
 {
     public class TranslatedString
     {
+        public UInt16 Version = 0;
         public string Value;
         public string Handle;
 
@@ -56,13 +57,14 @@ namespace LSLib.LS
             DT_LSString = 23,
             DT_ULongLong = 24,
             DT_ScratchBuffer = 25,
+            // Seems to be unused?
             DT_Long = 26,
             DT_Int8 = 27,
             DT_TranslatedString = 28,
             DT_WString = 29,
             DT_LSWString = 30,
             DT_UUID = 31,
-            DT_Unknown32 = 32,
+            DT_Int64 = 32,
             DT_TranslatedFSString = 33,
             // Last supported datatype, always keep this one at the end
             DT_Max = DT_TranslatedFSString
@@ -315,6 +317,7 @@ namespace LSLib.LS
                     break;
 
                 case DataType.DT_Long:
+                case DataType.DT_Int64:
                     value = Convert.ToInt64(str);
                     break;
 

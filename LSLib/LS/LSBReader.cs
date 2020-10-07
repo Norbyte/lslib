@@ -9,6 +9,7 @@ namespace LSLib.LS
         private Stream stream;
         private BinaryReader reader;
         private Dictionary<UInt32, string> staticStrings = new Dictionary<UInt32, string>();
+        private bool IsBG3;
 
         public LSBReader(Stream stream)
         {
@@ -24,31 +25,23 @@ namespace LSLib.LS
         {
             using (this.reader = new BinaryReader(stream))
             {
-                LSBHeader header;
-                header.signature = reader.ReadUInt32();
-                if (header.signature != LSBHeader.Signature)
-                    throw new InvalidFormatException(String.Format("Illegal signature in header; expected {0}, got {1}", LSBHeader.Signature, header.signature));
+                // Check for BG3 header
+                var header = BinUtils.ReadStruct<LSBHeader>(reader);
+                if (header.Signature != BitConverter.ToUInt32(LSBHeader.SignatureBG3, 0) && header.Signature != LSBHeader.SignatureFW3)
+                    throw new InvalidFormatException(String.Format("Illegal signature in LSB header ({1})", header.Signature));
 
-                header.totalSize = reader.ReadUInt32();
-                if (stream.Length != header.totalSize)
-                    throw new InvalidFormatException(String.Format("Invalid LSB file size; expected {0}, got {1}", header.totalSize, stream.Length));
+                if (stream.Length != header.TotalSize)
+                    throw new InvalidFormatException(String.Format("Invalid LSB file size; expected {0}, got {1}", header.TotalSize, stream.Length));
 
-                header.bigEndian = reader.ReadUInt32();
                 // The game only uses little-endian files on all platforms currently and big-endian support isn't worth the hassle
-                if (header.bigEndian != 0)
+                if (header.BigEndian != 0)
                     throw new InvalidFormatException("Big-endian LSB files are not supported");
 
-                header.unknown = reader.ReadUInt32();
-                header.metadata.timestamp = reader.ReadUInt64();
-                header.metadata.majorVersion = reader.ReadUInt32();
-                header.metadata.minorVersion = reader.ReadUInt32();
-                header.metadata.revision = reader.ReadUInt32();
-                header.metadata.buildNumber = reader.ReadUInt32();
-
+                IsBG3 = (header.Signature == BitConverter.ToUInt32(LSBHeader.SignatureBG3, 0));
                 ReadStaticStrings();
 
                 Resource rsrc = new Resource();
-                rsrc.Metadata = header.metadata;
+                rsrc.Metadata = header.Metadata;
                 ReadRegions(rsrc);
                 return rsrc;
             }
@@ -125,7 +118,32 @@ namespace LSLib.LS
                     {
                         var attr = new NodeAttribute(type);
                         var str = new TranslatedString();
-                        str.Value = ReadString(true);
+
+                        if (IsBG3)
+                        {
+                            str.Version = reader.ReadUInt16();
+
+                            // Sometimes BG3 string keys still contain the value?
+                            // Weird heuristic to find these cases
+                            var test = reader.ReadUInt16();
+                            if (test == 0)
+                            {
+                                stream.Seek(-4, SeekOrigin.Current);
+                                str.Version = 0;
+                                str.Value = ReadString(true);
+                            }
+                            else
+                            {
+                                stream.Seek(-2, SeekOrigin.Current);
+                                str.Value = null;
+                            }
+                        }
+                        else
+                        {
+                            str.Version = 0;
+                            str.Value = ReadString(true);
+                        }
+
                         str.Handle = ReadString(true);
                         attr.Value = str;
                         return attr;

@@ -445,7 +445,7 @@ namespace LSLib.Granny.Model
                     if (jointNames == null)
                         throw new ParsingException("Joint input source 'JOINT' must contain array of names.");
 
-                    var skeleton = root.Skeletons.Single();
+                    var skeleton = root.Skeletons[0];
                     joints = new List<Bone>();
                     foreach (var name in jointNames)
                     {

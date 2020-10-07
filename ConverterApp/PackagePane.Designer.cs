@@ -42,6 +42,11 @@
             this.extractionPath = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.solid = new System.Windows.Forms.CheckBox();
+            this.preloadIntoCache = new System.Windows.Forms.CheckBox();
+            this.allowMemoryMapping = new System.Windows.Forms.CheckBox();
+            this.packagePriority = new System.Windows.Forms.NumericUpDown();
+            this.label7 = new System.Windows.Forms.Label();
             this.createPackagePathBrowseBtn = new System.Windows.Forms.Button();
             this.createPackagePath = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -55,11 +60,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.createPackageFileDlg = new System.Windows.Forms.OpenFileDialog();
             this.createPackagePathDlg = new System.Windows.Forms.FolderBrowserDialog();
-            this.label7 = new System.Windows.Forms.Label();
-            this.packagePriority = new System.Windows.Forms.NumericUpDown();
-            this.allowMemoryMapping = new System.Windows.Forms.CheckBox();
-            this.preloadIntoCache = new System.Windows.Forms.CheckBox();
-            this.solid = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.packagePriority)).BeginInit();
@@ -209,6 +209,59 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Create Package";
             // 
+            // solid
+            // 
+            this.solid.AutoSize = true;
+            this.solid.Location = new System.Drawing.Point(453, 111);
+            this.solid.Name = "solid";
+            this.solid.Size = new System.Drawing.Size(49, 17);
+            this.solid.TabIndex = 76;
+            this.solid.Text = "Solid";
+            this.solid.UseVisualStyleBackColor = true;
+            // 
+            // preloadIntoCache
+            // 
+            this.preloadIntoCache.AutoSize = true;
+            this.preloadIntoCache.Location = new System.Drawing.Point(592, 112);
+            this.preloadIntoCache.Name = "preloadIntoCache";
+            this.preloadIntoCache.Size = new System.Drawing.Size(115, 17);
+            this.preloadIntoCache.TabIndex = 75;
+            this.preloadIntoCache.Text = "Preload into cache";
+            this.preloadIntoCache.UseVisualStyleBackColor = true;
+            this.preloadIntoCache.Visible = false;
+            // 
+            // allowMemoryMapping
+            // 
+            this.allowMemoryMapping.AutoSize = true;
+            this.allowMemoryMapping.Location = new System.Drawing.Point(453, 132);
+            this.allowMemoryMapping.Name = "allowMemoryMapping";
+            this.allowMemoryMapping.Size = new System.Drawing.Size(133, 17);
+            this.allowMemoryMapping.TabIndex = 74;
+            this.allowMemoryMapping.Text = "Allow memory mapping";
+            this.allowMemoryMapping.UseVisualStyleBackColor = true;
+            this.allowMemoryMapping.Visible = false;
+            // 
+            // packagePriority
+            // 
+            this.packagePriority.Location = new System.Drawing.Point(385, 127);
+            this.packagePriority.Maximum = new decimal(new int[] {
+            255,
+            0,
+            0,
+            0});
+            this.packagePriority.Name = "packagePriority";
+            this.packagePriority.Size = new System.Drawing.Size(58, 20);
+            this.packagePriority.TabIndex = 73;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(382, 110);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(41, 13);
+            this.label7.TabIndex = 72;
+            this.label7.Text = "Priority:";
+            // 
             // createPackagePathBrowseBtn
             // 
             this.createPackagePathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -244,6 +297,7 @@
             this.packageVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.packageVersion.FormattingEnabled = true;
             this.packageVersion.Items.AddRange(new object[] {
+            "V15 (Baldurs Gate 3)",
             "V13 (Divinity Original Sin: EE, Original Sin 2)",
             "V10 (Divinity Original Sin)",
             "V9 (Divinity Original Sin Classic)",
@@ -330,59 +384,6 @@
             // 
             this.createPackageFileDlg.CheckFileExists = false;
             this.createPackageFileDlg.Filter = "LS package / savegame files|*.pak;*.lsv";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(382, 110);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(41, 13);
-            this.label7.TabIndex = 72;
-            this.label7.Text = "Priority:";
-            // 
-            // packagePriority
-            // 
-            this.packagePriority.Location = new System.Drawing.Point(385, 127);
-            this.packagePriority.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.packagePriority.Name = "packagePriority";
-            this.packagePriority.Size = new System.Drawing.Size(58, 20);
-            this.packagePriority.TabIndex = 73;
-            // 
-            // allowMemoryMapping
-            // 
-            this.allowMemoryMapping.AutoSize = true;
-            this.allowMemoryMapping.Location = new System.Drawing.Point(453, 132);
-            this.allowMemoryMapping.Name = "allowMemoryMapping";
-            this.allowMemoryMapping.Size = new System.Drawing.Size(133, 17);
-            this.allowMemoryMapping.TabIndex = 74;
-            this.allowMemoryMapping.Text = "Allow memory mapping";
-            this.allowMemoryMapping.UseVisualStyleBackColor = true;
-            this.allowMemoryMapping.Visible = false;
-            // 
-            // preloadIntoCache
-            // 
-            this.preloadIntoCache.AutoSize = true;
-            this.preloadIntoCache.Location = new System.Drawing.Point(592, 112);
-            this.preloadIntoCache.Name = "preloadIntoCache";
-            this.preloadIntoCache.Size = new System.Drawing.Size(115, 17);
-            this.preloadIntoCache.TabIndex = 75;
-            this.preloadIntoCache.Text = "Preload into cache";
-            this.preloadIntoCache.UseVisualStyleBackColor = true;
-            this.preloadIntoCache.Visible = false;
-            // 
-            // solid
-            // 
-            this.solid.AutoSize = true;
-            this.solid.Location = new System.Drawing.Point(453, 111);
-            this.solid.Name = "solid";
-            this.solid.Size = new System.Drawing.Size(49, 17);
-            this.solid.TabIndex = 76;
-            this.solid.Text = "Solid";
-            this.solid.UseVisualStyleBackColor = true;
             // 
             // PackagePane
             // 

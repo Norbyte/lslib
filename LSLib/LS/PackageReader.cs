@@ -6,6 +6,7 @@ using System.Text;
 using LZ4;
 using Alphaleonis.Win32.Filesystem;
 using File = Alphaleonis.Win32.Filesystem.File;
+using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
@@ -118,9 +119,9 @@ namespace LSLib.LS
             var package = new Package();
             var header = BinUtils.ReadStruct<LSPKHeader13>(reader);
 
-            if (header.Version != (ulong) Package.CurrentVersion)
+            if (header.Version != (ulong) PackageVersion.V13)
             {
-                string msg = $"Unsupported package version {header.Version}; this extractor only supports {Package.CurrentVersion}";
+                string msg = $"Unsupported package version {header.Version}; this package layout is only supported for {PackageVersion.V13}";
                 throw new InvalidDataException(msg);
             }
 
@@ -213,6 +214,51 @@ namespace LSLib.LS
             return package;
         }
 
+        private Package ReadPackageV15(FileStream mainStream, BinaryReader reader)
+        {
+            var package = new Package();
+            var header = BinUtils.ReadStruct<LSPKHeader15>(reader);
+
+            if (header.Version != (ulong)PackageVersion.V15)
+            {
+                string msg = $"Unsupported package version {header.Version}; this layout is only supported for {PackageVersion.V15}";
+                throw new InvalidDataException(msg);
+            }
+
+            package.Metadata.Flags = (PackageFlags)0;
+            package.Metadata.Priority = 0;
+
+            if (_metadataOnly) return package;
+
+            OpenStreams(mainStream, 1);
+            mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
+            int numFiles = reader.ReadInt32();
+            int compressedSize = reader.ReadInt32();
+            byte[] compressedFileList = reader.ReadBytes(compressedSize);
+
+            int fileBufferSize = Marshal.SizeOf(typeof(FileEntry15)) * numFiles;
+            var uncompressedList = new byte[fileBufferSize];
+            int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, true);
+            if (uncompressedSize != fileBufferSize)
+            {
+                string msg = $"LZ4 compressor disagrees about the size of file headers; expected {fileBufferSize}, got {uncompressedSize}";
+                throw new InvalidDataException(msg);
+            }
+
+            var ms = new MemoryStream(uncompressedList);
+            var msr = new BinaryReader(ms);
+
+            var entries = new FileEntry15[numFiles];
+            BinUtils.ReadStructs(msr, entries);
+
+            foreach (var entry in entries)
+            {
+                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[0]));
+            }
+
+            return package;
+        }
+
         public Package Read()
         {
             var mainStream = File.Open(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -239,6 +285,15 @@ namespace LSLib.LS
                     if (version == 10)
                     {
                         return ReadPackageV10(mainStream, reader);
+                    }
+                    else if (version == 15)
+                    {
+                        mainStream.Seek(4, SeekOrigin.Begin);
+                        return ReadPackageV15(mainStream, reader);
+                    }
+                    else
+                    {
+                        throw new InvalidDataException($"Package version v{version} not supported");
                     }
                 }
 

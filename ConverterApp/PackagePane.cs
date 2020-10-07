@@ -15,7 +15,7 @@ namespace ConverterApp
         {
             InitializeComponent();
 
-            packageVersion.SelectedIndex = 0;
+            packageVersion.SelectedIndex = 1;
             compressionMethod.SelectedIndex = 3;
 
             extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
@@ -104,6 +104,10 @@ namespace ConverterApp
                 switch (packageVersion.SelectedIndex)
                 {
                     case 0:
+                    {
+                        options.Version = PackageVersion.V15;
+                        break;
+                    }
                     case 1:
                     {
                         options.Version = PackageVersion.V13;
@@ -248,17 +252,22 @@ namespace ConverterApp
             switch (game)
             {
                 case Game.DivinityOriginalSin:
-                    packageVersion.SelectedIndex = 3;
+                    packageVersion.SelectedIndex = 4;
                     break;
 
                 case Game.DivinityOriginalSinEE:
-                    packageVersion.SelectedIndex = 2;
+                    packageVersion.SelectedIndex = 3;
                     break;
 
                 case Game.DivinityOriginalSin2:
+                    packageVersion.SelectedIndex = 2;
+                    break;
+
+                case Game.DivinityOriginalSin2DE:
                     packageVersion.SelectedIndex = 1;
                     break;
-                case Game.DivinityOriginalSin2DE:
+
+                case Game.BaldursGate3:
                     packageVersion.SelectedIndex = 0;
                     break;
             }

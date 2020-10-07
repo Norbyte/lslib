@@ -18,8 +18,13 @@
         VerExtendedNodes = 0x03,
 
         /// <summary>
+        /// BG3 version, no changes found so far apart from version numbering
+        /// </summary>
+        VerBG3 = 0x04,
+
+        /// <summary>
         /// Latest version supported by this library
         /// </summary>
-        CurrentVersion = 0x03
+        MaxVersion = 0x04
     }
 }

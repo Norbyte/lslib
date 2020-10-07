@@ -34,7 +34,7 @@ namespace ConverterApp
             {
                 _resource = ResourceUtils.LoadResource(resourceInputPath.Text);
                 ResourceFormat format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
-                FileVersion outputVersion = _form.GetGame().IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+                FileVersion outputVersion = _form.GetGame().LSFVersion();
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, outputVersion);
 
                 MessageBox.Show("Resource saved successfully.");
@@ -130,7 +130,7 @@ namespace ConverterApp
                 case 2:
                 {
                     outputFormat = ResourceFormat.LSF;
-                    outputVersion = _form.GetGame().IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+                    outputVersion = _form.GetGame().LSFVersion();
                     break;
                 }
                 case 3:

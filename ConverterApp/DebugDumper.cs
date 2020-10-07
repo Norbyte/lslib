@@ -79,7 +79,7 @@ namespace ConverterApp
 
                 ReportProgress(20 + (numProcessed * 30 / lsfList.Count()), "Converting to LSX: " + lsf.Name);
                 var resource = ResourceUtils.LoadResource(lsfPath, ResourceFormat.LSF);
-                ResourceUtils.SaveResource(resource, lsxPath, ResourceFormat.LSX, FileVersion.CurrentVersion);
+                ResourceUtils.SaveResource(resource, lsxPath, ResourceFormat.LSX, FileVersion.MaxVersion);
                 numProcessed++;
             }
         }

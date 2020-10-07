@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace LSLib.LS
 {
@@ -24,34 +25,42 @@ namespace LSLib.LS
             {
                 Major = (byte)((packed >> 28) & 0x0f),
                 Minor = (byte)((packed >> 24) & 0x0f),
-                Revision = (byte)((packed >> 20) & 0xff),
+                Revision = (byte)((packed >> 16) & 0xff),
                 Build = (UInt16)(packed & 0xffff),
             };
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public struct LSMetadata
     {
         public const uint CurrentMajorVersion = 33;
 
-        public UInt64 timestamp;
-        public UInt32 majorVersion;
-        public UInt32 minorVersion;
-        public UInt32 revision;
-        public UInt32 buildNumber;
+        public UInt64 Timestamp;
+        public UInt32 MajorVersion;
+        public UInt32 MinorVersion;
+        public UInt32 Revision;
+        public UInt32 BuildNumber;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public struct LSBHeader
     {
-        public const uint Signature = 0x40000000;
-        public const uint CurrentMajorVersion = 1;
-        public const uint CurrentMinorVersion = 3;
+        /// <summary>
+        /// LSB file signature since BG3
+        /// </summary>
+        public static byte[] SignatureBG3 = new byte[] { 0x4C, 0x53, 0x46, 0x4D };
 
-        public UInt32 signature;
-        public UInt32 totalSize;
-        public UInt32 bigEndian;
-        public UInt32 unknown;
-        public LSMetadata metadata;
+        /// <summary>
+        /// LSB signature up to FW3 (DOS2 DE)
+        /// </summary>
+        public const uint SignatureFW3 = 0x40000000;
+
+        public UInt32 Signature;
+        public UInt32 TotalSize;
+        public UInt32 BigEndian;
+        public UInt32 Unknown;
+        public LSMetadata Metadata;
     }
 
     public class Resource
@@ -61,7 +70,7 @@ namespace LSLib.LS
 
         public Resource()
         {
-            Metadata.majorVersion = LSMetadata.CurrentMajorVersion;
+            Metadata.MajorVersion = 3;
         }
     }
 

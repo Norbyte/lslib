@@ -1,13 +1,53 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Xml;
 
 namespace LSLib.LS
 {
     public class LSXWriter
     {
+        private static Dictionary<NodeAttribute.DataType, string> TypeNames = new Dictionary<NodeAttribute.DataType, string>
+        {
+            { NodeAttribute.DataType.DT_None, "None" },
+            { NodeAttribute.DataType.DT_Byte, "uint8" },
+            { NodeAttribute.DataType.DT_Short, "int16" },
+            { NodeAttribute.DataType.DT_UShort, "uint16" },
+            { NodeAttribute.DataType.DT_Int, "int32" },
+            { NodeAttribute.DataType.DT_UInt, "uint32" },
+            { NodeAttribute.DataType.DT_Float, "float" },
+            { NodeAttribute.DataType.DT_Double, "double" },
+            { NodeAttribute.DataType.DT_IVec2, "ivec2" },
+            { NodeAttribute.DataType.DT_IVec3, "ivec3" },
+            { NodeAttribute.DataType.DT_IVec4, "ivec4" },
+            { NodeAttribute.DataType.DT_Vec2, "fvec2" },
+            { NodeAttribute.DataType.DT_Vec3, "fvec3" },
+            { NodeAttribute.DataType.DT_Vec4, "fvec4" },
+            { NodeAttribute.DataType.DT_Mat2, "mat2x2" },
+            { NodeAttribute.DataType.DT_Mat3, "mat3x3" },
+            { NodeAttribute.DataType.DT_Mat3x4, "mat3x4" },
+            { NodeAttribute.DataType.DT_Mat4x3, "mat4x3" },
+            { NodeAttribute.DataType.DT_Mat4, "mat4x4" },
+            { NodeAttribute.DataType.DT_Bool, "bool" },
+            { NodeAttribute.DataType.DT_String, "string" },
+            { NodeAttribute.DataType.DT_Path, "path" },
+            { NodeAttribute.DataType.DT_FixedString, "FixedString" },
+            { NodeAttribute.DataType.DT_LSString, "LSString" },
+            { NodeAttribute.DataType.DT_ULongLong, "uint64" },
+            { NodeAttribute.DataType.DT_ScratchBuffer, "ScratchBuffer" },
+            { NodeAttribute.DataType.DT_Long, "old_int64" },
+            { NodeAttribute.DataType.DT_Int8, "int8" },
+            { NodeAttribute.DataType.DT_TranslatedString, "TranslatedString" },
+            { NodeAttribute.DataType.DT_WString, "WString" },
+            { NodeAttribute.DataType.DT_LSWString, "LSWString" },
+            { NodeAttribute.DataType.DT_UUID, "guid" },
+            { NodeAttribute.DataType.DT_Int64, "int64" },
+            { NodeAttribute.DataType.DT_TranslatedFSString, "TranslatedFSString" },
+        };
+
         private Stream stream;
         private XmlWriter writer;
         public bool PrettyPrint = false;
+        private uint Version;
 
         public LSXWriter(Stream stream)
         {
@@ -16,6 +56,7 @@ namespace LSLib.LS
 
         public void Write(Resource rsrc)
         {
+            Version = rsrc.Metadata.MajorVersion;
             var settings = new XmlWriterSettings();
             settings.Indent = PrettyPrint;
             settings.IndentChars = "\t";
@@ -24,16 +65,11 @@ namespace LSLib.LS
             {
                 writer.WriteStartElement("save");
 
-                writer.WriteStartElement("header");
-                writer.WriteAttributeString("version", LSXReader.CurrentVersion);
-                writer.WriteAttributeString("time", rsrc.Metadata.timestamp.ToString());
-                writer.WriteEndElement();
-
                 writer.WriteStartElement("version");
-                writer.WriteAttributeString("major", rsrc.Metadata.majorVersion.ToString());
-                writer.WriteAttributeString("minor", rsrc.Metadata.minorVersion.ToString());
-                writer.WriteAttributeString("revision", rsrc.Metadata.revision.ToString());
-                writer.WriteAttributeString("build", rsrc.Metadata.buildNumber.ToString());
+                writer.WriteAttributeString("major", rsrc.Metadata.MajorVersion.ToString());
+                writer.WriteAttributeString("minor", rsrc.Metadata.MinorVersion.ToString());
+                writer.WriteAttributeString("revision", rsrc.Metadata.Revision.ToString());
+                writer.WriteAttributeString("build", rsrc.Metadata.BuildNumber.ToString());
                 writer.WriteEndElement();
 
                 WriteRegions(rsrc);
@@ -92,18 +128,39 @@ namespace LSLib.LS
             {
                 writer.WriteStartElement("attribute");
                 writer.WriteAttributeString("id", attribute.Key);
-                writer.WriteAttributeString("value", attribute.Value.ToString());
-                writer.WriteAttributeString("type", ((int)attribute.Value.Type).ToString());
+                if (Version >= 4)
+                {
+                    writer.WriteAttributeString("type", TypeNames[attribute.Value.Type]);
+                }
+                else
+                {
+                    writer.WriteAttributeString("type", ((int)attribute.Value.Type).ToString());
+                }
+
                 if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString)
                 {
                     var ts = ((TranslatedString)attribute.Value.Value);
                     writer.WriteAttributeString("handle", ts.Handle);
+                    if (ts.Value != null)
+                    {
+                        writer.WriteAttributeString("value", ts.ToString());
+                    }
+                    else
+                    {
+                        writer.WriteAttributeString("version", ts.Version.ToString());
+                    }
                 }
                 else if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedFSString)
                 {
                     var fs = ((TranslatedFSString)attribute.Value.Value);
+                    writer.WriteAttributeString("value", fs.Value);
                     WriteTranslatedFSStringInner(fs);
                 }
+                else
+                {
+                    writer.WriteAttributeString("value", attribute.Value.ToString());
+                }
+
                 writer.WriteEndElement();
             }
 

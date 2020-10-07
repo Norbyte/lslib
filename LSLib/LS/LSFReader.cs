@@ -361,6 +361,10 @@ namespace LSLib.LS
         /// Raw value data stream
         /// </summary>
         private Stream Values;
+        /// <summary>
+        /// Version of the file we're serializing
+        /// </summary>
+        private uint Version;
 
         public LSFReader(Stream stream)
         {
@@ -605,11 +609,13 @@ namespace LSLib.LS
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.Version < (ulong) FileVersion.VerInitial || hdr.Version > (ulong) FileVersion.CurrentVersion)
+                if (hdr.Version < (ulong) FileVersion.VerInitial || hdr.Version > (ulong) FileVersion.MaxVersion)
                 {
                     var msg = String.Format("LSF version {0} is not supported", hdr.Version);
                     throw new InvalidDataException(msg);
                 }
+
+                this.Version = hdr.Version;
 
                 Names = new List<List<String>>();
                 bool isCompressed = BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) != CompressionMethod.None;
@@ -711,10 +717,10 @@ namespace LSLib.LS
                 Resource resource = new Resource();
                 ReadRegions(resource);
 
-                resource.Metadata.majorVersion = (hdr.EngineVersion & 0xff000000) >> 24;
-                resource.Metadata.minorVersion = (hdr.EngineVersion & 0xff0000) >> 16;
-                resource.Metadata.revision = (hdr.EngineVersion & 0xff00) >> 8;
-                resource.Metadata.buildNumber = (hdr.EngineVersion & 0xff);
+                resource.Metadata.MajorVersion = (hdr.EngineVersion & 0xf0000000) >> 28;
+                resource.Metadata.MinorVersion = (hdr.EngineVersion & 0xf000000) >> 24;
+                resource.Metadata.Revision = (hdr.EngineVersion & 0xff0000) >> 16;
+                resource.Metadata.BuildNumber = (hdr.EngineVersion & 0xffff);
 
                 return resource;
             }
@@ -803,8 +809,16 @@ namespace LSLib.LS
                         var attr = new NodeAttribute(type);
                         var str = new TranslatedString();
 
-                        var valueLength = reader.ReadInt32();
-                        str.Value = ReadString(reader, valueLength);
+                        if (Version >= (uint)FileVersion.VerBG3)
+                        {
+                            str.Version = reader.ReadUInt16();
+                        }
+                        else
+                        {
+                            str.Version = 0;
+                            var valueLength = reader.ReadInt32();
+                            str.Value = ReadString(reader, valueLength);
+                        }
 
                         var handleLength = reader.ReadInt32();
                         str.Handle = ReadString(reader, handleLength);

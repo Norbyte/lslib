@@ -221,7 +221,7 @@ namespace Divine.CLI
 
         public static FileVersion GetFileVersionByGame(Game divinityGame)
         {
-            return divinityGame.IsDOS2() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
+            return divinityGame.IsFW3() ? FileVersion.VerExtendedNodes : FileVersion.VerChunkedCompress;
         }
 
         public static ExportFormat GetModelFormatByString(string format)
