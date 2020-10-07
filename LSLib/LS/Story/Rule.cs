@@ -162,7 +162,7 @@ namespace LSLib.LS.Story
             foreach (var call in Calls)
             {
                 call.MakeScript(writer, story, initialTuple);
-                writer.WriteLine();
+                writer.WriteLine(";");
             }
         }
 

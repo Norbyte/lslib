@@ -122,7 +122,7 @@ namespace LSLib.LS.Story
             foreach (var call in InitCalls)
             {
                 call.MakeScript(writer, story, nullTuple);
-                writer.WriteLine();
+                writer.WriteLine(";");
             }
 
             writer.WriteLine();
@@ -147,7 +147,7 @@ namespace LSLib.LS.Story
             foreach (var call in ExitCalls)
             {
                 call.MakeScript(writer, story, nullTuple);
-                writer.WriteLine();
+                writer.WriteLine(";");
             }
 
             writer.WriteLine("ENDEXITSECTION");
