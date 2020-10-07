@@ -142,6 +142,60 @@ namespace LSLib.LS
         public abstract void ReleaseStream();
     }
 
+
+    public class UncompressedPackagedFileStream : Stream
+    {
+        private readonly Stream PackageStream;
+        private readonly PackagedFileInfo FileInfo;
+
+        public UncompressedPackagedFileStream(Stream packageStream, PackagedFileInfo fileInfo)
+        {
+            PackageStream = packageStream;
+            FileInfo = fileInfo;
+            PackageStream.Seek((long)fileInfo.OffsetInFile, SeekOrigin.Begin);
+            
+            if ((CompressionMethod)(FileInfo.Flags & 0x0F) != CompressionMethod.None)
+            {
+                throw new ArgumentException("We only support uncompressed files!");
+            }
+        }
+
+        public override bool CanRead { get { return true; } }
+        public override bool CanSeek { get { return false; } }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (PackageStream.Position < (long)FileInfo.OffsetInFile
+                || PackageStream.Position > (long)FileInfo.OffsetInFile + (long)FileInfo.SizeOnDisk)
+            {
+                throw new Exception("Stream at unexpected position while reading packaged file?");
+            }
+
+            long readable = (long)FileInfo.SizeOnDisk - Position;
+            int bytesToRead = (readable < count) ? (int)readable : count;
+            return PackageStream.Read(buffer, offset, bytesToRead);
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+
+        public override long Position
+        {
+            get { return PackageStream.Position - (long)FileInfo.OffsetInFile; }
+            set { throw new NotSupportedException(); }
+        }
+
+        public override bool CanTimeout { get { return PackageStream.CanTimeout; } }
+        public override bool CanWrite { get { return false; } }
+        public override long Length { get { return (long)FileInfo.SizeOnDisk; } }
+        public override void SetLength(long value) { throw new NotSupportedException(); }
+        public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
+        public override void Flush() { }
+    }
+
     public class PackagedFileInfo : AbstractFileInfo, IDisposable
     {
         public UInt32 ArchivePart;
@@ -172,12 +226,19 @@ namespace LSLib.LS
                 return _uncompressedStream;
             }
 
-            var compressed = new byte[SizeOnDisk];
+            if ((CompressionMethod)(Flags & 0x0F) == CompressionMethod.None)
+            {
+                // Use direct stream read for non-compressed files
+                _uncompressedStream = new UncompressedPackagedFileStream(PackageStream, this);
+                return _uncompressedStream;
+            }
 
             if (SizeOnDisk > 0x7fffffff)
             {
                 throw new InvalidDataException($"File '{Name}' is over 2GB ({SizeOnDisk} bytes), which is not supported yet!");
             }
+
+            var compressed = new byte[SizeOnDisk];
 
             PackageStream.Seek((long)OffsetInFile, SeekOrigin.Begin);
             int readSize = PackageStream.Read(compressed, 0, (int)SizeOnDisk);
