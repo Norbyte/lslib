@@ -44,7 +44,10 @@ namespace ConverterApp
                 {
                     var playerData = characterNode.Children["PlayerData"][0]
                         .Children["PlayerCustomData"][0];
-                    key += " (Player " + (string)playerData.Attributes["Name"].Value + ")";
+                    if (playerData.Attributes.TryGetValue("Name", out NodeAttribute name))
+                    {
+                        key += " (Player " + (string)name.Value + ")";
+                    }
                 }
 
                 DumpVariables(key, characterVars);
