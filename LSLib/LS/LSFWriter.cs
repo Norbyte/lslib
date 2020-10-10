@@ -267,8 +267,17 @@ namespace LSLib.LS
 
         private void WriteTranslatedFSString(BinaryWriter writer, TranslatedFSString fs)
         {
-            WriteStringWithLength(writer, fs.Value);
+            if (Version >= (uint)FileVersion.VerBG3)
+            {
+                writer.Write(fs.Version);
+            }
+            else
+            {
+                WriteStringWithLength(writer, fs.Value);
+            }
+
             WriteStringWithLength(writer, fs.Handle);
+
             writer.Write((UInt32)fs.Arguments.Count);
             foreach (var arg in fs.Arguments)
             {

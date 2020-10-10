@@ -850,8 +850,16 @@ namespace LSLib.LS
         {
             var str = new TranslatedFSString();
 
-            var valueLength = reader.ReadInt32();
-            str.Value = ReadString(reader, valueLength);
+            if (Version >= (uint)FileVersion.VerBG3)
+            {
+                str.Version = reader.ReadUInt16();
+            }
+            else
+            {
+                str.Version = 0;
+                var valueLength = reader.ReadInt32();
+                str.Value = ReadString(reader, valueLength);
+            }
 
             var handleLength = reader.ReadInt32();
             str.Handle = ReadString(reader, handleLength);
