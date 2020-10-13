@@ -47,7 +47,7 @@ namespace LSLib.LS
         {
             // Assume that all files are written uncompressed (worst-case) when calculating package sizes
             long size = (long)info.Size();
-            if (_streams.Last().Position + size > MaxPackageSize)
+            if (Version < PackageVersion.V15 && _streams.Last().Position + size > MaxPackageSize)
             {
                 // Start a new package file if the current one is full.
                 string partPath = Package.MakePartFilename(_path, _streams.Count);

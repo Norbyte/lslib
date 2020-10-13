@@ -93,6 +93,19 @@ namespace ConverterApp
             }
         }
 
+        private PackageVersion SelectedPackageVersion()
+        {
+            switch (packageVersion.SelectedIndex)
+            {
+                case 0: return PackageVersion.V15;
+                case 1: return PackageVersion.V13;
+                case 2: return PackageVersion.V10;
+                case 3: return PackageVersion.V9;
+                case 4: return PackageVersion.V7;
+                default: throw new InvalidDataException();
+            }
+        }
+
         private void createPackageBtn_Click(object sender, EventArgs e)
         {
             createPackageBtn.Enabled = false;
@@ -101,34 +114,7 @@ namespace ConverterApp
             try
             {
                 var options = new PackageCreationOptions();
-                switch (packageVersion.SelectedIndex)
-                {
-                    case 0:
-                    {
-                        options.Version = PackageVersion.V15;
-                        break;
-                    }
-                    case 1:
-                    {
-                        options.Version = PackageVersion.V13;
-                        break;
-                    }
-                    case 2:
-                    {
-                        options.Version = PackageVersion.V10;
-                        break;
-                    }
-                    case 3:
-                    {
-                        options.Version = PackageVersion.V9;
-                        break;
-                    }
-                    case 4:
-                    {
-                        options.Version = PackageVersion.V7;
-                        break;
-                    }
-                }
+                options.Version = SelectedPackageVersion();
                 
                 switch (compressionMethod.SelectedIndex)
                 {
@@ -271,6 +257,13 @@ namespace ConverterApp
                     packageVersion.SelectedIndex = 0;
                     break;
             }
+        }
+
+        private void packageVersion_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var hasPackageFlags = SelectedPackageVersion() < PackageVersion.V15;
+            packagePriority.Enabled = hasPackageFlags;
+            solid.Enabled = hasPackageFlags;
         }
     }
 }

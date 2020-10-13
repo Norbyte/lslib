@@ -72,3 +72,4 @@ DebuggerFrontend/Osidebug.cs
 StoryCompiler/Debuginfo.cs
 DebuggerFrontend/Debuginfo.cs
 DebuggerFrontend/DbgProtocol.cs
+WwiseTool

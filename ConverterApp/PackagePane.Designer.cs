@@ -297,7 +297,7 @@
             this.packageVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.packageVersion.FormattingEnabled = true;
             this.packageVersion.Items.AddRange(new object[] {
-            "V15 (Baldurs Gate 3)",
+            "V15 (Baldur\'s Gate 3)",
             "V13 (Divinity Original Sin: EE, Original Sin 2)",
             "V10 (Divinity Original Sin)",
             "V9 (Divinity Original Sin Classic)",
@@ -306,6 +306,7 @@
             this.packageVersion.Name = "packageVersion";
             this.packageVersion.Size = new System.Drawing.Size(237, 21);
             this.packageVersion.TabIndex = 68;
+            this.packageVersion.SelectedIndexChanged += new System.EventHandler(this.packageVersion_SelectedIndexChanged);
             // 
             // label8
             // 
