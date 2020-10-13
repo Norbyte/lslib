@@ -9,7 +9,7 @@ namespace LSLib.LS
 
 		public const int MinorVersion = 15;
 
-		public const int PatchVersion = 0;
+		public const int PatchVersion = 1;
 
 		/// <summary>
 		/// Returns the version number of the LSLib library
