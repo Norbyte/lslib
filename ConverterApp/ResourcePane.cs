@@ -145,6 +145,7 @@ namespace ConverterApp
                 resourceConvertBtn.Enabled = false;
                 var utils = new ResourceUtils();
                 utils.progressUpdate += ResourceProgressUpdate;
+                utils.NoRecurse = !cbRecurseIntoSubdirectories.Checked;
                 utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, outputVersion);
 
                 MessageBox.Show("Resources converted successfully.");

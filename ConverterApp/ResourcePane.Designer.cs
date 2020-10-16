@@ -49,6 +49,7 @@
             this.resourceOutputPath = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.cbRecurseIntoSubdirectories = new System.Windows.Forms.CheckBox();
             this.resourceProgressLabel = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.resourceInputFileDlg = new System.Windows.Forms.OpenFileDialog();
@@ -263,6 +264,7 @@
             // 
             this.groupBox5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox5.Controls.Add(this.cbRecurseIntoSubdirectories);
             this.groupBox5.Controls.Add(this.resourceProgressLabel);
             this.groupBox5.Controls.Add(this.resourceConversionProgress);
             this.groupBox5.Controls.Add(this.label17);
@@ -283,6 +285,16 @@
             this.groupBox5.TabIndex = 62;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Batch Convert";
+            // 
+            // cbRecurseIntoSubdirectories
+            // 
+            this.cbRecurseIntoSubdirectories.AutoSize = true;
+            this.cbRecurseIntoSubdirectories.Location = new System.Drawing.Point(508, 137);
+            this.cbRecurseIntoSubdirectories.Name = "cbRecurseIntoSubdirectories";
+            this.cbRecurseIntoSubdirectories.Size = new System.Drawing.Size(154, 17);
+            this.cbRecurseIntoSubdirectories.TabIndex = 68;
+            this.cbRecurseIntoSubdirectories.Text = "Recurse into subdirectories";
+            this.cbRecurseIntoSubdirectories.UseVisualStyleBackColor = true;
             // 
             // resourceProgressLabel
             // 
@@ -365,5 +377,6 @@
         private System.Windows.Forms.SaveFileDialog resourceOutputFileDlg;
         private System.Windows.Forms.FolderBrowserDialog resourceInputPathDlg;
         private System.Windows.Forms.FolderBrowserDialog resourceOutputPathDlg;
+        private System.Windows.Forms.CheckBox cbRecurseIntoSubdirectories;
     }
 }
