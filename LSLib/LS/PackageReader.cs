@@ -228,8 +228,8 @@ namespace LSLib.LS
                 throw new InvalidDataException(msg);
             }
 
-            package.Metadata.Flags = (PackageFlags)0;
-            package.Metadata.Priority = 0;
+            package.Metadata.Flags = (PackageFlags)header.Flags;
+            package.Metadata.Priority = header.Priority;
             package.Version = PackageVersion.V15;
 
             if (_metadataOnly) return package;

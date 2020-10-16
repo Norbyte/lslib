@@ -306,7 +306,6 @@
             this.packageVersion.Name = "packageVersion";
             this.packageVersion.Size = new System.Drawing.Size(237, 21);
             this.packageVersion.TabIndex = 68;
-            this.packageVersion.SelectedIndexChanged += new System.EventHandler(this.packageVersion_SelectedIndexChanged);
             // 
             // label8
             // 

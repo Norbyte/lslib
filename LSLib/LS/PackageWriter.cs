@@ -310,10 +310,10 @@ namespace LSLib.LS
                 writer.Write((UInt32)compressedFileList.Length);
                 writer.Write(compressedFileList);
 
-                header.FileListSize = (UInt64)mainStream.Position - header.FileListOffset;
-                header.Unknown = 0;
-                header.Unknown2 = 0;
-                header.Unknown3 = 0;
+                header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
+                header.Priority = _package.Metadata.Priority;
+                header.Flags = (byte)_package.Metadata.Flags;
+                header.Md5 = ComputeArchiveHash();
                 mainStream.Seek(4, SeekOrigin.Begin);
                 BinUtils.WriteStruct(writer, ref header);
             }

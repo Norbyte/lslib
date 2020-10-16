@@ -68,10 +68,12 @@ namespace LSLib.LS
     {
         public UInt32 Version;
         public UInt64 FileListOffset;
-        public UInt64 FileListSize;
-        public UInt64 Unknown;
-        public UInt32 Unknown2;
-        public UInt16 Unknown3;
+        public UInt32 FileListSize;
+        public Byte Flags;
+        public Byte Priority;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] Md5;
     }
 
     [Flags]

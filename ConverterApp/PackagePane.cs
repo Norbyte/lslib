@@ -258,12 +258,5 @@ namespace ConverterApp
                     break;
             }
         }
-
-        private void packageVersion_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var hasPackageFlags = SelectedPackageVersion() < PackageVersion.V15;
-            packagePriority.Enabled = hasPackageFlags;
-            solid.Enabled = hasPackageFlags;
-        }
     }
 }
