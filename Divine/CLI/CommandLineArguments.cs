@@ -23,10 +23,10 @@ namespace Divine.CLI
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'g', "game",
             Description = "Set target game when generating output",
-            DefaultValue = "dos2",
-            AllowedValues = "dos;dosee;dos2;dos2de",
+            DefaultValue = null,
+            AllowedValues = "dos;dosee;dos2;dos2de;bg3",
             ValueOptional = false,
-            Optional = true
+            Optional = false
         )]
         public string Game;
 
@@ -88,16 +88,6 @@ namespace Divine.CLI
         public string Action;
 
         // @formatter:off
-        [EnumeratedValueArgument(typeof(string), 'p', "package-version",
-            Description = "Set package version",
-            DefaultValue = "v13",
-            AllowedValues = "v7;v9;v10;v13",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string PackageVersion;
-
-        // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'c', "compression-method",
             Description = "Set compression method",
             DefaultValue = "lz4hc",
@@ -150,7 +140,6 @@ namespace Divine.CLI
         public bool UseRegex;
 
         // @formatter:on
-
         public static LogLevel GetLogLevelByString(string logLevel)
         {
             switch (logLevel)
@@ -199,6 +188,10 @@ namespace Divine.CLI
         {
             switch (game)
             {
+                case "bg3":
+                {
+                    return LSLib.LS.Enums.Game.BaldursGate3;
+                }
                 case "dos":
                 {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin;
@@ -212,9 +205,12 @@ namespace Divine.CLI
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2;
                 }
                 case "dos2de":
-                default:
                 {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2DE;
+                }
+                default:
+                {
+                    throw new ArgumentException($"Unknown game: \"{game}\"");
                 }
             }
         }
@@ -228,9 +224,18 @@ namespace Divine.CLI
         {
             switch (format.ToLower())
             {
-                case "gr2": return ExportFormat.GR2;
-                case "dae": return ExportFormat.DAE;
-                default: throw new ArgumentException($"Unknown model format: {format}");
+                case "gr2":
+                {
+                    return ExportFormat.GR2;
+                }
+                case "dae":
+                {
+                    return ExportFormat.DAE;
+                }
+                default:
+                {
+                    throw new ArgumentException($"Unknown model format: {format}");
+                }
             }
         }
 
@@ -241,10 +246,8 @@ namespace Divine.CLI
             {
                 return GetModelFormatByString(extension.Substring(1));
             }
-            else
-            {
-                throw new ArgumentException($"Could not determine model format from filename: {path}");
-            }
+
+            throw new ArgumentException($"Could not determine model format from filename: {path}");
         }
 
         // ReSharper disable once RedundantCaseLabel
@@ -265,34 +268,12 @@ namespace Divine.CLI
                     return ResourceFormat.LSJ;
                 }
                 case "lsx":
-                default:
                 {
                     return ResourceFormat.LSX;
                 }
-            }
-        }
-
-        // ReSharper disable once RedundantCaseLabel
-        public static PackageVersion GetPackageVersion(string packageVersion)
-        {
-            switch (packageVersion)
-            {
-                case "v7":
-                {
-                    return LSLib.LS.Enums.PackageVersion.V7;
-                }
-                case "v9":
-                {
-                    return LSLib.LS.Enums.PackageVersion.V9;
-                }
-                case "v10":
-                {
-                    return LSLib.LS.Enums.PackageVersion.V10;
-                }
-                case "v13":
                 default:
                 {
-                    return LSLib.LS.Enums.PackageVersion.V13;
+                    throw new ArgumentException($"Unknown resource format: \"{resourceFormat}\"");
                 }
             }
         }
