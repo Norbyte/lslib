@@ -82,7 +82,27 @@ namespace Divine.CLI
 
             if (args.Action == "create-package")
             {
-                PackageVersion = CommandLineArguments.GetPackageVersion(args.PackageVersion);
+                switch (Game)
+                {
+                    case Game.DivinityOriginalSin:
+                        PackageVersion = PackageVersion.V7;
+                        break;
+                    case Game.DivinityOriginalSinEE:
+                        PackageVersion = PackageVersion.V9;
+                        break;
+                    case Game.DivinityOriginalSin2:
+                        PackageVersion = PackageVersion.V10;
+                        break;
+                    case Game.DivinityOriginalSin2DE:
+                        PackageVersion = PackageVersion.V13;
+                        break;
+                    case Game.BaldursGate3:
+                        PackageVersion = PackageVersion.V15;
+                        break;
+                    default:
+                        throw new ArgumentException($"Unknown game: \"{Game}\"");
+                }
+
                 CommandLineLogger.LogDebug($"Using package version: {PackageVersion}");
             }
 
