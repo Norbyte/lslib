@@ -55,6 +55,10 @@ namespace LSTools.StoryCompiler
                 {
                     modCompiler.Game = TargetGame.DOS2DE;
                 }
+                else if (args.Game == "bg3")
+                {
+                    modCompiler.Game = TargetGame.BG3;
+                }
                 else
                 {
                     throw new ArgumentException("Unsupported game type");

@@ -698,7 +698,7 @@ namespace LSLib.LS.Story.Compiler
                     if (!signature.Value.Read)
                     {
                         // Unused databases are considered an error in DOS:2 DE.
-                        if (Game == TargetGame.DOS2DE)
+                        if (Game == TargetGame.DOS2DE || Game == TargetGame.BG3)
                         {
                             // TODO - return location of declaration
                             Context.Log.Error(null,
@@ -720,7 +720,7 @@ namespace LSLib.LS.Story.Compiler
                         && signature.Value.Read)
                     {
                         // Unused databases are considered an error in DOS:2 DE.
-                        if (Game == TargetGame.DOS2DE)
+                        if (Game == TargetGame.DOS2DE || Game == TargetGame.BG3)
                         {
                             Context.Log.Error(null,
                                 DiagnosticCode.UnusedDatabaseError,

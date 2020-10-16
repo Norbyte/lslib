@@ -40,7 +40,7 @@ namespace LSTools.StoryCompiler
         public bool NoPackages;
 
         [EnumeratedValueArgument(typeof(string), "game",
-            AllowedValues = "dos2;dos2de",
+            AllowedValues = "dos2;dos2de;bg3",
             Description = "Which game is the story targeting?",
             Optional = true
         )]

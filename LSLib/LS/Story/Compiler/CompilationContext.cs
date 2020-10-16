@@ -10,7 +10,8 @@ namespace LSLib.LS.Story.Compiler
     public enum TargetGame
     {
         DOS2,
-        DOS2DE
+        DOS2DE,
+        BG3
     }
 
     /// <summary>
