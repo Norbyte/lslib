@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using LSLib.LS;
 using LSLib.LS.Enums;
@@ -13,6 +14,7 @@ namespace ConverterApp
     public partial class OsirisPane : UserControl
     {
         private Story _story;
+        private PackageVersion OriginalSavePakVersion;
 
         public OsirisPane(ISettingsDataSource settingsDataSource)
         {
@@ -64,11 +66,12 @@ namespace ConverterApp
             }
         }
 
-        public static Resource LoadResourceFromSave(string path)
+        public Resource LoadResourceFromSave(string path)
         {
             var packageReader = new PackageReader(path);
             Package package = packageReader.Read();
-
+            OriginalSavePakVersion = package.Version;
+            
             AbstractFileInfo abstractFileInfo = package.Files.FirstOrDefault(p => p.Name == "globals.lsf");
             if (abstractFileInfo == null)
             {
@@ -169,8 +172,17 @@ namespace ConverterApp
 
             // Save globals.lsf
             var rewrittenStream = new MemoryStream();
-            // TODO: Resave using original version
-            var rsrcWriter = new LSFWriter(rewrittenStream, FileVersion.VerExtendedNodes);
+            FileVersion version;
+            if (OriginalSavePakVersion == PackageVersion.V15)
+            {
+                version = FileVersion.VerBG3;
+            }
+            else
+            {
+                version = FileVersion.VerExtendedNodes;
+            }
+
+            var rsrcWriter = new LSFWriter(rewrittenStream, version);
             rsrcWriter.Write(resource);
             rewrittenStream.Seek(0, SeekOrigin.Begin);
 
@@ -184,8 +196,7 @@ namespace ConverterApp
 
             using (var packageWriter = new PackageWriter(rewrittenPackage, $"{storyFilePath.Text}.tmp"))
             {
-                // TODO: Resave using original version and flags
-                packageWriter.Version = PackageVersion.V13;
+                packageWriter.Version = OriginalSavePakVersion;
                 packageWriter.Compression = CompressionMethod.Zlib;
                 packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
                 packageWriter.Write();

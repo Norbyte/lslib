@@ -512,6 +512,7 @@ namespace LSLib.LS
 
         public PackageMetadata Metadata = new PackageMetadata();
         public List<AbstractFileInfo> Files = new List<AbstractFileInfo>();
+        public PackageVersion Version;
 
         public static string MakePartFilename(string path, int part)
         {

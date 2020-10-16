@@ -69,6 +69,7 @@ namespace LSLib.LS
 
             package.Metadata.Flags = 0;
             package.Metadata.Priority = 0;
+            package.Version = PackageVersion.V7;
 
             if (_metadataOnly) return package;
 
@@ -94,6 +95,7 @@ namespace LSLib.LS
 
             package.Metadata.Flags = (PackageFlags)header.Flags;
             package.Metadata.Priority = header.Priority;
+            package.Version = PackageVersion.V10;
 
             if (_metadataOnly) return package;
 
@@ -127,6 +129,7 @@ namespace LSLib.LS
 
             package.Metadata.Flags = (PackageFlags)header.Flags;
             package.Metadata.Priority = header.Priority;
+            package.Version = PackageVersion.V13;
 
             if (_metadataOnly) return package;
 
@@ -227,6 +230,7 @@ namespace LSLib.LS
 
             package.Metadata.Flags = (PackageFlags)0;
             package.Metadata.Priority = 0;
+            package.Version = PackageVersion.V15;
 
             if (_metadataOnly) return package;
 
