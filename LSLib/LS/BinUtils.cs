@@ -292,10 +292,13 @@ namespace LSLib.LS
 
         public static byte MakeCompressionFlags(CompressionMethod method, CompressionLevel level)
         {
-            byte flags = 0;
             if (method == CompressionMethod.None)
-                flags = 0;
-            else if (method == CompressionMethod.Zlib)
+            {
+                return 0;
+            }
+
+            byte flags = 0;
+            if (method == CompressionMethod.Zlib)
                 flags = 0x1;
             else if (method == CompressionMethod.LZ4)
                 flags = 0x2;

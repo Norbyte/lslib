@@ -97,13 +97,25 @@ namespace LSLib.LS
                 byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
                 header.StringsUncompressedSize = (UInt32)stringBuffer.Length;
-                header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
                 header.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
-                header.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
                 header.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
-                header.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
                 header.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
-                header.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+
+                if (Compression == CompressionMethod.None)
+                {
+                    header.StringsSizeOnDisk = 0;
+                    header.NodesSizeOnDisk = 0;
+                    header.AttributesSizeOnDisk = 0;
+                    header.ValuesSizeOnDisk = 0;
+                }
+                else
+                {
+                    header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
+                    header.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
+                    header.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
+                    header.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+                }
+
                 header.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
                 header.Unknown2 = 0;
                 header.Unknown3 = 0;
