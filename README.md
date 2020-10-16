@@ -1,7 +1,7 @@
 LSLib
 =====
 
-This package provides utilities for manipulating Divinity Original Sin 1, Enhanced Edition and Original Sin 2 files:
+This package provides utilities for manipulating Divinity Original Sin 1, Enhanced Edition, Original Sin 2 and Baldur's Gate 3 EA files:
 
  - Extracting/creating PAK packages
  - Extracting/creating LSV savegame packages
