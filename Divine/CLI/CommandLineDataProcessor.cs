@@ -8,12 +8,12 @@ namespace Divine.CLI
     {
         public static void Convert()
         {
-            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game));
+            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.Game.LSFVersion());
         }
 
         public static void BatchConvert()
         {
-            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, CommandLineArguments.GetFileVersionByGame(CommandLineActions.Game));
+            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, CommandLineActions.Game.LSFVersion());
         }
 
         private static void ConvertResource(string sourcePath, string destinationPath, FileVersion fileVersion)
