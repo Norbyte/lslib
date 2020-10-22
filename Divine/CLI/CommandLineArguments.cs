@@ -80,7 +80,7 @@ namespace Divine.CLI
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'a', "action",
             Description = "Set action to execute",
-            DefaultValue = "extract-package",
+            DefaultValue = null,
             AllowedValues = "create-package;list-package;extract-single-file;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
             ValueOptional = false,
             Optional = false
