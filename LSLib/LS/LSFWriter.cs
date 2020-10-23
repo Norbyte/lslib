@@ -285,7 +285,7 @@ namespace LSLib.LS
             }
             else
             {
-                WriteStringWithLength(writer, fs.Value);
+                WriteStringWithLength(writer, fs.Value ?? "");
             }
 
             WriteStringWithLength(writer, fs.Handle);
@@ -321,7 +321,7 @@ namespace LSLib.LS
                         }
                         else
                         {
-                            WriteStringWithLength(writer, ts.Value);
+                            WriteStringWithLength(writer, ts.Value ?? "");
                         }
 
                         WriteStringWithLength(writer, ts.Handle);

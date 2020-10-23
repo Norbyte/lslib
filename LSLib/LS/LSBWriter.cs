@@ -125,7 +125,7 @@ namespace LSLib.LS
                         }
                         else
                         {
-                            WriteString(str.Value, true);
+                            WriteString(str.Value ?? "", true);
                         }
 
                         WriteString(str.Handle, true);
