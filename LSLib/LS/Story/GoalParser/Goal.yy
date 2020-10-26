@@ -85,6 +85,7 @@ Facts : /* empty */ { $$ = MakeFactList(); }
       
 Fact : FactStatement { $$ = $1; }
      | NOT FactStatement { $$ = MakeNotFact(@$, $2); }
+     | GOAL_COMPLETED ';' { $$ = MakeGoalCompletedFact(@$); }
      ;
 
 FactStatement : IDENTIFIER '(' FactElementList ')' ';'

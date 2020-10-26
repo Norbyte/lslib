@@ -126,6 +126,8 @@ namespace LSLib.LS.Story.Compiler
         public bool Not;
         // List of values in the fact tuple
         public List<IRConstant> Elements;
+        // Goal that we're completing
+        public IRGoal Goal;
         // Location of node in source code
         public CodeLocation Location;
     }

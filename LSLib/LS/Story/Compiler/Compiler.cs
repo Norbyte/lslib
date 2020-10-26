@@ -49,6 +49,11 @@ namespace LSLib.LS.Story.Compiler
 
         private void VerifyIRFact(IRFact fact)
         {
+            if (fact.Database == null)
+            {
+                return;
+            }
+
             var db = Context.LookupSignature(fact.Database.Name);
             if (db == null)
             {
@@ -252,7 +257,7 @@ namespace LSLib.LS.Story.Compiler
                                 constant.StringValue, constant.Type.Name);
                         }
                     }
-                    else if (prefix.Contains("GUID"))
+                    else if (prefix.Contains("GUID") && Game != TargetGame.BG3)
                     {
                         Context.Log.Warn(constant.Location, 
                             DiagnosticCode.GuidPrefixNotKnown,
@@ -620,7 +625,7 @@ namespace LSLib.LS.Story.Compiler
             if (rule.Type == RuleType.Proc || rule.Type == RuleType.Query)
             {
                 var initialName = (rule.Conditions[0] as IRFuncCondition).Func.Name;
-                if (rule.Type == RuleType.Proc && initialName.Name.Substring(0, 4).ToUpper() != "PROC")
+                if (rule.Type == RuleType.Proc && initialName.Name.Length > 4 && initialName.Name.Substring(0, 4).ToUpper() != "PROC")
                 {
                     Context.Log.Warn(rule.Conditions[0].Location, 
                         DiagnosticCode.RuleNamingStyle,
@@ -628,7 +633,7 @@ namespace LSLib.LS.Story.Compiler
                         initialName);
                 }
 
-                if (rule.Type == RuleType.Query && initialName.Name.Substring(0, 3).ToUpper() != "QRY")
+                if (rule.Type == RuleType.Query && initialName.Name.Length > 3 && initialName.Name.Substring(0, 3).ToUpper() != "QRY")
                 {
                     Context.Log.Warn(rule.Conditions[0].Location, 
                         DiagnosticCode.RuleNamingStyle,
@@ -1034,7 +1039,10 @@ namespace LSLib.LS.Story.Compiler
         private bool PropagateRuleTypes(IRFact fact)
         {
             bool updated = false;
-            PropagateSignatureIfRequired(fact.Database.Name, FunctionType.Database, fact.Elements, ref updated);
+            if (fact.Database != null)
+            {
+                PropagateSignatureIfRequired(fact.Database.Name, FunctionType.Database, fact.Elements, ref updated);
+            }
             return updated;
         }
 

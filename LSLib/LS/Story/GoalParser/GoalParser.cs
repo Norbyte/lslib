@@ -24,7 +24,7 @@ namespace LSLib.LS.Story.GoalParser
     /// List of facts in an INIT or EXIT section.
     /// This is discarded during parsing and does not appear in the final AST.
     /// </summary>
-    using ASTFactList = List<ASTFact>;
+    using ASTFactList = List<ASTBaseFact>;
 
     /// <summary>
     /// List of scalar values in a fact tuple
@@ -195,7 +195,7 @@ namespace LSLib.LS.Story.GoalParser
         private ASTFactList MakeFactList(object factList, object fact)
         {
             var facts = (ASTFactList)factList;
-            facts.Add((ASTFact)fact);
+            facts.Add((ASTBaseFact)fact);
             return facts;
         }
 
@@ -213,6 +213,11 @@ namespace LSLib.LS.Story.GoalParser
             Database = (string)database,
             Not = false,
             Elements = (ASTFactElementList)elements
+        };
+
+        private ASTGoalCompletedFact MakeGoalCompletedFact(CodeLocation location) => new ASTGoalCompletedFact
+        {
+            Location = location
         };
 
         private ASTFactElementList MakeFactElementList() => new ASTFactElementList();

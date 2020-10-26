@@ -33,7 +33,7 @@ namespace LSLib.LS.Story.Compiler
 
             foreach (var fact in astGoal.InitSection)
             {
-                goal.InitSection.Add(ASTFactToIR(fact));
+                goal.InitSection.Add(ASTFactToIR(goal, fact));
             }
 
             foreach (var rule in astGoal.KBSection)
@@ -43,7 +43,7 @@ namespace LSLib.LS.Story.Compiler
 
             foreach (var fact in astGoal.ExitSection)
             {
-                goal.ExitSection.Add(ASTFactToIR(fact));
+                goal.ExitSection.Add(ASTFactToIR(goal, fact));
             }
 
             foreach (var refGoal in astGoal.ParentTargetEdges)
@@ -201,22 +201,43 @@ namespace LSLib.LS.Story.Compiler
             }
         }
 
-        private IRFact ASTFactToIR(ASTFact astFact)
+        private IRFact ASTFactToIR(IRGoal goal, ASTBaseFact astFact)
         {
-            var fact = new IRFact
+            if (astFact is ASTFact)
             {
-                Database = new IRSymbolRef(new FunctionNameAndArity(astFact.Database, astFact.Elements.Count)),
-                Not = astFact.Not,
-                Elements = new List<IRConstant>(astFact.Elements.Count),
-                Location = astFact.Location
-            };
+                var f = astFact as ASTFact;
+                var fact = new IRFact
+                {
+                    Database = new IRSymbolRef(new FunctionNameAndArity(f.Database, f.Elements.Count)),
+                    Not = f.Not,
+                    Elements = new List<IRConstant>(f.Elements.Count),
+                    Goal = null,
+                    Location = f.Location
+                };
 
-            foreach (var element in astFact.Elements)
-            {
-                fact.Elements.Add(ASTConstantToIR(element));
+                foreach (var element in f.Elements)
+                {
+                    fact.Elements.Add(ASTConstantToIR(element));
+                }
+
+                return fact;
             }
-
-            return fact;
+            else if (astFact is ASTGoalCompletedFact)
+            {
+                var f = astFact as ASTGoalCompletedFact;
+                return new IRFact
+                {
+                    Database = null,
+                    Not = false,
+                    Elements = new List<IRConstant>(),
+                    Goal = goal,
+                    Location = f.Location
+                };
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot convert unknown AST fact type to IR");
+            }
         }
 
         // TODO - un-copy + move to constant code?

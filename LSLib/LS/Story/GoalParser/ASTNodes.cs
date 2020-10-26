@@ -10,11 +10,11 @@ namespace LSLib.LS.Story.GoalParser
     public class ASTGoal
     {
         // Facts in the INITSECTION part
-        public List<ASTFact> InitSection;
+        public List<ASTBaseFact> InitSection;
         // List of all production rules (including procs and queries) from the KBSECTION part
         public List<ASTRule> KBSection;
         // Ffacts in the EXITSECTION part
-        public List<ASTFact> ExitSection;
+        public List<ASTBaseFact> ExitSection;
         // Names of parent goals (if any)
         public List<ASTParentTargetEdge> ParentTargetEdges;
         // Location of node in source code
@@ -34,18 +34,32 @@ namespace LSLib.LS.Story.GoalParser
     }
 
     /// <summary>
-    /// Osiris fact statement from the INIT or EXIT section.
+    /// Osiris statement from the INIT or EXIT section.
     /// </summary>
-    public class ASTFact
+    public class ASTBaseFact
     {
         // Location of fact in source code
         public CodeLocation Location;
+    }
+
+    /// <summary>
+    /// Osiris fact statement from the INIT or EXIT section.
+    /// </summary>
+    public class ASTFact : ASTBaseFact
+    {
         // Name of database we're inserting into / deleting from
         public String Database;
         // Fact negation ("DB_Something(1)" vs. "NOT DB_Something(1)").
         public bool Not;
         // List of values in the fact tuple
         public List<ASTConstantValue> Elements;
+    }
+
+    /// <summary>
+    /// Osiris GoalCompleted statement from the INIT or EXIT section.
+    /// </summary>
+    public class ASTGoalCompletedFact : ASTBaseFact
+    {
     }
 
     /// <summary>

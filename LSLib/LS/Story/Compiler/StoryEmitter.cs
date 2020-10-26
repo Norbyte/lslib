@@ -549,25 +549,37 @@ namespace LSLib.LS.Story.Compiler
 
         private Call EmitCall(IRFact fact)
         {
-            var name = Context.LookupSignature(fact.Database.Name);
-            EmitName(fact.Database.Name, NameRefType.Action);
-
-            var osiCall = new Call
+            if (fact.Database != null)
             {
-                Name = fact.Database.Name.Name,
-                Parameters = new List<TypedValue>(fact.Elements.Count),
-                Negate = fact.Not,
-                // TODO const - InvalidGoalId?
-                GoalIdOrDebugHook = 0
-            };
+                EmitName(fact.Database.Name, NameRefType.Action);
 
-            foreach (var param in fact.Elements)
-            {
-                var osiParam = EmitTypedValue(param);
-                osiCall.Parameters.Add(osiParam);
+                var osiCall = new Call
+                {
+                    Name = fact.Database.Name.Name,
+                    Parameters = new List<TypedValue>(fact.Elements.Count),
+                    Negate = fact.Not,
+                    // TODO const - InvalidGoalId?
+                    GoalIdOrDebugHook = 0
+                };
+
+                foreach (var param in fact.Elements)
+                {
+                    var osiParam = EmitTypedValue(param);
+                    osiCall.Parameters.Add(osiParam);
+                }
+
+                return osiCall;
             }
-
-            return osiCall;
+            else
+            {
+                return new Call
+                {
+                    Name = "",
+                    Parameters = new List<TypedValue>(),
+                    Negate = false,
+                    GoalIdOrDebugHook = (int)Goals[fact.Goal].Index
+                };
+            }
         }
 
         private Call EmitCall(IRStatement statement)
