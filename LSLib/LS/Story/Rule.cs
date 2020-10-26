@@ -124,15 +124,35 @@ namespace LSLib.LS.Story
         public RuleType GetRuleType(Story story)
         {
             var root = GetRoot(story);
-            if (root is ProcNode)
+            if (root is DatabaseNode)
             {
-                if (IsQuery)
-                    return RuleType.Query;
-                else
-                    return RuleType.Proc;
+                return RuleType.Rule;
+            }
+            else if (root is ProcNode)
+            {
+                var sig = root.Name + "/" + root.NumParams.ToString();
+                var func = story.FunctionSignatureMap[sig];
+
+                switch (func.Type)
+                {
+                    case FunctionType.Event:
+                        return RuleType.Rule;
+
+                    case FunctionType.Proc:
+                        return RuleType.Proc;
+
+                    case FunctionType.UserQuery:
+                        return RuleType.Query;
+
+                    default:
+                        throw new InvalidDataException($"Unsupported root function type: {func.Type}");
+
+                }
             }
             else
-                return RuleType.Rule;
+            {
+                throw new InvalidDataException("Cannot export rules with this root node");
+            }
         }
 
         public Tuple MakeInitialTuple()

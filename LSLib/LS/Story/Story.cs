@@ -19,6 +19,7 @@ namespace LSLib.LS.Story
         public Dictionary<uint, Goal> Goals;
         public List<Call> GlobalActions;
         public List<string> ExternalStringTable;
+        public Dictionary<string, Function> FunctionSignatureMap;
 
         public void DebugDump(TextWriter writer)
         {
@@ -296,6 +297,12 @@ namespace LSLib.LS.Story
                 story.Databases = ReadDatabases(reader);
                 story.Goals = ReadGoals(reader, story);
                 story.GlobalActions = reader.ReadList<Call>();
+
+                story.FunctionSignatureMap = new Dictionary<string, Function>();
+                foreach (var func in story.Functions)
+                {
+                    story.FunctionSignatureMap.Add(func.Name.Name + "/" + func.Name.Parameters.Types.Count.ToString(), func);
+                }
 
                 foreach (var node in story.Nodes)
                 {

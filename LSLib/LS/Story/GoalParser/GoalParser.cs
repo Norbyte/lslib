@@ -151,6 +151,11 @@ namespace LSLib.LS.Story.GoalParser
         {
             this.fileName = fileName;
         }
+
+        public CodeLocation LastLocation()
+        {
+            return new CodeLocation(null, tokLin, tokCol, tokELin, tokECol);
+        }
     }
 
     public partial class GoalParser

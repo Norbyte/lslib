@@ -233,8 +233,10 @@ namespace LSLib.LS.Story.Compiler
                 Name = EmitFunctionSignature(signature)
             };
 
-            FuncEntries.Add(signature.GetNameAndArity(), osiFunc);
+            var sig = signature.GetNameAndArity();
+            FuncEntries.Add(sig, osiFunc);
             Story.Functions.Add(osiFunc);
+            Story.FunctionSignatureMap.Add(sig.Name + "/" + sig.Arity.ToString(), osiFunc);
 
             if (DebugInfo != null)
             {
@@ -1455,7 +1457,8 @@ namespace LSLib.LS.Story.Compiler
                 Databases = new Dictionary<uint, Database>(),
                 Goals = new Dictionary<uint, Goal>(),
                 GlobalActions = new List<Call>(),
-                ExternalStringTable = new List<string>()
+                ExternalStringTable = new List<string>(),
+                FunctionSignatureMap = new Dictionary<string, Function>()
             };
 
             // TODO HEADER

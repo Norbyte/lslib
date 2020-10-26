@@ -14,6 +14,7 @@ namespace LSLib.LS.Story.Compiler
     public class IRGenerator
     {
         private CompilationContext Context;
+        public CodeLocation LastLocation;
 
         public IRGenerator(CompilationContext context)
         {
@@ -297,6 +298,7 @@ namespace LSLib.LS.Story.Compiler
             }
             else
             {
+                this.LastLocation = scanner.LastLocation();
                 return null;
             }
         }

@@ -108,7 +108,7 @@ namespace LSTools.StoryCompiler
                     }
                     else
                     {
-                        var msg = new Diagnostic(null, MessageLevel.Error, "X00", $"Could not parse goal file " + script.Name);
+                        var msg = new Diagnostic(goalLoader.LastLocation, MessageLevel.Error, "X00", $"Could not parse goal file " + script.Name);
                         Logger.CompilationDiagnostic(msg);
                         HasErrors = true;
                     }

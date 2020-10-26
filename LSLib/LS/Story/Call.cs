@@ -116,7 +116,7 @@ namespace LSLib.LS.Story
 
             if (GoalIdOrDebugHook > 0)
             {
-                writer.Write("GoalCompleted;");
+                writer.Write("GoalCompleted");
             }
         }
     }

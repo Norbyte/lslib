@@ -153,16 +153,10 @@ namespace LSLib.LS.Story
             writer.WriteLine("ENDEXITSECTION");
             writer.WriteLine();
 
-            foreach (var goalRef in SubGoals)
-            {
-                var goal = goalRef.Resolve();
-                writer.WriteLine("ParentTargetEdge \"{0}\"", goal.Name);
-            }
-
             foreach (var goalRef in ParentGoals)
             {
                 var goal = goalRef.Resolve();
-                writer.WriteLine("TargetEdge \"{0}\"", goal.Name);
+                writer.WriteLine("ParentTargetEdge \"{0}\"", goal.Name);
             }
         }
     }
