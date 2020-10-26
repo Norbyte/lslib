@@ -177,6 +177,12 @@ namespace LSLib.LS.Story
             }
 
             var initialTuple = MakeInitialTuple();
+            if (AdapterRef.IsValid)
+            {
+                var adapter = AdapterRef.Resolve();
+                initialTuple = adapter.Adapt(initialTuple);
+            }
+
             ParentRef.Resolve().MakeScript(writer, story, initialTuple);
             writer.WriteLine("THEN");
             foreach (var call in Calls)
