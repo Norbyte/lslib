@@ -398,9 +398,17 @@ namespace LSTools.StoryCompiler
                     }
                 }
 
-                var storyStream = storyHeaderFile.MakeStream();
-                LoadStoryHeaders(storyStream);
-                storyHeaderFile.ReleaseStream();
+                if (storyHeaderFile != null)
+                {
+                    var storyStream = storyHeaderFile.MakeStream();
+                    LoadStoryHeaders(storyStream);
+                    storyHeaderFile.ReleaseStream();
+                }
+                else
+                {
+                    Logger.CompilationDiagnostic(new Diagnostic(null, MessageLevel.Error, "X00", "Unable to locate story header file (story_header.div)"));
+                    HasErrors = true;
+                }
 
                 if (typeCoercionWhitelistFile != null)
                 {
