@@ -70,7 +70,7 @@ namespace LSTools.StoryCompiler
                     return 3;
                 }
 
-                if (args.DebugLogOutputPath != null)
+                if (args.DebugLogOutputPath != null && !args.CheckOnly)
                 {
                     DebugDump(args.OutputPath, args.DebugLogOutputPath);
                 }
