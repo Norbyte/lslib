@@ -28,6 +28,14 @@ namespace LSLib.LS.Story.Compiler
         {
             if (param.Type.IntrinsicTypeId != value.Type.IntrinsicTypeId)
             {
+                // BG3 allows promoting integer constants to float
+                if (Game == TargetGame.BG3 && value is IRConstant 
+                    && (param.Type.IntrinsicTypeId == Value.Type.Float || param.Type.IntrinsicTypeId == Value.Type.Integer64)
+                    && value.Type.IntrinsicTypeId == Value.Type.Integer)
+                {
+                    return;
+                }
+
                 object paramName = (param.Name != null) ? (object)param.Name : paramIndex;
                 Context.Log.Error(value.Location,
                     DiagnosticCode.LocalTypeMismatch,
