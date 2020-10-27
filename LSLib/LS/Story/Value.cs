@@ -291,7 +291,7 @@ namespace LSLib.LS.Story
                     break;
 
                 case Type.Float:
-                    writer.Write(FloatValue);
+                    writer.Write((decimal)FloatValue);
                     break;
 
                 case Type.String:
