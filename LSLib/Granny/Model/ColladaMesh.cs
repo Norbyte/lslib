@@ -126,7 +126,8 @@ namespace LSLib.Granny.Model
 
                 if ((Single.IsNaN(r) || Single.IsInfinity(r)) && !Options.IgnoreUVNaN)
                 {
-                    throw new Exception($"NaN tangent - possible UV coordinate reuse? UV1{w1.ToString()} UV2{w2.ToString()} UV3{w3.ToString()}");
+                    throw new Exception($"Couldn't calculate tangents; the mesh most likely contains non-manifold geometry.{Environment.NewLine}"
+                        + $"UV1: {w1}{Environment.NewLine}UV2: {w2}{Environment.NewLine}UV3: {w3}");
                 }
 
                 var sdir = new Vector3(

@@ -102,6 +102,7 @@ namespace LSLib.Granny.Model
         public bool FlipSkeleton = false;
         // Apply Y-up transforms on skeletons?
         public bool TransformSkeletons = true;
+        // Ignore cases where we couldn't calculate tangents from UVs because of non-manifold geometry
         public bool IgnoreUVNaN = false;
         // Remove animation keys that are a linear interpolation of the preceding and following keys
         // Disabled by default, as D:OS doesn't support sparse knot values in anim curves.
