@@ -235,18 +235,22 @@ namespace LSLib.LS
             // file table that makes loading unneccessarily slow.
             HashSet<string> packageBlacklist = new HashSet<string>
             {
+                "Assets.pak",
                 "Effects.pak",
                 "Engine.pak",
                 "EngineShaders.pak",
                 "Game.pak",
                 "GamePlatform.pak",
+                "Gustav_Textures.pak",
                 "Icons.pak",
                 "LowTex.pak",
                 "Materials.pak",
                 "Minimaps.pak",
+                "Models.pak",
                 "SharedSoundBanks.pak",
                 "SharedSounds.pak",
-                "Textures.pak"
+                "Textures.pak",
+                "VirtualTextures.pak"
             };
 
             // Collect priority value from headers
