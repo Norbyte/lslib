@@ -121,7 +121,7 @@ namespace LSLib.LS.Story
             var nullTuple = new Tuple();
             foreach (var call in InitCalls)
             {
-                call.MakeScript(writer, story, nullTuple);
+                call.MakeScript(writer, story, nullTuple, false);
                 writer.WriteLine(";");
             }
 
@@ -135,7 +135,7 @@ namespace LSLib.LS.Story
                     var rule = node.Value as RuleNode;
                     if (rule.DerivedGoalRef.Index == Index)
                     {
-                        node.Value.MakeScript(writer, story, nullTuple);
+                        node.Value.MakeScript(writer, story, nullTuple, false);
                         writer.WriteLine();
                     }
                 }
@@ -146,7 +146,7 @@ namespace LSLib.LS.Story
 
             foreach (var call in ExitCalls)
             {
-                call.MakeScript(writer, story, nullTuple);
+                call.MakeScript(writer, story, nullTuple, false);
                 writer.WriteLine(";");
             }
 

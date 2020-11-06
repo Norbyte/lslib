@@ -167,9 +167,10 @@ namespace LSLib.LS.Story
             return tuple;
         }
 
-        public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
+        public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
-            switch (GetRuleType(story))
+            var ruleType = GetRuleType(story);
+            switch (ruleType)
             {
                 case RuleType.Proc: writer.WriteLine("PROC"); break;
                 case RuleType.Query: writer.WriteLine("QRY"); break;
@@ -183,11 +184,12 @@ namespace LSLib.LS.Story
                 initialTuple = adapter.Adapt(initialTuple);
             }
 
-            ParentRef.Resolve().MakeScript(writer, story, initialTuple);
+            printTypes = printTypes || ruleType == RuleType.Proc || ruleType == RuleType.Query;
+            ParentRef.Resolve().MakeScript(writer, story, initialTuple, printTypes);
             writer.WriteLine("THEN");
             foreach (var call in Calls)
             {
-                call.MakeScript(writer, story, initialTuple);
+                call.MakeScript(writer, story, initialTuple, false);
                 writer.WriteLine(";");
             }
         }

@@ -14,10 +14,10 @@ namespace LSLib.LS.Story
             return "Database";
         }
 
-        public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
+        public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
             writer.Write("{0}(", Name);
-            tuple.MakeScript(writer, story);
+            tuple.MakeScript(writer, story, printTypes);
             writer.WriteLine(")");
         }
     }

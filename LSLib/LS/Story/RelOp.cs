@@ -76,10 +76,10 @@ namespace LSLib.LS.Story
             writer.WriteLine();
         }
 
-        public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
+        public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
             var adaptedTuple = AdapterRef.Resolve().Adapt(tuple);
-            ParentRef.Resolve().MakeScript(writer, story, adaptedTuple);
+            ParentRef.Resolve().MakeScript(writer, story, adaptedTuple, printTypes);
             writer.WriteLine("AND");
 
             if (LeftValueIndex != -1)

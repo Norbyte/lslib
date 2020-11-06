@@ -94,7 +94,7 @@ namespace LSLib.LS.Story
             }
         }
 
-        public void MakeScript(TextWriter writer, Story story, Tuple tuple)
+        public void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
             if (Name.Length > 0)
             {
@@ -105,7 +105,7 @@ namespace LSLib.LS.Story
                     for (var i = 0; i < Parameters.Count; i++)
                     {
                         var param = Parameters[i];
-                        param.MakeScript(writer, story, tuple);
+                        param.MakeScript(writer, story, tuple, printTypes);
                         if (i < Parameters.Count - 1)
                             writer.Write(", ");
                     }

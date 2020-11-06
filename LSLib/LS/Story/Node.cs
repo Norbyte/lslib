@@ -45,7 +45,7 @@ namespace LSLib.LS.Story
 
         public abstract string TypeName();
 
-        public abstract void MakeScript(TextWriter writer, Story story, Tuple tuple);
+        public abstract void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes = false);
 
         public virtual void PostLoad(Story story)
         {

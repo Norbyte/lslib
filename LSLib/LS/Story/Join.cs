@@ -144,13 +144,13 @@ namespace LSLib.LS.Story
             return "And";
         }
 
-        public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
+        public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
             var leftTuple = LeftAdapterRef.Resolve().Adapt(tuple);
-            LeftParentRef.Resolve().MakeScript(writer, story, leftTuple);
+            LeftParentRef.Resolve().MakeScript(writer, story, leftTuple, printTypes);
             writer.WriteLine("AND");
             var rightTuple = RightAdapterRef.Resolve().Adapt(tuple);
-            RightParentRef.Resolve().MakeScript(writer, story, rightTuple);
+            RightParentRef.Resolve().MakeScript(writer, story, rightTuple, false);
         }
     }
 
@@ -166,13 +166,13 @@ namespace LSLib.LS.Story
             return "Not And";
         }
 
-        public override void MakeScript(TextWriter writer, Story story, Tuple tuple)
+        public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
             var leftTuple = LeftAdapterRef.Resolve().Adapt(tuple);
-            LeftParentRef.Resolve().MakeScript(writer, story, leftTuple);
+            LeftParentRef.Resolve().MakeScript(writer, story, leftTuple, printTypes);
             writer.WriteLine("AND NOT");
             var rightTuple = RightAdapterRef.Resolve().Adapt(tuple);
-            RightParentRef.Resolve().MakeScript(writer, story, rightTuple);
+            RightParentRef.Resolve().MakeScript(writer, story, rightTuple, false);
         }
     }
 }

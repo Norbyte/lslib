@@ -383,13 +383,18 @@ namespace LSLib.LS.Story
         {
             if (Unused)
             {
+                if (printTypes && TypeId > 0)
+                {
+                    writer.Write("({0})", story.Types[TypeId].Name);
+                }
+
                 writer.Write("_");
             }
             else if (Adapted)
             {
                 if (VariableName != null && VariableName.Length > 0)
                 {
-                    if (printTypes)
+                    if (printTypes && TypeId > 0)
                     {
                         writer.Write("({0})", story.Types[TypeId].Name);
                     }
