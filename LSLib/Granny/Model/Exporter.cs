@@ -32,7 +32,9 @@ namespace LSLib.Granny.Model
         // Use LSM UserMeshProperties
         LSMv0,
         // Use LSM UserMeshProperties and FormatDescs
-        LSMv1
+        LSMv1,
+        // Use BG3 extended LSM UserMeshProperties and FormatDescs
+        LSMv3
     };
 
     public class ExporterOptions
@@ -135,6 +137,12 @@ namespace LSLib.Granny.Model
                     AlternateSignature = true;
                     VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
                     ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
+                    break;
+                case LSLib.LS.Enums.Game.BaldursGate3:
+                    Is64Bit = true;
+                    AlternateSignature = false;
+                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                    ModelInfoFormat = DivinityModelInfoFormat.LSMv3;
                     break;
                 case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
                 default:

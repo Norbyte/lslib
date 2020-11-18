@@ -245,18 +245,28 @@ namespace LSLib.Granny.Model
                 {
                     if (skeleton.Bones != null)
                     {
-                        var accumulatedFlags = DetermineSkeletonModelFlagsFromModels(root, skeleton, modelFlagOverrides);
-
-                        foreach (var bone in skeleton.Bones)
+                        if (Options.ModelInfoFormat == DivinityModelInfoFormat.None || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
                         {
-                            if (bone.ExtendedData == null)
+                            foreach (var bone in skeleton.Bones)
                             {
-                                bone.ExtendedData = new DivinityBoneExtendedData();
+                                 bone.ExtendedData = null;
                             }
+                        }
+                        else
+                        {
+                            var accumulatedFlags = DetermineSkeletonModelFlagsFromModels(root, skeleton, modelFlagOverrides);
 
-                            var userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(accumulatedFlags);
-                            bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
-                            bone.ExtendedData.IsRigid = (accumulatedFlags.IsRigid()) ? 1 : 0;
+                            foreach (var bone in skeleton.Bones)
+                            {
+                                if (bone.ExtendedData == null)
+                                {
+                                    bone.ExtendedData = new DivinityBoneExtendedData();
+                                }
+
+                                var userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(accumulatedFlags);
+                                bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
+                                bone.ExtendedData.IsRigid = (accumulatedFlags.IsRigid()) ? 1 : 0;
+                            }
                         }
                     }
                 }

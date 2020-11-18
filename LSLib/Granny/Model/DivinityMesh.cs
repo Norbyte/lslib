@@ -186,6 +186,10 @@ namespace LSLib.Granny.Model
         public List<DivinityFormatDesc> FormatDescs;
         [Serialization(Type = MemberType.VariantReference)]
         public object ExtendedData;
+        [Serialization(ArraySize = 1)]
+        public float[] LodDistance;
+        [Serialization(ArraySize = 1)]
+        public Int32[] IsImpostor;
 
         public DivinityModelFlag MeshFlags
         {
@@ -212,7 +216,9 @@ namespace LSLib.Granny.Model
                     Flags = new UInt32[] { 0, 0, 0, 0 },
                     Lod = new Int32[] { -1 },
                     FormatDescs = null,
-                    ExtendedData = null
+                    ExtendedData = null,
+                    LodDistance = new float[] { 3.40282347E+38f },
+                    IsImpostor = new Int32[] { 0 }
                 },
                 LSMVersion = CurrentLSMVersion
             };
@@ -351,7 +357,14 @@ namespace LSLib.Granny.Model
             {
                 extendedData.UserMeshProperties.MeshFlags = modelFlags;
 
-                if (format == DivinityModelInfoFormat.LSMv1)
+                if (format == DivinityModelInfoFormat.LSMv3)
+                {
+                    extendedData.LSMVersion = 3;
+                    extendedData.UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
+                    extendedData.UserMeshProperties.LodDistance = new float[] { 3.40282347E+38f };
+                    extendedData.UserMeshProperties.IsImpostor = new Int32[] { 0 };
+                }
+                else if (format == DivinityModelInfoFormat.LSMv1)
                 {
                     extendedData.LSMVersion = 1;
                     extendedData.UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);

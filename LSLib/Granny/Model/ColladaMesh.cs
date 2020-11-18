@@ -608,7 +608,8 @@ namespace LSLib.Granny.Model
 
             // Use optimized tangent, texture map and color map format when exporting for D:OS 2
             if ((Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv0
-                || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv1)
+                || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv1
+                || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
                 && HasNormals 
                 && HasTangents)
             {
