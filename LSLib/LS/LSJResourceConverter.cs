@@ -225,6 +225,7 @@ namespace LSLib.LS
 
                                     var ts = (TranslatedString)attribute.Value;
                                     ts.Value = reader.Value.ToString();
+                                    ts.Handle = handle;
                                     break;
                                 }
 
@@ -294,7 +295,7 @@ namespace LSLib.LS
                     }
                     else if (key == "handle")
                     {
-                        if (attribute.Type == NodeAttribute.DataType.DT_TranslatedString)
+                        if (attribute != null && attribute.Type == NodeAttribute.DataType.DT_TranslatedString)
                         {
                             if (attribute.Value == null)
                             {
