@@ -86,7 +86,7 @@ namespace ConverterApp
 
         private Resource LoadPackagedResource(string path)
         {
-            AbstractFileInfo fileInfo = SavePackage.Files.FirstOrDefault(p => p.Name == path);
+            AbstractFileInfo fileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == path);
             if (fileInfo == null)
             {
                 throw new ArgumentException($"Could not locate file in package: '{path}");
@@ -275,7 +275,7 @@ namespace ConverterApp
             {
                 SavePackage = packageReader.Read();
 
-                AbstractFileInfo abstractFileInfo = SavePackage.Files.FirstOrDefault(p => p.Name == "globals.lsf");
+                AbstractFileInfo abstractFileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
                 if (abstractFileInfo == null)
                 {
                     MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);

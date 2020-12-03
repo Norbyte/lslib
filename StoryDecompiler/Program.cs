@@ -16,7 +16,7 @@ namespace LSTools.StoryDecompiler
             {
                 Package package = packageReader.Read();
 
-                AbstractFileInfo globalsFile = package.Files.FirstOrDefault(p => p.Name == "globals.lsf");
+                AbstractFileInfo globalsFile = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
                 if (globalsFile == null)
                 {
                     throw new Exception("Could not find globals.lsf in savegame archive.");

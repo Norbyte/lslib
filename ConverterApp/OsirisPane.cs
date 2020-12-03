@@ -72,7 +72,7 @@ namespace ConverterApp
             Package package = packageReader.Read();
             OriginalSavePakVersion = package.Version;
             
-            AbstractFileInfo abstractFileInfo = package.Files.FirstOrDefault(p => p.Name == "globals.lsf");
+            AbstractFileInfo abstractFileInfo = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (abstractFileInfo == null)
             {
                 MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -138,7 +138,7 @@ namespace ConverterApp
             var packageReader = new PackageReader(storyFilePath.Text);
             Package package = packageReader.Read();
 
-            AbstractFileInfo globalsLsf = package.Files.FirstOrDefault(p => p.Name == "globals.lsf");
+            AbstractFileInfo globalsLsf = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (globalsLsf == null)
             {
                 MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -191,7 +191,7 @@ namespace ConverterApp
             StreamFileInfo globalsRepacked = StreamFileInfo.CreateFromStream(rewrittenStream, "globals.lsf");
             rewrittenPackage.Files.Add(globalsRepacked);
 
-            List<AbstractFileInfo> files = package.Files.Where(x => x.Name != "globals.lsf").ToList();
+            List<AbstractFileInfo> files = package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf").ToList();
             rewrittenPackage.Files.AddRange(files);
 
             using (var packageWriter = new PackageWriter(rewrittenPackage, $"{storyFilePath.Text}.tmp"))
