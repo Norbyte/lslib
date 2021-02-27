@@ -26,7 +26,7 @@ namespace LSLib {
 				throw gcnew System::IO::InvalidDataException("Granny2.dll is required for compressed GR2 files.");
 			}
 
-			auto decompressProc = (GrannyDecompressDataProc)GetProcAddress(hGranny, "_GrannyDecompressData@32");
+			auto decompressProc = (GrannyDecompressDataProc)GetProcAddress(hGranny, "GrannyDecompressData");
 			if (!decompressProc)
 			{
 				throw gcnew System::IO::InvalidDataException("GrannyDecompressData export not found in Granny2.dll.");
