@@ -527,7 +527,7 @@ namespace LSLib.LS
 
     public class PackageCreationOptions
     {
-        public PackageVersion Version = PackageVersion.V13;
+        public PackageVersion Version = PackageVersion.V15;
         public CompressionMethod Compression = CompressionMethod.None;
         public bool FastCompression = true;
         public PackageFlags Flags = 0;

@@ -97,6 +97,7 @@ namespace Divine.CLI
                         PackageVersion = PackageVersion.V13;
                         break;
                     case Game.BaldursGate3:
+                        // Use V15 for now, for compatibility reasons
                         PackageVersion = PackageVersion.V15;
                         break;
                     default:

@@ -17,7 +17,8 @@ namespace LSLib.LS
     {
         public delegate void WriteProgressDelegate(AbstractFileInfo abstractFile, long numerator, long denominator);
 
-        private const long MaxPackageSize = 0x40000000;
+        private const long MaxPackageSizeDOS = 0x40000000;
+        private const long MaxPackageSizeBG3 = 0x100000000;
         public CompressionMethod Compression = CompressionMethod.None;
         public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
 
@@ -47,7 +48,8 @@ namespace LSLib.LS
         {
             // Assume that all files are written uncompressed (worst-case) when calculating package sizes
             long size = (long)info.Size();
-            if (Version < PackageVersion.V15 && _streams.Last().Position + size > MaxPackageSize)
+            if ((Version < PackageVersion.V15 && _streams.Last().Position + size > MaxPackageSizeDOS)
+                || (Version >= PackageVersion.V16 && _streams.Last().Position + size > MaxPackageSizeBG3))
             {
                 // Start a new package file if the current one is full.
                 string partPath = Package.MakePartFilename(_path, _streams.Count);
@@ -365,6 +367,7 @@ namespace LSLib.LS
             switch (Version)
             {
                 case PackageVersion.V15:
+                case PackageVersion.V16:
                 {
                     WriteV15(mainStream);
                     break;

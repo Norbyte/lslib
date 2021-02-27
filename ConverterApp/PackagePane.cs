@@ -15,7 +15,7 @@ namespace ConverterApp
         {
             InitializeComponent();
 
-            packageVersion.SelectedIndex = 1;
+            packageVersion.SelectedIndex = 2;
             compressionMethod.SelectedIndex = 3;
 
             extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
@@ -97,11 +97,12 @@ namespace ConverterApp
         {
             switch (packageVersion.SelectedIndex)
             {
-                case 0: return PackageVersion.V15;
-                case 1: return PackageVersion.V13;
-                case 2: return PackageVersion.V10;
-                case 3: return PackageVersion.V9;
-                case 4: return PackageVersion.V7;
+                case 0: return PackageVersion.V16;
+                case 1: return PackageVersion.V15;
+                case 2: return PackageVersion.V13;
+                case 3: return PackageVersion.V10;
+                case 4: return PackageVersion.V9;
+                case 5: return PackageVersion.V7;
                 default: throw new InvalidDataException();
             }
         }
@@ -238,23 +239,24 @@ namespace ConverterApp
             switch (game)
             {
                 case Game.DivinityOriginalSin:
-                    packageVersion.SelectedIndex = 4;
+                    packageVersion.SelectedIndex = 5;
                     break;
 
                 case Game.DivinityOriginalSinEE:
-                    packageVersion.SelectedIndex = 3;
+                    packageVersion.SelectedIndex = 4;
                     break;
 
                 case Game.DivinityOriginalSin2:
-                    packageVersion.SelectedIndex = 2;
+                    packageVersion.SelectedIndex = 3;
                     break;
 
                 case Game.DivinityOriginalSin2DE:
-                    packageVersion.SelectedIndex = 1;
+                    packageVersion.SelectedIndex = 2;
                     break;
 
                 case Game.BaldursGate3:
-                    packageVersion.SelectedIndex = 0;
+                    // Use V15 for now, for compatibility reasons
+                    packageVersion.SelectedIndex = 1;
                     break;
             }
         }

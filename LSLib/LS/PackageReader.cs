@@ -222,15 +222,15 @@ namespace LSLib.LS
             var package = new Package();
             var header = BinUtils.ReadStruct<LSPKHeader15>(reader);
 
-            if (header.Version != (ulong)PackageVersion.V15)
+            if (header.Version != (ulong)PackageVersion.V15 && header.Version != (ulong)PackageVersion.V16)
             {
-                string msg = $"Unsupported package version {header.Version}; this layout is only supported for {PackageVersion.V15}";
+                string msg = $"Unsupported package version {header.Version}; this layout is only supported for V15 and V16";
                 throw new InvalidDataException(msg);
             }
 
             package.Metadata.Flags = (PackageFlags)header.Flags;
             package.Metadata.Priority = header.Priority;
-            package.Version = PackageVersion.V15;
+            package.Version = (header.Version == 15) ? PackageVersion.V15 : PackageVersion.V16;
 
             if (_metadataOnly) return package;
 
@@ -290,7 +290,7 @@ namespace LSLib.LS
                     {
                         return ReadPackageV10(mainStream, reader);
                     }
-                    else if (version == 15)
+                    else if (version == 15 || version == 16)
                     {
                         mainStream.Seek(4, SeekOrigin.Begin);
                         return ReadPackageV15(mainStream, reader);

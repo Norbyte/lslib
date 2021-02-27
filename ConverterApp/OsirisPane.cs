@@ -173,7 +173,7 @@ namespace ConverterApp
             // Save globals.lsf
             var rewrittenStream = new MemoryStream();
             FileVersion version;
-            if (OriginalSavePakVersion == PackageVersion.V15)
+            if (OriginalSavePakVersion >= PackageVersion.V15)
             {
                 version = FileVersion.VerBG3;
             }
