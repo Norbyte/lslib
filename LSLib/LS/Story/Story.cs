@@ -299,7 +299,11 @@ namespace LSLib.LS.Story
                     story.Types[2] = OsirisType.MakeBuiltin(2, "INTEGER64");
                     story.Types[3] = OsirisType.MakeBuiltin(3, "REAL");
                     story.Types[4] = OsirisType.MakeBuiltin(4, "STRING");
-                    story.Types[5] = OsirisType.MakeBuiltin(5, "GUIDSTRING");
+                    // BG3 defines GUIDSTRING in the .osi file
+                    if (!story.Types.ContainsKey(5))
+                    {
+                        story.Types[5] = OsirisType.MakeBuiltin(5, "GUIDSTRING");
+                    }
                 }
                 else
                 {
