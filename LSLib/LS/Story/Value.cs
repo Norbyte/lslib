@@ -232,11 +232,7 @@ namespace LSLib.LS.Story
 
         public virtual void DebugDump(TextWriter writer, Story story)
         {
-            var builtinTypeId = (byte)TypeId;
-            if (builtinTypeId > (byte)Type.GuidString)
-            {
-                builtinTypeId = story.Types[builtinTypeId].Alias;
-            }
+            var builtinTypeId = story.FindBuiltinTypeId(TypeId);
 
             switch ((Type)builtinTypeId)
             {
@@ -271,11 +267,7 @@ namespace LSLib.LS.Story
 
         public virtual void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes = false)
         {
-            var builtinTypeId = (byte)TypeId;
-            if (builtinTypeId > (byte)Type.GuidString)
-            {
-                builtinTypeId = story.Types[builtinTypeId].Alias;
-            }
+            var builtinTypeId = story.FindBuiltinTypeId(TypeId);
 
             switch ((Type)builtinTypeId)
             {

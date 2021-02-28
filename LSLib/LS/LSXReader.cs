@@ -283,7 +283,7 @@ namespace LSLib.LS
                             ReadEndElement();
                         }
                     }
-                } catch (Exception e)
+                } catch (Exception)
                 {
                     lastLine = ((IXmlLineInfo)reader).LineNumber;
                     lastColumn = ((IXmlLineInfo)reader).LinePosition;

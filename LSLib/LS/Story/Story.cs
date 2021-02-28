@@ -85,6 +85,18 @@ namespace LSLib.LS.Story
                 writer.WriteLine();
             }
         }
+
+        public uint FindBuiltinTypeId(uint typeId)
+        {
+            var aliasId = typeId;
+
+            while (typeId != 0 && Types[aliasId].Alias != 0)
+            {
+                aliasId = Types[aliasId].Alias;
+            }
+
+            return aliasId;
+        }
     }
 
     public class StoryReader
@@ -220,6 +232,34 @@ namespace LSLib.LS.Story
             return goals;
         }
 
+        private Dictionary<uint, OsirisType> ReadTypes(OsiReader reader, Story story)
+        {
+            if (reader.Ver < OsiVersion.VerAddTypeMap)
+            {
+                return new Dictionary<uint, OsirisType>();
+            }
+
+            var types = ReadTypes(reader);
+
+            // Find outermost types
+            foreach (var type in types)
+            {
+                if (type.Value.Alias != 0)
+                {
+                    var aliasId = type.Value.Alias;
+
+                    while (aliasId != 0 && types.ContainsKey(aliasId) && types[aliasId].Alias != 0)
+                    {
+                        aliasId = types[aliasId].Alias;
+                    }
+
+                    reader.TypeAliases.Add(type.Key, aliasId);
+                }
+            }
+
+            return types;
+        }
+
         public Story Read(Stream stream)
         {
             var story = new Story();
@@ -244,19 +284,7 @@ namespace LSLib.LS.Story
                 if (reader.Ver >= OsiVersion.VerScramble)
                     reader.Scramble = 0xAD;
 
-                if (reader.Ver >= OsiVersion.VerAddTypeMap)
-                {
-                    story.Types = ReadTypes(reader);
-                    foreach (var type in story.Types)
-                    {
-                        if (type.Value.Alias != 0)
-                        {
-                            reader.TypeAliases.Add(type.Key, type.Value.Alias);
-                        }
-                    }
-                }
-                else
-                    story.Types = new Dictionary<uint, OsirisType>();
+                story.Types = ReadTypes(reader, story);
 
                 if (reader.Ver >= OsiVersion.VerExternalStringTable && reader.Ver < OsiVersion.VerRemoveExternalStringTable)
                     story.ExternalStringTable = ReadStrings(reader);
@@ -332,7 +360,7 @@ namespace LSLib.LS.Story
             }
         }
 
-        private void WriteTypes(IList<OsirisType> types)
+        private void WriteTypes(IList<OsirisType> types, Story story)
         {
             Writer.Write((UInt32)types.Count);
             foreach (var type in types)
@@ -340,7 +368,7 @@ namespace LSLib.LS.Story
                 type.Write(Writer);
                 if (type.Alias != 0)
                 {
-                    Writer.TypeAliases.Add(type.Index, type.Alias);
+                    Writer.TypeAliases.Add(type.Index, story.FindBuiltinTypeId(type.Index));
                 }
             }
         }
@@ -430,7 +458,7 @@ namespace LSLib.LS.Story
                 {
                     // Don't export builtin types, only externally declared ones
                     var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
-                    WriteTypes(types);
+                    WriteTypes(types, story);
                 }
 
                 // TODO: regenerate string table?
