@@ -76,6 +76,21 @@ namespace LSLib.LS
         public byte[] Md5;
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct LSPKHeader16
+    {
+        public UInt32 Version;
+        public UInt64 FileListOffset;
+        public UInt32 FileListSize;
+        public Byte Flags;
+        public Byte Priority;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] Md5;
+
+        public UInt16 NumParts;
+    }
+
     [Flags]
     public enum PackageFlags
     {
@@ -128,7 +143,7 @@ namespace LSLib.LS
         public UInt64 OffsetInFile;
         public UInt64 SizeOnDisk;
         public UInt64 UncompressedSize;
-        public UInt32 Unknown1;
+        public UInt32 ArchivePart;
         public UInt32 Flags;
         public UInt32 Crc;
         public UInt32 Unknown2;
@@ -325,7 +340,7 @@ namespace LSLib.LS
                 OffsetInFile = entry.OffsetInFile,
                 SizeOnDisk = entry.SizeOnDisk,
                 UncompressedSize = entry.UncompressedSize,
-                ArchivePart = 0,
+                ArchivePart = entry.ArchivePart,
                 Flags = entry.Flags,
                 Crc = entry.Crc,
                 Solid = false
@@ -424,7 +439,7 @@ namespace LSLib.LS
                 UncompressedSize = (Flags & 0x0F) == 0 ? 0 : UncompressedSize,
                 Flags = Flags,
                 Crc = Crc,
-                Unknown1 = 0,
+                ArchivePart = ArchivePart,
                 Unknown2 = 0
             };
             byte[] encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
@@ -502,7 +517,7 @@ namespace LSLib.LS
 
     public class Package
     {
-        public const PackageVersion CurrentVersion = PackageVersion.V15;
+        public const PackageVersion CurrentVersion = PackageVersion.V16;
 
         public static byte[] Signature =
         {
@@ -527,7 +542,7 @@ namespace LSLib.LS
 
     public class PackageCreationOptions
     {
-        public PackageVersion Version = PackageVersion.V15;
+        public PackageVersion Version = PackageVersion.V16;
         public CompressionMethod Compression = CompressionMethod.None;
         public bool FastCompression = true;
         public PackageFlags Flags = 0;

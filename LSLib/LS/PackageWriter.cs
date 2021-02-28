@@ -266,6 +266,44 @@ namespace LSLib.LS
             }
         }
 
+        private List<PackagedFileInfo> PackFiles()
+        {
+            long totalSize = _package.Files.Sum(p => (long)p.Size());
+            long currentSize = 0;
+
+            var writtenFiles = new List<PackagedFileInfo>();
+            foreach (AbstractFileInfo file in _package.Files)
+            {
+                WriteProgress(file, currentSize, totalSize);
+                writtenFiles.Add(WriteFile(file));
+                currentSize += (long)file.Size();
+            }
+
+            return writtenFiles;
+        }
+
+        private void WriteFileListV15(BinaryWriter metadataWriter, List<PackagedFileInfo> files)
+        {
+            byte[] fileListBuf;
+            using (var fileList = new MemoryStream())
+            using (var fileListWriter = new BinaryWriter(fileList))
+            {
+                foreach (PackagedFileInfo file in files)
+                {
+                    FileEntry15 entry = file.MakeEntryV15();
+                    BinUtils.WriteStruct(fileListWriter, ref entry);
+                }
+
+                fileListBuf = fileList.ToArray();
+            }
+
+            byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
+
+            metadataWriter.Write((UInt32)files.Count);
+            metadataWriter.Write((UInt32)compressedFileList.Length);
+            metadataWriter.Write(compressedFileList);
+        }
+
         public void WriteV15(FileStream mainStream)
         {
             var header = new LSPKHeader15
@@ -279,38 +317,12 @@ namespace LSLib.LS
                 BinUtils.WriteStruct(writer, ref header);
             }
 
-            long totalSize = _package.Files.Sum(p => (long)p.Size());
-            long currentSize = 0;
-
-            var writtenFiles = new List<PackagedFileInfo>();
-            foreach (AbstractFileInfo file in _package.Files)
-            {
-                WriteProgress(file, currentSize, totalSize);
-                writtenFiles.Add(WriteFile(file));
-                currentSize += (long)file.Size();
-            }
+            var writtenFiles = PackFiles();
 
             using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
             {
-                byte[] fileListBuf;
-                using (var fileList = new MemoryStream())
-                using (var fileListWriter = new BinaryWriter(fileList))
-                {
-                    foreach (PackagedFileInfo file in writtenFiles)
-                    {
-                        FileEntry15 entry = file.MakeEntryV15();
-                        BinUtils.WriteStruct(fileListWriter, ref entry);
-                    }
-
-                    fileListBuf = fileList.ToArray();
-                }
-
-                byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
-
                 header.FileListOffset = (UInt64)mainStream.Position;
-                writer.Write((UInt32)writtenFiles.Count);
-                writer.Write((UInt32)compressedFileList.Length);
-                writer.Write(compressedFileList);
+                WriteFileListV15(writer, writtenFiles);
 
                 header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
                 header.Priority = _package.Metadata.Priority;
@@ -321,11 +333,44 @@ namespace LSLib.LS
             }
         }
 
+        public void WriteV16(FileStream mainStream)
+        {
+            var header = new LSPKHeader16
+            {
+                Version = (uint)Version
+            };
+
+            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            {
+                writer.Write(Package.Signature);
+                BinUtils.WriteStruct(writer, ref header);
+            }
+
+            var writtenFiles = PackFiles();
+
+            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            {
+                header.FileListOffset = (UInt64)mainStream.Position;
+                WriteFileListV15(writer, writtenFiles);
+
+                header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
+                header.Priority = _package.Metadata.Priority;
+                header.Flags = (byte)_package.Metadata.Flags;
+                header.Md5 = ComputeArchiveHash();
+                header.NumParts = (UInt16)_streams.Count;
+                mainStream.Seek(4, SeekOrigin.Begin);
+                BinUtils.WriteStruct(writer, ref header);
+            }
+        }
+
         public byte[] ComputeArchiveHash()
         {
             // MD5 is computed over the contents of all files in an alphabetically sorted order
             List<AbstractFileInfo> orderedFileList = _package.Files.Select(item => item).ToList();
-            orderedFileList.Sort((a, b) => String.CompareOrdinal(a.Name, b.Name));
+            if (Version < PackageVersion.V15)
+            {
+                orderedFileList.Sort((a, b) => String.CompareOrdinal(a.Name, b.Name));
+            }
 
             using (MD5 md5 = MD5.Create())
             {
@@ -366,8 +411,12 @@ namespace LSLib.LS
 
             switch (Version)
             {
-                case PackageVersion.V15:
                 case PackageVersion.V16:
+                {
+                    WriteV16(mainStream);
+                    break;
+                }
+                case PackageVersion.V15:
                 {
                     WriteV15(mainStream);
                     break;

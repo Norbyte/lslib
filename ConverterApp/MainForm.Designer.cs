@@ -138,7 +138,7 @@
             this.Controls.Add(this.label7);
             this.Controls.Add(this.tabControl);
             this.Name = "MainForm";
-            this.Text = "GR2 Converter";
+            this.Text = "LSLib Toolkit";
             this.tabControl.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LZ4;
-using Alphaleonis.Win32.Filesystem;
 using File = Alphaleonis.Win32.Filesystem.File;
 using LSLib.LS.Enums;
 
@@ -217,25 +216,8 @@ namespace LSLib.LS
             return package;
         }
 
-        private Package ReadPackageV15(FileStream mainStream, BinaryReader reader)
+        private void ReadFileListV15(BinaryReader reader, Package package)
         {
-            var package = new Package();
-            var header = BinUtils.ReadStruct<LSPKHeader15>(reader);
-
-            if (header.Version != (ulong)PackageVersion.V15 && header.Version != (ulong)PackageVersion.V16)
-            {
-                string msg = $"Unsupported package version {header.Version}; this layout is only supported for V15 and V16";
-                throw new InvalidDataException(msg);
-            }
-
-            package.Metadata.Flags = (PackageFlags)header.Flags;
-            package.Metadata.Priority = header.Priority;
-            package.Version = (header.Version == 15) ? PackageVersion.V15 : PackageVersion.V16;
-
-            if (_metadataOnly) return package;
-
-            OpenStreams(mainStream, 1);
-            mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
             int numFiles = reader.ReadInt32();
             int compressedSize = reader.ReadInt32();
             byte[] compressedFileList = reader.ReadBytes(compressedSize);
@@ -257,8 +239,54 @@ namespace LSLib.LS
 
             foreach (var entry in entries)
             {
-                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[0]));
+                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
             }
+        }
+
+        private Package ReadPackageV15(FileStream mainStream, BinaryReader reader)
+        {
+            var package = new Package();
+            var header = BinUtils.ReadStruct<LSPKHeader15>(reader);
+
+            if (header.Version != (ulong)PackageVersion.V15)
+            {
+                string msg = $"Unsupported package version {header.Version}; this layout is only supported for V15";
+                throw new InvalidDataException(msg);
+            }
+
+            package.Metadata.Flags = (PackageFlags)header.Flags;
+            package.Metadata.Priority = header.Priority;
+            package.Version = PackageVersion.V15;
+
+            if (_metadataOnly) return package;
+
+            OpenStreams(mainStream, 1);
+            mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
+            ReadFileListV15(reader, package);
+
+            return package;
+        }
+
+        private Package ReadPackageV16(FileStream mainStream, BinaryReader reader)
+        {
+            var package = new Package();
+            var header = BinUtils.ReadStruct<LSPKHeader16>(reader);
+
+            if (header.Version != (ulong)PackageVersion.V16)
+            {
+                string msg = $"Unsupported package version {header.Version}; this layout is only supported for V16";
+                throw new InvalidDataException(msg);
+            }
+
+            package.Metadata.Flags = (PackageFlags)header.Flags;
+            package.Metadata.Priority = header.Priority;
+            package.Version = PackageVersion.V16;
+
+            if (_metadataOnly) return package;
+
+            OpenStreams(mainStream, header.NumParts);
+            mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
+            ReadFileListV15(reader, package);
 
             return package;
         }
@@ -290,10 +318,15 @@ namespace LSLib.LS
                     {
                         return ReadPackageV10(mainStream, reader);
                     }
-                    else if (version == 15 || version == 16)
+                    else if (version == 15)
                     {
                         mainStream.Seek(4, SeekOrigin.Begin);
                         return ReadPackageV15(mainStream, reader);
+                    }
+                    else if (version == 16)
+                    {
+                        mainStream.Seek(4, SeekOrigin.Begin);
+                        return ReadPackageV16(mainStream, reader);
                     }
                     else
                     {

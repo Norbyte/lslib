@@ -255,8 +255,7 @@ namespace ConverterApp
                     break;
 
                 case Game.BaldursGate3:
-                    // Use V15 for now, for compatibility reasons
-                    packageVersion.SelectedIndex = 1;
+                    packageVersion.SelectedIndex = 0;
                     break;
             }
         }

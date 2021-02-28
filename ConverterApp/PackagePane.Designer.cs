@@ -297,6 +297,7 @@
             this.packageVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.packageVersion.FormattingEnabled = true;
             this.packageVersion.Items.AddRange(new object[] {
+            "V16 (Baldur\'s Gate 3 EA Patch 4)",
             "V15 (Baldur\'s Gate 3)",
             "V13 (Divinity Original Sin: EE, Original Sin 2)",
             "V10 (Divinity Original Sin)",
