@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.LS;
+using Alphaleonis.Win32.Filesystem;
 
 namespace LSLib.Granny.Model
 {
@@ -710,7 +711,10 @@ namespace LSLib.Granny.Model
 
             collada.Items = rootElements.ToArray();
 
-            collada.Save(outputPath);
+            using (var stream = File.Open(outputPath, System.IO.FileMode.Create))
+            {
+                collada.Save(stream);
+            }
         }
     }
 }
