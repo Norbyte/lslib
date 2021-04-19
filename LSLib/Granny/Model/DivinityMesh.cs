@@ -94,7 +94,7 @@ namespace LSLib.Granny.Model
         public static List<DivinityFormatDesc> FromVertexFormat(VertexDescriptor format)
         {
             var formats = new List<DivinityFormatDesc>();
-            if (format.HasPosition)
+            if (format.PositionType != PositionType.None)
             {
                 formats.Add(Make(DivinityVertexUsage.Position, DivinityVertexAttributeFormat.Real32, 3));
             }

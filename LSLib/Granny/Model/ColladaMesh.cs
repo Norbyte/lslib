@@ -438,7 +438,7 @@ namespace LSLib.Granny.Model
         private VertexDescriptor FindVertexFormat(bool isSkinned)
         {
             var desc = new VertexDescriptor();
-            desc.HasPosition = true;
+            desc.PositionType = PositionType.Float3;
             if (isSkinned)
             {
                 desc.HasBoneWeights = true;
@@ -490,9 +490,9 @@ namespace LSLib.Granny.Model
             InputVertexType = vertexFormat;
             OutputVertexType = new VertexDescriptor
             {
-                HasPosition = InputVertexType.HasPosition,
                 HasBoneWeights = InputVertexType.HasBoneWeights,
                 NumBoneInfluences = InputVertexType.NumBoneInfluences,
+                PositionType = InputVertexType.PositionType,
                 NormalType = InputVertexType.NormalType,
                 TangentType = InputVertexType.TangentType,
                 BinormalType = InputVertexType.BinormalType,

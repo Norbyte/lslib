@@ -148,7 +148,7 @@ namespace LSLib.Granny.Model
         private void DetermineInputsFromVertex(Vertex vertex)
         {
             var desc = vertex.Format;
-            if (!desc.HasPosition)
+            if (desc.PositionType == PositionType.None)
             {
                 throw new NotImplementedException("Cannot import vertices without position");
             }
