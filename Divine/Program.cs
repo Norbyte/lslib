@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Divine.CLI;
 
 namespace Divine
@@ -14,15 +15,29 @@ namespace Divine
             customCulture.NumberFormat.NumberDecimalSeparator = ".";
             System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
-            CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser
+            DivineCommandLineParser parser = new DivineCommandLineParser
             {
                 IgnoreCase = true,
-                ShowUsageOnEmptyCommandline = true
+                ShowUsageHeader = "Divine - by Norbyte & fireundubh <https://github.com/Norbyte/lslib>"
             };
 
             argv = new CommandLineArguments();
 
             parser.ExtractArgumentAttributes(argv);
+
+            string[] helpArgs =
+            {
+                @"-h",
+                @"--help",
+                @"-?",
+                @"/?"
+            };
+
+            if (args.Length == 0 || helpArgs.Any(args.Contains))
+            {
+                parser.PrintUsage(Console.Out);
+                return;
+            }
 
 #if !DEBUG
             try

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Alphaleonis.Win32.Filesystem;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
@@ -37,15 +37,6 @@ namespace Divine.CLI
                 "extract-packages",
                 "convert-models",
                 "convert-resources"
-            };
-
-            string[] packageActions =
-            {
-                "create-package",
-                "list-package",
-                "extract-single-file",
-                "extract-package",
-                "extract-packages"
             };
 
             string[] graphicsActions =
@@ -127,11 +118,31 @@ namespace Divine.CLI
                 }
             }
 
+            // validate all source paths
             SourcePath = TryToValidatePath(args.Source);
-            if (args.Action != "list-package")
+
+            // validate destination path for create-package action and batch actions
+            if (args.Action == "create-package" || batchActions.Any(args.Action.Contains))
             {
-                DestinationPath = TryToValidatePath(args.Destination);
+                if (string.IsNullOrWhiteSpace(args.Destination))
+                {
+                    var attrs = File.GetAttributes(SourcePath);
+
+                    if ((attrs & FileAttributes.Directory) == FileAttributes.Directory)
+                    {
+                        DestinationPath = SourcePath;
+                    }
+                    else
+                    {
+                        DestinationPath = Path.GetDirectoryName(SourcePath);
+                    }
+                }
+                else
+                {
+                    DestinationPath = TryToValidatePath(args.Destination);
+                }
             }
+
             if (args.Action == "extract-single-file")
             {
                 PackagedFilePath = args.PackagedPath;
@@ -172,30 +183,44 @@ namespace Divine.CLI
             {
                 case "create-package":
                 {
+                    // requires:
+                    //   SourcePath      = directory
+                    //   DestinationPath = new file path - no validation
                     CommandLinePackageProcessor.Create();
                     break;
                 }
 
                 case "extract-package":
                 {
+                    // requires:
+                    //   SourcePath      = file path (package)
+                    //   DestinationPath = directory path - no validation
                     CommandLinePackageProcessor.Extract(filter);
                     break;
                 }
 
                 case "extract-single-file":
                 {
+                    // requires:
+                    //   SourcePath      = file path (package)
+                    //   DestinationPath = file path (file to write) - no validation
                     CommandLinePackageProcessor.ExtractSingleFile();
                     break;
                 }
 
                 case "list-package":
                 {
+                    // requires:
+                    //   SourcePath      = file path (package)
                     CommandLinePackageProcessor.ListFiles(filter);
                     break;
                 }
 
                 case "convert-model":
                 {
+                    // requires:
+                    //   SourcePath      = original file path
+                    //   DestinationPath = new file path - no validation
                     CommandLineGR2Processor.UpdateExporterSettings();
                     CommandLineGR2Processor.Convert();
                     break;
@@ -203,24 +228,36 @@ namespace Divine.CLI
 
                 case "convert-resource":
                 {
+                    // requires:
+                    //   SourcePath      = original file path
+                    //   DestinationPath = new file path - no validation
                     CommandLineDataProcessor.Convert();
                     break;
                 }
 
                 case "extract-packages":
                 {
+                    // requires:
+                    //   SourcePath      = directory path (contains packages)
+                    //   DestinationPath = directory path - no validation
                     CommandLinePackageProcessor.BatchExtract(filter);
                     break;
                 }
 
                 case "convert-models":
                 {
+                    // requires:
+                    //   SourcePath      = directory path (contains models)
+                    //   DestinationPath = directory path - no validation
                     CommandLineGR2Processor.BatchConvert();
                     break;
                 }
 
                 case "convert-resources":
                 {
+                    // requires:
+                    //   SourcePath      = directory path (contains resources)
+                    //   DestinationPath = directory path - no validation
                     CommandLineDataProcessor.BatchConvert();
                     break;
                 }
@@ -253,7 +290,9 @@ namespace Divine.CLI
 
             if (uri != null && (!Path.IsPathRooted(path) || !uri.IsFile))
             {
-                CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E2]: {path}", 1);
+                var cwd = Directory.GetCurrentDirectory();
+                path = Path.Combine(cwd, path);
+                path = TryToValidatePath(path);
             }
 
             // ReSharper disable once AssignNullToNotNullAttribute

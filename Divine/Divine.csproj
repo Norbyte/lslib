@@ -57,6 +57,7 @@
     <Compile Include="CLI\CommandLineLogger.cs" />
     <Compile Include="CLI\CommandLinePackageProcessor.cs" />
     <Compile Include="CLI\CommandLineArguments.cs" />
+    <Compile Include="CLI\DivineCommandLineParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
