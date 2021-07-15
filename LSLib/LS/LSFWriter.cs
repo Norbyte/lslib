@@ -96,31 +96,43 @@ namespace LSLib.LS
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
                 byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
-                header.StringsUncompressedSize = (UInt32)stringBuffer.Length;
-                header.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
-                header.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
-                header.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
+                var meta = new Metadata();
+                meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
+                meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
+                meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
+                meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
 
                 if (Compression == CompressionMethod.None)
                 {
-                    header.StringsSizeOnDisk = 0;
-                    header.NodesSizeOnDisk = 0;
-                    header.AttributesSizeOnDisk = 0;
-                    header.ValuesSizeOnDisk = 0;
+                    meta.StringsSizeOnDisk = 0;
+                    meta.NodesSizeOnDisk = 0;
+                    meta.AttributesSizeOnDisk = 0;
+                    meta.ValuesSizeOnDisk = 0;
                 }
                 else
                 {
-                    header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
-                    header.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
-                    header.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
-                    header.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+                    meta.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
+                    meta.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
+                    meta.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
+                    meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
                 }
 
-                header.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
-                header.Unknown2 = 0;
-                header.Unknown3 = 0;
-                header.Extended = ExtendedNodes ? 1u : 0u;
-                BinUtils.WriteStruct<Header>(Writer, ref header);
+                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                meta.Unknown2 = 0;
+                meta.Unknown3 = 0;
+                meta.Extended = ExtendedNodes ? 1u : 0u;
+
+                if (header.Version < (ulong)FileVersion.VerExtendedHeader)
+                {
+                    BinUtils.WriteStruct<Metadata>(Writer, ref meta);
+                }
+                else
+                {
+                    var meta2 = new MetadataV5();
+                    meta2.Unknown = 0x02000002;
+                    meta2.Metadata = meta;
+                    BinUtils.WriteStruct<MetadataV5>(Writer, ref meta2);
+                }
 
                 Writer.Write(stringsCompressed, 0, stringsCompressed.Length);
                 Writer.Write(nodesCompressed, 0, nodesCompressed.Length);
