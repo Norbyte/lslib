@@ -30,11 +30,13 @@ namespace LSLib.LS
 
         private List<List<string>> StringHashMap;
         private bool ExtendedNodes = false;
+        private List<int> NextSiblingIndices;
 
         public LSFWriter(Stream stream, FileVersion version)
         {
             this.Stream = stream;
             this.Version = (uint) version;
+            this.ExtendedNodes = (this.Version >= (uint)FileVersion.VerExtendedNodes);
         }
 
         public void Write(Resource resource)
@@ -62,10 +64,16 @@ namespace LSLib.LS
                 NextNodeIndex = 0;
                 NextAttributeIndex = 0;
                 NodeIndices = new Dictionary<Node, int>();
+                NextSiblingIndices = null;
                 StringHashMap = new List<List<string>>(StringHashMapSize);
                 while (StringHashMap.Count < StringHashMapSize)
                 {
                     StringHashMap.Add(new List<string>());
+                }
+
+                if (ExtendedNodes)
+                {
+                    ComputeSiblingIndices(resource);
                 }
 
                 WriteRegions(resource);
@@ -122,6 +130,8 @@ namespace LSLib.LS
                 meta.Unknown3 = 0;
                 meta.Extended = ExtendedNodes ? 1u : 0u;
 
+                BinUtils.WriteStruct<Header>(Writer, ref header);
+
                 if (header.Version < (ulong)FileVersion.VerExtendedHeader)
                 {
                     BinUtils.WriteStruct<Metadata>(Writer, ref meta);
@@ -141,8 +151,51 @@ namespace LSLib.LS
             }
         }
 
+        private int ComputeSiblingIndices(Node node)
+        {
+            int index = NextNodeIndex;
+            NextNodeIndex++;
+            NextSiblingIndices.Add(-1);
+
+            int lastSiblingIndex = -1;
+            foreach (var children in node.Children)
+            {
+                foreach (var child in children.Value)
+                {
+                    int childIndex = ComputeSiblingIndices(child);
+                    if (lastSiblingIndex != -1)
+                    {
+                        NextSiblingIndices[lastSiblingIndex] = childIndex;
+                    }
+
+                    lastSiblingIndex = childIndex;
+                }
+            }
+
+            return index;
+        }
+
+        private void ComputeSiblingIndices(Resource resource)
+        {
+            NextNodeIndex = 0;
+            NextSiblingIndices = new List<int>();
+
+            int lastRegionIndex = -1;
+            foreach (var region in resource.Regions)
+            {
+                int regionIndex = ComputeSiblingIndices(region.Value);
+                if (lastRegionIndex != -1)
+                {
+                    NextSiblingIndices[lastRegionIndex] = regionIndex;
+                }
+
+                lastRegionIndex = regionIndex;
+            }
+        }
+
         private void WriteRegions(Resource resource)
         {
+            NextNodeIndex = 0;
             foreach (var region in resource.Regions)
             {
                 if (Version >= (ulong) FileVersion.VerExtendedNodes
@@ -197,7 +250,7 @@ namespace LSLib.LS
                 {
                     attributeInfo.NextAttributeIndex = NextAttributeIndex + 1;
                 }
-                attributeInfo.Offset = (UInt32)ValueStream.Position;
+                attributeInfo.Offset = lastOffset;
                 BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref attributeInfo);
 
                 NextAttributeIndex++;
@@ -269,6 +322,9 @@ namespace LSLib.LS
 
             nodeInfo.NameHashTableIndex = AddStaticString(node.Name);
 
+            // Assumes we calculated indices first using ComputeSiblingIndices()
+            nodeInfo.NextSiblingIndex = NextSiblingIndices[NextNodeIndex];
+
             if (node.Attributes.Count > 0)
             {
                 nodeInfo.FirstAttributeIndex = NextAttributeIndex;
@@ -279,9 +335,6 @@ namespace LSLib.LS
                 nodeInfo.FirstAttributeIndex = -1;
             }
 
-            // FIXME!
-            throw new Exception("Writing uncompressed LSFv3 is not supported yet");
-            nodeInfo.NextSiblingIndex = -1;
             BinUtils.WriteStruct<NodeEntryV3>(NodeWriter, ref nodeInfo);
             NodeIndices[node] = NextNodeIndex;
             NextNodeIndex++;
