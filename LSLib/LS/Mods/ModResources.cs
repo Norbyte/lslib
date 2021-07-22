@@ -121,6 +121,8 @@ namespace LSLib.LS
 
         private void DiscoverPackagedFile(AbstractFileInfo file)
         {
+            if (file.IsDeletion()) return;
+
             if (file.Name.EndsWith("meta.lsx", StringComparison.Ordinal))
             {
                 var match = metaRe.Match(file.Name);

@@ -41,7 +41,7 @@ namespace Divine.CLI
                 {
                     Package package = reader.Read();
                     // Try to match by full path
-                    AbstractFileInfo file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
+                    AbstractFileInfo file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0 && !fileInfo.IsDeletion());
                     if (file == null)
                     {
                         // Try to match by filename only
