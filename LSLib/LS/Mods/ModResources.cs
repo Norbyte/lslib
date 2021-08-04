@@ -228,7 +228,7 @@ namespace LSLib.LS
             }
         }
 
-        private void DiscoverBuiltinPackages(string gameDataPath)
+        public void DiscoverBuiltinPackages(string gameDataPath)
         {
             // List of packages we won't ever load
             // These packages don't contain any mod resources, but have a large
@@ -415,7 +415,7 @@ namespace LSLib.LS
                 }
             }
 
-            if (CollectStats)
+            if (CollectStats && Directory.Exists(publicPath))
             {
                 DiscoverModStats(modName, publicPath);
             }
@@ -435,15 +435,19 @@ namespace LSLib.LS
         {
             var modsPath = Path.Combine(gameDataPath, "Mods");
             var publicPath = Path.Combine(gameDataPath, "Public");
-            var modPaths = Directory.GetDirectories(modsPath);
 
-            foreach (var modPath in modPaths)
-            {
-                if (File.Exists(Path.Combine(modPath, "meta.lsx")))
+            if(Directory.Exists(modsPath))
+			{
+                var modPaths = Directory.GetDirectories(modsPath);
+
+                foreach (var modPath in modPaths)
                 {
-                    var modName = Path.GetFileNameWithoutExtension(modPath);
-                    var modPublicPath = Path.Combine(publicPath, Path.GetFileName(modPath));
-                    DiscoverModDirectory(modName, modPath, modPublicPath);
+                    if (File.Exists(Path.Combine(modPath, "meta.lsx")))
+                    {
+                        var modName = Path.GetFileNameWithoutExtension(modPath);
+                        var modPublicPath = Path.Combine(publicPath, Path.GetFileName(modPath));
+                        DiscoverModDirectory(modName, modPath, modPublicPath);
+                    }
                 }
             }
         }
