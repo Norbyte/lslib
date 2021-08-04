@@ -157,6 +157,7 @@ namespace LSLib.LS
         public abstract UInt32 CRC();
         public abstract Stream MakeStream();
         public abstract void ReleaseStream();
+        public abstract bool IsDeletion();
     }
 
 
@@ -238,6 +239,11 @@ namespace LSLib.LS
 
         public override Stream MakeStream()
         {
+            if (IsDeletion())
+            {
+                throw new InvalidOperationException("Cannot open file stream for a deleted file");
+            }
+
             if (_uncompressedStream != null)
             {
                 return _uncompressedStream;
@@ -447,6 +453,11 @@ namespace LSLib.LS
 
             return entry;
         }
+
+        public override bool IsDeletion()
+        {
+            return OffsetInFile == 0xdeadbeefdeadbeef;
+        }
     }
 
     public class FilesystemFileInfo : AbstractFileInfo, IDisposable
@@ -488,6 +499,11 @@ namespace LSLib.LS
             info.CachedSize = fsInfo.Length;
             return info;
         }
+
+        public override bool IsDeletion()
+        {
+            return false;
+        }
     }
 
     public class StreamFileInfo : AbstractFileInfo
@@ -512,6 +528,11 @@ namespace LSLib.LS
                 Stream = stream
             };
             return info;
+        }
+
+        public override bool IsDeletion()
+        {
+            return false;
         }
     }
 
@@ -582,6 +603,8 @@ namespace LSLib.LS
             {
                 ProgressUpdate(file.Name, currentSize, totalSize, file);
                 currentSize += (long)file.Size();
+
+                if (file.IsDeletion()) continue;
 
                 string outPath = outputPath + file.Name;
 

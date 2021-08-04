@@ -83,16 +83,6 @@ namespace LSLib.LS
             }
         }
 
-        private static void EnumerateScripts(List<string> paths, string rootPath)
-        {
-            var localPaths = new List<string>();
-            EnumerateFiles(localPaths, rootPath, rootPath, "*.txt");
-            foreach (var path in localPaths)
-            {
-                paths.Add(rootPath + "\\" + path);
-            }
-        }
-
         private ModInfo GetMod(string modName)
         {
             if (!Resources.Mods.TryGetValue(modName, out ModInfo mod))
@@ -131,6 +121,8 @@ namespace LSLib.LS
 
         private void DiscoverPackagedFile(AbstractFileInfo file)
         {
+            if (file.IsDeletion()) return;
+
             if (file.Name.EndsWith("meta.lsx", StringComparison.Ordinal))
             {
                 var match = metaRe.Match(file.Name);
@@ -436,8 +428,8 @@ namespace LSLib.LS
             var modsPath = Path.Combine(gameDataPath, "Mods");
             var publicPath = Path.Combine(gameDataPath, "Public");
 
-            if(Directory.Exists(modsPath))
-			{
+            if (Directory.Exists(modsPath))
+            {
                 var modPaths = Directory.GetDirectories(modsPath);
 
                 foreach (var modPath in modPaths)

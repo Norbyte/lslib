@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.LS;
+using Alphaleonis.Win32.Filesystem;
 
 namespace LSLib.Granny.Model
 {
@@ -147,7 +148,7 @@ namespace LSLib.Granny.Model
         private void DetermineInputsFromVertex(Vertex vertex)
         {
             var desc = vertex.Format;
-            if (!desc.HasPosition)
+            if (desc.PositionType == PositionType.None)
             {
                 throw new NotImplementedException("Cannot import vertices without position");
             }
@@ -710,7 +711,10 @@ namespace LSLib.Granny.Model
 
             collada.Items = rootElements.ToArray();
 
-            collada.Save(outputPath);
+            using (var stream = File.Open(outputPath, System.IO.FileMode.Create))
+            {
+                collada.Save(stream);
+            }
         }
     }
 }

@@ -23,8 +23,13 @@
         VerBG3 = 0x04,
 
         /// <summary>
+        /// BG3 version with updated header metadata
+        /// </summary>
+        VerExtendedHeader = 0x05,
+
+        /// <summary>
         /// Latest version supported by this library
         /// </summary>
-        MaxVersion = 0x04
+        MaxVersion = 0x05
     }
 }

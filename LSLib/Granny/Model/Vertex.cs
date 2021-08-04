@@ -46,11 +46,19 @@ namespace LSLib.Granny.Model
         }
     }
 
+    public enum PositionType
+    {
+        None,
+        Float3,
+        Word4
+    };
+
     public enum NormalType
     {
         None,
         Float3,
         Half4,
+        Byte4,
         QTangent
     };
 
@@ -73,9 +81,9 @@ namespace LSLib.Granny.Model
     /// </summary>
     public class VertexDescriptor
     {
-        public bool HasPosition = true;
         public bool HasBoneWeights = false;
         public int NumBoneInfluences = 4;
+        public PositionType PositionType = PositionType.None;
         public NormalType NormalType = NormalType.None;
         public NormalType TangentType = NormalType.None;
         public NormalType BinormalType = NormalType.None;
@@ -88,7 +96,7 @@ namespace LSLib.Granny.Model
         public List<String> ComponentNames()
         {
             var names = new List<String>();
-            if (HasPosition)
+            if (PositionType != PositionType.None)
             {
                 names.Add("Position");
             }
@@ -145,8 +153,24 @@ namespace LSLib.Granny.Model
         public String Name()
         {
             string vertexFormat;
-            vertexFormat = "P";
-            string attributeCounts = "3";
+            vertexFormat = "";
+            string attributeCounts = "";
+
+            switch (PositionType)
+            {
+                case PositionType.None:
+                    break;
+
+                case PositionType.Float3:
+                    vertexFormat += "P";
+                    attributeCounts += "3";
+                    break;
+
+                case PositionType.Word4:
+                    vertexFormat += "PW";
+                    attributeCounts += "4";
+                    break;
+            }
 
             if (HasBoneWeights)
             {
@@ -404,12 +428,18 @@ namespace LSLib.Granny.Model
                 switch (member.Name)
                 {
                     case "Position":
-                        if (member.Type != MemberType.Real32
-                            || member.ArraySize != 3)
+                        if (member.Type == MemberType.Real32 && member.ArraySize == 3)
                         {
-                            throw new Exception("Vertex position must be a Vector3");
+                            desc.PositionType = PositionType.Float3;
                         }
-                        desc.HasPosition = true;
+                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        {
+                            desc.PositionType = PositionType.Word4;
+                        }
+                        else
+                        {
+                            throw new Exception($"Unsupported position format: {member.Type}, {member.ArraySize}");
+                        }
                         break;
 
                     case "BoneWeights":
@@ -443,6 +473,10 @@ namespace LSLib.Granny.Model
                         {
                             desc.NormalType = NormalType.Half4;
                         }
+                        else if (member.Type == MemberType.BinormalInt8 && member.ArraySize == 4)
+                        {
+                            desc.NormalType = NormalType.Byte4;
+                        }
                         else
                         {
                             throw new Exception($"Unsupported normal format: {member.Type}, {member.ArraySize}");
@@ -469,7 +503,11 @@ namespace LSLib.Granny.Model
                         }
                         else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
                         {
-                            desc.NormalType = NormalType.Half4;
+                            desc.TangentType = NormalType.Half4;
+                        }
+                        else if (member.Type == MemberType.BinormalInt8 && member.ArraySize == 4)
+                        {
+                            desc.TangentType = NormalType.Byte4;
                         }
                         else
                         {
@@ -484,7 +522,11 @@ namespace LSLib.Granny.Model
                         }
                         else if (member.Type == MemberType.Real16 && member.ArraySize == 4)
                         {
-                            desc.NormalType = NormalType.Half4;
+                            desc.BinormalType = NormalType.Half4;
+                        }
+                        else if (member.Type == MemberType.BinormalInt8 && member.ArraySize == 4)
+                        {
+                            desc.BinormalType = NormalType.Byte4;
                         }
                         else
                         {

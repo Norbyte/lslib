@@ -35,7 +35,7 @@
             }
             else
             {
-                return FileVersion.VerBG3;
+                return FileVersion.VerExtendedHeader;
             }
         }
     }

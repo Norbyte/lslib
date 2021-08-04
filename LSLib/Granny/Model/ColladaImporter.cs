@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Alphaleonis.Win32.Filesystem;
 using LSLib.Granny.GR2;
 using LSLib.LS;
 using OpenTK;
@@ -776,7 +777,12 @@ namespace LSLib.Granny.Model
 
         public Root Import(string inputPath)
         {
-            var collada = COLLADA.Load(inputPath);
+            COLLADA collada = null;
+            using (var stream = File.OpenRead(inputPath))
+            {
+                collada = COLLADA.Load(stream);
+            }
+
             var root = new Root();
             root.ArtToolInfo = ImportArtToolInfo(collada);
             if (!Options.StripMetadata)

@@ -30,11 +30,13 @@ namespace LSLib.LS
 
         private List<List<string>> StringHashMap;
         private bool ExtendedNodes = false;
+        private List<int> NextSiblingIndices;
 
         public LSFWriter(Stream stream, FileVersion version)
         {
             this.Stream = stream;
             this.Version = (uint) version;
+            this.ExtendedNodes = (this.Version >= (uint)FileVersion.VerExtendedNodes);
         }
 
         public void Write(Resource resource)
@@ -62,10 +64,16 @@ namespace LSLib.LS
                 NextNodeIndex = 0;
                 NextAttributeIndex = 0;
                 NodeIndices = new Dictionary<Node, int>();
+                NextSiblingIndices = null;
                 StringHashMap = new List<List<string>>(StringHashMapSize);
                 while (StringHashMap.Count < StringHashMapSize)
                 {
                     StringHashMap.Add(new List<string>());
+                }
+
+                if (ExtendedNodes)
+                {
+                    ComputeSiblingIndices(resource);
                 }
 
                 WriteRegions(resource);
@@ -96,31 +104,45 @@ namespace LSLib.LS
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
                 byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
-                header.StringsUncompressedSize = (UInt32)stringBuffer.Length;
-                header.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
-                header.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
-                header.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
+                var meta = new Metadata();
+                meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
+                meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
+                meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
+                meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
 
                 if (Compression == CompressionMethod.None)
                 {
-                    header.StringsSizeOnDisk = 0;
-                    header.NodesSizeOnDisk = 0;
-                    header.AttributesSizeOnDisk = 0;
-                    header.ValuesSizeOnDisk = 0;
+                    meta.StringsSizeOnDisk = 0;
+                    meta.NodesSizeOnDisk = 0;
+                    meta.AttributesSizeOnDisk = 0;
+                    meta.ValuesSizeOnDisk = 0;
                 }
                 else
                 {
-                    header.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
-                    header.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
-                    header.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
-                    header.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+                    meta.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
+                    meta.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
+                    meta.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
+                    meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
                 }
 
-                header.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
-                header.Unknown2 = 0;
-                header.Unknown3 = 0;
-                header.Extended = ExtendedNodes ? 1u : 0u;
+                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                meta.Unknown2 = 0;
+                meta.Unknown3 = 0;
+                meta.Extended = ExtendedNodes ? 1u : 0u;
+
                 BinUtils.WriteStruct<Header>(Writer, ref header);
+
+                if (header.Version < (ulong)FileVersion.VerExtendedHeader)
+                {
+                    BinUtils.WriteStruct<Metadata>(Writer, ref meta);
+                }
+                else
+                {
+                    var meta2 = new MetadataV5();
+                    meta2.Unknown = 0x02000002;
+                    meta2.Metadata = meta;
+                    BinUtils.WriteStruct<MetadataV5>(Writer, ref meta2);
+                }
 
                 Writer.Write(stringsCompressed, 0, stringsCompressed.Length);
                 Writer.Write(nodesCompressed, 0, nodesCompressed.Length);
@@ -129,8 +151,51 @@ namespace LSLib.LS
             }
         }
 
+        private int ComputeSiblingIndices(Node node)
+        {
+            int index = NextNodeIndex;
+            NextNodeIndex++;
+            NextSiblingIndices.Add(-1);
+
+            int lastSiblingIndex = -1;
+            foreach (var children in node.Children)
+            {
+                foreach (var child in children.Value)
+                {
+                    int childIndex = ComputeSiblingIndices(child);
+                    if (lastSiblingIndex != -1)
+                    {
+                        NextSiblingIndices[lastSiblingIndex] = childIndex;
+                    }
+
+                    lastSiblingIndex = childIndex;
+                }
+            }
+
+            return index;
+        }
+
+        private void ComputeSiblingIndices(Resource resource)
+        {
+            NextNodeIndex = 0;
+            NextSiblingIndices = new List<int>();
+
+            int lastRegionIndex = -1;
+            foreach (var region in resource.Regions)
+            {
+                int regionIndex = ComputeSiblingIndices(region.Value);
+                if (lastRegionIndex != -1)
+                {
+                    NextSiblingIndices[lastRegionIndex] = regionIndex;
+                }
+
+                lastRegionIndex = regionIndex;
+            }
+        }
+
         private void WriteRegions(Resource resource)
         {
+            NextNodeIndex = 0;
             foreach (var region in resource.Regions)
             {
                 if (Version >= (ulong) FileVersion.VerExtendedNodes
@@ -185,7 +250,7 @@ namespace LSLib.LS
                 {
                     attributeInfo.NextAttributeIndex = NextAttributeIndex + 1;
                 }
-                attributeInfo.Offset = (UInt32)ValueStream.Position;
+                attributeInfo.Offset = lastOffset;
                 BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref attributeInfo);
 
                 NextAttributeIndex++;
@@ -257,6 +322,9 @@ namespace LSLib.LS
 
             nodeInfo.NameHashTableIndex = AddStaticString(node.Name);
 
+            // Assumes we calculated indices first using ComputeSiblingIndices()
+            nodeInfo.NextSiblingIndex = NextSiblingIndices[NextNodeIndex];
+
             if (node.Attributes.Count > 0)
             {
                 nodeInfo.FirstAttributeIndex = NextAttributeIndex;
@@ -267,9 +335,6 @@ namespace LSLib.LS
                 nodeInfo.FirstAttributeIndex = -1;
             }
 
-            // FIXME!
-            throw new Exception("Writing uncompressed LSFv3 is not supported yet");
-            nodeInfo.NextSiblingIndex = -1;
             BinUtils.WriteStruct<NodeEntryV3>(NodeWriter, ref nodeInfo);
             NodeIndices[node] = NextNodeIndex;
             NextNodeIndex++;

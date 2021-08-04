@@ -93,6 +93,26 @@ namespace LSLib.Granny.Model
             return v;
         }
 
+        public static Vector3 ReadNormalSWordVector4As3(GR2Reader reader)
+        {
+            Vector3 v;
+            v.X = reader.Reader.ReadInt16() / 32767.0f;
+            v.Y = reader.Reader.ReadInt16() / 32767.0f;
+            v.Z = reader.Reader.ReadInt16() / 32767.0f;
+            reader.Reader.ReadInt16(); // Unused word
+            return v;
+        }
+
+        public static Vector3 ReadNormalSByteVector4As3(GR2Reader reader)
+        {
+            Vector3 v;
+            v.X = reader.Reader.ReadSByte() / 127.0f;
+            v.Y = reader.Reader.ReadSByte() / 127.0f;
+            v.Z = reader.Reader.ReadSByte() / 127.0f;
+            reader.Reader.ReadSByte(); // Unused byte
+            return v;
+        }
+
         public static Matrix3 ReadQTangent(GR2Reader reader)
         {
             Quaternion qTangent = ReadBinormalShortVector4(reader);
@@ -242,6 +262,20 @@ namespace LSLib.Granny.Model
             section.Writer.Write((byte)(v.Z * 255));
             section.Writer.Write((byte)(v.W * 255));
         }
+        public static void WriteNormalSWordVector3As4(WritableSection section, Vector3 v)
+        {
+            section.Writer.Write((Int16)(v.X * 32767));
+            section.Writer.Write((Int16)(v.Y * 32767));
+            section.Writer.Write((Int16)(v.Z * 32767));
+            section.Writer.Write(0);
+        }
+        public static void WriteNormalSByteVector3As4(WritableSection section, Vector3 v)
+        {
+            section.Writer.Write((sbyte)(v.X * 127));
+            section.Writer.Write((sbyte)(v.Y * 127));
+            section.Writer.Write((sbyte)(v.Z * 127));
+            section.Writer.Write(0);
+        }
 
         public static void WriteInfluences2(WritableSection section, BoneWeight v)
         {
@@ -270,9 +304,11 @@ namespace LSLib.Granny.Model
         {
             var d = v.Format;
 
-            if (d.HasPosition)
+            switch (d.PositionType)
             {
-                WriteVector3(section, v.Position);
+                case PositionType.None: break;
+                case PositionType.Float3: WriteVector3(section, v.Position); break;
+                case PositionType.Word4: WriteNormalSWordVector3As4(section, v.Position); break;
             }
 
             if (d.HasBoneWeights)
@@ -294,6 +330,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: WriteVector3(section, v.Normal); break;
                 case NormalType.Half4: WriteHalfVector3As4(section, v.Normal); break;
+                case NormalType.Byte4: WriteNormalSByteVector3As4(section, v.Normal); break;
                 case NormalType.QTangent: WriteQTangent(section, v.Normal, v.Tangent, v.Binormal); break;
             }
 
@@ -302,6 +339,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: WriteVector3(section, v.Tangent); break;
                 case NormalType.Half4: WriteHalfVector3As4(section, v.Tangent); break;
+                case NormalType.Byte4: WriteNormalSByteVector3As4(section, v.Tangent); break;
                 case NormalType.QTangent: break; // Tangent saved into QTangent
             }
 
@@ -310,6 +348,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: WriteVector3(section, v.Binormal); break;
                 case NormalType.Half4: WriteHalfVector3As4(section, v.Binormal); break;
+                case NormalType.Byte4: WriteNormalSByteVector3As4(section, v.Binormal); break;
                 case NormalType.QTangent: break; // Binormal saved into QTangent
             }
 
@@ -346,9 +385,11 @@ namespace LSLib.Granny.Model
         {
             var d = v.Format;
 
-            if (d.HasPosition)
+            switch (d.PositionType)
             {
-                v.Position = ReadVector3(reader);
+                case PositionType.None: break;
+                case PositionType.Float3: v.Position = ReadVector3(reader); break;
+                case PositionType.Word4: v.Position = ReadNormalSWordVector4As3(reader); break;
             }
 
             if (d.HasBoneWeights)
@@ -370,6 +411,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: v.Normal = ReadVector3(reader); break;
                 case NormalType.Half4: v.Normal = ReadHalfVector4As3(reader); break;
+                case NormalType.Byte4: v.Normal = ReadNormalSByteVector4As3(reader); break;
                 case NormalType.QTangent:
                     {
                         var qTangent = ReadQTangent(reader);
@@ -385,6 +427,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: v.Tangent = ReadVector3(reader); break;
                 case NormalType.Half4: v.Tangent = ReadHalfVector4As3(reader); break;
+                case NormalType.Byte4: v.Tangent = ReadNormalSByteVector4As3(reader); break;
                 case NormalType.QTangent: break; // Tangent read from QTangent
             }
 
@@ -393,6 +436,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: v.Binormal = ReadVector3(reader); break;
                 case NormalType.Half4: v.Binormal = ReadHalfVector4As3(reader); break;
+                case NormalType.Byte4: v.Binormal = ReadNormalSByteVector4As3(reader); break;
                 case NormalType.QTangent: break; // Binormal read from QTangent
             }
 
@@ -502,9 +546,11 @@ namespace LSLib.Granny.Model
                 Type = typeof(Vertex)
             };
 
-            if (desc.HasPosition)
+            switch (desc.PositionType)
             {
-                AddMember(defn, "Position", MemberType.Real32, 3);
+                case PositionType.None: break;
+                case PositionType.Float3: AddMember(defn, "Position", MemberType.Real32, 3); break;
+                case PositionType.Word4: AddMember(defn, "Position", MemberType.BinormalInt16, 4); break;
             }
 
             if (desc.HasBoneWeights)
@@ -518,6 +564,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: AddMember(defn, "Normal", MemberType.Real32, 3); break;
                 case NormalType.Half4: AddMember(defn, "Normal", MemberType.Real16, 4); break;
+                case NormalType.Byte4: AddMember(defn, "Normal", MemberType.BinormalInt8, 4); break;
                 case NormalType.QTangent: AddMember(defn, "QTangent", MemberType.BinormalInt16, 4); break;
             }
 
@@ -526,6 +573,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: AddMember(defn, "Tangent", MemberType.Real32, 3); break;
                 case NormalType.Half4: AddMember(defn, "Tangent", MemberType.Real16, 4); break;
+                case NormalType.Byte4: AddMember(defn, "Tangent", MemberType.BinormalInt8, 4); break;
                 case NormalType.QTangent: break; // Tangent saved into QTangent
             }
 
@@ -534,6 +582,7 @@ namespace LSLib.Granny.Model
                 case NormalType.None: break;
                 case NormalType.Float3: AddMember(defn, "Binormal", MemberType.Real32, 3); break;
                 case NormalType.Half4: AddMember(defn, "Binormal", MemberType.Real16, 4); break;
+                case NormalType.Byte4: AddMember(defn, "Binormal", MemberType.BinormalInt8, 4); break;
                 case NormalType.QTangent: break; // Binormal saved into QTangent
             }
 

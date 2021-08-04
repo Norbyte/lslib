@@ -30,6 +30,11 @@ namespace LSLib.LS
         /// Possibly version number? (major, minor, rev, build)
         /// </summary>
         public UInt32 EngineVersion;
+    };
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct Metadata
+    {
         /// <summary>
         /// Total uncompressed size of the string hash table
         /// </summary>
@@ -76,6 +81,16 @@ namespace LSLib.LS
         /// Extended node/attribute format indicator, 0 for V2, 0/1 for V3
         /// </summary>
         public UInt32 Extended;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct MetadataV5
+    {
+        /// <summary>
+        /// Unknown, always 0x02000002
+        /// </summary>
+        public UInt32 Unknown;
+        public Metadata Metadata;
     }
 
     /// <summary>
@@ -588,11 +603,11 @@ namespace LSLib.LS
             }
         }
 
-        private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header)
+        private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header, Metadata metadata)
         {
             bool chunked = header.Version >= (ulong) FileVersion.VerChunkedCompress;
             byte[] compressed = reader.ReadBytes((int)compressedSize);
-            return BinUtils.Decompress(compressed, (int)uncompressedSize, header.CompressionFlags, chunked);
+            return BinUtils.Decompress(compressed, (int)uncompressedSize, metadata.CompressionFlags, chunked);
         }
 
         public Resource Read()
@@ -617,16 +632,27 @@ namespace LSLib.LS
 
                 this.Version = hdr.Version;
 
-                Names = new List<List<String>>();
-                bool isCompressed = BinUtils.CompressionFlagsToMethod(hdr.CompressionFlags) != CompressionMethod.None;
-                if (hdr.StringsSizeOnDisk > 0 || hdr.StringsUncompressedSize > 0)
+                Metadata meta;
+                if (hdr.Version < (ulong)FileVersion.VerExtendedHeader)
                 {
-                    uint onDiskSize = isCompressed ? hdr.StringsSizeOnDisk : hdr.StringsUncompressedSize;
+                    meta = BinUtils.ReadStruct<Metadata>(reader);
+                }
+                else
+                {
+                    var meta2 = BinUtils.ReadStruct<MetadataV5>(reader);
+                    meta = meta2.Metadata;
+                }
+
+                Names = new List<List<String>>();
+                bool isCompressed = BinUtils.CompressionFlagsToMethod(meta.CompressionFlags) != CompressionMethod.None;
+                if (meta.StringsSizeOnDisk > 0 || meta.StringsUncompressedSize > 0)
+                {
+                    uint onDiskSize = isCompressed ? meta.StringsSizeOnDisk : meta.StringsUncompressedSize;
                     byte[] compressed = reader.ReadBytes((int)onDiskSize);
                     byte[] uncompressed;
                     if (isCompressed)
                     {
-                        uncompressed = BinUtils.Decompress(compressed, (int)hdr.StringsUncompressedSize, hdr.CompressionFlags);
+                        uncompressed = BinUtils.Decompress(compressed, (int)meta.StringsUncompressedSize, meta.CompressionFlags);
                     }
                     else
                     {
@@ -647,10 +673,10 @@ namespace LSLib.LS
                 }
                 
                 Nodes = new List<NodeInfo>();
-                if (hdr.NodesSizeOnDisk > 0 || hdr.NodesUncompressedSize > 0)
+                if (meta.NodesSizeOnDisk > 0 || meta.NodesUncompressedSize > 0)
                 {
-                    uint onDiskSize = isCompressed ? hdr.NodesSizeOnDisk : hdr.NodesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, hdr.NodesUncompressedSize, hdr);
+                    uint onDiskSize = isCompressed ? meta.NodesSizeOnDisk : meta.NodesUncompressedSize;
+                    var uncompressed = Decompress(reader, onDiskSize, meta.NodesUncompressedSize, hdr, meta);
 
 #if DUMP_LSF_SERIALIZATION
                     using (var nodesFile = new FileStream("nodes.bin", FileMode.Create, FileAccess.Write))
@@ -662,16 +688,16 @@ namespace LSLib.LS
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
                         var longNodes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes
-                            && hdr.Extended == 1;
+                            && meta.Extended == 1;
                         ReadNodes(nodesStream, longNodes);
                     }
                 }
 
                 Attributes = new List<AttributeInfo>();
-                if (hdr.AttributesSizeOnDisk > 0 || hdr.AttributesUncompressedSize > 0)
+                if (meta.AttributesSizeOnDisk > 0 || meta.AttributesUncompressedSize > 0)
                 {
-                    uint onDiskSize = isCompressed ? hdr.AttributesSizeOnDisk : hdr.AttributesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, hdr.AttributesUncompressedSize, hdr);
+                    uint onDiskSize = isCompressed ? meta.AttributesSizeOnDisk : meta.AttributesUncompressedSize;
+                    var uncompressed = Decompress(reader, onDiskSize, meta.AttributesUncompressedSize, hdr, meta);
 
 #if DUMP_LSF_SERIALIZATION
                     using (var attributesFile = new FileStream("attributes.bin", FileMode.Create, FileAccess.Write))
@@ -683,7 +709,7 @@ namespace LSLib.LS
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
                         var longAttributes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes
-                            && hdr.Extended == 1;
+                            && meta.Extended == 1;
                         if (longAttributes)
                         {
                             ReadAttributesV3(attributesStream);
@@ -695,10 +721,10 @@ namespace LSLib.LS
                     }
                 }
 
-                if (hdr.ValuesSizeOnDisk > 0 || hdr.ValuesUncompressedSize > 0)
+                if (meta.ValuesSizeOnDisk > 0 || meta.ValuesUncompressedSize > 0)
                 {
-                    uint onDiskSize = isCompressed ? hdr.ValuesSizeOnDisk : hdr.ValuesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, hdr.ValuesUncompressedSize, hdr);
+                    uint onDiskSize = isCompressed ? meta.ValuesSizeOnDisk : meta.ValuesUncompressedSize;
+                    var uncompressed = Decompress(reader, onDiskSize, meta.ValuesUncompressedSize, hdr, meta);
                     var valueStream = new MemoryStream(uncompressed);
                     this.Values = valueStream;
 
