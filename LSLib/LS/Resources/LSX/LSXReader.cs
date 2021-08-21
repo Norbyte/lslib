@@ -131,6 +131,7 @@ namespace LSLib.LS
                 case "header":
                     // LSX metadata part 1
                     resource.Metadata.Timestamp = Convert.ToUInt64(reader["time"]);
+                    Version = Convert.ToUInt32(reader["version"]);
                     break;
 
                 case "version":
@@ -139,7 +140,6 @@ namespace LSLib.LS
                     resource.Metadata.MinorVersion = Convert.ToUInt32(reader["minor"]);
                     resource.Metadata.Revision = Convert.ToUInt32(reader["revision"]);
                     resource.Metadata.BuildNumber = Convert.ToUInt32(reader["build"]);
-                    Version = resource.Metadata.MajorVersion;
                     break;
 
                 case "region":
