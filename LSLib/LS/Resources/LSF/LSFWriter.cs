@@ -12,9 +12,6 @@ namespace LSLib.LS
 
         private Stream Stream;
         private BinaryWriter Writer;
-        private UInt32 Version;
-        private CompressionMethod Compression;
-        private CompressionLevel CompressionLevel;
 
         private MemoryStream NodeStream;
         private BinaryWriter NodeWriter;
@@ -29,30 +26,20 @@ namespace LSLib.LS
         private BinaryWriter ValueWriter;
 
         private List<List<string>> StringHashMap;
-        private bool ExtendedNodes = false;
         private List<int> NextSiblingIndices;
 
-        public LSFWriter(Stream stream, FileVersion version)
+        public LSFVersion Version = LSFVersion.MaxVersion;
+        public bool EncodeSiblingData = false;
+        public CompressionMethod Compression = CompressionMethod.LZ4;
+        public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
+
+        public LSFWriter(Stream stream)
         {
             this.Stream = stream;
-            this.Version = (uint) version;
-            this.ExtendedNodes = (this.Version >= (uint)FileVersion.VerExtendedNodes);
         }
 
         public void Write(Resource resource)
         {
-            if (Version <= (uint)FileVersion.VerExtendedNodes)
-            {
-                Compression = CompressionMethod.LZ4;
-                CompressionLevel = CompressionLevel.MaxCompression;
-            }
-            else
-            {
-                // BG3 doesn't seem to compress LSFs anymore
-                Compression = CompressionMethod.None;
-                CompressionLevel = CompressionLevel.DefaultCompression;
-            }
-
             using (this.Writer = new BinaryWriter(Stream, Encoding.Default, true))
             using (this.NodeStream = new MemoryStream())
             using (this.NodeWriter = new BinaryWriter(NodeStream))
@@ -71,7 +58,7 @@ namespace LSLib.LS
                     StringHashMap.Add(new List<string>());
                 }
 
-                if (ExtendedNodes)
+                if (EncodeSiblingData)
                 {
                     ComputeSiblingIndices(resource);
                 }
@@ -92,13 +79,10 @@ namespace LSLib.LS
 
                 var header = new Header();
                 header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
-                header.Version = Version;
-                header.EngineVersion = (resource.Metadata.MajorVersion << 28) |
-                    (resource.Metadata.MinorVersion << 24) |
-                    (resource.Metadata.Revision << 16) |
-                    resource.Metadata.BuildNumber;
+                header.Version = (uint)Version;
+                header.EngineVersion = resource.Metadata.BuildNumber;
 
-                bool chunked = header.Version >= (ulong) FileVersion.VerChunkedCompress;
+                bool chunked = header.Version >= (ulong) LSFVersion.VerChunkedCompress;
                 byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
                 byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
@@ -128,11 +112,11 @@ namespace LSLib.LS
                 meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
                 meta.Unknown2 = 0;
                 meta.Unknown3 = 0;
-                meta.Extended = ExtendedNodes ? 1u : 0u;
+                meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
 
                 BinUtils.WriteStruct<Header>(Writer, ref header);
 
-                if (header.Version < (ulong)FileVersion.VerExtendedHeader)
+                if (header.Version < (ulong)LSFVersion.VerBG3ExtendedHeader)
                 {
                     BinUtils.WriteStruct<Metadata>(Writer, ref meta);
                 }
@@ -198,8 +182,8 @@ namespace LSLib.LS
             NextNodeIndex = 0;
             foreach (var region in resource.Regions)
             {
-                if (Version >= (ulong) FileVersion.VerExtendedNodes
-                    && ExtendedNodes)
+                if (Version >= LSFVersion.VerExtendedNodes
+                    && EncodeSiblingData)
                 {
                     WriteNodeV3(region.Value);
                 }
@@ -265,7 +249,7 @@ namespace LSLib.LS
             {
                 foreach (var child in children.Value)
                 {
-                    if (Version >= (ulong) FileVersion.VerExtendedNodes && ExtendedNodes)
+                    if (Version >= LSFVersion.VerExtendedNodes && EncodeSiblingData)
                     {
                         WriteNodeV3(child);
                     }
@@ -344,7 +328,7 @@ namespace LSLib.LS
 
         private void WriteTranslatedFSString(BinaryWriter writer, TranslatedFSString fs)
         {
-            if (Version >= (uint)FileVersion.VerBG3)
+            if (Version >= LSFVersion.VerBG3)
             {
                 writer.Write(fs.Version);
             }
@@ -380,7 +364,7 @@ namespace LSLib.LS
                 case NodeAttribute.DataType.DT_TranslatedString:
                     {
                         var ts = (TranslatedString)attr.Value;
-                        if (Version >= (uint)FileVersion.VerBG3)
+                        if (Version >= LSFVersion.VerBG3)
                         {
                             writer.Write(ts.Version);
                         }

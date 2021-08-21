@@ -4,351 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Header
-    {
-        /// <summary>
-        /// LSOF file signature
-        /// </summary>
-        public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x4F, 0x46 };
-
-        /// <summary>
-        /// LSOF file signature; should be the same as LSFHeader.Signature
-        /// </summary>
-        public UInt32 Magic;
-        /// <summary>
-        /// Version of the LSOF file; D:OS EE is version 1/2, D:OS 2 is version 3
-        /// </summary>
-        public UInt32 Version;
-        /// <summary>
-        /// Possibly version number? (major, minor, rev, build)
-        /// </summary>
-        public UInt32 EngineVersion;
-    };
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Metadata
-    {
-        /// <summary>
-        /// Total uncompressed size of the string hash table
-        /// </summary>
-        public UInt32 StringsUncompressedSize;
-        /// <summary>
-        /// Compressed size of the string hash table
-        /// </summary>
-        public UInt32 StringsSizeOnDisk;
-        /// <summary>
-        /// Total uncompressed size of the node list
-        /// </summary>
-        public UInt32 NodesUncompressedSize;
-        /// <summary>
-        /// Compressed size of the node list
-        /// </summary>
-        public UInt32 NodesSizeOnDisk;
-        /// <summary>
-        /// Total uncompressed size of the attribute list
-        /// </summary>
-        public UInt32 AttributesUncompressedSize;
-        /// <summary>
-        /// Compressed size of the attribute list
-        /// </summary>
-        public UInt32 AttributesSizeOnDisk;
-        /// <summary>
-        /// Total uncompressed size of the raw value buffer
-        /// </summary>
-        public UInt32 ValuesUncompressedSize;
-        /// <summary>
-        /// Compressed size of the raw value buffer
-        /// </summary>
-        public UInt32 ValuesSizeOnDisk;
-        /// <summary>
-        /// Compression method and level used for the string, node, attribute and value buffers.
-        /// Uses the same format as packages (see BinUtils.MakeCompressionFlags)
-        /// </summary>
-        public Byte CompressionFlags;
-        /// <summary>
-        /// Possibly unused, always 0
-        /// </summary>
-        public Byte Unknown2;
-        public UInt16 Unknown3;
-        /// <summary>
-        /// Extended node/attribute format indicator, 0 for V2, 0/1 for V3
-        /// </summary>
-        public UInt32 Extended;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct MetadataV5
-    {
-        /// <summary>
-        /// Unknown, always 0x02000002
-        /// </summary>
-        public UInt32 Unknown;
-        public Metadata Metadata;
-    }
-
-    /// <summary>
-    /// Node (structure) entry in the LSF file
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct NodeEntryV2
-    {
-        /// <summary>
-        /// Name of this node
-        /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
-        /// </summary>
-        public UInt32 NameHashTableIndex;
-        /// <summary>
-        /// Index of the first attribute of this node
-        /// (-1: node has no attributes)
-        /// </summary>
-        public Int32 FirstAttributeIndex;
-        /// <summary>
-        /// Index of the parent node
-        /// (-1: this node is a root region)
-        /// </summary>
-        public Int32 ParentIndex;
-
-        /// <summary>
-        /// Index into name hash table
-        /// </summary>
-        public int NameIndex
-        {
-            get { return (int)(NameHashTableIndex >> 16); }
-        }
-
-        /// <summary>
-        /// Offset in hash chain
-        /// </summary>
-        public int NameOffset
-        {
-            get { return (int)(NameHashTableIndex & 0xffff); }
-        }
-    };
-
-    /// <summary>
-    /// Node (structure) entry in the LSF file
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct NodeEntryV3
-    {
-        /// <summary>
-        /// Name of this node
-        /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
-        /// </summary>
-        public UInt32 NameHashTableIndex;
-        /// <summary>
-        /// Index of the parent node
-        /// (-1: this node is a root region)
-        /// </summary>
-        public Int32 ParentIndex;
-        /// <summary>
-        /// Index of the next sibling of this node
-        /// (-1: this is the last node)
-        /// </summary>
-        public Int32 NextSiblingIndex;
-        /// <summary>
-        /// Index of the first attribute of this node
-        /// (-1: node has no attributes)
-        /// </summary>
-        public Int32 FirstAttributeIndex;
-
-        /// <summary>
-        /// Index into name hash table
-        /// </summary>
-        public int NameIndex
-        {
-            get { return (int)(NameHashTableIndex >> 16); }
-        }
-
-        /// <summary>
-        /// Offset in hash chain
-        /// </summary>
-        public int NameOffset
-        {
-            get { return (int)(NameHashTableIndex & 0xffff); }
-        }
-    };
-
-    /// <summary>
-    /// Processed node information for a node in the LSF file
-    /// </summary>
-    internal class NodeInfo
-    {
-        /// <summary>
-        /// Index of the parent node
-        /// (-1: this node is a root region)
-        /// </summary>
-        public int ParentIndex;
-        /// <summary>
-        /// Index into name hash table
-        /// </summary>
-        public int NameIndex;
-        /// <summary>
-        /// Offset in hash chain
-        /// </summary>
-        public int NameOffset;
-        /// <summary>
-        /// Index of the first attribute of this node
-        /// (-1: node has no attributes)
-        /// </summary>
-        public int FirstAttributeIndex;
-    };
-
-    /// <summary>
-    /// V2 attribute extension in the LSF file
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AttributeEntryV2
-    {
-        /// <summary>
-        /// Name of this attribute
-        /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
-        /// </summary>
-        public UInt32 NameHashTableIndex;
-
-        /// <summary>
-        /// 6-bit LSB: Type of this attribute (see NodeAttribute.DataType)
-        /// 26-bit MSB: Length of this attribute
-        /// </summary>
-        public UInt32 TypeAndLength;
-
-        /// <summary>
-        /// Index of the node that this attribute belongs to
-        /// Note: These indexes are assigned seemingly arbitrarily, and are not neccessarily indices into the node list
-        /// </summary>
-        public Int32 NodeIndex;
-
-        /// <summary>
-        /// Index into name hash table
-        /// </summary>
-        public int NameIndex
-        {
-            get { return (int)(NameHashTableIndex >> 16); }
-        }
-
-        /// <summary>
-        /// Offset in hash chain
-        /// </summary>
-        public int NameOffset
-        {
-            get { return (int)(NameHashTableIndex & 0xffff); }
-        }
-
-        /// <summary>
-        /// Type of this attribute (see NodeAttribute.DataType)
-        /// </summary>
-        public uint TypeId
-        {
-            get { return TypeAndLength & 0x3f; }
-        }
-
-        /// <summary>
-        /// Length of this attribute
-        /// </summary>
-        public uint Length
-        {
-            get { return TypeAndLength >> 6; }
-        }
-    };
-
-    /// <summary>
-    /// V3 attribute extension in the LSF file
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AttributeEntryV3
-    {
-        /// <summary>
-        /// Name of this attribute
-        /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
-        /// </summary>
-        public UInt32 NameHashTableIndex;
-
-        /// <summary>
-        /// 6-bit LSB: Type of this attribute (see NodeAttribute.DataType)
-        /// 26-bit MSB: Length of this attribute
-        /// </summary>
-        public UInt32 TypeAndLength;
-
-        /// <summary>
-        /// Index of the node that this attribute belongs to
-        /// Note: These indexes are assigned seemingly arbitrarily, and are not neccessarily indices into the node list
-        /// </summary>
-        public Int32 NextAttributeIndex;
-
-        /// <summary>
-        /// Absolute position of attribute value in the value stream
-        /// </summary>
-        public UInt32 Offset;
-
-        /// <summary>
-        /// Index into name hash table
-        /// </summary>
-        public int NameIndex
-        {
-            get { return (int)(NameHashTableIndex >> 16); }
-        }
-
-        /// <summary>
-        /// Offset in hash chain
-        /// </summary>
-        public int NameOffset
-        {
-            get { return (int)(NameHashTableIndex & 0xffff); }
-        }
-
-        /// <summary>
-        /// Type of this attribute (see NodeAttribute.DataType)
-        /// </summary>
-        public uint TypeId
-        {
-            get { return TypeAndLength & 0x3f; }
-        }
-
-        /// <summary>
-        /// Length of this attribute
-        /// </summary>
-        public uint Length
-        {
-            get { return TypeAndLength >> 6; }
-        }
-    };
-
-    internal class AttributeInfo
-    {
-        /// <summary>
-        /// Index into name hash table
-        /// </summary>
-        public int NameIndex;
-        /// <summary>
-        /// Offset in hash chain
-        /// </summary>
-        public int NameOffset;
-        /// <summary>
-        /// Type of this attribute (see NodeAttribute.DataType)
-        /// </summary>
-        public uint TypeId;
-        /// <summary>
-        /// Length of this attribute
-        /// </summary>
-        public uint Length;
-        /// <summary>
-        /// Absolute position of attribute data in the values section
-        /// </summary>
-        public uint DataOffset;
-        /// <summary>
-        /// Index of the next attribute in this node
-        /// (-1: this is the last attribute)
-        /// </summary>
-        public int NextAttributeIndex;
-    };
-
     public class LSFReader : IDisposable
     {
         /// <summary>
@@ -605,7 +265,7 @@ namespace LSLib.LS
 
         private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header, Metadata metadata)
         {
-            bool chunked = header.Version >= (ulong) FileVersion.VerChunkedCompress;
+            bool chunked = header.Version >= (ulong) LSFVersion.VerChunkedCompress;
             byte[] compressed = reader.ReadBytes((int)compressedSize);
             return BinUtils.Decompress(compressed, (int)uncompressedSize, metadata.CompressionFlags, chunked);
         }
@@ -624,7 +284,7 @@ namespace LSLib.LS
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.Version < (ulong) FileVersion.VerInitial || hdr.Version > (ulong) FileVersion.MaxVersion)
+                if (hdr.Version < (ulong) LSFVersion.VerInitial || hdr.Version > (ulong) LSFVersion.MaxVersion)
                 {
                     var msg = String.Format("LSF version {0} is not supported", hdr.Version);
                     throw new InvalidDataException(msg);
@@ -633,7 +293,7 @@ namespace LSLib.LS
                 this.Version = hdr.Version;
 
                 Metadata meta;
-                if (hdr.Version < (ulong)FileVersion.VerExtendedHeader)
+                if (hdr.Version < (ulong)LSFVersion.VerBG3ExtendedHeader)
                 {
                     meta = BinUtils.ReadStruct<Metadata>(reader);
                 }
@@ -687,8 +347,8 @@ namespace LSLib.LS
 
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
-                        var longNodes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes
-                            && meta.Extended == 1;
+                        var longNodes = hdr.Version >= (ulong)LSFVersion.VerExtendedNodes
+                            && meta.HasSiblingData == 1;
                         ReadNodes(nodesStream, longNodes);
                     }
                 }
@@ -708,9 +368,9 @@ namespace LSLib.LS
 
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
-                        var longAttributes = hdr.Version >= (ulong) FileVersion.VerExtendedNodes
-                            && meta.Extended == 1;
-                        if (longAttributes)
+                        var hasSiblingData = hdr.Version >= (ulong)LSFVersion.VerExtendedNodes
+                            && meta.HasSiblingData == 1;
+                        if (hasSiblingData)
                         {
                             ReadAttributesV3(attributesStream);
                         }
@@ -743,10 +403,10 @@ namespace LSLib.LS
                 Resource resource = new Resource();
                 ReadRegions(resource);
 
-                resource.Metadata.MajorVersion = (hdr.EngineVersion & 0xf0000000) >> 28;
-                resource.Metadata.MinorVersion = (hdr.EngineVersion & 0xf000000) >> 24;
-                resource.Metadata.Revision = (hdr.EngineVersion & 0xff0000) >> 16;
-                resource.Metadata.BuildNumber = (hdr.EngineVersion & 0xffff);
+                resource.Metadata.MajorVersion = 1;
+                resource.Metadata.MinorVersion = 0;
+                resource.Metadata.Revision = 0;
+                resource.Metadata.BuildNumber = hdr.EngineVersion;
 
                 return resource;
             }
@@ -835,7 +495,7 @@ namespace LSLib.LS
                         var attr = new NodeAttribute(type);
                         var str = new TranslatedString();
 
-                        if (Version >= (uint)FileVersion.VerBG3)
+                        if (Version >= (uint)LSFVersion.VerBG3)
                         {
                             str.Version = reader.ReadUInt16();
                         }
@@ -876,7 +536,7 @@ namespace LSLib.LS
         {
             var str = new TranslatedFSString();
 
-            if (Version >= (uint)FileVersion.VerBG3)
+            if (Version >= (uint)LSFVersion.VerBG3)
             {
                 str.Version = reader.ReadUInt16();
             }

@@ -34,8 +34,8 @@ namespace ConverterApp
             {
                 _resource = ResourceUtils.LoadResource(resourceInputPath.Text);
                 ResourceFormat format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
-                FileVersion outputVersion = _form.GetGame().LSFVersion();
-                ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, outputVersion);
+                var conversionParams = ResourceConversionParameters.FromGameVersion(_form.GetGame());
+                ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, conversionParams);
 
                 MessageBox.Show("Resource saved successfully.");
             }
@@ -113,7 +113,7 @@ namespace ConverterApp
             }
 
             var outputFormat = ResourceFormat.LSF;
-            FileVersion outputVersion = 0x0;
+            var conversionParams = ResourceConversionParameters.FromGameVersion(_form.GetGame());
 
             switch (resourceOutputFormatCb.SelectedIndex)
             {
@@ -130,7 +130,6 @@ namespace ConverterApp
                 case 2:
                 {
                     outputFormat = ResourceFormat.LSF;
-                    outputVersion = _form.GetGame().LSFVersion();
                     break;
                 }
                 case 3:
@@ -145,7 +144,7 @@ namespace ConverterApp
                 resourceConvertBtn.Enabled = false;
                 var utils = new ResourceUtils();
                 utils.progressUpdate += ResourceProgressUpdate;
-                utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, outputVersion);
+                utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, conversionParams);
 
                 MessageBox.Show("Resources converted successfully.");
             }

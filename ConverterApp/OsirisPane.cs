@@ -14,7 +14,7 @@ namespace ConverterApp
     public partial class OsirisPane : UserControl
     {
         private Story _story;
-        private PackageVersion OriginalSavePakVersion;
+        public Game Game;
 
         public OsirisPane(ISettingsDataSource settingsDataSource)
         {
@@ -70,7 +70,6 @@ namespace ConverterApp
         {
             var packageReader = new PackageReader(path);
             Package package = packageReader.Read();
-            OriginalSavePakVersion = package.Version;
             
             AbstractFileInfo abstractFileInfo = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (abstractFileInfo == null)
@@ -135,6 +134,7 @@ namespace ConverterApp
 
         private void SaveSavegameDatabase()
         {
+            var conversionParams = ResourceConversionParameters.FromGameVersion(Game);
             var packageReader = new PackageReader(storyFilePath.Text);
             Package package = packageReader.Read();
 
@@ -172,17 +172,8 @@ namespace ConverterApp
 
             // Save globals.lsf
             var rewrittenStream = new MemoryStream();
-            FileVersion version;
-            if (OriginalSavePakVersion >= PackageVersion.V15)
-            {
-                version = FileVersion.VerBG3;
-            }
-            else
-            {
-                version = FileVersion.VerExtendedNodes;
-            }
-
-            var rsrcWriter = new LSFWriter(rewrittenStream, version);
+            var rsrcWriter = new LSFWriter(rewrittenStream);
+            rsrcWriter.Version = conversionParams.LSF;
             rsrcWriter.Write(resource);
             rewrittenStream.Seek(0, SeekOrigin.Begin);
 
@@ -196,7 +187,7 @@ namespace ConverterApp
 
             using (var packageWriter = new PackageWriter(rewrittenPackage, $"{storyFilePath.Text}.tmp"))
             {
-                packageWriter.Version = OriginalSavePakVersion;
+                packageWriter.Version = conversionParams.PAKVersion;
                 packageWriter.Compression = CompressionMethod.Zlib;
                 packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
                 packageWriter.Write();

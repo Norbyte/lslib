@@ -2,11 +2,14 @@
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.IO;
+using LSLib.LS.Enums;
 
 namespace ConverterApp
 {
     public partial class DebugPane : UserControl
     {
+        public Game Game;
+
         public DebugPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
@@ -20,6 +23,7 @@ namespace ConverterApp
 
             var dumper = new DebugDumperTask
             {
+                GameVersion = Game,
                 ExtractionPath = dumpPath + "SaveArchive",
                 DataDumpPath = dumpPath + "Dumps",
 
