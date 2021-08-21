@@ -68,19 +68,9 @@ namespace LSLib.LS
 
                 writer.WriteStartElement("version");
 
-                if (Version == LSXVersion.V3)
-                {
-                    writer.WriteAttributeString("major", "3");
-                    writer.WriteAttributeString("minor", "0");
-                    writer.WriteAttributeString("revision", "0");
-                }
-                else
-                {
-                    writer.WriteAttributeString("major", "4");
-                    writer.WriteAttributeString("minor", "0");
-                    writer.WriteAttributeString("revision", "5");
-                }
-
+                writer.WriteAttributeString("major", rsrc.Metadata.MajorVersion.ToString());
+                writer.WriteAttributeString("minor", rsrc.Metadata.MinorVersion.ToString());
+                writer.WriteAttributeString("revision", rsrc.Metadata.Revision.ToString());
                 writer.WriteAttributeString("build", rsrc.Metadata.BuildNumber.ToString());
                 writer.WriteEndElement();
 

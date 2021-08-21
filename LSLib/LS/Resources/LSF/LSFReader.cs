@@ -23,11 +23,11 @@ namespace LSLib.LS
         /// <summary>
         /// Preprocessed list of nodes (structures)
         /// </summary>
-        private List<NodeInfo> Nodes;
+        private List<LSFNodeInfo> Nodes;
         /// <summary>
         /// Preprocessed list of node attributes
         /// </summary>
-        private List<AttributeInfo> Attributes;
+        private List<LSFAttributeInfo> Attributes;
         /// <summary>
         /// Node instances
         /// </summary>
@@ -39,7 +39,11 @@ namespace LSLib.LS
         /// <summary>
         /// Version of the file we're serializing
         /// </summary>
-        private uint Version;
+        private LSFVersion Version;
+        /// <summary>
+        /// Game version that generated the LSF file
+        /// </summary>
+        private PackedVersion GameVersion;
 
         public LSFReader(Stream stream)
         {
@@ -106,14 +110,14 @@ namespace LSLib.LS
                 Int32 index = 0;
                 while (s.Position < s.Length)
                 {
-                    var resolved = new NodeInfo();
+                    var resolved = new LSFNodeInfo();
 #if DEBUG_LSF_SERIALIZATION
                     var pos = s.Position;
 #endif
 
                     if (longNodes)
                     {
-                        var item = BinUtils.ReadStruct<NodeEntryV3>(reader);
+                        var item = BinUtils.ReadStruct<LSFNodeEntryV3>(reader);
                         resolved.ParentIndex = item.ParentIndex;
                         resolved.NameIndex = item.NameIndex;
                         resolved.NameOffset = item.NameOffset;
@@ -121,7 +125,7 @@ namespace LSLib.LS
                     }
                     else
                     {
-                        var item = BinUtils.ReadStruct<NodeEntryV2>(reader);
+                        var item = BinUtils.ReadStruct<LSFNodeEntryV2>(reader);
                         resolved.ParentIndex = item.ParentIndex;
                         resolved.NameIndex = item.NameIndex;
                         resolved.NameOffset = item.NameOffset;
@@ -159,9 +163,9 @@ namespace LSLib.LS
                 Int32 index = 0;
                 while (s.Position < s.Length)
                 {
-                    var attribute = BinUtils.ReadStruct<AttributeEntryV2>(reader);
+                    var attribute = BinUtils.ReadStruct<LSFAttributeEntryV2>(reader);
 
-                    var resolved = new AttributeInfo();
+                    var resolved = new LSFAttributeInfo();
                     resolved.NameIndex = attribute.NameIndex;
                     resolved.NameOffset = attribute.NameOffset;
                     resolved.TypeId = attribute.TypeId;
@@ -233,9 +237,9 @@ namespace LSLib.LS
             {
                 while (s.Position < s.Length)
                 {
-                    var attribute = BinUtils.ReadStruct<AttributeEntryV3>(reader);
+                    var attribute = BinUtils.ReadStruct<LSFAttributeEntryV3>(reader);
 
-                    var resolved = new AttributeInfo();
+                    var resolved = new LSFAttributeInfo();
                     resolved.NameIndex = attribute.NameIndex;
                     resolved.NameOffset = attribute.NameOffset;
                     resolved.TypeId = attribute.TypeId;
@@ -263,9 +267,9 @@ namespace LSLib.LS
             }
         }
 
-        private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, Header header, Metadata metadata)
+        private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, LSFMetadata metadata)
         {
-            bool chunked = header.Version >= (ulong) LSFVersion.VerChunkedCompress;
+            bool chunked = Version >= LSFVersion.VerChunkedCompress;
             byte[] compressed = reader.ReadBytes((int)compressedSize);
             return BinUtils.Decompress(compressed, (int)uncompressedSize, metadata.CompressionFlags, chunked);
         }
@@ -274,34 +278,36 @@ namespace LSLib.LS
         {
             using (var reader = new BinaryReader(Stream))
             {
-                var hdr = BinUtils.ReadStruct<Header>(reader);
-                if (hdr.Magic != BitConverter.ToUInt32(Header.Signature, 0))
+                var magic = BinUtils.ReadStruct<LSFMagic>(reader);
+                if (magic.Magic != BitConverter.ToUInt32(LSFMagic.Signature, 0))
                 {
                     var msg = String.Format(
                         "Invalid LSF signature; expected {0,8:X}, got {1,8:X}",
-                        BitConverter.ToUInt32(Header.Signature, 0), hdr.Magic
+                        BitConverter.ToUInt32(LSFMagic.Signature, 0), magic.Magic
                     );
                     throw new InvalidDataException(msg);
                 }
 
-                if (hdr.Version < (ulong) LSFVersion.VerInitial || hdr.Version > (ulong) LSFVersion.MaxVersion)
+                if (magic.Version < (ulong) LSFVersion.VerInitial || magic.Version > (ulong) LSFVersion.MaxVersion)
                 {
-                    var msg = String.Format("LSF version {0} is not supported", hdr.Version);
+                    var msg = String.Format("LSF version {0} is not supported", magic.Version);
                     throw new InvalidDataException(msg);
                 }
 
-                this.Version = hdr.Version;
+                this.Version = (LSFVersion)magic.Version;
 
-                Metadata meta;
-                if (hdr.Version < (ulong)LSFVersion.VerBG3ExtendedHeader)
+                if (this.Version >= LSFVersion.VerBG3ExtendedHeader)
                 {
-                    meta = BinUtils.ReadStruct<Metadata>(reader);
+                    var hdr = BinUtils.ReadStruct<LSFHeaderV5>(reader);
+                    GameVersion = PackedVersion.FromInt64(hdr.EngineVersion);
                 }
                 else
                 {
-                    var meta2 = BinUtils.ReadStruct<MetadataV5>(reader);
-                    meta = meta2.Metadata;
+                    var hdr = BinUtils.ReadStruct<LSFHeader>(reader);
+                    GameVersion = PackedVersion.FromInt32(hdr.EngineVersion);
                 }
+
+                var meta = BinUtils.ReadStruct<LSFMetadata>(reader);
 
                 Names = new List<List<String>>();
                 bool isCompressed = BinUtils.CompressionFlagsToMethod(meta.CompressionFlags) != CompressionMethod.None;
@@ -332,11 +338,11 @@ namespace LSLib.LS
                     }
                 }
                 
-                Nodes = new List<NodeInfo>();
+                Nodes = new List<LSFNodeInfo>();
                 if (meta.NodesSizeOnDisk > 0 || meta.NodesUncompressedSize > 0)
                 {
                     uint onDiskSize = isCompressed ? meta.NodesSizeOnDisk : meta.NodesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, meta.NodesUncompressedSize, hdr, meta);
+                    var uncompressed = Decompress(reader, onDiskSize, meta.NodesUncompressedSize, meta);
 
 #if DUMP_LSF_SERIALIZATION
                     using (var nodesFile = new FileStream("nodes.bin", FileMode.Create, FileAccess.Write))
@@ -347,17 +353,17 @@ namespace LSLib.LS
 
                     using (var nodesStream = new MemoryStream(uncompressed))
                     {
-                        var longNodes = hdr.Version >= (ulong)LSFVersion.VerExtendedNodes
+                        var longNodes = Version >= LSFVersion.VerExtendedNodes
                             && meta.HasSiblingData == 1;
                         ReadNodes(nodesStream, longNodes);
                     }
                 }
 
-                Attributes = new List<AttributeInfo>();
+                Attributes = new List<LSFAttributeInfo>();
                 if (meta.AttributesSizeOnDisk > 0 || meta.AttributesUncompressedSize > 0)
                 {
                     uint onDiskSize = isCompressed ? meta.AttributesSizeOnDisk : meta.AttributesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, meta.AttributesUncompressedSize, hdr, meta);
+                    var uncompressed = Decompress(reader, onDiskSize, meta.AttributesUncompressedSize, meta);
 
 #if DUMP_LSF_SERIALIZATION
                     using (var attributesFile = new FileStream("attributes.bin", FileMode.Create, FileAccess.Write))
@@ -368,7 +374,7 @@ namespace LSLib.LS
 
                     using (var attributesStream = new MemoryStream(uncompressed))
                     {
-                        var hasSiblingData = hdr.Version >= (ulong)LSFVersion.VerExtendedNodes
+                        var hasSiblingData = Version >= LSFVersion.VerExtendedNodes
                             && meta.HasSiblingData == 1;
                         if (hasSiblingData)
                         {
@@ -384,7 +390,7 @@ namespace LSLib.LS
                 if (meta.ValuesSizeOnDisk > 0 || meta.ValuesUncompressedSize > 0)
                 {
                     uint onDiskSize = isCompressed ? meta.ValuesSizeOnDisk : meta.ValuesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, meta.ValuesUncompressedSize, hdr, meta);
+                    var uncompressed = Decompress(reader, onDiskSize, meta.ValuesUncompressedSize, meta);
                     var valueStream = new MemoryStream(uncompressed);
                     this.Values = valueStream;
 
@@ -403,10 +409,10 @@ namespace LSLib.LS
                 Resource resource = new Resource();
                 ReadRegions(resource);
 
-                resource.Metadata.MajorVersion = 1;
-                resource.Metadata.MinorVersion = 0;
-                resource.Metadata.Revision = 0;
-                resource.Metadata.BuildNumber = hdr.EngineVersion;
+                resource.Metadata.MajorVersion = GameVersion.Major;
+                resource.Metadata.MinorVersion = GameVersion.Minor;
+                resource.Metadata.Revision = GameVersion.Revision;
+                resource.Metadata.BuildNumber = GameVersion.Build;
 
                 return resource;
             }
@@ -438,7 +444,7 @@ namespace LSLib.LS
             }
         }
 
-        private void ReadNode(NodeInfo defn, Node node, BinaryReader attributeReader)
+        private void ReadNode(LSFNodeInfo defn, Node node, BinaryReader attributeReader)
         {
             node.Name = Names[defn.NameIndex][defn.NameOffset];
 
@@ -495,7 +501,7 @@ namespace LSLib.LS
                         var attr = new NodeAttribute(type);
                         var str = new TranslatedString();
 
-                        if (Version >= (uint)LSFVersion.VerBG3)
+                        if (Version >= LSFVersion.VerBG3)
                         {
                             str.Version = reader.ReadUInt16();
                         }
@@ -536,7 +542,7 @@ namespace LSLib.LS
         {
             var str = new TranslatedFSString();
 
-            if (Version >= (uint)LSFVersion.VerBG3)
+            if (Version >= LSFVersion.VerBG3)
             {
                 str.Version = reader.ReadUInt16();
             }

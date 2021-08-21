@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace LSLib.LS
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Header
+    internal struct LSFMagic
     {
         /// <summary>
         /// LSOF file signature
@@ -15,18 +15,33 @@ namespace LSLib.LS
         /// LSOF file signature; should be the same as LSFHeader.Signature
         /// </summary>
         public UInt32 Magic;
+
         /// <summary>
         /// Version of the LSOF file; D:OS EE is version 1/2, D:OS 2 is version 3
         /// </summary>
         public UInt32 Version;
-        /// <summary>
-        /// Possibly version number? (major, minor, rev, build)
-        /// </summary>
-        public UInt32 EngineVersion;
     };
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct Metadata
+    internal struct LSFHeader
+    {
+        /// <summary>
+        /// Possibly version number? (major, minor, rev, build)
+        /// </summary>
+        public Int32 EngineVersion;
+    };
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct LSFHeaderV5
+    {
+        /// <summary>
+        /// Possibly version number? (major, minor, rev, build)
+        /// </summary>
+        public Int64 EngineVersion;
+    };
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct LSFMetadata
     {
         /// <summary>
         /// Total uncompressed size of the string hash table
@@ -76,21 +91,11 @@ namespace LSLib.LS
         public UInt32 HasSiblingData;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct MetadataV5
-    {
-        /// <summary>
-        /// Unknown, always 0x02000002
-        /// </summary>
-        public UInt32 Unknown;
-        public Metadata Metadata;
-    }
-
     /// <summary>
     /// Node (structure) entry in the LSF file
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct NodeEntryV2
+    internal struct LSFNodeEntryV2
     {
         /// <summary>
         /// Name of this node
@@ -129,7 +134,7 @@ namespace LSLib.LS
     /// Node (structure) entry in the LSF file
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct NodeEntryV3
+    internal struct LSFNodeEntryV3
     {
         /// <summary>
         /// Name of this node
@@ -172,7 +177,7 @@ namespace LSLib.LS
     /// <summary>
     /// Processed node information for a node in the LSF file
     /// </summary>
-    internal class NodeInfo
+    internal class LSFNodeInfo
     {
         /// <summary>
         /// Index of the parent node
@@ -198,7 +203,7 @@ namespace LSLib.LS
     /// V2 attribute extension in the LSF file
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AttributeEntryV2
+    internal struct LSFAttributeEntryV2
     {
         /// <summary>
         /// Name of this attribute
@@ -255,7 +260,7 @@ namespace LSLib.LS
     /// V3 attribute extension in the LSF file
     /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct AttributeEntryV3
+    internal struct LSFAttributeEntryV3
     {
         /// <summary>
         /// Name of this attribute
@@ -313,7 +318,7 @@ namespace LSLib.LS
         }
     };
 
-    internal class AttributeInfo
+    internal class LSFAttributeInfo
     {
         /// <summary>
         /// Index into name hash table

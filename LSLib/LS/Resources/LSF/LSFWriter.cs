@@ -77,18 +77,39 @@ namespace LSLib.LS
                 var attributeBuffer = AttributeStream.ToArray();
                 var valueBuffer = ValueStream.ToArray();
 
-                var header = new Header();
-                header.Magic = BitConverter.ToUInt32(Header.Signature, 0);
-                header.Version = (uint)Version;
-                header.EngineVersion = resource.Metadata.BuildNumber;
+                var magic = new LSFMagic();
+                magic.Magic = BitConverter.ToUInt32(LSFMagic.Signature, 0);
+                magic.Version = (uint)Version;
+                BinUtils.WriteStruct<LSFMagic>(Writer, ref magic);
 
-                bool chunked = header.Version >= (ulong) LSFVersion.VerChunkedCompress;
+                PackedVersion gameVersion = new PackedVersion
+                {
+                    Major = resource.Metadata.MajorVersion,
+                    Minor = resource.Metadata.MinorVersion,
+                    Revision = resource.Metadata.Revision,
+                    Build = resource.Metadata.BuildNumber
+                };
+
+                if (Version < LSFVersion.VerBG3ExtendedHeader)
+                {
+                    var header = new LSFHeader();
+                    header.EngineVersion = gameVersion.ToVersion32();
+                    BinUtils.WriteStruct<LSFHeader>(Writer, ref header);
+                }
+                else
+                {
+                    var header = new LSFHeaderV5();
+                    header.EngineVersion = gameVersion.ToVersion64();
+                    BinUtils.WriteStruct<LSFHeaderV5>(Writer, ref header);
+                }
+
+                bool chunked = Version >= LSFVersion.VerChunkedCompress;
                 byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
                 byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
                 byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
-                var meta = new Metadata();
+                var meta = new LSFMetadata();
                 meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
                 meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
                 meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
@@ -114,19 +135,7 @@ namespace LSLib.LS
                 meta.Unknown3 = 0;
                 meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
 
-                BinUtils.WriteStruct<Header>(Writer, ref header);
-
-                if (header.Version < (ulong)LSFVersion.VerBG3ExtendedHeader)
-                {
-                    BinUtils.WriteStruct<Metadata>(Writer, ref meta);
-                }
-                else
-                {
-                    var meta2 = new MetadataV5();
-                    meta2.Unknown = 0x02000002;
-                    meta2.Metadata = meta;
-                    BinUtils.WriteStruct<MetadataV5>(Writer, ref meta2);
-                }
+                BinUtils.WriteStruct<LSFMetadata>(Writer, ref meta);
 
                 Writer.Write(stringsCompressed, 0, stringsCompressed.Length);
                 Writer.Write(nodesCompressed, 0, nodesCompressed.Length);
@@ -201,12 +210,12 @@ namespace LSLib.LS
             {
                 WriteAttributeValue(ValueWriter, entry.Value);
 
-                var attributeInfo = new AttributeEntryV2();
+                var attributeInfo = new LSFAttributeEntryV2();
                 var length = (UInt32)ValueStream.Position - lastOffset;
                 attributeInfo.TypeAndLength = (UInt32)entry.Value.Type | (length << 6);
                 attributeInfo.NameHashTableIndex = AddStaticString(entry.Key);
                 attributeInfo.NodeIndex = NextNodeIndex;
-                BinUtils.WriteStruct<AttributeEntryV2>(AttributeWriter, ref attributeInfo);
+                BinUtils.WriteStruct<LSFAttributeEntryV2>(AttributeWriter, ref attributeInfo);
                 NextAttributeIndex++;
 
                 lastOffset = (UInt32)ValueStream.Position;
@@ -222,7 +231,7 @@ namespace LSLib.LS
                 WriteAttributeValue(ValueWriter, entry.Value);
                 numWritten++;
 
-                var attributeInfo = new AttributeEntryV3();
+                var attributeInfo = new LSFAttributeEntryV3();
                 var length = (UInt32)ValueStream.Position - lastOffset;
                 attributeInfo.TypeAndLength = (UInt32)entry.Value.Type | (length << 6);
                 attributeInfo.NameHashTableIndex = AddStaticString(entry.Key);
@@ -235,7 +244,7 @@ namespace LSLib.LS
                     attributeInfo.NextAttributeIndex = NextAttributeIndex + 1;
                 }
                 attributeInfo.Offset = lastOffset;
-                BinUtils.WriteStruct<AttributeEntryV3>(AttributeWriter, ref attributeInfo);
+                BinUtils.WriteStruct<LSFAttributeEntryV3>(AttributeWriter, ref attributeInfo);
 
                 NextAttributeIndex++;
 
@@ -263,7 +272,7 @@ namespace LSLib.LS
 
         private void WriteNodeV2(Node node)
         {
-            var nodeInfo = new NodeEntryV2();
+            var nodeInfo = new LSFNodeEntryV2();
             if (node.Parent == null)
             {
                 nodeInfo.ParentIndex = -1;
@@ -285,7 +294,7 @@ namespace LSLib.LS
                 nodeInfo.FirstAttributeIndex = -1;
             }
 
-            BinUtils.WriteStruct<NodeEntryV2>(NodeWriter, ref nodeInfo);
+            BinUtils.WriteStruct<LSFNodeEntryV2>(NodeWriter, ref nodeInfo);
             NodeIndices[node] = NextNodeIndex;
             NextNodeIndex++;
 
@@ -294,7 +303,7 @@ namespace LSLib.LS
 
         private void WriteNodeV3(Node node)
         {
-            var nodeInfo = new NodeEntryV3();
+            var nodeInfo = new LSFNodeEntryV3();
             if (node.Parent == null)
             {
                 nodeInfo.ParentIndex = -1;
@@ -319,7 +328,7 @@ namespace LSLib.LS
                 nodeInfo.FirstAttributeIndex = -1;
             }
 
-            BinUtils.WriteStruct<NodeEntryV3>(NodeWriter, ref nodeInfo);
+            BinUtils.WriteStruct<LSFNodeEntryV3>(NodeWriter, ref nodeInfo);
             NodeIndices[node] = NextNodeIndex;
             NextNodeIndex++;
 

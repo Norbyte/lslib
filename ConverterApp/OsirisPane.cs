@@ -174,6 +174,7 @@ namespace ConverterApp
             var rewrittenStream = new MemoryStream();
             var rsrcWriter = new LSFWriter(rewrittenStream);
             rsrcWriter.Version = conversionParams.LSF;
+            rsrcWriter.EncodeSiblingData = false;
             rsrcWriter.Write(resource);
             rewrittenStream.Seek(0, SeekOrigin.Begin);
 

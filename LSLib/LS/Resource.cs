@@ -26,7 +26,7 @@ namespace LSLib.LS
                 Major = (UInt32)((packed >> 55) & 0x7f),
                 Minor = (UInt32)((packed >> 47) & 0xff),
                 Revision = (UInt32)((packed >> 31) & 0xffff),
-                Build = (UInt32)(packed & 0x7FFFFFFF),
+                Build = (UInt32)(packed & 0x7fffffff),
             };
         }
 
@@ -39,6 +39,22 @@ namespace LSLib.LS
                 Revision = (UInt32)((packed >> 16) & 0xff),
                 Build = (UInt32)(packed & 0xffff),
             };
+        }
+
+        public Int32 ToVersion32()
+        {
+            return (Int32)((Major & 0x0f) << 28 |
+                (Minor & 0x0f) << 24 |
+                (Revision & 0xff) << 16 |
+                (Build & 0xffff) << 0);
+        }
+
+        public Int64 ToVersion64()
+        {
+            return (Int64)(((Int64)Major & 0x7f) << 55 |
+                ((Int64)Minor & 0xff) << 47 |
+                ((Int64)Revision & 0xffff) << 31 |
+                ((Int64)Build & 0x7fffffff) << 0);
         }
     }
 
