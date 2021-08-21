@@ -123,8 +123,17 @@ namespace ConverterApp
                 {
                     var folder = (string)modDesc.Attributes["Folder"].Value;
                     var name = (string)modDesc.Attributes["Name"].Value;
-                    var versionNum = (Int32)modDesc.Attributes["Version"].Value;
-                    var version = PackedVersion.FromInt(versionNum);
+                    PackedVersion version;
+                    if (modDesc.Attributes.ContainsKey("Version64"))
+                    {
+                        var versionNum = (Int64)modDesc.Attributes["Version64"].Value;
+                        version = PackedVersion.FromInt64(versionNum);
+                    }
+                    else
+                    {
+                        var versionNum = (Int32)modDesc.Attributes["Version"].Value;
+                        version = PackedVersion.FromInt32(versionNum);
+                    }
 
                     writer.WriteLine($"{name} (v{version.Major}.{version.Minor}.{version.Revision}.{version.Build}) @ {folder}");
                 }
