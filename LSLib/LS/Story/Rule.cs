@@ -121,7 +121,7 @@ namespace LSLib.LS.Story
             }
         }
 
-        public RuleType GetRuleType(Story story)
+        public RuleType? GetRuleType(Story story)
         {
             var root = GetRoot(story);
             if (root is DatabaseNode)
@@ -130,8 +130,14 @@ namespace LSLib.LS.Story
             }
             else if (root is ProcNode)
             {
+                var querySig = root.Name + "__DEF__/" + root.NumParams.ToString();
                 var sig = root.Name + "/" + root.NumParams.ToString();
-                var func = story.FunctionSignatureMap[sig];
+
+                if (!story.FunctionSignatureMap.TryGetValue(querySig, out Function func)
+                    && !story.FunctionSignatureMap.TryGetValue(sig, out func))
+                {
+                    return null;
+                }
 
                 switch (func.Type)
                 {
@@ -146,7 +152,6 @@ namespace LSLib.LS.Story
 
                     default:
                         throw new InvalidDataException($"Unsupported root function type: {func.Type}");
-
                 }
             }
             else
@@ -170,6 +175,11 @@ namespace LSLib.LS.Story
         public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
         {
             var ruleType = GetRuleType(story);
+            if (ruleType == null)
+            {
+                return;
+            }
+
             switch (ruleType)
             {
                 case RuleType.Proc: writer.WriteLine("PROC"); break;
