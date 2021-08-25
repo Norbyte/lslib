@@ -14,20 +14,47 @@ namespace LSLib.LS
 
     public struct PackedVersion
     {
-        public Byte Major;
-        public Byte Minor;
-        public Byte Revision;
-        public UInt16 Build;
+        public UInt32 Major;
+        public UInt32 Minor;
+        public UInt32 Revision;
+        public UInt32 Build;
 
-        public static PackedVersion FromInt(Int32 packed)
+        public static PackedVersion FromInt64(Int64 packed)
         {
             return new PackedVersion
             {
-                Major = (byte)((packed >> 28) & 0x0f),
-                Minor = (byte)((packed >> 24) & 0x0f),
-                Revision = (byte)((packed >> 16) & 0xff),
-                Build = (UInt16)(packed & 0xffff),
+                Major = (UInt32)((packed >> 55) & 0x7f),
+                Minor = (UInt32)((packed >> 47) & 0xff),
+                Revision = (UInt32)((packed >> 31) & 0xffff),
+                Build = (UInt32)(packed & 0x7fffffff),
             };
+        }
+
+        public static PackedVersion FromInt32(Int32 packed)
+        {
+            return new PackedVersion
+            {
+                Major = (UInt32)((packed >> 28) & 0x0f),
+                Minor = (UInt32)((packed >> 24) & 0x0f),
+                Revision = (UInt32)((packed >> 16) & 0xff),
+                Build = (UInt32)(packed & 0xffff),
+            };
+        }
+
+        public Int32 ToVersion32()
+        {
+            return (Int32)((Major & 0x0f) << 28 |
+                (Minor & 0x0f) << 24 |
+                (Revision & 0xff) << 16 |
+                (Build & 0xffff) << 0);
+        }
+
+        public Int64 ToVersion64()
+        {
+            return (Int64)(((Int64)Major & 0x7f) << 55 |
+                ((Int64)Minor & 0xff) << 47 |
+                ((Int64)Revision & 0xffff) << 31 |
+                ((Int64)Build & 0x7fffffff) << 0);
         }
     }
 

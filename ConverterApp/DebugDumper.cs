@@ -18,6 +18,7 @@ namespace ConverterApp
         private Resource SaveGlobals;
         private Story SaveStory;
 
+        public Game GameVersion { get; set; }
         public string SaveFilePath { get; set; }
         public string ExtractionPath { get; set; }
         public string DataDumpPath { get; set; }
@@ -70,6 +71,8 @@ namespace ConverterApp
 
         private void DoLsxConversion()
         {
+            var conversionParams = ResourceConversionParameters.FromGameVersion(GameVersion);
+
             var lsfList = SavePackage.Files.Where(p => p.Name.EndsWith(".lsf"));
             var numProcessed = 0;
             foreach (var lsf in lsfList)
@@ -79,7 +82,7 @@ namespace ConverterApp
 
                 ReportProgress(20 + (numProcessed * 30 / lsfList.Count()), "Converting to LSX: " + lsf.Name);
                 var resource = ResourceUtils.LoadResource(lsfPath, ResourceFormat.LSF);
-                ResourceUtils.SaveResource(resource, lsxPath, ResourceFormat.LSX, FileVersion.MaxVersion);
+                ResourceUtils.SaveResource(resource, lsxPath, ResourceFormat.LSX, conversionParams);
                 numProcessed++;
             }
         }
@@ -120,8 +123,17 @@ namespace ConverterApp
                 {
                     var folder = (string)modDesc.Attributes["Folder"].Value;
                     var name = (string)modDesc.Attributes["Name"].Value;
-                    var versionNum = (Int32)modDesc.Attributes["Version"].Value;
-                    var version = PackedVersion.FromInt(versionNum);
+                    PackedVersion version;
+                    if (modDesc.Attributes.ContainsKey("Version64"))
+                    {
+                        var versionNum = (Int64)modDesc.Attributes["Version64"].Value;
+                        version = PackedVersion.FromInt64(versionNum);
+                    }
+                    else
+                    {
+                        var versionNum = (Int32)modDesc.Attributes["Version"].Value;
+                        version = PackedVersion.FromInt32(versionNum);
+                    }
 
                     writer.WriteLine($"{name} (v{version.Major}.{version.Minor}.{version.Revision}.{version.Build}) @ {folder}");
                 }

@@ -9,6 +9,53 @@ using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
+    public class ResourceConversionParameters
+    {
+        /// <summary>
+        /// Format of generated PAK files
+        /// </summary>
+        public PackageVersion PAKVersion;
+
+        /// <summary>
+        /// Format of generated LSF files
+        /// </summary>
+        public LSFVersion LSF = LSFVersion.MaxVersion;
+
+        /// <summary>
+        /// Store sibling/neighbour node data in LSF files (usually done by savegames only)
+        /// </summary>
+        public bool LSFEncodeSiblingData = false;
+
+        /// <summary>
+        /// Format of generated LSX files
+        /// </summary>
+        public LSXVersion LSX = LSXVersion.V4;
+
+        /// <summary>
+        /// Pretty-print (format) LSX/LSJ files
+        /// </summary>
+        public bool PrettyPrint = true;
+
+        /// <summary>
+        /// LSF/LSB compression method
+        /// </summary>
+        public CompressionMethod Compression = CompressionMethod.LZ4;
+
+        /// <summary>
+        /// LSF/LSB compression level (i.e. size/compression time tradeoff)
+        /// </summary>
+        public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
+
+        public static ResourceConversionParameters FromGameVersion(Game game)
+        {
+            ResourceConversionParameters p = new ResourceConversionParameters();
+            p.PAKVersion = game.PAKVersion();
+            p.LSF = game.LSFVersion();
+            p.LSX = game.LSXVersion();
+            return p;
+        }
+    }
+
     public class ResourceUtils
     {
         public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator);
@@ -91,12 +138,12 @@ namespace LSLib.LS
             }
         }
 
-        public static void SaveResource(Resource resource, string outputPath)
+        public static void SaveResource(Resource resource, string outputPath, ResourceConversionParameters conversionParams)
         {
-            SaveResource(resource, outputPath, ExtensionToResourceFormat(outputPath));
+            SaveResource(resource, outputPath, ExtensionToResourceFormat(outputPath), conversionParams);
         }
 
-        public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, FileVersion version = 0x0)
+        public static void SaveResource(Resource resource, string outputPath, ResourceFormat format, ResourceConversionParameters conversionParams)
         {
             FileManager.TryToCreateDirectory(outputPath);
 
@@ -107,7 +154,8 @@ namespace LSLib.LS
                     case ResourceFormat.LSX:
                         {
                             var writer = new LSXWriter(file);
-                            writer.PrettyPrint = true;
+                            writer.Version = conversionParams.LSX;
+                            writer.PrettyPrint = conversionParams.PrettyPrint;
                             writer.Write(resource);
                             break;
                         }
@@ -121,10 +169,11 @@ namespace LSLib.LS
 
                     case ResourceFormat.LSF:
                         {
-                            // Write in V2 format for D:OS EE compatibility
-                            FileVersion lsfVersion = version == 0x0 ? FileVersion.VerChunkedCompress : version;
-
-                            var writer = new LSFWriter(file, lsfVersion);
+                            var writer = new LSFWriter(file);
+                            writer.Version = conversionParams.LSF;
+                            writer.EncodeSiblingData = conversionParams.LSFEncodeSiblingData;
+                            writer.Compression = conversionParams.Compression;
+                            writer.CompressionLevel = conversionParams.CompressionLevel;
                             writer.Write(resource);
                             break;
                         }
@@ -132,7 +181,7 @@ namespace LSLib.LS
                     case ResourceFormat.LSJ:
                         {
                             var writer = new LSJWriter(file);
-                            writer.PrettyPrint = true;
+                            writer.PrettyPrint = conversionParams.PrettyPrint;
                             writer.Write(resource);
                             break;
                         }
@@ -166,7 +215,7 @@ namespace LSLib.LS
             }
         }
 
-        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, FileVersion outputVersion = 0x0)
+        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, ResourceConversionParameters conversionParams)
         {
             this.progressUpdate("Enumerating files ...", 0, 1);
             var paths = new List<string>();
@@ -183,7 +232,7 @@ namespace LSLib.LS
 
                 this.progressUpdate("Converting: " + inPath, i, paths.Count);
                 var resource = LoadResource(inPath, inputFormat);
-                SaveResource(resource, outPath, outputFormat, outputVersion);
+                SaveResource(resource, outPath, outputFormat, conversionParams);
             }
         }
     }

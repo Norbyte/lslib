@@ -11,6 +11,9 @@ namespace ConverterApp
     public sealed partial class MainForm : Form, ISettingsDataSource
     {
         PackagePane packagePane;
+        ResourcePane resourcePane;
+        OsirisPane osirisPane;
+        DebugPane debugPane;
 
         public ConverterAppSettings Settings { get; set; }
 
@@ -50,21 +53,21 @@ namespace ConverterApp
             };
             packageTab.Controls.Add(packagePane);
 
-            var resourcePane = new ResourcePane(this)
+            resourcePane = new ResourcePane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = resourceTab.ClientSize
             };
             resourceTab.Controls.Add(resourcePane);
 
-            var osirisPane = new OsirisPane(this)
+            osirisPane = new OsirisPane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = osirisTab.ClientSize
             };
             osirisTab.Controls.Add(osirisPane);
 
-            var debugPane = new DebugPane(this)
+            debugPane = new DebugPane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = debugTab.ClientSize
@@ -132,6 +135,8 @@ namespace ConverterApp
             }
 
             packagePane.SetGame(game);
+            osirisPane.Game = game;
+            debugPane.Game = game;
         }
     }
 }

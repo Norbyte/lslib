@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Enums;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -49,11 +50,11 @@ namespace LSLib.LS
 
         private Stream stream;
         private XmlReader reader;
-        private uint Version;
         private Resource resource;
         private Region currentRegion;
         private List<Node> stack;
         private int lastLine, lastColumn;
+        private LSXVersion Version = LSXVersion.V3;
 
         public LSXReader(Stream stream)
         {
@@ -139,7 +140,7 @@ namespace LSLib.LS
                     resource.Metadata.MinorVersion = Convert.ToUInt32(reader["minor"]);
                     resource.Metadata.Revision = Convert.ToUInt32(reader["revision"]);
                     resource.Metadata.BuildNumber = Convert.ToUInt32(reader["build"]);
-                    Version = resource.Metadata.MajorVersion;
+                    Version = (resource.Metadata.MajorVersion >= 4) ? LSXVersion.V4 : LSXVersion.V3;
                     break;
 
                 case "region":
@@ -182,7 +183,7 @@ namespace LSLib.LS
 
                 case "attribute":
                     UInt32 attrTypeId;
-                    if (Version >= 4)
+                    if (Version >= LSXVersion.V4)
                     {
                         attrTypeId = (uint)TypeNames[reader["type"]];
                     }

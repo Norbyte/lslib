@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using LSLib.LS.Enums;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 
@@ -46,8 +47,9 @@ namespace LSLib.LS
 
         private Stream stream;
         private XmlWriter writer;
+
         public bool PrettyPrint = false;
-        private uint Version;
+        public LSXVersion Version = LSXVersion.V3;
 
         public LSXWriter(Stream stream)
         {
@@ -56,7 +58,6 @@ namespace LSLib.LS
 
         public void Write(Resource rsrc)
         {
-            Version = rsrc.Metadata.MajorVersion;
             var settings = new XmlWriterSettings();
             settings.Indent = PrettyPrint;
             settings.IndentChars = "\t";
@@ -66,6 +67,7 @@ namespace LSLib.LS
                 writer.WriteStartElement("save");
 
                 writer.WriteStartElement("version");
+
                 writer.WriteAttributeString("major", rsrc.Metadata.MajorVersion.ToString());
                 writer.WriteAttributeString("minor", rsrc.Metadata.MinorVersion.ToString());
                 writer.WriteAttributeString("revision", rsrc.Metadata.Revision.ToString());
@@ -128,7 +130,7 @@ namespace LSLib.LS
             {
                 writer.WriteStartElement("attribute");
                 writer.WriteAttributeString("id", attribute.Key);
-                if (Version >= 4)
+                if (Version >= LSXVersion.V4)
                 {
                     writer.WriteAttributeString("type", TypeNames[attribute.Value.Type]);
                 }

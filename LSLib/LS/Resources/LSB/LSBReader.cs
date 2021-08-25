@@ -28,7 +28,7 @@ namespace LSLib.LS
                 // Check for BG3 header
                 var header = BinUtils.ReadStruct<LSBHeader>(reader);
                 if (header.Signature != BitConverter.ToUInt32(LSBHeader.SignatureBG3, 0) && header.Signature != LSBHeader.SignatureFW3)
-                    throw new InvalidFormatException(String.Format("Illegal signature in LSB header ({1})", header.Signature));
+                    throw new InvalidFormatException(String.Format("Illegal signature in LSB header ({0})", header.Signature));
 
                 if (stream.Length != header.TotalSize)
                     throw new InvalidFormatException(String.Format("Invalid LSB file size; expected {0}, got {1}", header.TotalSize, stream.Length));

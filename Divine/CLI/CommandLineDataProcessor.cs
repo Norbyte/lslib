@@ -8,15 +8,17 @@ namespace Divine.CLI
     {
         public static void Convert()
         {
-            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.Game.LSFVersion());
+            var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
+            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, conversionParams);
         }
 
         public static void BatchConvert()
         {
-            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, CommandLineActions.Game.LSFVersion());
+            var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
+            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, conversionParams);
         }
 
-        private static void ConvertResource(string sourcePath, string destinationPath, FileVersion fileVersion)
+        private static void ConvertResource(string sourcePath, string destinationPath, ResourceConversionParameters conversionParams)
         {
             try
             {
@@ -25,7 +27,7 @@ namespace Divine.CLI
 
                 Resource resource = ResourceUtils.LoadResource(sourcePath);
 
-                ResourceUtils.SaveResource(resource, destinationPath, resourceFormat, fileVersion);
+                ResourceUtils.SaveResource(resource, destinationPath, resourceFormat, conversionParams);
 
                 CommandLineLogger.LogInfo($"Wrote resource to: {destinationPath}");
             }
@@ -36,14 +38,14 @@ namespace Divine.CLI
             }
         }
 
-        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, FileVersion fileVersion)
+        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, ResourceConversionParameters conversionParams)
         {
             try
             {
                 CommandLineLogger.LogDebug($"Using destination extension: {outputFormat}");
 
                 var resourceUtils = new ResourceUtils();
-                resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, fileVersion);
+                resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, conversionParams);
 
                 CommandLineLogger.LogInfo($"Wrote resources to: {destinationPath}");
             }
