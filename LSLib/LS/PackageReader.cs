@@ -342,7 +342,7 @@ namespace LSLib.LS
                     return ReadPackageV7(mainStream, reader);
                 }
 
-                throw new NotAPackageException("No valid signature found in package file");
+                throw new NotAPackageException($"No valid signature found in package file {_path}");
             }
         }
     }
