@@ -44,8 +44,8 @@ namespace Divine
             if (args.Length == 1)
             {
                 string path = args[0];
-
-                if (Directory.Exists(path))
+                
+                if (PathUtils.IsDir(path))
                 {
                     args = new[]
                     {
@@ -58,7 +58,7 @@ namespace Divine
                         "--use-package-name"
                     };
                 }
-                else if (File.Exists(path))
+                else if (PathUtils.IsFile(path))
                 {
                     args = new[]
                     {

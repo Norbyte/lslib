@@ -130,8 +130,7 @@ namespace Divine.CLI
             {
                 if (string.IsNullOrWhiteSpace(args.Destination))
                 {
-                    FileAttributes attrs = File.GetAttributes(SourcePath);
-                    DestinationPath = (attrs & FileAttributes.Directory) == FileAttributes.Directory ? SourcePath : Path.GetDirectoryName(SourcePath);
+                    DestinationPath = PathUtils.IsDir(SourcePath) ? SourcePath : Path.GetDirectoryName(SourcePath);
                 }
                 else
                 {
