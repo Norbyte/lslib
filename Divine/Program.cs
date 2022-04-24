@@ -52,7 +52,7 @@ namespace Divine
 #if DEBUG
                         "-l", "all",
 #endif
-                        "-a", "extract-packages",
+                        "-a", Constants.EXTRACT_PACKAGES,
                         "-s", $"{path}",
                         "-d", $"{path}",
                         "--use-package-name"
@@ -65,7 +65,7 @@ namespace Divine
 #if DEBUG
                         "-l", "all",
 #endif
-                        "-a", "extract-package",
+                        "-a", Constants.EXTRACT_PACKAGE,
                         "-s", $"{path}",
                         "-d", $"{Path.GetDirectoryName(path)}",
                         "--use-package-name"

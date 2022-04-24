@@ -34,22 +34,22 @@ namespace Divine.CLI
         {
             string[] batchActions =
             {
-                "convert-models",
-                "convert-resources"
+                Constants.CONVERT_MODELS,
+                Constants.CONVERT_RESOURCES
             };
 
             string[] packageActionsWhereGameCanBeAutoDetected =
             {
-                "extract-package",
-                "extract-packages",
-                "extract-single-file",
-                "list-package"
+                Constants.EXTRACT_PACKAGE,
+                Constants.EXTRACT_PACKAGES,
+                Constants.EXTRACT_SINGLE_FILE,
+                Constants.LIST_PACKAGE
             };
 
             string[] graphicsActions =
             {
-                "convert-model",
-                "convert-models"
+                Constants.CONVERT_MODEL,
+                Constants.CONVERT_MODELS
             };
 
             LogLevel = CommandLineArguments.GetLogLevelByString(args.LogLevel);
@@ -58,7 +58,7 @@ namespace Divine.CLI
             // validate all source paths
             SourcePath = TryToValidatePath(args.Source);
 
-            if (string.Equals(args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(args.Game, Constants.AUTODETECT, StringComparison.OrdinalIgnoreCase))
             {
                 if (!packageActionsWhereGameCanBeAutoDetected.Any(args.Action.Contains))
                 {
@@ -90,14 +90,14 @@ namespace Divine.CLI
                 InputFormat = CommandLineArguments.GetResourceFormatByString(args.InputFormat);
                 CommandLineLogger.LogDebug($"Using input format: {InputFormat}");
 
-                if (!string.Equals(args.Action, "extract-packages", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(args.Action, Constants.EXTRACT_PACKAGES, StringComparison.OrdinalIgnoreCase))
                 {
                     OutputFormat = CommandLineArguments.GetResourceFormatByString(args.OutputFormat);
                     CommandLineLogger.LogDebug($"Using output format: {OutputFormat}");
                 }
             }
 
-            if (string.Equals(args.Action, "create-package", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(args.Action, Constants.CREATE_PACKAGE, StringComparison.OrdinalIgnoreCase))
             {
                 PackageVersion = CommandLinePackageProcessor.GetPackageVersionByGame(Game);
             }
@@ -124,7 +124,9 @@ namespace Divine.CLI
             }
 
             // validate destination path for create-package action and batch actions
-            if (args.Action == "create-package" || args.Action == "extract-packages" || batchActions.Any(args.Action.Contains))
+            if (string.Equals(args.Action, Constants.CREATE_PACKAGE, StringComparison.OrdinalIgnoreCase) || 
+                string.Equals(args.Action, Constants.EXTRACT_PACKAGES, StringComparison.OrdinalIgnoreCase) ||
+                batchActions.Any(args.Action.Contains))
             {
                 if (string.IsNullOrWhiteSpace(args.Destination))
                 {
@@ -170,40 +172,40 @@ namespace Divine.CLI
 
             switch (args.Action)
             {
-                case "create-package":
+                case Constants.CREATE_PACKAGE:
                     CommandLinePackageProcessor.Create();
                     break;
 
-                case "extract-package":
+                case Constants.EXTRACT_PACKAGE:
                     CommandLinePackageProcessor.Extract(filter);
                     break;
 
-                case "extract-single-file":
+                case Constants.EXTRACT_SINGLE_FILE:
                     CommandLinePackageProcessor.ExtractSingleFile();
                     break;
 
-                case "list-package":
+                case Constants.LIST_PACKAGE:
                     CommandLinePackageProcessor.ListFiles(filter);
                     break;
 
-                case "convert-model":
+                case Constants.CONVERT_MODEL:
                     CommandLineGR2Processor.UpdateExporterSettings();
                     CommandLineGR2Processor.Convert();
                     break;
 
-                case "convert-resource":
+                case Constants.CONVERT_RESOURCE:
                     CommandLineDataProcessor.Convert();
                     break;
 
-                case "extract-packages":
+                case Constants.EXTRACT_PACKAGES:
                     CommandLinePackageProcessor.BatchExtract(filter);
                     break;
 
-                case "convert-models":
+                case Constants.CONVERT_MODELS:
                     CommandLineGR2Processor.BatchConvert();
                     break;
 
-                case "convert-resources":
+                case Constants.CONVERT_RESOURCES:
                     CommandLineDataProcessor.BatchConvert();
                     break;
 

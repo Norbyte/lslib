@@ -27,7 +27,7 @@ namespace Divine.CLI
 
         private static void ExtractSingleFile(string packagePath, string destinationPath, string packagedPath)
         {
-            if (string.Equals(Args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Args.Game, Constants.AUTODETECT, StringComparison.OrdinalIgnoreCase))
             {
                 CommandLineActions.Game = GetGameByPackageVersion(packagePath);
             }
@@ -78,7 +78,7 @@ namespace Divine.CLI
 
         private static void ListPackageFiles(string packagePath, Func<AbstractFileInfo, bool> filter = null)
         {
-            if (string.Equals(Args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Args.Game, Constants.AUTODETECT, StringComparison.OrdinalIgnoreCase))
             {
                 CommandLineActions.Game = GetGameByPackageVersion(packagePath);
             }
@@ -132,7 +132,7 @@ namespace Divine.CLI
         {
             string[] files;
             
-            if (string.Equals(Args.Action, "extract-packages", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Args.Action, Constants.EXTRACT_PACKAGES, StringComparison.OrdinalIgnoreCase))
             {
                 files = Directory.GetFiles(CommandLineActions.SourcePath, "*.pak");
             }
@@ -204,7 +204,7 @@ namespace Divine.CLI
                 CommandLineLogger.LogDebug($"Using source path: {file}");
             }
             
-            if (string.Equals(Args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Args.Game, Constants.AUTODETECT, StringComparison.OrdinalIgnoreCase))
             {
                 CommandLineActions.Game = GetGameByPackageVersion(file);
             }
