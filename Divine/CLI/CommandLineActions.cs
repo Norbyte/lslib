@@ -8,7 +8,7 @@ using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
-    internal class CommandLineActions
+    internal static class CommandLineActions
     {
         public static string SourcePath;
         public static string DestinationPath;
@@ -58,11 +58,12 @@ namespace Divine.CLI
             // validate all source paths
             SourcePath = TryToValidatePath(args.Source);
 
-            if (args.Game == "autodetect")
+            if (string.Equals(args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
             {
                 if (!packageActionsWhereGameCanBeAutoDetected.Any(args.Action.Contains))
                 {
                     CommandLineLogger.LogFatal("Cannot proceed without --game argument", 1);
+                    return;
                 }
             }
             else
@@ -71,7 +72,7 @@ namespace Divine.CLI
                 CommandLineLogger.LogDebug($"Using game: {Game}");
             }
             
-            // ensure these fields are set to passed argv
+            // ensure these fields are populated with argument values
             DestinationPath = args.Destination;
             PackagedFilePath = args.PackagedPath;
             ConformPath = args.ConformPath;
@@ -89,48 +90,27 @@ namespace Divine.CLI
                 InputFormat = CommandLineArguments.GetResourceFormatByString(args.InputFormat);
                 CommandLineLogger.LogDebug($"Using input format: {InputFormat}");
 
-                if (args.Action != "extract-packages")
+                if (!string.Equals(args.Action, "extract-packages", StringComparison.OrdinalIgnoreCase))
                 {
                     OutputFormat = CommandLineArguments.GetResourceFormatByString(args.OutputFormat);
                     CommandLineLogger.LogDebug($"Using output format: {OutputFormat}");
                 }
             }
 
-            if (args.Action == "create-package")
+            if (string.Equals(args.Action, "create-package", StringComparison.OrdinalIgnoreCase))
             {
-                switch (Game)
-                {
-                    case Game.DivinityOriginalSin:
-                        PackageVersion = PackageVersion.V7;
-                        break;
-                    case Game.DivinityOriginalSinEE:
-                        PackageVersion = PackageVersion.V9;
-                        break;
-                    case Game.DivinityOriginalSin2:
-                        PackageVersion = PackageVersion.V10;
-                        break;
-                    case Game.DivinityOriginalSin2DE:
-                        PackageVersion = PackageVersion.V13;
-                        break;
-                    case Game.BaldursGate3:
-                        PackageVersion = PackageVersion.V16;
-                        break;
-                    default:
-                        throw new ArgumentException($"Unknown game: \"{Game}\"");
-                }
-
-                CommandLineLogger.LogDebug($"Using package version: {PackageVersion}");
+                PackageVersion = CommandLinePackageProcessor.GetPackageVersionByGame(Game);
             }
 
             if (graphicsActions.Any(args.Action.Contains))
             {
                 GR2Options = CommandLineArguments.GetGR2Options(args.Options);
 
-                if(LogLevel == LogLevel.DEBUG || LogLevel == LogLevel.ALL)
+                if (LogLevel == LogLevel.DEBUG || LogLevel == LogLevel.ALL)
                 {
                     CommandLineLogger.LogDebug("Using graphics options:");
 
-                    foreach (KeyValuePair<string, bool> x in GR2Options)
+                    foreach (var x in GR2Options)
                     {
                         CommandLineLogger.LogDebug($"   {x.Key} = {x.Value}");
                     }
@@ -148,7 +128,7 @@ namespace Divine.CLI
             {
                 if (string.IsNullOrWhiteSpace(args.Destination))
                 {
-                    var attrs = File.GetAttributes(SourcePath);
+                    FileAttributes attrs = File.GetAttributes(SourcePath);
                     DestinationPath = (attrs & FileAttributes.Directory) == FileAttributes.Directory ? SourcePath : Path.GetDirectoryName(SourcePath);
                 }
                 else
@@ -157,7 +137,7 @@ namespace Divine.CLI
                 }
             }
         }
-
+        
         private static void Process(CommandLineArguments args)
         {
             Func<AbstractFileInfo, bool> filter;
@@ -187,98 +167,52 @@ namespace Divine.CLI
             {
                 filter = obj => true;
             }
-            
-	        switch (args.Action)
+
+            switch (args.Action)
             {
                 case "create-package":
-                {
-                    // requires:
-                    //   SourcePath      = directory
-                    //   DestinationPath = new file path - no validation
                     CommandLinePackageProcessor.Create();
                     break;
-                }
 
                 case "extract-package":
-                {
-                    // requires:
-                    //   SourcePath      = file path (package)
-                    //   DestinationPath = directory path - no validation
                     CommandLinePackageProcessor.Extract(filter);
                     break;
-                }
 
                 case "extract-single-file":
-                {
-                    // requires:
-                    //   SourcePath      = file path (package)
-                    //   DestinationPath = file path (file to write) - no validation
                     CommandLinePackageProcessor.ExtractSingleFile();
                     break;
-                }
 
                 case "list-package":
-                {
-                    // requires:
-                    //   SourcePath      = file path (package)
                     CommandLinePackageProcessor.ListFiles(filter);
                     break;
-                }
 
                 case "convert-model":
-                {
-                    // requires:
-                    //   SourcePath      = original file path
-                    //   DestinationPath = new file path - no validation
                     CommandLineGR2Processor.UpdateExporterSettings();
                     CommandLineGR2Processor.Convert();
                     break;
-                }
 
                 case "convert-resource":
-                {
-                    // requires:
-                    //   SourcePath      = original file path
-                    //   DestinationPath = new file path - no validation
                     CommandLineDataProcessor.Convert();
                     break;
-                }
 
                 case "extract-packages":
-                {
-                    // requires:
-                    //   SourcePath      = directory path (contains packages)
-                    //   DestinationPath = directory path - no validation
                     CommandLinePackageProcessor.BatchExtract(filter);
                     break;
-                }
 
                 case "convert-models":
-                {
-                    // requires:
-                    //   SourcePath      = directory path (contains models)
-                    //   DestinationPath = directory path - no validation
                     CommandLineGR2Processor.BatchConvert();
                     break;
-                }
 
                 case "convert-resources":
-                {
-                    // requires:
-                    //   SourcePath      = directory path (contains resources)
-                    //   DestinationPath = directory path - no validation
                     CommandLineDataProcessor.BatchConvert();
                     break;
-                }
 
                 default:
-                {
                     throw new ArgumentException($"Unhandled action: {args.Action}");
-                }
             }
         }
 
-        public static string TryToValidatePath(string path)
+        private static string TryToValidatePath(string path)
         {
             CommandLineLogger.LogDebug($"Using path: {path}");
 
@@ -294,12 +228,12 @@ namespace Divine.CLI
             }
             catch (InvalidOperationException)
             {
-                CommandLineLogger.LogDebug($"Indeterminate path found, correcting: {path}");
+                CommandLineLogger.LogWarn($"Indeterminate path found, correcting: {path}");
             }
 
             if (uri != null && (!uri.IsAbsoluteUri || !uri.IsFile))
             {
-                var cwd = Directory.GetCurrentDirectory();
+                string cwd = Directory.GetCurrentDirectory();
                 // ReSharper disable once AssignNullToNotNullAttribute
                 path = Path.Combine(cwd, path);
                 path = TryToValidatePath(path);

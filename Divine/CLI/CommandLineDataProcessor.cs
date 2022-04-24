@@ -4,17 +4,17 @@ using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
-    internal class CommandLineDataProcessor
+    internal static class CommandLineDataProcessor
     {
         public static void Convert()
         {
-            var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
+            ResourceConversionParameters conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
             ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, conversionParams);
         }
 
         public static void BatchConvert()
         {
-            var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
+            ResourceConversionParameters conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
             BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, conversionParams);
         }
 

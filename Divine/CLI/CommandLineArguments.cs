@@ -145,41 +145,23 @@ namespace Divine.CLI
             switch (logLevel)
             {
                 case "off":
-                {
                     return LSLib.LS.Enums.LogLevel.OFF;
-                }
                 case "fatal":
-                {
                     return LSLib.LS.Enums.LogLevel.FATAL;
-                }
                 case "error":
-                {
                     return LSLib.LS.Enums.LogLevel.ERROR;
-                }
                 case "warn":
-                {
                     return LSLib.LS.Enums.LogLevel.WARN;
-                }
                 case "info":
-                {
                     return LSLib.LS.Enums.LogLevel.INFO;
-                }
                 case "debug":
-                {
                     return LSLib.LS.Enums.LogLevel.DEBUG;
-                }
                 case "trace":
-                {
                     return LSLib.LS.Enums.LogLevel.TRACE;
-                }
                 case "all":
-                {
                     return LSLib.LS.Enums.LogLevel.ALL;
-                }
                 default:
-                {
                     return LSLib.LS.Enums.LogLevel.INFO;
-                }
             }
         }
 
@@ -189,29 +171,17 @@ namespace Divine.CLI
             switch (game)
             {
                 case "bg3":
-                {
                     return LSLib.LS.Enums.Game.BaldursGate3;
-                }
                 case "dos":
-                {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin;
-                }
                 case "dosee":
-                {
                     return LSLib.LS.Enums.Game.DivinityOriginalSinEE;
-                }
                 case "dos2":
-                {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2;
-                }
                 case "dos2de":
-                {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2DE;
-                }
                 default:
-                {
                     throw new ArgumentException($"Unknown game: \"{game}\"");
-                }
             }
         }
 
@@ -220,17 +190,11 @@ namespace Divine.CLI
             switch (format.ToLower())
             {
                 case "gr2":
-                {
                     return ExportFormat.GR2;
-                }
                 case "dae":
-                {
                     return ExportFormat.DAE;
-                }
                 default:
-                {
                     throw new ArgumentException($"Unknown model format: {format}");
-                }
             }
         }
 
@@ -251,72 +215,50 @@ namespace Divine.CLI
             switch (resourceFormat)
             {
                 case "lsb":
-                {
                     return ResourceFormat.LSB;
-                }
                 case "lsf":
-                {
                     return ResourceFormat.LSF;
-                }
                 case "lsj":
-                {
                     return ResourceFormat.LSJ;
-                }
                 case "lsx":
-                {
                     return ResourceFormat.LSX;
-                }
                 default:
-                {
                     throw new ArgumentException($"Unknown resource format: \"{resourceFormat}\"");
-                }
             }
         }
 
         public static Dictionary<string, object> GetCompressionOptions(string compressionOption, PackageVersion packageVersion)
         {
             CompressionMethod compression;
-            var fastCompression = true;
+            bool fastCompression = true;
 
             switch (compressionOption)
             {
                 case "zlibfast":
-                {
                     compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                     break;
-                }
 
                 case "zlib":
-                {
                     compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                     fastCompression = false;
                     break;
-                }
 
                 case "lz4":
-                {
                     compression = LSLib.LS.Enums.CompressionMethod.LZ4;
                     break;
-                }
 
                 case "lz4hc":
-                {
                     compression = LSLib.LS.Enums.CompressionMethod.LZ4;
                     fastCompression = false;
                     break;
-                }
 
-                // ReSharper disable once RedundantCaseLabel
-                case "none":
                 default:
-                {
                     compression = LSLib.LS.Enums.CompressionMethod.None;
                     break;
-                }
             }
 
             // fallback to zlib, if the package version doesn't support lz4
-            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && packageVersion <= LSLib.LS.Enums.PackageVersion.V9)
+            if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && packageVersion <= PackageVersion.V9)
             {
                 compression = LSLib.LS.Enums.CompressionMethod.Zlib;
                 fastCompression = false;

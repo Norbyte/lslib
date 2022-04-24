@@ -30,6 +30,7 @@ namespace Divine
             {
                 @"-h",
                 @"--help",
+                @"help",
                 @"-?",
                 @"/?"
             };
@@ -42,7 +43,7 @@ namespace Divine
 
             if (args.Length == 1)
             {
-                var path = args[0];
+                string path = args[0];
 
                 if (Directory.Exists(path))
                 {

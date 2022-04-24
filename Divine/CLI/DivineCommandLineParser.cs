@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using CommandLineParser.Arguments;
 
@@ -10,7 +11,7 @@ namespace Divine.CLI
     {
         private static string WordWrap(string text, int maxLength = 80, int indent = 0)
         {
-            var indentation = "".PadLeft(indent);
+            string indentation = "".PadLeft(indent);
 
             var lineWrap = new Regex($"(.{{1,{maxLength}}})(?: +|$)");
 
@@ -19,9 +20,9 @@ namespace Divine.CLI
 
         private static void AddFormattedArgument(Argument argument, ICollection<string> list, string newline)
         {
-            var line = string.Empty;
+            string line = string.Empty;
 
-            if (argument.ShortName.HasValue && !string.IsNullOrEmpty(argument.LongName))
+            if (argument.ShortName.HasValue && !string.IsNullOrWhiteSpace(argument.LongName))
             {
                 line = $"  -{argument.ShortName}, --{argument.LongName}";
             }
@@ -29,7 +30,7 @@ namespace Divine.CLI
             {
                 line = $"  -{argument.ShortName}";
             }
-            else if (!string.IsNullOrEmpty(argument.LongName))
+            else if (!string.IsNullOrWhiteSpace(argument.LongName))
             {
                 line = $"  --{argument.LongName}";
             }
@@ -52,8 +53,8 @@ namespace Divine.CLI
                     list.Add($"    Default Value:{newline}      {enumValueArg.DefaultValue}");
                 }
 
-                var allowedValues = string.Join(", ", enumValueArg.AllowedValues);
-                var formattedAllowedValues = WordWrap(allowedValues, 76, 6).TrimEnd();
+                string allowedValues = string.Join(", ", enumValueArg.AllowedValues);
+                string formattedAllowedValues = WordWrap(allowedValues, 76, 6).TrimEnd();
 
                 list.Add($"    Allowed Values:{newline}      {formattedAllowedValues}");
             }
@@ -63,7 +64,7 @@ namespace Divine.CLI
         {
             var lines = new List<string>();
 
-            var newline = outputStream.NewLine;
+            string newline = outputStream.NewLine;
 
             if (!string.IsNullOrWhiteSpace(ShowUsageHeader))
             {
@@ -74,22 +75,16 @@ namespace Divine.CLI
 
             lines.Add(newline + "required arguments:");
 
-            foreach (var argument in this.Arguments)
+            foreach (var argument in Arguments.Where(argument => !argument.Optional))
             {
-                if (!argument.Optional)
-                {
-                    AddFormattedArgument(argument, lines, newline);
-                }
+                AddFormattedArgument(argument, lines, newline);
             }
 
             lines.Add(newline + "optional arguments:");
 
-            foreach (var argument in this.Arguments)
+            foreach (var argument in Arguments.Where(argument => argument.Optional))
             {
-                if (argument.Optional)
-                {
-                    AddFormattedArgument(argument, lines, newline);
-                }
+                AddFormattedArgument(argument, lines, newline);
             }
 
             if (!string.IsNullOrWhiteSpace(ShowUsageFooter))

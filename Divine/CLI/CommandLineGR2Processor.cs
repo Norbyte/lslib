@@ -1,25 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
-using LSLib.LS.Enums;
 
 namespace Divine.CLI
 {
-    internal class CommandLineGR2Processor
+    internal static class CommandLineGR2Processor
     {
         private static readonly Dictionary<string, bool> GR2Options = CommandLineActions.GR2Options;
 
-        public static void Convert(string file = "")
-        {
-            ConvertResource(file);
-        }
+        public static void Convert(string file = "") => ConvertResource(file);
 
-        public static void BatchConvert()
-        {
-            BatchConvertResources(CommandLineActions.SourcePath, Program.argv.InputFormat);
-        }
+        public static void BatchConvert() => BatchConvertResources(CommandLineActions.SourcePath, Program.argv.InputFormat);
 
         public static ExporterOptions UpdateExporterSettings()
         {
@@ -43,7 +35,7 @@ namespace Divine.CLI
                 DeduplicateUVs = GR2Options["deduplicate-uvs"],
                 ApplyBasisTransforms = GR2Options["apply-basis-transforms"],
                 UseObsoleteVersionTag = GR2Options["force-legacy-version"],
-                ConformGR2Path = GR2Options["conform"] && !string.IsNullOrEmpty(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
+                ConformGR2Path = GR2Options["conform"] && !string.IsNullOrWhiteSpace(CommandLineActions.ConformPath) ? CommandLineActions.ConformPath : null,
                 FlipSkeleton = GR2Options["x-flip-skeletons"],
                 FlipMesh = GR2Options["x-flip-meshes"],
                 TransformSkeletons = GR2Options["y-up-skeletons"],
@@ -71,7 +63,7 @@ namespace Divine.CLI
                 Options = UpdateExporterSettings()
             };
 
-            if (!string.IsNullOrEmpty(file))
+            if (!string.IsNullOrWhiteSpace(file))
             {
                 exporter.Options.InputPath = file;
             }
