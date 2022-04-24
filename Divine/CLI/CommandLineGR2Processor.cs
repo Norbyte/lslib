@@ -84,7 +84,7 @@ namespace Divine.CLI
 
                 CommandLineLogger.LogInfo("Export completed successfully.");
 #if !DEBUG
-        }
+            }
             catch (Exception e)
             {
                 CommandLineLogger.LogFatal($"Export failed: {e.Message + Environment.NewLine + e.StackTrace}", 2);

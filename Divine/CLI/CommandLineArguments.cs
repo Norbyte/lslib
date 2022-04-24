@@ -12,7 +12,7 @@ namespace Divine.CLI
     {
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'l', "loglevel",
-            Description = "Set verbosity level of log output",
+            Description = "Log output verbosity",
             DefaultValue = "info",
             AllowedValues = "off;fatal;error;warn;info;debug;trace;all",
             ValueOptional = false,
@@ -22,17 +22,17 @@ namespace Divine.CLI
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'g', "game",
-            Description = "Set target game when generating output",
-            DefaultValue = null,
-            AllowedValues = "dos;dosee;dos2;dos2de;bg3",
+            Description = "Target game when generating output",
+            DefaultValue = "autodetect",
+            AllowedValues = "dos;dosee;dos2;dos2de;bg3;autodetect",
             ValueOptional = false,
-            Optional = false
+            Optional = true
         )]
         public string Game;
 
         // @formatter:off
         [ValueArgument(typeof(string), 's', "source",
-            Description = "Set source file path or directory",
+            Description = "Source file path or directory",
             DefaultValue = null,
             ValueOptional = false,
             Optional = false
@@ -41,7 +41,7 @@ namespace Divine.CLI
 
         // @formatter:off
         [ValueArgument(typeof(string), 'd', "destination",
-            Description = "Set destination file path or directory",
+            Description = "Destination file path or directory",
             DefaultValue = null,
             ValueOptional = true,
             Optional = true
@@ -59,9 +59,9 @@ namespace Divine.CLI
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'i', "input-format",
-            Description = "Set input format for batch operations",
+            Description = "Input format for batch operations",
             DefaultValue = null,
-            AllowedValues = "dae;gr2;lsv;pak;lsj;lsx;lsb;lsf",
+            AllowedValues = "dae;gr2;lsv;lsj;lsx;lsb;lsf",
             ValueOptional = false,
             Optional = true
         )]
@@ -69,9 +69,9 @@ namespace Divine.CLI
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'o', "output-format",
-            Description = "Set output format for batch operations",
+            Description = "Output format for batch operations",
             DefaultValue = null,
-            AllowedValues = "dae;gr2;lsv;pak;lsj;lsx;lsb;lsf",
+            AllowedValues = "dae;gr2;lsv;lsj;lsx;lsb;lsf",
             ValueOptional = false,
             Optional = true
         )]
@@ -79,8 +79,8 @@ namespace Divine.CLI
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'a', "action",
-            Description = "Set action to execute",
-            DefaultValue = "extract-package",
+            Description = "Action to execute",
+            DefaultValue = null,
             AllowedValues = "create-package;list-package;extract-single-file;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
             ValueOptional = false,
             Optional = false
@@ -89,7 +89,7 @@ namespace Divine.CLI
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'c', "compression-method",
-            Description = "Set compression method",
+            Description = "Compression method",
             DefaultValue = "lz4hc",
             AllowedValues = "zlib;zlibfast;lz4;lz4hc;none",
             ValueOptional = false,
@@ -99,7 +99,7 @@ namespace Divine.CLI
 
         // @formatter:off
         [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
-            Description = "Set extra options for GR2/DAE conversion",
+            Description = "Extra options for GR2/DAE conversion",
             AllowMultiple = true,
             AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;ignore-uv-nan;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform;conform-copy",
             ValueOptional = false,
@@ -109,7 +109,7 @@ namespace Divine.CLI
 
 		// @formatter:off
 		[ValueArgument(typeof(string), 'x', "expression",
-            Description = "Set glob expression for extract and list actions",
+            Description = "Glob expression for extract and list actions",
             DefaultValue = "*",
             ValueOptional = false,
             Optional = true
@@ -118,7 +118,7 @@ namespace Divine.CLI
 
         // @formatter:off
         [ValueArgument(typeof(string), "conform-path",
-            Description = "Set conform to original path",
+            Description = "Conform to original path",
             DefaultValue = null,
             ValueOptional = false,
             Optional = true

@@ -35,6 +35,11 @@ namespace Divine.CLI
 
         private static void ExtractSingleFile(string packagePath, string destinationPath, string packagedPath)
         {
+            if (string.Equals(Args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            {
+                SetGameVersionFromPackage(packagePath);
+            }
+            
             try
             {
                 using (var reader = new PackageReader(packagePath))
@@ -81,6 +86,11 @@ namespace Divine.CLI
 
         private static void ListPackageFiles(string packagePath, Func<AbstractFileInfo, bool> filter = null)
         {
+            if (string.Equals(Args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            {
+                SetGameVersionFromPackage(packagePath);
+            }
+            
             try
             {
                 using (var reader = new PackageReader(packagePath))
@@ -129,12 +139,21 @@ namespace Divine.CLI
 
         public static void BatchExtract(Func<AbstractFileInfo, bool> filter = null)
         {
-            string[] files = Directory.GetFiles(CommandLineActions.SourcePath, $"*.{Args.InputFormat}");
+            string[] files;
+            
+            if (string.Equals(Args.Action, "extract-packages", StringComparison.OrdinalIgnoreCase))
+            {
+                files = Directory.GetFiles(CommandLineActions.SourcePath, "*.pak");
+            }
+            else
+            {
+                files = Directory.GetFiles(CommandLineActions.SourcePath, $"*.{Args.InputFormat}");
+            }
 
             foreach (string file in files)
             {
                 string extractionPath = GetExtractionPath(file, CommandLineActions.DestinationPath);
-
+                
                 CommandLineLogger.LogInfo($"Extracting package: {file}");
 
                 ExtractPackageResource(file, extractionPath, filter);
@@ -143,7 +162,22 @@ namespace Divine.CLI
 
         private static string GetExtractionPath(string sourcePath, string destinationPath)
         {
-            return Args.UsePackageName ? Path.Combine(destinationPath, Path.GetFileNameWithoutExtension(sourcePath) ?? throw new InvalidOperationException()) : CommandLineActions.DestinationPath;
+            if (Args.UsePackageName)
+            {
+                if (string.IsNullOrWhiteSpace(destinationPath))
+                {
+                    destinationPath = Path.GetDirectoryName(sourcePath);
+                }
+
+                if (string.IsNullOrWhiteSpace(destinationPath))
+                {
+                    destinationPath = Directory.GetCurrentDirectory();
+                }
+                
+                return Path.GetFullPath(Path.Combine(destinationPath, Path.GetFileNameWithoutExtension(sourcePath)));
+            }
+
+            return CommandLineActions.DestinationPath;
         }
 
         private static void CreatePackageResource(string file = "")
@@ -178,6 +212,11 @@ namespace Divine.CLI
                 file = CommandLineActions.SourcePath;
                 CommandLineLogger.LogDebug($"Using source path: {file}");
             }
+            
+            if (string.Equals(Args.Game, "autodetect", StringComparison.OrdinalIgnoreCase))
+            {
+                SetGameVersionFromPackage(file);
+            }
 
             try
             {
@@ -186,7 +225,7 @@ namespace Divine.CLI
                 string extractionPath = GetExtractionPath(folder, CommandLineActions.DestinationPath);
 
                 CommandLineLogger.LogDebug($"Using extraction path: {extractionPath}");
-
+                
                 packager.UncompressPackage(file, extractionPath, filter);
 
                 CommandLineLogger.LogInfo($"Extracted package to: {extractionPath}");
@@ -200,6 +239,42 @@ namespace Divine.CLI
                 CommandLineLogger.LogFatal($"Failed to extract package: {e.Message}", 2);
                 CommandLineLogger.LogTrace($"{e.StackTrace}");
             }
+        }
+
+        public static void SetGameVersionFromPackage(string packagePath)
+        {
+            try
+            {
+                using (var reader = new PackageReader(packagePath))
+                {
+                    Package package = reader.Read();
+                    switch (package.Version)
+                    {
+                        case PackageVersion.V7:
+                            CommandLineActions.Game = Game.DivinityOriginalSin;
+                            break;
+                        case PackageVersion.V9:
+                            CommandLineActions.Game = Game.DivinityOriginalSinEE;
+                            break;
+                        case PackageVersion.V10:
+                            CommandLineActions.Game = Game.DivinityOriginalSin2;
+                            break;
+                        case PackageVersion.V13:
+                            CommandLineActions.Game = Game.DivinityOriginalSin2DE;
+                            break;
+                        case PackageVersion.V15:
+                        case PackageVersion.V16:
+                            CommandLineActions.Game = Game.BaldursGate3;
+                            break;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                CommandLineLogger.LogFatal($"Cannot determine game from package version: {e.Message}", 3);
+            }
+            
+            CommandLineLogger.LogDebug($"Using game version: \"{CommandLineActions.Game}\"");
         }
     }
 }
