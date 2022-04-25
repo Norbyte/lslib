@@ -187,7 +187,7 @@ namespace Divine.CLI
 
         public static ExportFormat GetModelFormatByString(string format)
         {
-            switch (format.ToLower())
+            switch (format.ToLowerInvariant())
             {
                 case "gr2":
                     return ExportFormat.GR2;
