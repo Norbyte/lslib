@@ -76,10 +76,17 @@ namespace Divine.CLI
             {
                 if (!string.IsNullOrWhiteSpace(args.Destination))
                     DestinationPath = TryToValidatePath(args.Destination);
-                else if (PathUtils.IsDir(SourcePath))
-                    DestinationPath = SourcePath;
                 else
-                    DestinationPath = Path.GetDirectoryName(SourcePath);
+                {
+                    if (PathUtils.IsDir(SourcePath))
+                        DestinationPath = SourcePath;
+                    else
+                        DestinationPath = Path.GetDirectoryName(SourcePath);
+
+                    // do not require --destination argument for create-package action
+                    if (DestinationPath != null && string.Equals(args.Action, Constants.CREATE_PACKAGE, StringComparison.OrdinalIgnoreCase))
+                        DestinationPath += ".pak";
+                }
 
                 if (string.IsNullOrWhiteSpace(DestinationPath))
                     CommandLineLogger.LogFatal("Cannot proceed without a valid destination path", 1);
