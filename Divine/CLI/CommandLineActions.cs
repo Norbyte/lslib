@@ -32,12 +32,6 @@ namespace Divine.CLI
 
         private static void SetUpAndValidate(CommandLineArguments args)
         {
-            string[] batchActions =
-            {
-                Constants.CONVERT_MODELS,
-                Constants.CONVERT_RESOURCES
-            };
-
             string[] packageActionsWhereGameCanBeAutoDetected =
             {
                 Constants.EXTRACT_PACKAGE,
@@ -46,18 +40,52 @@ namespace Divine.CLI
                 Constants.LIST_PACKAGE
             };
 
-            string[] graphicsActions =
-            {
-                Constants.CONVERT_MODEL,
-                Constants.CONVERT_MODELS
-            };
-
             LogLevel = CommandLineArguments.GetLogLevelByString(args.LogLevel);
             CommandLineLogger.LogDebug($"Using log level: {LogLevel}");
 
-            // validate all source paths
+            // source path must be validated for every action
             SourcePath = TryToValidatePath(args.Source);
+            
+            // ensure these fields are populated with argument values
+            DestinationPath = args.Destination;
+            PackagedFilePath = args.PackagedPath;
+            ConformPath = args.ConformPath;
+            
+            // validate source path type for actions
+            switch (args.Action.ToLowerInvariant())
+            {
+                case Constants.CONVERT_MODEL:
+                case Constants.CONVERT_RESOURCE:
+                case Constants.EXTRACT_PACKAGE:
+                case Constants.EXTRACT_SINGLE_FILE:
+                case Constants.LIST_PACKAGE:
+                    if (!PathUtils.IsFile(SourcePath))
+                        CommandLineLogger.LogFatal("Source path must point to an existing file", 1);
+                    break;
+                case Constants.CONVERT_MODELS:
+                case Constants.CONVERT_RESOURCES:
+                case Constants.CREATE_PACKAGE:
+                case Constants.EXTRACT_PACKAGES:
+                    if (!PathUtils.IsDir(SourcePath))
+                        CommandLineLogger.LogFatal("Source path must point to an existing directory", 1);
+                    break;
+            }
+            
+            // handle destination paths
+            if (!string.Equals(args.Action, Constants.LIST_PACKAGE, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(args.Destination))
+                    DestinationPath = TryToValidatePath(args.Destination);
+                else if (PathUtils.IsDir(SourcePath))
+                    DestinationPath = SourcePath;
+                else
+                    DestinationPath = Path.GetDirectoryName(SourcePath);
 
+                if (string.IsNullOrWhiteSpace(DestinationPath))
+                    CommandLineLogger.LogFatal("Cannot proceed without a valid destination path", 1);
+            }
+            
+            // handle game setting
             if (string.Equals(args.Game, Constants.AUTODETECT, StringComparison.OrdinalIgnoreCase))
             {
                 if (!packageActionsWhereGameCanBeAutoDetected.Any(args.Action.Contains))
@@ -72,70 +100,62 @@ namespace Divine.CLI
                 CommandLineLogger.LogDebug($"Using game: {Game}");
             }
             
-            // ensure these fields are populated with argument values
-            DestinationPath = args.Destination;
-            PackagedFilePath = args.PackagedPath;
-            ConformPath = args.ConformPath;
-            
-            if (batchActions.Any(args.Action.Contains))
-            {
-                if (args.InputFormat == null || args.OutputFormat == null)
-                {
-                    if (args.InputFormat == null)
-                    {
-                        CommandLineLogger.LogFatal("Cannot perform batch action without --input-format and --output-format arguments", 1);
-                    }
-                }
-
-                InputFormat = CommandLineArguments.GetResourceFormatByString(args.InputFormat);
-                CommandLineLogger.LogDebug($"Using input format: {InputFormat}");
-
-                if (!string.Equals(args.Action, Constants.EXTRACT_PACKAGES, StringComparison.OrdinalIgnoreCase))
-                {
-                    OutputFormat = CommandLineArguments.GetResourceFormatByString(args.OutputFormat);
-                    CommandLineLogger.LogDebug($"Using output format: {OutputFormat}");
-                }
-            }
-
+            // only the create-package action requires a package version
             if (string.Equals(args.Action, Constants.CREATE_PACKAGE, StringComparison.OrdinalIgnoreCase))
-            {
                 PackageVersion = CommandLinePackageProcessor.GetPackageVersionByGame(Game);
+
+            switch (args.Action.ToLowerInvariant())
+            {
+                case Constants.CONVERT_MODEL:
+                case Constants.CONVERT_MODELS:
+                case Constants.CONVERT_RESOURCE:
+                case Constants.CONVERT_RESOURCES:
+                    string resourceFormat = !string.IsNullOrWhiteSpace(args.InputFormat) ? args.InputFormat : Path.GetExtension(SourcePath).TrimStart('.');
+
+                    try
+                    {
+                        InputFormat = CommandLineArguments.GetResourceFormatByString(resourceFormat);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        CommandLineLogger.LogFatal("Cannot proceed without input format", 1);
+                    }
+
+                    resourceFormat = !string.IsNullOrWhiteSpace(args.OutputFormat) ? args.OutputFormat : Path.GetExtension(DestinationPath).TrimStart('.');
+
+                    try
+                    {
+                        OutputFormat = CommandLineArguments.GetResourceFormatByString(resourceFormat);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        CommandLineLogger.LogFatal("Cannot proceed without output format", 1);
+                    }
+
+                    CommandLineLogger.LogDebug($"Using input format: {InputFormat}");
+                    CommandLineLogger.LogDebug($"Using output format: {OutputFormat}");
+
+                    break;
             }
 
-            if (graphicsActions.Any(args.Action.Contains))
+            switch (args.Action.ToLowerInvariant())
             {
-                GR2Options = CommandLineArguments.GetGR2Options(args.Options);
+                case Constants.CONVERT_MODEL:
+                case Constants.CONVERT_MODELS:
+                    GR2Options = CommandLineArguments.GetGR2Options(args.Options);
 
-                if (LogLevel == LogLevel.DEBUG || LogLevel == LogLevel.ALL)
-                {
+#if DEBUG
                     CommandLineLogger.LogDebug("Using graphics options:");
 
                     foreach (var x in GR2Options)
                     {
                         CommandLineLogger.LogDebug($"   {x.Key} = {x.Value}");
                     }
+#endif
 
-                }
-
-                if (GR2Options["conform"])
-                {
-                    ConformPath = TryToValidatePath(args.ConformPath);
-                }
-            }
-
-            // validate destination path for create-package action and batch actions
-            if (string.Equals(args.Action, Constants.CREATE_PACKAGE, StringComparison.OrdinalIgnoreCase) || 
-                string.Equals(args.Action, Constants.EXTRACT_PACKAGES, StringComparison.OrdinalIgnoreCase) ||
-                batchActions.Any(args.Action.Contains))
-            {
-                if (string.IsNullOrWhiteSpace(args.Destination))
-                {
-                    DestinationPath = PathUtils.IsDir(SourcePath) ? SourcePath : Path.GetDirectoryName(SourcePath);
-                }
-                else
-                {
-                    DestinationPath = TryToValidatePath(args.Destination);
-                }
+                    if (GR2Options["conform"])
+                        ConformPath = TryToValidatePath(args.ConformPath);
+                    break;
             }
         }
         
