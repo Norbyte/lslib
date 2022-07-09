@@ -268,9 +268,18 @@ namespace LSLib.LS
             }
         }
 
-        private MemoryStream Decompress(BinaryReader reader, uint sizeOnDisk, uint uncompressedSize, string debugDumpTo)
+        private MemoryStream Decompress(BinaryReader reader, uint sizeOnDisk, uint uncompressedSize, string debugDumpTo, bool isGlobal)
         {
-            bool chunked = Version >= LSFVersion.VerChunkedCompress;
+            bool chunked;
+            if (isGlobal)
+            {
+                chunked = Version >= LSFVersion.VerChunkedCompress && Version < LSFVersion.VerBG3AdditionalBlob;
+            }
+            else
+            {
+                chunked = Version >= LSFVersion.VerChunkedCompress;
+            }
+
             bool isCompressed = BinUtils.CompressionFlagsToMethod(Metadata.CompressionFlags) != CompressionMethod.None;
             uint compressedSize = isCompressed ? sizeOnDisk : uncompressedSize;
             byte[] compressed = reader.ReadBytes((int)compressedSize);
@@ -347,14 +356,14 @@ namespace LSLib.LS
                 ReadHeaders(reader);
 
                 Names = new List<List<String>>();
-                var namesStream = Decompress(reader, Metadata.StringsSizeOnDisk, Metadata.StringsUncompressedSize, "strings.bin");
+                var namesStream = Decompress(reader, Metadata.StringsSizeOnDisk, Metadata.StringsUncompressedSize, "strings.bin", true);
                 using (namesStream)
                 {
                     ReadNames(namesStream);
                 }
 
                 Nodes = new List<LSFNodeInfo>();
-                var nodesStream = Decompress(reader, Metadata.NodesSizeOnDisk, Metadata.NodesUncompressedSize, "nodes.bin");
+                var nodesStream = Decompress(reader, Metadata.NodesSizeOnDisk, Metadata.NodesUncompressedSize, "nodes.bin", false);
                 using (nodesStream)
                 {
                     var longNodes = Version >= LSFVersion.VerExtendedNodes
@@ -363,7 +372,7 @@ namespace LSLib.LS
                 }
 
                 Attributes = new List<LSFAttributeInfo>();
-                var attributesStream = Decompress(reader, Metadata.AttributesSizeOnDisk, Metadata.AttributesUncompressedSize, "attributes.bin");
+                var attributesStream = Decompress(reader, Metadata.AttributesSizeOnDisk, Metadata.AttributesUncompressedSize, "attributes.bin", false);
                 using (attributesStream)
                 {
                     var hasSiblingData = Version >= LSFVersion.VerExtendedNodes
@@ -378,7 +387,7 @@ namespace LSLib.LS
                     }
                 }
 
-                this.Values = Decompress(reader, Metadata.ValuesSizeOnDisk, Metadata.ValuesUncompressedSize, "values.bin");
+                this.Values = Decompress(reader, Metadata.ValuesSizeOnDisk, Metadata.ValuesUncompressedSize, "values.bin", false);
 
                 Resource resource = new Resource();
                 ReadRegions(resource);

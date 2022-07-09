@@ -30,19 +30,19 @@ namespace ConverterApp
 
         private void resourceConvertBtn_Click(object sender, EventArgs e)
         {
-            try
-            {
+            //try
+            //{
                 _resource = ResourceUtils.LoadResource(resourceInputPath.Text);
                 ResourceFormat format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
                 var conversionParams = ResourceConversionParameters.FromGameVersion(_form.GetGame());
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, conversionParams);
 
                 MessageBox.Show("Resource saved successfully.");
-            }
-            catch (Exception exc)
-            {
-                MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            //}
+            //catch (Exception exc)
+            //{
+            //    MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //}
         }
 
         private void resourceInputBrowseBtn_Click(object sender, EventArgs e)
