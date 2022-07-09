@@ -44,6 +44,7 @@ namespace LSLib.LS
         /// Game version that generated the LSF file
         /// </summary>
         private PackedVersion GameVersion;
+        private LSFMetadataV6 Metadata;
 
         public LSFReader(Stream stream)
         {
@@ -267,144 +268,117 @@ namespace LSLib.LS
             }
         }
 
-        private byte[] Decompress(BinaryReader reader, uint compressedSize, uint uncompressedSize, LSFMetadata metadata)
+        private MemoryStream Decompress(BinaryReader reader, uint sizeOnDisk, uint uncompressedSize, string debugDumpTo)
         {
             bool chunked = Version >= LSFVersion.VerChunkedCompress;
+            bool isCompressed = BinUtils.CompressionFlagsToMethod(Metadata.CompressionFlags) != CompressionMethod.None;
+            uint compressedSize = isCompressed ? sizeOnDisk : uncompressedSize;
             byte[] compressed = reader.ReadBytes((int)compressedSize);
-            return BinUtils.Decompress(compressed, (int)uncompressedSize, metadata.CompressionFlags, chunked);
+            var uncompressed = BinUtils.Decompress(compressed, (int)uncompressedSize, Metadata.CompressionFlags, chunked);
+
+#if DUMP_LSF_SERIALIZATION
+            using (var nodesFile = new FileStream(debugDumpTo, FileMode.Create, FileAccess.Write))
+            {
+                nodesFile.Write(uncompressed, 0, uncompressed.Length);
+            }
+#endif
+
+            return new MemoryStream(uncompressed);
+        }
+
+        private void ReadHeaders(BinaryReader reader)
+        {
+            var magic = BinUtils.ReadStruct<LSFMagic>(reader);
+            if (magic.Magic != BitConverter.ToUInt32(LSFMagic.Signature, 0))
+            {
+                var msg = String.Format(
+                    "Invalid LSF signature; expected {0,8:X}, got {1,8:X}",
+                    BitConverter.ToUInt32(LSFMagic.Signature, 0), magic.Magic
+                );
+                throw new InvalidDataException(msg);
+            }
+
+            if (magic.Version < (ulong)LSFVersion.VerInitial || magic.Version > (ulong)LSFVersion.MaxVersion)
+            {
+                var msg = String.Format("LSF version {0} is not supported", magic.Version);
+                throw new InvalidDataException(msg);
+            }
+
+            Version = (LSFVersion)magic.Version;
+
+            if (Version >= LSFVersion.VerBG3ExtendedHeader)
+            {
+                var hdr = BinUtils.ReadStruct<LSFHeaderV5>(reader);
+                GameVersion = PackedVersion.FromInt64(hdr.EngineVersion);
+            }
+            else
+            {
+                var hdr = BinUtils.ReadStruct<LSFHeader>(reader);
+                GameVersion = PackedVersion.FromInt32(hdr.EngineVersion);
+            }
+
+            if (Version < LSFVersion.VerBG3AdditionalBlob)
+            {
+                var meta = BinUtils.ReadStruct<LSFMetadataV5>(reader);
+                Metadata = new LSFMetadataV6
+                {
+                    StringsUncompressedSize = meta.StringsUncompressedSize,
+                    StringsSizeOnDisk = meta.StringsSizeOnDisk,
+                    NodesUncompressedSize = meta.NodesUncompressedSize,
+                    NodesSizeOnDisk = meta.NodesSizeOnDisk,
+                    AttributesUncompressedSize = meta.AttributesUncompressedSize,
+                    AttributesSizeOnDisk = meta.AttributesSizeOnDisk,
+                    ValuesUncompressedSize = meta.ValuesUncompressedSize,
+                    ValuesSizeOnDisk = meta.ValuesSizeOnDisk,
+                    CompressionFlags = meta.CompressionFlags,
+                    HasSiblingData = meta.HasSiblingData
+                };
+            }
+            else
+            {
+                Metadata = BinUtils.ReadStruct<LSFMetadataV6>(reader);
+            }
         }
 
         public Resource Read()
         {
             using (var reader = new BinaryReader(Stream))
             {
-                var magic = BinUtils.ReadStruct<LSFMagic>(reader);
-                if (magic.Magic != BitConverter.ToUInt32(LSFMagic.Signature, 0))
-                {
-                    var msg = String.Format(
-                        "Invalid LSF signature; expected {0,8:X}, got {1,8:X}",
-                        BitConverter.ToUInt32(LSFMagic.Signature, 0), magic.Magic
-                    );
-                    throw new InvalidDataException(msg);
-                }
-
-                if (magic.Version < (ulong) LSFVersion.VerInitial || magic.Version > (ulong) LSFVersion.MaxVersion)
-                {
-                    var msg = String.Format("LSF version {0} is not supported", magic.Version);
-                    throw new InvalidDataException(msg);
-                }
-
-                this.Version = (LSFVersion)magic.Version;
-
-                if (this.Version >= LSFVersion.VerBG3ExtendedHeader)
-                {
-                    var hdr = BinUtils.ReadStruct<LSFHeaderV5>(reader);
-                    GameVersion = PackedVersion.FromInt64(hdr.EngineVersion);
-                }
-                else
-                {
-                    var hdr = BinUtils.ReadStruct<LSFHeader>(reader);
-                    GameVersion = PackedVersion.FromInt32(hdr.EngineVersion);
-                }
-
-                var meta = BinUtils.ReadStruct<LSFMetadata>(reader);
+                ReadHeaders(reader);
 
                 Names = new List<List<String>>();
-                bool isCompressed = BinUtils.CompressionFlagsToMethod(meta.CompressionFlags) != CompressionMethod.None;
-                if (meta.StringsSizeOnDisk > 0 || meta.StringsUncompressedSize > 0)
+                var namesStream = Decompress(reader, Metadata.StringsSizeOnDisk, Metadata.StringsUncompressedSize, "strings.bin");
+                using (namesStream)
                 {
-                    uint onDiskSize = isCompressed ? meta.StringsSizeOnDisk : meta.StringsUncompressedSize;
-                    byte[] compressed = reader.ReadBytes((int)onDiskSize);
-                    byte[] uncompressed;
-                    if (isCompressed)
-                    {
-                        uncompressed = BinUtils.Decompress(compressed, (int)meta.StringsUncompressedSize, meta.CompressionFlags);
-                    }
-                    else
-                    {
-                        uncompressed = compressed;
-                    }
-
-#if DUMP_LSF_SERIALIZATION
-                    using (var nodesFile = new FileStream("names.bin", FileMode.Create, FileAccess.Write))
-                    {
-                        nodesFile.Write(uncompressed, 0, uncompressed.Length);
-                    }
-#endif
-
-                    using (var namesStream = new MemoryStream(uncompressed))
-                    {
-                        ReadNames(namesStream);
-                    }
+                    ReadNames(namesStream);
                 }
-                
+
                 Nodes = new List<LSFNodeInfo>();
-                if (meta.NodesSizeOnDisk > 0 || meta.NodesUncompressedSize > 0)
+                var nodesStream = Decompress(reader, Metadata.NodesSizeOnDisk, Metadata.NodesUncompressedSize, "nodes.bin");
+                using (nodesStream)
                 {
-                    uint onDiskSize = isCompressed ? meta.NodesSizeOnDisk : meta.NodesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, meta.NodesUncompressedSize, meta);
-
-#if DUMP_LSF_SERIALIZATION
-                    using (var nodesFile = new FileStream("nodes.bin", FileMode.Create, FileAccess.Write))
-                    {
-                        nodesFile.Write(uncompressed, 0, uncompressed.Length);
-                    }
-#endif
-
-                    using (var nodesStream = new MemoryStream(uncompressed))
-                    {
-                        var longNodes = Version >= LSFVersion.VerExtendedNodes
-                            && meta.HasSiblingData == 1;
-                        ReadNodes(nodesStream, longNodes);
-                    }
+                    var longNodes = Version >= LSFVersion.VerExtendedNodes
+                        && Metadata.HasSiblingData == 1;
+                    ReadNodes(nodesStream, longNodes);
                 }
 
                 Attributes = new List<LSFAttributeInfo>();
-                if (meta.AttributesSizeOnDisk > 0 || meta.AttributesUncompressedSize > 0)
+                var attributesStream = Decompress(reader, Metadata.AttributesSizeOnDisk, Metadata.AttributesUncompressedSize, "attributes.bin");
+                using (attributesStream)
                 {
-                    uint onDiskSize = isCompressed ? meta.AttributesSizeOnDisk : meta.AttributesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, meta.AttributesUncompressedSize, meta);
-
-#if DUMP_LSF_SERIALIZATION
-                    using (var attributesFile = new FileStream("attributes.bin", FileMode.Create, FileAccess.Write))
+                    var hasSiblingData = Version >= LSFVersion.VerExtendedNodes
+                        && Metadata.HasSiblingData == 1;
+                    if (hasSiblingData)
                     {
-                        attributesFile.Write(uncompressed, 0, uncompressed.Length);
+                        ReadAttributesV3(attributesStream);
                     }
-#endif
-
-                    using (var attributesStream = new MemoryStream(uncompressed))
+                    else
                     {
-                        var hasSiblingData = Version >= LSFVersion.VerExtendedNodes
-                            && meta.HasSiblingData == 1;
-                        if (hasSiblingData)
-                        {
-                            ReadAttributesV3(attributesStream);
-                        }
-                        else
-                        {
-                            ReadAttributesV2(attributesStream);
-                        }
+                        ReadAttributesV2(attributesStream);
                     }
                 }
 
-                if (meta.ValuesSizeOnDisk > 0 || meta.ValuesUncompressedSize > 0)
-                {
-                    uint onDiskSize = isCompressed ? meta.ValuesSizeOnDisk : meta.ValuesUncompressedSize;
-                    var uncompressed = Decompress(reader, onDiskSize, meta.ValuesUncompressedSize, meta);
-                    var valueStream = new MemoryStream(uncompressed);
-                    this.Values = valueStream;
-
-#if DUMP_LSF_SERIALIZATION
-                    using (var valuesFile = new FileStream("values.bin", FileMode.Create, FileAccess.Write))
-                    {
-                        valuesFile.Write(uncompressed, 0, uncompressed.Length);
-                    }
-#endif
-                }
-                else
-                {
-                    this.Values = new MemoryStream();
-                }
+                this.Values = Decompress(reader, Metadata.ValuesSizeOnDisk, Metadata.ValuesUncompressedSize, "values.bin");
 
                 Resource resource = new Resource();
                 ReadRegions(resource);

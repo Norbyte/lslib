@@ -109,7 +109,7 @@ namespace LSLib.LS
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
                 byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
-                var meta = new LSFMetadata();
+                var meta = new LSFMetadataV5();
                 meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
                 meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
                 meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
@@ -135,7 +135,7 @@ namespace LSLib.LS
                 meta.Unknown3 = 0;
                 meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
 
-                BinUtils.WriteStruct<LSFMetadata>(Writer, ref meta);
+                BinUtils.WriteStruct<LSFMetadataV5>(Writer, ref meta);
 
                 Writer.Write(stringsCompressed, 0, stringsCompressed.Length);
                 Writer.Write(nodesCompressed, 0, nodesCompressed.Length);

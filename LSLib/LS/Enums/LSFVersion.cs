@@ -28,9 +28,14 @@
         VerBG3ExtendedHeader = 0x05,
 
         /// <summary>
+        /// BG3 version with unknown additions
+        /// </summary>
+        VerBG3AdditionalBlob = 0x06,
+
+        /// <summary>
         /// Latest version supported by this library
         /// </summary>
-        MaxVersion = 0x05
+        MaxVersion = 0x06
     }
 
     public enum LSXVersion
