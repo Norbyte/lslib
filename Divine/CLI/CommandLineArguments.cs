@@ -192,6 +192,10 @@ namespace Divine.CLI
                 {
                     return LSLib.LS.Enums.Game.BaldursGate3;
                 }
+                case "bg3p7":
+                {
+                    return LSLib.LS.Enums.Game.BaldursGate3PrePatch8;
+                }
                 case "dos":
                 {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin;

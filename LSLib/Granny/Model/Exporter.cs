@@ -7,6 +7,7 @@ using LSLib.LS;
 using OpenTK;
 using Alphaleonis.Win32.Filesystem;
 using File = Alphaleonis.Win32.Filesystem.File;
+using LSLib.LS.Enums;
 
 namespace LSLib.Granny.Model
 {
@@ -116,39 +117,40 @@ namespace LSLib.Granny.Model
         public List<string> DisabledModels = new List<string>();
         public List<string> DisabledSkeletons = new List<string>();
 
-        public void LoadGameSettings(LSLib.LS.Enums.Game game)
+        public void LoadGameSettings(Game game)
         {
             switch (game)
             {
-                case LSLib.LS.Enums.Game.DivinityOriginalSin:
+                case Game.DivinityOriginalSin:
                     Is64Bit = false;
                     AlternateSignature = false;
-                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOS;
+                    VersionTag = Header.Tag_DOS;
                     ModelInfoFormat = DivinityModelInfoFormat.None;
                     break;
-                case LSLib.LS.Enums.Game.DivinityOriginalSinEE:
+                case Game.DivinityOriginalSinEE:
                     Is64Bit = true;
                     AlternateSignature = true;
-                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                    VersionTag = Header.Tag_DOSEE;
                     ModelInfoFormat = DivinityModelInfoFormat.UserDefinedProperties;
                     break;
-                case LSLib.LS.Enums.Game.DivinityOriginalSin2:
+                case Game.DivinityOriginalSin2:
                     Is64Bit = true;
                     AlternateSignature = true;
-                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                    VersionTag = Header.Tag_DOSEE;
                     ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
                     break;
-                case LSLib.LS.Enums.Game.BaldursGate3:
+                case Game.BaldursGate3PrePatch8:
+                case Game.BaldursGate3:
                     Is64Bit = true;
                     AlternateSignature = false;
-                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOSEE;
+                    VersionTag = Header.Tag_DOSEE;
                     ModelInfoFormat = DivinityModelInfoFormat.LSMv3;
                     break;
-                case LSLib.LS.Enums.Game.DivinityOriginalSin2DE:
+                case Game.DivinityOriginalSin2DE:
                 default:
                     Is64Bit = true;
                     AlternateSignature = true;
-                    VersionTag = LSLib.Granny.GR2.Header.Tag_DOS2DE;
+                    VersionTag = Header.Tag_DOS2DE;
                     ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
                     break;
             }

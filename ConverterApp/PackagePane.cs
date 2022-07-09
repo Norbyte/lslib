@@ -236,25 +236,25 @@ namespace ConverterApp
 
         public void SetGame(Game game)
         {
-            switch (game)
+            switch (game.PAKVersion())
             {
-                case Game.DivinityOriginalSin:
+                case PackageVersion.V7:
                     packageVersion.SelectedIndex = 5;
                     break;
 
-                case Game.DivinityOriginalSinEE:
+                case PackageVersion.V9:
                     packageVersion.SelectedIndex = 4;
                     break;
 
-                case Game.DivinityOriginalSin2:
+                case PackageVersion.V10:
                     packageVersion.SelectedIndex = 3;
                     break;
 
-                case Game.DivinityOriginalSin2DE:
+                case PackageVersion.V13:
                     packageVersion.SelectedIndex = 2;
                     break;
 
-                case Game.BaldursGate3:
+                case PackageVersion.V16:
                     packageVersion.SelectedIndex = 0;
                     break;
             }
