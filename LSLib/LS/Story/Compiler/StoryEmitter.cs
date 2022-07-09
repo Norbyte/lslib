@@ -48,17 +48,17 @@ namespace LSLib.LS.Story.Compiler
         {
             foreach (var type in Context.TypesById)
             {
-                if (type.Key <= (uint)Value.Type.GuidString) continue;
-
                 var osiType = new OsirisType();
                 osiType.Index = (byte)type.Value.TypeId;
                 if (type.Value.TypeId == (uint)type.Value.IntrinsicTypeId)
                 {
                     osiType.Alias = (byte)0;
+                    osiType.IsBuiltin = true;
                 }
                 else
                 {
                     osiType.Alias = (byte)type.Value.IntrinsicTypeId;
+                    osiType.IsBuiltin = false;
                 }
 
                 osiType.Name = type.Value.Name;
