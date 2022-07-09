@@ -49,57 +49,63 @@
             this.tabControl.Controls.Add(this.resourceTab);
             this.tabControl.Controls.Add(this.osirisTab);
             this.tabControl.Controls.Add(this.debugTab);
-            this.tabControl.Location = new System.Drawing.Point(12, 42);
+            this.tabControl.Location = new System.Drawing.Point(16, 52);
+            this.tabControl.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(917, 620);
+            this.tabControl.Size = new System.Drawing.Size(1223, 763);
             this.tabControl.TabIndex = 0;
             // 
             // gr2Tab
             // 
-            this.gr2Tab.Location = new System.Drawing.Point(4, 22);
+            this.gr2Tab.Location = new System.Drawing.Point(4, 25);
+            this.gr2Tab.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.gr2Tab.Name = "gr2Tab";
-            this.gr2Tab.Padding = new System.Windows.Forms.Padding(3);
-            this.gr2Tab.Size = new System.Drawing.Size(909, 594);
+            this.gr2Tab.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.gr2Tab.Size = new System.Drawing.Size(1215, 734);
             this.gr2Tab.TabIndex = 0;
             this.gr2Tab.Text = "GR2 Tools";
             this.gr2Tab.UseVisualStyleBackColor = true;
             // 
             // packageTab
             // 
-            this.packageTab.Location = new System.Drawing.Point(4, 22);
+            this.packageTab.Location = new System.Drawing.Point(4, 25);
+            this.packageTab.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.packageTab.Name = "packageTab";
-            this.packageTab.Padding = new System.Windows.Forms.Padding(3);
-            this.packageTab.Size = new System.Drawing.Size(909, 594);
+            this.packageTab.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.packageTab.Size = new System.Drawing.Size(1215, 734);
             this.packageTab.TabIndex = 1;
             this.packageTab.Text = "PAK / LSV Tools";
             this.packageTab.UseVisualStyleBackColor = true;
             // 
             // resourceTab
             // 
-            this.resourceTab.Location = new System.Drawing.Point(4, 22);
+            this.resourceTab.Location = new System.Drawing.Point(4, 25);
+            this.resourceTab.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.resourceTab.Name = "resourceTab";
-            this.resourceTab.Padding = new System.Windows.Forms.Padding(3);
-            this.resourceTab.Size = new System.Drawing.Size(909, 594);
+            this.resourceTab.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.resourceTab.Size = new System.Drawing.Size(1215, 734);
             this.resourceTab.TabIndex = 2;
             this.resourceTab.Text = "LSX / LSB / LSF / LSJ Tools";
             this.resourceTab.UseVisualStyleBackColor = true;
             // 
             // osirisTab
             // 
-            this.osirisTab.Location = new System.Drawing.Point(4, 22);
+            this.osirisTab.Location = new System.Drawing.Point(4, 25);
+            this.osirisTab.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.osirisTab.Name = "osirisTab";
-            this.osirisTab.Padding = new System.Windows.Forms.Padding(3);
-            this.osirisTab.Size = new System.Drawing.Size(909, 594);
+            this.osirisTab.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.osirisTab.Size = new System.Drawing.Size(1215, 734);
             this.osirisTab.TabIndex = 3;
             this.osirisTab.Text = "Story (OSI) tools";
             this.osirisTab.UseVisualStyleBackColor = true;
             // 
             // debugTab
             // 
-            this.debugTab.Location = new System.Drawing.Point(4, 22);
+            this.debugTab.Location = new System.Drawing.Point(4, 25);
+            this.debugTab.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.debugTab.Name = "debugTab";
-            this.debugTab.Size = new System.Drawing.Size(909, 594);
+            this.debugTab.Size = new System.Drawing.Size(1215, 734);
             this.debugTab.TabIndex = 4;
             this.debugTab.Text = "Savegame Debugging";
             this.debugTab.UseVisualStyleBackColor = true;
@@ -113,30 +119,34 @@
             "Divinity: Original Sin EE (64-bit)",
             "Divinity: Original Sin 2 (64-bit)",
             "Divinity: Original Sin 2 DE (64-bit)",
-            "Baldur\'s Gate 3 (64-bit)"});
-            this.gr2Game.Location = new System.Drawing.Point(74, 12);
+            "Baldur\'s Gate 3 EA Patch 1-7 (64-bit)",
+            "Baldur\'s Gate 3 EA Patch 8+ (64-bit)"});
+            this.gr2Game.Location = new System.Drawing.Point(99, 15);
+            this.gr2Game.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.gr2Game.Name = "gr2Game";
-            this.gr2Game.Size = new System.Drawing.Size(356, 21);
+            this.gr2Game.Size = new System.Drawing.Size(473, 24);
             this.gr2Game.TabIndex = 30;
             this.gr2Game.SelectedIndexChanged += new System.EventHandler(this.gr2Game_SelectedIndexChanged);
             // 
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(12, 14);
+            this.label7.Location = new System.Drawing.Point(16, 17);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(38, 13);
+            this.label7.Size = new System.Drawing.Size(50, 17);
             this.label7.TabIndex = 29;
             this.label7.Text = "Game:";
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(941, 671);
+            this.ClientSize = new System.Drawing.Size(1255, 826);
             this.Controls.Add(this.gr2Game);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.tabControl);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "MainForm";
             this.Text = "LSLib Toolkit";
             this.tabControl.ResumeLayout(false);
