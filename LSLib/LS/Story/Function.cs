@@ -63,7 +63,14 @@ namespace LSLib.LS.Story
             var count = reader.ReadByte();
             while (count-- > 0)
             {
-                Types.Add(reader.ReadUInt32());
+                if (reader.ShortTypeIds)
+                {
+                    Types.Add(reader.ReadUInt16());
+                }
+                else
+                {
+                    Types.Add(reader.ReadUInt32());
+                }
             }
         }
 
@@ -72,7 +79,14 @@ namespace LSLib.LS.Story
             writer.Write((byte)Types.Count);
             foreach (var type in Types)
             {
-                writer.Write(type);
+                if (writer.ShortTypeIds)
+                {
+                    writer.Write((UInt16)type);
+                }
+                else
+                {
+                    writer.Write(type);
+                }
             }
         }
 

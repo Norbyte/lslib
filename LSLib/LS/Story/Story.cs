@@ -9,6 +9,8 @@ namespace LSLib.LS.Story
     {
         public byte MinorVersion;
         public byte MajorVersion;
+        // Use 16-bit instead of 32-bit type IDs, BG3 Patch8+
+        public bool ShortTypeIds;
         public SaveFileHeader Header;
         public Dictionary<uint, OsirisType> Types;
         public List<OsirisDivObject> DivObjects;
@@ -269,8 +271,10 @@ namespace LSLib.LS.Story
                 header.Read(reader);
                 reader.MinorVersion = header.MinorVersion;
                 reader.MajorVersion = header.MajorVersion;
+                reader.ShortTypeIds = header.BG3Patch8;
                 story.MinorVersion = header.MinorVersion;
                 story.MajorVersion = header.MajorVersion;
+                story.ShortTypeIds = header.BG3Patch8;
 
                 if (reader.Ver > OsiVersion.VerLastSupported)
                 {
@@ -428,11 +432,19 @@ namespace LSLib.LS.Story
 
                 Writer.MajorVersion = story.MajorVersion;
                 Writer.MinorVersion = story.MinorVersion;
+                Writer.ShortTypeIds = story.ShortTypeIds;
 
                 var header = new SaveFileHeader();
                 if (Writer.Ver >= OsiVersion.VerExternalStringTable)
                 {
-                    header.Version = "Osiris save file dd. 03/30/17 07:28:20. Version 1.8.";
+                    if (Writer.ShortTypeIds)
+                    {
+                        header.Version = "Osiris save file dd. 07/09/22 00:20:54. Version 1.8.";
+                    }
+                    else
+                    {
+                        header.Version = "Osiris save file dd. 03/30/17 07:28:20. Version 1.8.";
+                    }
                 }
                 else
                 {

@@ -99,12 +99,28 @@ namespace LSLib.LS.Story
             var wtf = reader.ReadByte();
             if (wtf == '1')
             {
-                TypeId = reader.ReadUInt32();
+                if (reader.ShortTypeIds)
+                {
+                    TypeId = reader.ReadUInt16();
+                }
+                else
+                {
+                    TypeId = reader.ReadUInt32();
+                }
+
                 IntValue = reader.ReadInt32();
             }
             else if (wtf == '0')
             {
-                TypeId = reader.ReadUInt32();
+                if (reader.ShortTypeIds)
+                {
+                    TypeId = reader.ReadUInt16();
+                }
+                else
+                {
+                    TypeId = reader.ReadUInt32();
+                }
+
                 uint writtenTypeId = TypeId;
 
                 uint alias;
@@ -179,7 +195,15 @@ namespace LSLib.LS.Story
                 writtenTypeId = alias;
             }
 
-            writer.Write(TypeId);
+            if (writer.ShortTypeIds)
+            {
+                writer.Write((UInt16)TypeId);
+            }
+            else
+            {
+                writer.Write(TypeId);
+            }
+
             if (writer.Ver < OsiVersion.VerEnhancedTypes)
             {
                 // Make sure that we're serializing using the D:OS2 type ID
