@@ -289,9 +289,7 @@ namespace LSLib.LS.Story
             else
                 DebugFlags = 0;
 
-            // Patch 8 doesn't increment the version number but changes type layout,
-            // so we need to detect it from the build date.
-            BG3Patch8 = Version.Contains("07/09/22");
+            BG3Patch8 = Version.EndsWith("Version 1.8.");
         }
 
         public void Write(OsiWriter writer)
