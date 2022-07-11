@@ -99,7 +99,7 @@ namespace LSLib.LS.Story
             var wtf = reader.ReadByte();
             if (wtf == '1')
             {
-                if (reader.ShortTypeIds)
+                if (reader.ShortTypeIds == true)
                 {
                     TypeId = reader.ReadUInt16();
                 }
@@ -112,7 +112,7 @@ namespace LSLib.LS.Story
             }
             else if (wtf == '0')
             {
-                if (reader.ShortTypeIds)
+                if (reader.ShortTypeIds == true)
                 {
                     TypeId = reader.ReadUInt16();
                 }

@@ -271,10 +271,8 @@ namespace LSLib.LS.Story
                 header.Read(reader);
                 reader.MinorVersion = header.MinorVersion;
                 reader.MajorVersion = header.MajorVersion;
-                reader.ShortTypeIds = header.BG3Patch8;
                 story.MinorVersion = header.MinorVersion;
                 story.MajorVersion = header.MajorVersion;
-                story.ShortTypeIds = header.BG3Patch8;
 
                 if (reader.Ver > OsiVersion.VerLastSupported)
                 {
@@ -333,6 +331,7 @@ namespace LSLib.LS.Story
                 story.Databases = ReadDatabases(reader);
                 story.Goals = ReadGoals(reader, story);
                 story.GlobalActions = reader.ReadList<Call>();
+                story.ShortTypeIds = (bool)reader.ShortTypeIds;
 
                 story.FunctionSignatureMap = new Dictionary<string, Function>();
                 foreach (var func in story.Functions)

@@ -63,7 +63,16 @@ namespace LSLib.LS.Story
             var count = reader.ReadByte();
             while (count-- > 0)
             {
-                if (reader.ShortTypeIds)
+                // BG3 heuristic: Patch 8 doesn't increment the version number but changes type ID format,
+                // so we need to detect it by checking if a 32-bit type ID would be valid.
+                if (reader.ShortTypeIds == null)
+                {
+                    var id = reader.ReadUInt32();
+                    reader.BaseStream.Position -= 4;
+                    reader.ShortTypeIds = (id > 0xff);
+                }
+
+                if (reader.ShortTypeIds == true)
                 {
                     Types.Add(reader.ReadUInt16());
                 }

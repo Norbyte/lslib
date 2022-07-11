@@ -84,7 +84,7 @@ namespace LSLib.LS.Story
         public UInt32 MinorVersion;
         public UInt32 MajorVersion;
         // Use 16-bit instead of 32-bit type IDs, BG3 Patch8+
-        public bool ShortTypeIds;
+        public bool? ShortTypeIds = null;
         public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
         // TODO: Make RO!
         public Story Story;
@@ -265,7 +265,6 @@ namespace LSLib.LS.Story
         public bool BigEndian;
         public byte Unused;
         public UInt32 DebugFlags;
-        public bool BG3Patch8;
 
         public uint Ver
         {
@@ -288,10 +287,6 @@ namespace LSLib.LS.Story
                 DebugFlags = reader.ReadUInt32();
             else
                 DebugFlags = 0;
-
-            // Patch 8 doesn't increment the version number but changes type layout,
-            // so we need to detect it from the build date.
-            BG3Patch8 = Version.Contains("07/09/22");
         }
 
         public void Write(OsiWriter writer)
