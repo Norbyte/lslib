@@ -298,7 +298,7 @@ namespace LSLib.LS
                 throw new InvalidDataException(msg);
             }
 
-            if (magic.Version < (ulong)LSFVersion.VerInitial || magic.Version > (ulong)LSFVersion.MaxVersion)
+            if (magic.Version < (ulong)LSFVersion.VerInitial || magic.Version > (ulong)LSFVersion.MaxReadVersion)
             {
                 var msg = String.Format("LSF version {0} is not supported", magic.Version);
                 throw new InvalidDataException(msg);

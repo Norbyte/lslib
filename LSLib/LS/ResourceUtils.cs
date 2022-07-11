@@ -19,7 +19,7 @@ namespace LSLib.LS
         /// <summary>
         /// Format of generated LSF files
         /// </summary>
-        public LSFVersion LSF = LSFVersion.MaxVersion;
+        public LSFVersion LSF = LSFVersion.MaxWriteVersion;
 
         /// <summary>
         /// Store sibling/neighbour node data in LSF files (usually done by savegames only)

@@ -28,7 +28,7 @@ namespace LSLib.LS
         private List<List<string>> StringHashMap;
         private List<int> NextSiblingIndices;
 
-        public LSFVersion Version = LSFVersion.MaxVersion;
+        public LSFVersion Version = LSFVersion.MaxWriteVersion;
         public bool EncodeSiblingData = false;
         public CompressionMethod Compression = CompressionMethod.LZ4;
         public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
@@ -40,6 +40,12 @@ namespace LSLib.LS
 
         public void Write(Resource resource)
         {
+            if (Version > LSFVersion.MaxWriteVersion)
+            {
+                var msg = String.Format("Writing LSF version {0} is not supported (highest is {1})", Version, LSFVersion.MaxWriteVersion);
+                throw new InvalidDataException(msg);
+            }
+
             using (this.Writer = new BinaryWriter(Stream, Encoding.Default, true))
             using (this.NodeStream = new MemoryStream())
             using (this.NodeWriter = new BinaryWriter(NodeStream))
@@ -109,33 +115,67 @@ namespace LSLib.LS
                 byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
                 byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
-                var meta = new LSFMetadataV5();
-                meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
-                meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
-                meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
-                meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
-
-                if (Compression == CompressionMethod.None)
+                if (Version < LSFVersion.VerBG3AdditionalBlob)
                 {
-                    meta.StringsSizeOnDisk = 0;
-                    meta.NodesSizeOnDisk = 0;
-                    meta.AttributesSizeOnDisk = 0;
-                    meta.ValuesSizeOnDisk = 0;
+                    var meta = new LSFMetadataV5();
+                    meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
+                    meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
+                    meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
+                    meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
+
+                    if (Compression == CompressionMethod.None)
+                    {
+                        meta.StringsSizeOnDisk = 0;
+                        meta.NodesSizeOnDisk = 0;
+                        meta.AttributesSizeOnDisk = 0;
+                        meta.ValuesSizeOnDisk = 0;
+                    }
+                    else
+                    {
+                        meta.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
+                        meta.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
+                        meta.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
+                        meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+                    }
+
+                    meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                    meta.Unknown2 = 0;
+                    meta.Unknown3 = 0;
+                    meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
+
+                    BinUtils.WriteStruct<LSFMetadataV5>(Writer, ref meta);
                 }
                 else
                 {
-                    meta.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
-                    meta.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
-                    meta.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
-                    meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+                    var meta = new LSFMetadataV6();
+                    meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
+                    meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
+                    meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
+                    meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
+
+                    if (Compression == CompressionMethod.None)
+                    {
+                        meta.StringsSizeOnDisk = 0;
+                        meta.NodesSizeOnDisk = 0;
+                        meta.AttributesSizeOnDisk = 0;
+                        meta.ValuesSizeOnDisk = 0;
+                    }
+                    else
+                    {
+                        meta.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
+                        meta.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
+                        meta.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
+                        meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
+                    }
+
+                    meta.Unknown = 0;
+                    meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                    meta.Unknown2 = 0;
+                    meta.Unknown3 = 0;
+                    meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
+
+                    BinUtils.WriteStruct<LSFMetadataV6>(Writer, ref meta);
                 }
-
-                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
-                meta.Unknown2 = 0;
-                meta.Unknown3 = 0;
-                meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
-
-                BinUtils.WriteStruct<LSFMetadataV5>(Writer, ref meta);
 
                 Writer.Write(stringsCompressed, 0, stringsCompressed.Length);
                 Writer.Write(nodesCompressed, 0, nodesCompressed.Length);

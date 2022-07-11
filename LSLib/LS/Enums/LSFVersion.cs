@@ -33,9 +33,14 @@
         VerBG3AdditionalBlob = 0x06,
 
         /// <summary>
-        /// Latest version supported by this library
+        /// Latest input version supported by this library
         /// </summary>
-        MaxVersion = 0x06
+        MaxReadVersion = 0x06,
+
+        /// <summary>
+        /// Latest output version supported by this library
+        /// </summary>
+        MaxWriteVersion = 0x06
     }
 
     public enum LSXVersion
