@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -15,13 +16,26 @@ namespace ConverterApp
     {
         private Story _story;
         public Game Game;
+        
+        private ConverterAppSettings Settings { get; }
 
+        private readonly List<KeyValuePair<uint, string>> _databaseItems = new List<KeyValuePair<uint, string>>();
+        
         public OsirisPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
 
+            Settings = settingsDataSource.Settings;
+
             storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath", true, DataSourceUpdateMode.OnPropertyChanged);
             goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            tbFilter.DataBindings.Add("Text", settingsDataSource, "Settings.Story.FilterText", true, DataSourceUpdateMode.OnPropertyChanged);
+            btnFilterMatchCase.DataBindings.Add("Tag", settingsDataSource, "Settings.Story.FilterMatchCase", true, DataSourceUpdateMode.OnPropertyChanged);
+            
+            btnFilterMatchCase.BackColor = Color.FromKnownColor(Settings.Story.FilterMatchCase ? KnownColor.MenuHighlight : KnownColor.Control);
+            
+            databaseSelectorCb.DisplayMember = "Value";
+            databaseSelectorCb.ValueMember = "Key";
         }
 
         private void storyFileBrowseBtn_Click(object sender, EventArgs e)
@@ -45,7 +59,9 @@ namespace ConverterApp
             var reader = new StoryReader();
             _story = reader.Read(s);
 
-            databaseSelectorCb.Items.Clear();
+            _databaseItems.Clear();
+
+            uint index = 0;
             foreach (KeyValuePair<uint, Database> database in _story.Databases)
             {
                 var name = "(Unnamed)";
@@ -57,13 +73,11 @@ namespace ConverterApp
 
                 name += $" #{database.Key} ({database.Value.Facts.Count} rows)";
 
-                databaseSelectorCb.Items.Add(name);
-
-                if (databaseSelectorCb.Items.Count > 0)
-                {
-                    databaseSelectorCb.SelectedIndex = 0;
-                }
+                _databaseItems.Add(new KeyValuePair<uint, string>(index, name));
+                index += 1;
             }
+            
+            databaseSelectorCb_FilterDropdownList();
         }
 
         public Resource LoadResourceFromSave(string path)
@@ -308,17 +322,50 @@ namespace ConverterApp
             MessageBox.Show("Story unpacked successfully.");
         }
 
+        private void databaseSelectorCb_FilterDropdownList()
+        {
+            tbFilter.BackColor = Color.FromKnownColor(KnownColor.Window);
+
+            if (tbFilter.Text.Trim().Length == 0)
+            {
+                tbFilter.Text = string.Empty;
+                databaseSelectorCb.DataSource = _databaseItems;
+                return;
+            }
+
+            List<KeyValuePair<uint, string>> queryResults;
+
+            if (Settings.Story.FilterMatchCase == false)
+            {
+                queryResults = _databaseItems
+                    .Where(s => s.Value.ToLowerInvariant().Contains(tbFilter.Text.ToLowerInvariant()))
+                    .ToList();
+            }
+            else
+            {
+                queryResults = _databaseItems
+                    .Where(s => s.Value.Contains(tbFilter.Text))
+                    .ToList();
+            }
+
+            if (queryResults.Any())
+            {
+                databaseSelectorCb.DataSource = queryResults;
+                databaseSelectorCb.SelectedIndex = 0;
+            }
+            else
+            {
+                tbFilter.BackColor = Color.LightCoral;
+            }
+        }
+
         private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)
         {
             databaseGrid.DataSource = null;
             databaseGrid.Columns.Clear();
 
-            if (databaseSelectorCb.SelectedIndex == -1)
-            {
-                return;
-            }
-
-            Database database = _story.Databases[(uint) databaseSelectorCb.SelectedIndex + 1];
+            var selectedIndex = ((KeyValuePair<uint, string>)databaseSelectorCb.SelectedItem).Key;
+            Database database = _story.Databases[selectedIndex + 1];
             databaseGrid.DataSource = database.Facts;
 
             for (var i = 0; i < database.Parameters.Types.Count; i++)
@@ -335,6 +382,22 @@ namespace ConverterApp
                 var sev = new StoryDebugExportVisitor(debugFileStream);
                 sev.Visit(_story);
             }
+        }
+
+        private void databaseFilter_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+                databaseSelectorCb_FilterDropdownList();
+        }
+
+        private void btnDatabaseFilterMatchCase_Click(object sender, EventArgs e)
+        {
+            Settings.Story.FilterMatchCase = !Settings.Story.FilterMatchCase;
+
+            btnFilterMatchCase.BackColor = Color.FromKnownColor(Settings.Story.FilterMatchCase ? KnownColor.MenuHighlight : KnownColor.Control);
+
+            if (tbFilter.Text.Trim().Length > 0)
+                databaseSelectorCb_FilterDropdownList();
         }
     }
 }

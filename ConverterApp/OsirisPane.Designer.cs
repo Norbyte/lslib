@@ -22,8 +22,8 @@
 
         #region Component Designer generated code
 
-        /// <summary> 
-        /// Required method for Designer support - do not modify 
+        /// <summary>
+        /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
@@ -44,6 +44,9 @@
             this.storyPathDlg = new System.Windows.Forms.OpenFileDialog();
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.btnDebugExport = new System.Windows.Forms.Button();
+            this.lblFilter = new System.Windows.Forms.Label();
+            this.tbFilter = new System.Windows.Forms.TextBox();
+            this.btnFilterMatchCase = new System.Windows.Forms.Button();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).BeginInit();
             this.SuspendLayout();
@@ -61,18 +64,51 @@
             // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.Controls.Add(this.databaseGrid);
             this.groupBox3.Controls.Add(this.databaseSelectorCb);
             this.groupBox3.Controls.Add(this.label18);
+            this.groupBox3.Controls.Add(this.lblFilter);
+            this.groupBox3.Controls.Add(this.tbFilter);
+            this.groupBox3.Controls.Add(this.btnFilterMatchCase);
             this.groupBox3.Location = new System.Drawing.Point(5, 147);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(849, 430);
+            this.groupBox3.Size = new System.Drawing.Size(849, 441);
             this.groupBox3.TabIndex = 68;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Database Editor";
+            // 
+            // lblFilter
+            // 
+            this.lblFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblFilter.AutoSize = true;
+            this.lblFilter.Location = new System.Drawing.Point(554, 22);
+            this.lblFilter.Name = "lblFilter";
+            this.lblFilter.Size = new System.Drawing.Size(32, 13);
+            this.lblFilter.TabIndex = 4;
+            this.lblFilter.Text = "Filter:";
+            // 
+            // tbFilter
+            // 
+            this.tbFilter.AcceptsReturn = true;
+            this.tbFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbFilter.Location = new System.Drawing.Point(594, 18);
+            this.tbFilter.Name = "tbFilter";
+            this.tbFilter.Size = new System.Drawing.Size(197, 20);
+            this.tbFilter.TabIndex = 3;
+            this.tbFilter.KeyUp += new System.Windows.Forms.KeyEventHandler(this.databaseFilter_KeyUp);
+            // 
+            // btnFilterMatchCase
+            // 
+            this.btnFilterMatchCase.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnFilterMatchCase.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnFilterMatchCase.Location = new System.Drawing.Point(797, 17);
+            this.btnFilterMatchCase.Name = "btnFilterMatchCase";
+            this.btnFilterMatchCase.Size = new System.Drawing.Size(41, 22);
+            this.btnFilterMatchCase.TabIndex = 5;
+            this.btnFilterMatchCase.Text = "Aa";
+            this.btnFilterMatchCase.UseVisualStyleBackColor = true;
+            this.btnFilterMatchCase.Click += new System.EventHandler(this.btnDatabaseFilterMatchCase_Click);
             // 
             // databaseGrid
             // 
@@ -83,7 +119,7 @@
             this.databaseGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.databaseGrid.Location = new System.Drawing.Point(9, 47);
             this.databaseGrid.Name = "databaseGrid";
-            this.databaseGrid.Size = new System.Drawing.Size(829, 369);
+            this.databaseGrid.Size = new System.Drawing.Size(829, 380);
             this.databaseGrid.TabIndex = 2;
             // 
             // databaseSelectorCb
@@ -244,5 +280,8 @@
         private System.Windows.Forms.OpenFileDialog storyPathDlg;
         private System.Windows.Forms.FolderBrowserDialog goalPathDlg;
         private System.Windows.Forms.Button btnDebugExport;
+        private System.Windows.Forms.Label lblFilter;
+        private System.Windows.Forms.TextBox tbFilter;
+        private System.Windows.Forms.Button btnFilterMatchCase;
     }
 }
