@@ -286,6 +286,22 @@ namespace ConverterApp
             get { return outputPath; }
             set { outputPath = value; OnPropertyChanged(); }
         }
+
+        private string filterText = "";
+
+        public string FilterText
+        {
+            get { return filterText; }
+            set { filterText = value; OnPropertyChanged(); }
+        }
+
+        private bool filterMatchCase = false;
+
+        public bool FilterMatchCase
+        {
+            get { return filterMatchCase; }
+            set { filterMatchCase = value; OnPropertyChanged(); }
+        }
     }
 
     public class DebugPaneSettings : SettingsBase
