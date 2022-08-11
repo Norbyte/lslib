@@ -249,7 +249,7 @@ namespace LSLib.LS
                 return _uncompressedStream;
             }
 
-            if ((CompressionMethod)(Flags & 0x0F) == CompressionMethod.None)
+            if ((CompressionMethod)(Flags & 0x0F) == CompressionMethod.None && !Solid)
             {
                 // Use direct stream read for non-compressed files
                 _uncompressedStream = new UncompressedPackagedFileStream(PackageStream, this);
