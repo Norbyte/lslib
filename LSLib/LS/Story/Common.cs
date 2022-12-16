@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace LSLib.LS.Story
@@ -73,9 +74,14 @@ namespace LSLib.LS.Story
         public const uint VerRemoveExternalStringTable = 0x010c;
 
         /// <summary>
+        /// Added enumerations
+        /// </summary>
+        public const uint VerEnums = 0x010d;
+
+        /// <summary>
         /// Last supported Osi version
         /// </summary>
-        public const uint VerLastSupported = VerRemoveExternalStringTable;
+        public const uint VerLastSupported = VerEnums;
     }
 
     public class OsiReader : BinaryReader
@@ -214,6 +220,7 @@ namespace LSLib.LS.Story
         // Use 16-bit instead of 32-bit type IDs, BG3 Patch8+
         public bool ShortTypeIds;
         public Dictionary<uint, uint> TypeAliases = new Dictionary<uint, uint>();
+        public Dictionary<uint, OsirisEnum> Enums = new Dictionary<uint, OsirisEnum>();
 
         public uint Ver
         {
@@ -366,6 +373,70 @@ namespace LSLib.LS.Story
             else
             {
                 writer.WriteLine("{0}: {1} (Alias: {2})", Index, Name, Alias);
+            }
+        }
+    }
+
+    public class OsirisEnumElement : OsirisSerializable
+    {
+        public String Name;
+        public UInt64 Value;
+
+
+        public void Read(OsiReader reader)
+        {
+            Name = reader.ReadString();
+            Value = reader.ReadUInt64();
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(Name);
+            writer.Write(Value);
+        }
+
+        public void DebugDump(TextWriter writer)
+        {
+            writer.WriteLine("{0}: {1}", Name, Value);
+        }
+    }
+
+    public class OsirisEnum : OsirisSerializable
+    {
+        public UInt16 UnderlyingType;
+        public List<OsirisEnumElement> Elements;
+
+
+        public void Read(OsiReader reader)
+        {
+            UnderlyingType = reader.ReadUInt16();
+            var elements = reader.ReadUInt32();
+            Elements = new List<OsirisEnumElement>();
+            while (elements-- > 0)
+            {
+                var e = new OsirisEnumElement();
+                e.Read(reader);
+                Elements.Add(e);
+            }
+        }
+
+        public void Write(OsiWriter writer)
+        {
+            writer.Write(UnderlyingType);
+            writer.Write((UInt32)Elements.Count);
+
+            foreach (var e in Elements)
+            {
+                e.Write(writer);
+            }
+        }
+
+        public void DebugDump(TextWriter writer)
+        {
+            writer.WriteLine("Type {0}", UnderlyingType);
+            foreach (var e in Elements)
+            {
+                e.DebugDump(writer);
             }
         }
     }

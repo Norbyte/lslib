@@ -175,6 +175,23 @@ namespace LSLib.LS.Story
                         break;
                 }
             }
+            else if (wtf == 'e')
+            {
+                TypeId = reader.ReadUInt16();
+
+                OsirisEnum e;
+                if (!reader.Story.Enums.TryGetValue(TypeId, out e))
+                {
+                    throw new InvalidDataException($"Enum label serialized for a non-enum type: {TypeId}");
+                }
+
+                StringValue = reader.ReadString();
+                var ele = e.Elements.Find(v => v.Name == StringValue);
+                if (ele == null)
+                {
+                    throw new InvalidDataException($"Enumeration {TypeId} has no label named '{StringValue}'");
+                }
+            }
             else
             {
                 throw new InvalidDataException("Unrecognized value type");
@@ -183,6 +200,14 @@ namespace LSLib.LS.Story
 
         public virtual void Write(OsiWriter writer)
         {
+            if (writer.Enums.ContainsKey(TypeId))
+            {
+                writer.Write((byte)'e');
+                writer.Write((UInt16)TypeId);
+                writer.Write(StringValue);
+                return;
+            }
+
             // TODO: Is the == 0x31 case ever used when reading?
             writer.Write((byte)'0');
 

@@ -12,6 +12,7 @@ namespace LSLib.LS.Story
         // Use 16-bit instead of 32-bit type IDs, BG3 Patch8+
         public bool ShortTypeIds;
         public SaveFileHeader Header;
+        public Dictionary<uint, OsirisEnum> Enums;
         public Dictionary<uint, OsirisType> Types;
         public List<OsirisDivObject> DivObjects;
         public List<Function> Functions;
@@ -25,6 +26,12 @@ namespace LSLib.LS.Story
 
         public void DebugDump(TextWriter writer)
         {
+            writer.WriteLine(" --- ENUMS ---");
+            foreach (var e in Enums)
+            {
+                e.Value.DebugDump(writer);
+            }
+            
             writer.WriteLine(" --- TYPES ---");
             foreach (var type in Types)
             {
@@ -132,6 +139,20 @@ namespace LSLib.LS.Story
             }
 
             return types;
+        }
+
+        private Dictionary<uint, OsirisEnum> ReadEnums(OsiReader reader)
+        {
+            var enums = new Dictionary<uint, OsirisEnum>();
+            var count = reader.ReadUInt32();
+            while (count-- > 0)
+            {
+                var e = new OsirisEnum();
+                e.Read(reader);
+                enums.Add(e.UnderlyingType, e);
+            }
+
+            return enums;
         }
 
         private Dictionary<uint, Node> ReadNodes(OsiReader reader)
@@ -283,6 +304,15 @@ namespace LSLib.LS.Story
                     throw new InvalidDataException(msg);
                 }
 
+                if (reader.Ver < OsiVersion.VerRemoveExternalStringTable)
+                {
+                    reader.ShortTypeIds = false;
+                }
+                else if (reader.Ver >= OsiVersion.VerEnums)
+                {
+                    reader.ShortTypeIds = true;
+                }
+
                 if (reader.Ver >= OsiVersion.VerScramble)
                     reader.Scramble = 0xAD;
 
@@ -322,6 +352,15 @@ namespace LSLib.LS.Story
                             reader.TypeAliases.Add(typeId, 3);
                         }
                     }
+                }
+
+                if (reader.Ver >= OsiVersion.VerEnums)
+                {
+                    story.Enums = ReadEnums(reader);
+                }
+                else
+                {
+                    story.Enums = new Dictionary<uint, OsirisEnum>();
                 }
 
                 story.DivObjects = reader.ReadList<OsirisDivObject>();
@@ -432,6 +471,7 @@ namespace LSLib.LS.Story
                 Writer.MajorVersion = story.MajorVersion;
                 Writer.MinorVersion = story.MinorVersion;
                 Writer.ShortTypeIds = story.ShortTypeIds;
+                Writer.Enums = story.Enums;
 
                 var header = new SaveFileHeader();
                 if (Writer.Ver >= OsiVersion.VerExternalStringTable)
@@ -474,6 +514,11 @@ namespace LSLib.LS.Story
                     // Don't export builtin types, only externally declared ones
                     var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
                     WriteTypes(types, story);
+                }
+
+                if (Writer.Ver >= OsiVersion.VerEnums)
+                {
+                    Writer.WriteList(story.Enums.Values.ToList());
                 }
 
                 // TODO: regenerate string table?
