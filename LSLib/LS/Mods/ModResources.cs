@@ -1,9 +1,13 @@
-﻿using LSLib.LS.Story.Compiler;
+﻿#define DEBUG
+using LSLib.LS.Story.Compiler;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+
+using System.Diagnostics;
 
 namespace LSLib.LS
 {
@@ -48,7 +52,7 @@ namespace LSLib.LS
         private static readonly Regex globalsRe = new Regex("^Mods/([^/]+)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex levelObjectsRe = new Regex("^Mods/([^/]+)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         // Pattern for excluding subsequent parts of a multi-part archive
-        private static readonly Regex archivePartRe = new Regex("^(.*)_[1-9]\\.pak$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex archivePartRe = new Regex("^(.*)_\\d+(.pak)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private readonly ModResources Resources;
 
@@ -210,54 +214,113 @@ namespace LSLib.LS
 
         public void DiscoverPackage(string packagePath)
         {
-            var reader = new PackageReader(packagePath);
-            Resources.LoadedPackages.Add(reader);
-            var package = reader.Read();
-
-            foreach (var file in package.Files)
+            try
             {
-                DiscoverPackagedFile(file);
+                var reader = new PackageReader(packagePath);
+                Resources.LoadedPackages.Add(reader);
+                var package = reader.Read();
+
+                foreach (var file in package.Files)
+                {
+                    DiscoverPackagedFile(file);
+                }
             }
+            catch(Exception ex)
+            {
+               Debug.WriteLine($"Error parsing package ({packagePath}):\n{ex}");
+            }
+        }
+
+        // List of packages we won't ever load
+        // These packages don't contain any mod resources, but have a large
+        // file table that makes loading unneccessarily slow.
+        static HashSet<string> packageBlacklist = new HashSet<string>
+        {
+            "Assets.pak",
+            "Effects.pak",
+            "Engine.pak",
+            "EngineShaders.pak",
+            "Game.pak",
+            "GamePlatform.pak",
+            "Gustav_Textures.pak",
+            "Icons.pak",
+            "LowTex.pak",
+            "Materials.pak",
+            "Minimaps.pak",
+            "Models.pak",
+            "SharedSoundBanks.pak",
+            "SharedSounds.pak",
+            "Textures.pak",
+            "VirtualTextures.pak"
+        };
+
+        static bool IgnorePak(Alphaleonis.Win32.Filesystem.FileSystemEntryInfo f, IEnumerable<string> ignorePaks = null)
+        {
+            if (ignorePaks != null)
+            {
+                if (ignorePaks.Contains(f.FileName, StringComparer.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                var m = archivePartRe.Match(f.FileName);
+                if (m.Success)
+                {
+                    var baseName = m.Groups[1].Value + m.Groups[2].Value;
+                    return ignorePaks.Contains(baseName, StringComparer.OrdinalIgnoreCase);
+                }
+            }
+            return false;
+        }
+
+        static bool IsPartialPak(KeyValuePair<string, string> kvp, Dictionary<string, string> paks)
+        {
+            var m = archivePartRe.Match(kvp.Key);
+            if (m.Success)
+            {
+                // Get the name without any numbers
+                var baseName = m.Groups[1].Value + m.Groups[2].Value;
+                // Check if this name is in the dictionary already. If it is, then this is a partial pak.
+                return paks.ContainsKey(baseName);
+            }
+            return false;
+        }
+
+        static IEnumerable<string> GetPackagePaths(string rootDirectory, bool recursive = false, IEnumerable<string> ignorePaks = null)
+        {
+            var opts = Alphaleonis.Win32.Filesystem.DirectoryEnumerationOptions.Files;
+            if (recursive)
+            {
+                opts |= Alphaleonis.Win32.Filesystem.DirectoryEnumerationOptions.Recursive;
+            }
+
+            var filters = new Alphaleonis.Win32.Filesystem.DirectoryEnumerationFilters
+            {
+                InclusionFilter = (f) => f.Extension.Equals(".pak", StringComparison.OrdinalIgnoreCase) && !IgnorePak(f, ignorePaks)
+            };
+            var allPackages = Alphaleonis.Win32.Filesystem.Directory.EnumerateFiles(rootDirectory, opts, filters)
+                .ToDictionary(x => Alphaleonis.Win32.Filesystem.Path.GetFileName(x), x => x);
+
+            return allPackages.Where(p => !IsPartialPak(p, allPackages)).Select(kvp => kvp.Value).Distinct();
         }
 
         public void DiscoverBuiltinPackages(string gameDataPath)
         {
-            // List of packages we won't ever load
-            // These packages don't contain any mod resources, but have a large
-            // file table that makes loading unneccessarily slow.
-            HashSet<string> packageBlacklist = new HashSet<string>
-            {
-                "Assets.pak",
-                "Effects.pak",
-                "Engine.pak",
-                "EngineShaders.pak",
-                "Game.pak",
-                "GamePlatform.pak",
-                "Gustav_Textures.pak",
-                "Icons.pak",
-                "LowTex.pak",
-                "Materials.pak",
-                "Minimaps.pak",
-                "Models.pak",
-                "SharedSoundBanks.pak",
-                "SharedSounds.pak",
-                "Textures.pak",
-                "VirtualTextures.pak"
-            };
-
             // Collect priority value from headers
             var packagePriorities = new List<Tuple<string, int>>();
 
-            foreach (var path in Directory.GetFiles(gameDataPath, "*.pak"))
+            var packagePaths = GetPackagePaths(gameDataPath, false, packageBlacklist).ToList();
+
+            foreach (var path in packagePaths)
             {
-                var baseName = Path.GetFileName(path);
-                if (!packageBlacklist.Contains(baseName)
-                    // Don't load 2nd, 3rd, ... parts of a multi-part archive
-                    && !archivePartRe.IsMatch(baseName))
+                try
                 {
                     var reader = new PackageReader(path, true);
                     var package = reader.Read();
                     packagePriorities.Add(new Tuple<string, int>(path, package.Metadata.Priority));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error parsing builtin package:\n{ex}");
                 }
             }
 
@@ -271,19 +334,15 @@ namespace LSLib.LS
             // Load non-patch packages first
             foreach (var package in packagePriorities)
             {
-                 DiscoverPackage(package.Item1);
+                DiscoverPackage(package.Item1);
             }
         }
 
         public void DiscoverUserPackages(string gameDataPath)
         {
-            foreach (var packagePath in Directory.GetFiles(gameDataPath, "*.pak"))
+            foreach (var packagePath in GetPackagePaths(gameDataPath, false))
             {
-                // Don't load 2nd, 3rd, ... parts of a multi-part archive
-                if (!archivePartRe.IsMatch(packagePath))
-                {
-                    DiscoverPackage(packagePath);
-                }
+                DiscoverPackage(packagePath);
             }
         }
 
@@ -407,7 +466,7 @@ namespace LSLib.LS
                 }
             }
 
-            if (CollectStats)
+            if (CollectStats && Directory.Exists(publicPath))
             {
                 DiscoverModStats(modName, publicPath);
             }
