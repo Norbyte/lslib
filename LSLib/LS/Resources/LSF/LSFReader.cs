@@ -270,6 +270,16 @@ namespace LSLib.LS
 
         private MemoryStream Decompress(BinaryReader reader, uint sizeOnDisk, uint uncompressedSize, string debugDumpTo, bool allowChunked)
         {
+            if (sizeOnDisk == 0 && uncompressedSize != 0) // data is not compressed
+            {
+                return new MemoryStream(reader.ReadBytes((int)uncompressedSize));
+            }
+
+            if (sizeOnDisk == 0 && uncompressedSize == 0) // no data
+            {
+                return new MemoryStream();
+            }
+            
             bool chunked = (Version >= LSFVersion.VerChunkedCompress && allowChunked);
             bool isCompressed = BinUtils.CompressionFlagsToMethod(Metadata.CompressionFlags) != CompressionMethod.None;
             uint compressedSize = isCompressed ? sizeOnDisk : uncompressedSize;
