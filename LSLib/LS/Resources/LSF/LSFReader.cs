@@ -310,6 +310,15 @@ namespace LSLib.LS
             {
                 var hdr = BinUtils.ReadStruct<LSFHeaderV5>(reader);
                 GameVersion = PackedVersion.FromInt64(hdr.EngineVersion);
+
+                // Workaround for merged LSF files with missing engine version number
+                if (GameVersion.Major == 0)
+                {
+                    GameVersion.Major = 4;
+                    GameVersion.Minor = 0;
+                    GameVersion.Revision = 9;
+                    GameVersion.Build = 0;
+                }
             }
             else
             {
