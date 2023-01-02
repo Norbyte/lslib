@@ -515,8 +515,18 @@ namespace LSLib.LS.Story
 
                 if (Writer.Ver >= OsiVersion.VerAddTypeMap)
                 {
-                    // Don't export builtin types, only externally declared ones
-                    var types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
+                    List<OsirisType> types;
+                    if (Writer.Ver >= OsiVersion.VerEnums)
+                    {
+                        // BG3 Patch 9 writes all types to the blob except type 0
+                        types = story.Types.Values.Where(t => t.Name != "UNKNOWN").ToList();
+                    }
+                    else
+                    {
+                        // Don't export builtin types, only externally declared ones
+                        types = story.Types.Values.Where(t => !t.IsBuiltin).ToList();
+                    }
+
                     WriteTypes(types, story);
                 }
 

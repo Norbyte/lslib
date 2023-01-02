@@ -87,16 +87,22 @@ namespace LSLib.LS
             packaged.SizeOnDisk = (UInt64) (stream.Position - (long)packaged.OffsetInFile);
             packaged.Crc = Crc32.Compute(compressed, 0);
 
-            int padLength = PaddingLength();
-            if (stream.Position % padLength <= 0)
-            {
-                return packaged;
-            }
-
             if ((_package.Metadata.Flags & PackageFlags.Solid) == 0)
             {
+                int padLength = PaddingLength();
+                long alignTo;
+                if (Version >= PackageVersion.V16)
+                {
+                    alignTo = stream.Position - Marshal.SizeOf(typeof(LSPKHeader16)) - 4;
+                }
+                else
+                {
+                    alignTo = stream.Position;
+                }
+
                 // Pad the file to a multiple of 64 bytes
-                var pad = new byte[padLength - stream.Position % padLength];
+                var padBytes = (padLength - alignTo % padLength) % padLength;
+                var pad = new byte[padBytes];
                 for (var i = 0; i < pad.Length; i++)
                 {
                     pad[i] = 0xAD;
