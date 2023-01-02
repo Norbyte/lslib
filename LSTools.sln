@@ -29,9 +29,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoryDecompiler", "StoryDec
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StatParser", "StatParser\StatParser.csproj", "{94D900D1-EC77-4170-8942-56E3736E44DE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainFixup", "TerrainFixup\TerrainFixup.csproj", "{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnpackGrid", "UnpackGrid\UnpackGrid.csproj", "{1948A6AF-41EE-4711-B617-B5CBA8434013}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainFixup", "TerrainFixup\TerrainFixup.csproj", "{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FCB7F25F-1626-43F6-A854-FB51B2D07670}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
