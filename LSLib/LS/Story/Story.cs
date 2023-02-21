@@ -24,6 +24,14 @@ namespace LSLib.LS.Story
         public List<string> ExternalStringTable;
         public Dictionary<string, Function> FunctionSignatureMap;
 
+        public uint Version
+        {
+            get
+            {
+                return ((uint)MajorVersion << 8) | (uint)MinorVersion;
+            }
+        }
+
         public void DebugDump(TextWriter writer)
         {
             writer.WriteLine(" --- ENUMS ---");

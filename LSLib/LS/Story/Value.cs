@@ -93,6 +93,20 @@ namespace LSLib.LS.Story
             }
         }
 
+        public Type GetBuiltinTypeId(Story story)
+        {
+            var aliasId = story.FindBuiltinTypeId(TypeId);
+
+            if (story.Version < OsiVersion.VerEnhancedTypes)
+            {
+                return (Type)ConvertOS1ToOS2Type(aliasId);
+            }
+            else
+            {
+                return (Type)aliasId;
+            }
+        }
+
         public virtual void Read(OsiReader reader)
         {
             // possibly isReference?
@@ -281,9 +295,9 @@ namespace LSLib.LS.Story
 
         public virtual void DebugDump(TextWriter writer, Story story)
         {
-            var builtinTypeId = story.FindBuiltinTypeId(TypeId);
+            var builtinTypeId = GetBuiltinTypeId(story);
 
-            switch ((Type)builtinTypeId)
+            switch (builtinTypeId)
             {
                 case Type.None:
                     writer.Write("<unknown>");
@@ -316,9 +330,9 @@ namespace LSLib.LS.Story
 
         public virtual void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes = false)
         {
-            var builtinTypeId = story.FindBuiltinTypeId(TypeId);
+            var builtinTypeId = GetBuiltinTypeId(story);
 
-            switch ((Type)builtinTypeId)
+            switch (builtinTypeId)
             {
                 case Type.None:
                     throw new InvalidDataException("Script cannot contain unknown values");
