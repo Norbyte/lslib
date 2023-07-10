@@ -473,7 +473,10 @@ namespace LSLib.Granny.Model
                     case "VERTEX": inputMaps.Add(positionMaps); break;
                     case "NORMAL":
                     case "TANGENT":
-                    case "BINORMAL": inputMaps.Add(normalMaps); break;
+                    case "BINORMAL": 
+                    case "TEXTANGENT":
+                    case "TEXBINORMAL": 
+                        inputMaps.Add(normalMaps); break;
                     case "TEXCOORD": inputMaps.Add(uvMaps[uvIndex]); uvIndex++; break;
                     case "COLOR": inputMaps.Add(colorMaps[colorIndex]); colorIndex++; break;
                     default: throw new InvalidOperationException("No input maps available for semantic " + input.semantic);
@@ -597,14 +600,6 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public VertexDescriptor VertexFormat;
 
-        [Serialization(Kind = SerializationKind.None)]
-        public DivinityModelFlag ModelType = 0;
-
-        // Is the model type inferred, or was the exact model type flag imported from the resource file?
-        // (Determines how the exporter reacts to model type override flags)
-        [Serialization(Kind = SerializationKind.None)]
-        public bool HasDefiniteModelType = false;
-
         public void PostLoad()
         {
             if (PrimaryVertexData.Vertices.Count > 0)
@@ -612,10 +607,42 @@ namespace LSLib.Granny.Model
                 VertexFormat = PrimaryVertexData.Vertices[0].Format;
             }
 
-            if (HasDefiniteModelType == false)
+            if (ExtendedData != null && ExtendedData.UserMeshProperties.MeshFlags == 0)
             {
-                ModelType = DivinityHelpers.DetermineModelFlags(this, out HasDefiniteModelType);
+                ExtendedData.UserMeshProperties.MeshFlags = AutodetectMeshFlags();
             }
+        }
+        public DivinityModelFlag AutodetectMeshFlags()
+        {
+            DivinityModelFlag flags = 0;
+
+            if (ExtendedData != null 
+                && ExtendedData.UserMeshProperties != null
+                && ExtendedData.UserMeshProperties.MeshFlags != 0)
+            {
+                return ExtendedData.UserMeshProperties.MeshFlags;
+            }
+
+            if (ExtendedData != null 
+                && ExtendedData.UserDefinedProperties != null)
+            {
+                flags = UserDefinedPropertiesHelpers.UserDefinedPropertiesToMeshType(ExtendedData.UserDefinedProperties);
+            }
+            else
+            {
+                // Only mark model as cloth if it has colored vertices
+                if (VertexFormat.ColorMaps > 0)
+                {
+                    flags |= DivinityModelFlag.Cloth;
+                }
+
+                if (!VertexFormat.HasBoneWeights)
+                {
+                    flags |= DivinityModelFlag.Rigid;
+                }
+            }
+
+            return flags;
         }
 
         public List<string> VertexComponentNames()

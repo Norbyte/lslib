@@ -1020,7 +1020,7 @@ namespace LSLib.Granny.GR2
 
             member.LoadAttributes(info, writer);
 
-            if (type.IsArray)
+            if (type.IsArray && member.SerializationKind != SerializationKind.None)
             {
                 if (member.ArraySize == 0)
                     throw new InvalidOperationException("SerializationAttribute.ArraySize must be set for fixed size arrays");
@@ -1141,7 +1141,7 @@ namespace LSLib.Granny.GR2
             {
                 var member = MemberDefinition.CreateFromFieldInfo(field, writer);
                 if (member.SerializationKind != SerializationKind.None)
-                    Members.Add(MemberDefinition.CreateFromFieldInfo(field, writer));
+                    Members.Add(member);
             }
         }
     }

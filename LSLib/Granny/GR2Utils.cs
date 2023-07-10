@@ -5,7 +5,6 @@ using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS;
-using Alphaleonis.Win32.Filesystem;
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using Path = Alphaleonis.Win32.Filesystem.Path;
 using File = Alphaleonis.Win32.Filesystem.File;

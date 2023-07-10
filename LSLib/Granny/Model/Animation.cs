@@ -664,7 +664,7 @@ namespace LSLib.Granny.Model
         public float[] LoopTranslation;
         public PeriodicLoop PeriodicLoop;
         [Serialization(Type = MemberType.VariantReference)]
-        public object ExtendedData;
+        public BG3TrackGroupExtendedData ExtendedData;
     }
 
     public class Animation

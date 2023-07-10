@@ -305,6 +305,8 @@ namespace LSLib.Granny.Model
         public Vector2 TextureCoordinates1;
         public Vector2 TextureCoordinates2;
         public Vector2 TextureCoordinates3;
+        public Vector2 TextureCoordinates4;
+        public Vector2 TextureCoordinates5;
 
         protected Vertex() { }
 
@@ -316,6 +318,8 @@ namespace LSLib.Granny.Model
                 case 1: return TextureCoordinates1;
                 case 2: return TextureCoordinates2;
                 case 3: return TextureCoordinates3;
+                case 4: return TextureCoordinates4;
+                case 5: return TextureCoordinates5;
                 default: throw new ArgumentException($"At most {MaxUVs} UVs are supported.");
             }
         }
@@ -328,6 +332,8 @@ namespace LSLib.Granny.Model
                 case 1: TextureCoordinates1 = uv; break;
                 case 2: TextureCoordinates2 = uv; break;
                 case 3: TextureCoordinates3 = uv; break;
+                case 4: TextureCoordinates4 = uv; break;
+                case 5: TextureCoordinates5 = uv; break;
                 default: throw new ArgumentException($"At most {MaxUVs} UVs are supported.");
             }
         }
@@ -560,6 +566,8 @@ namespace LSLib.Granny.Model
                     case "TextureCoordinates1":
                     case "TextureCoordinates2":
                     case "TextureCoordinates3":
+                    case "TextureCoordinates4":
+                    case "TextureCoordinates5":
                         desc.TextureCoordinates++;
                         if (member.Type == MemberType.Real32 && member.ArraySize == 2)
                         {

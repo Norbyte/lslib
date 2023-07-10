@@ -290,8 +290,15 @@ namespace LSLib.Granny.Model
 
             vertexSemantics.TryGetValue("POSITION", out vertexPositions);
             vertexSemantics.TryGetValue("NORMAL", out perVertexNormals);
-            vertexSemantics.TryGetValue("TANGENT", out perVertexTangents);
-            vertexSemantics.TryGetValue("BINORMAL", out perVertexBinormals);
+            if (!vertexSemantics.TryGetValue("TANGENT", out perVertexTangents))
+            {
+                vertexSemantics.TryGetValue("TEXTANGENT", out perVertexTangents);
+            }
+
+            if (!vertexSemantics.TryGetValue("BINORMAL", out perVertexBinormals))
+            {
+                vertexSemantics.TryGetValue("TEXBINORMAL", out perVertexBinormals);
+            }
 
             foreach (var input in Inputs)
             {
@@ -305,13 +312,13 @@ namespace LSLib.Granny.Model
                     Normals = ColladaHelpers.SourceToPositions(normalsSource);
                     NormalsInputIndex = (int)input.offset;
                 }
-                else if (input.semantic == "TANGENT")
+                else if (input.semantic == "TANGENT" || input.semantic == "TEXTANGENT")
                 {
                     var tangentsSource = FindSource(input.source);
                     Tangents = ColladaHelpers.SourceToPositions(tangentsSource);
                     TangentsInputIndex = (int)input.offset;
                 }
-                else if (input.semantic == "BINORMAL")
+                else if (input.semantic == "BINORMAL" || input.semantic == "TEXBINORMAL")
                 {
                     var binormalsSource = FindSource(input.source);
                     Binormals = ColladaHelpers.SourceToPositions(binormalsSource);
@@ -449,8 +456,12 @@ namespace LSLib.Granny.Model
                 switch (input.semantic)
                 {
                     case "NORMAL": desc.NormalType = NormalType.Float3; break;
-                    case "TANGENT": desc.TangentType = NormalType.Float3; break;
-                    case "BINORMAL": desc.BinormalType = NormalType.Float3; break;
+                    case "TANGENT":
+                    case "TEXTANGENT": 
+                        desc.TangentType = NormalType.Float3; break;
+                    case "BINORMAL":
+                    case "TEXBINORMAL":
+                        desc.BinormalType = NormalType.Float3; break;
                 }
             }
 
@@ -459,8 +470,12 @@ namespace LSLib.Granny.Model
                 switch (input.semantic)
                 {
                     case "NORMAL": desc.NormalType = NormalType.Float3; break;
-                    case "TANGENT": desc.TangentType = NormalType.Float3; break;
-                    case "BINORMAL": desc.BinormalType = NormalType.Float3; break;
+                    case "TANGENT": 
+                    case "TEXTANGENT": 
+                        desc.TangentType = NormalType.Float3; break;
+                    case "BINORMAL": 
+                    case "TEXBINORMAL": 
+                        desc.BinormalType = NormalType.Float3; break;
                     case "TEXCOORD":
                         desc.TextureCoordinateType = TextureCoordinateType.Float2;
                         desc.TextureCoordinates++;

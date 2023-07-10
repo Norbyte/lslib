@@ -12,7 +12,9 @@ namespace LSLib.Granny.Model
         HasProxyGeometry = 0x04,
         HasColor = 0x08,
         Skinned = 0x10,
-        Rigid = 0x20
+        Rigid = 0x20,
+        Spring = 0x40,
+        Occluder = 0x80
     };
 
     public static class DivinityModelFlagMethods
@@ -27,9 +29,24 @@ namespace LSLib.Granny.Model
             return (flag & DivinityModelFlag.Cloth) == DivinityModelFlag.Cloth;
         }
 
+        public static bool HasProxyGeometry(this DivinityModelFlag flag)
+        {
+            return (flag & DivinityModelFlag.HasProxyGeometry) == DivinityModelFlag.HasProxyGeometry;
+        }
+
         public static bool IsRigid(this DivinityModelFlag flag)
         {
             return (flag & DivinityModelFlag.Rigid) == DivinityModelFlag.Rigid;
+        }
+
+        public static bool IsSpring(this DivinityModelFlag flag)
+        {
+            return (flag & DivinityModelFlag.Spring) == DivinityModelFlag.Spring;
+        }
+
+        public static bool IsOccluder(this DivinityModelFlag flag)
+        {
+            return (flag & DivinityModelFlag.Occluder) == DivinityModelFlag.Occluder;
         }
     }
 
@@ -200,8 +217,14 @@ namespace LSLib.Granny.Model
 
     public class DivinityMeshExtendedData
     {
-        const Int32 CurrentLSMVersion = 1;
+        const Int32 CurrentLSMVersion = 3;
 
+        public Int32 MeshProxy;
+        public Int32 Rigid;
+        public Int32 Cloth;
+        public Int32 Spring;
+        public Int32 Occluder;
+        public Int32 LOD;
         public string UserDefinedProperties;
         public DivinityMeshProperties UserMeshProperties;
         public Int32 LSMVersion;
@@ -210,6 +233,11 @@ namespace LSLib.Granny.Model
         {
             return new DivinityMeshExtendedData
             {
+                Rigid = 0,
+                Cloth = 0,
+                Spring = 0,
+                Occluder = 0,
+                LOD = 0,
                 UserDefinedProperties = "",
                 UserMeshProperties = new DivinityMeshProperties
                 {
@@ -223,9 +251,66 @@ namespace LSLib.Granny.Model
                 LSMVersion = CurrentLSMVersion
             };
         }
+
+
+        public void UpdateFromModelInfo(Mesh mesh, DivinityModelInfoFormat format)
+        {
+            DivinityModelFlag meshFlags = 0;
+            if (UserMeshProperties != null)
+            {
+                meshFlags = UserMeshProperties.MeshFlags;
+            }
+
+            if (mesh.VertexFormat.HasBoneWeights)
+            {
+                meshFlags |= DivinityModelFlag.Skinned;
+            }
+
+            if (mesh.VertexFormat.ColorMaps > 0)
+            {
+                meshFlags |= DivinityModelFlag.HasColor;
+            }
+            else
+            {
+                meshFlags &= ~DivinityModelFlag.Cloth;
+            }
+
+            if (format == DivinityModelInfoFormat.UserDefinedProperties)
+            {
+                LSMVersion = 0;
+                UserMeshProperties = null;
+                UserDefinedProperties =
+                   UserDefinedPropertiesHelpers.MeshFlagsToUserDefinedProperties(meshFlags);
+            }
+            else
+            {
+                UserMeshProperties.MeshFlags = meshFlags;
+
+                if (format == DivinityModelInfoFormat.LSMv3)
+                {
+                    LSMVersion = 3;
+                    UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
+                }
+                else if (format == DivinityModelInfoFormat.LSMv1)
+                {
+                    LSMVersion = 1;
+                    UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
+                }
+                else
+                {
+                    LSMVersion = 0;
+                    UserMeshProperties.FormatDescs = new List<DivinityFormatDesc>();
+                }
+            }
+        }
     }
 
-    public static class DivinityHelpers
+    public class BG3TrackGroupExtendedData
+    {
+        public string SkeletonResourceID;
+    }
+
+    public static class UserDefinedPropertiesHelpers
     {
         // The GR2 loader checks for this exact string, including spaces.
         public const string UserDefinedProperties_Rigid = "Rigid = true";
@@ -233,20 +318,20 @@ namespace LSLib.Granny.Model
         public const string UserDefinedProperties_Cloth = "Cloth=true";
         public const string UserDefinedProperties_MeshProxy = "MeshProxy=true";
 
-        public static string ModelFlagsToUserDefinedProperties(DivinityModelFlag modelFlags)
+        public static string MeshFlagsToUserDefinedProperties(DivinityModelFlag meshFlags)
         {
             List<string> properties = new List<string>();
-            if (modelFlags.IsRigid())
+            if (meshFlags.IsRigid())
             {
                 properties.Add(UserDefinedProperties_Rigid);
             }
 
-            if (modelFlags.IsCloth())
+            if (meshFlags.IsCloth())
             {
                 properties.Add(UserDefinedProperties_Cloth);
             }
 
-            if (modelFlags.IsMeshProxy())
+            if (meshFlags.IsMeshProxy())
             {
                 properties.Add(UserDefinedProperties_MeshProxy);
             }
@@ -254,7 +339,7 @@ namespace LSLib.Granny.Model
             return String.Join("\n", properties);
         }
 
-        public static DivinityModelFlag UserDefinedPropertiesToModelType(string userDefinedProperties)
+        public static DivinityModelFlag UserDefinedPropertiesToMeshType(string userDefinedProperties)
         {
             // The D:OS 2 editor uses the ExtendedData attribute to determine whether a model can be 
             // bound to a character.
@@ -277,106 +362,6 @@ namespace LSLib.Granny.Model
             }
 
             return flags;
-        }
-        
-        public static DivinityModelFlag DetermineModelFlags(Mesh mesh, out bool hasDefiniteModelType)
-        {
-            DivinityModelFlag flags = 0;
-
-            if (mesh.HasDefiniteModelType)
-            {
-                flags = mesh.ModelType;
-                hasDefiniteModelType = true;
-            }
-            else if (mesh.ExtendedData != null
-                && mesh.ExtendedData.LSMVersion >= 1
-                && mesh.ExtendedData.UserMeshProperties != null)
-            {
-                flags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
-                hasDefiniteModelType = true;
-            }
-            else if (mesh.ExtendedData != null
-                && mesh.ExtendedData.UserDefinedProperties != null)
-            {
-                flags = UserDefinedPropertiesToModelType(mesh.ExtendedData.UserDefinedProperties);
-                hasDefiniteModelType = true;
-            }
-            else
-            {
-                // Only mark model as cloth if it has colored vertices
-                if (mesh.VertexFormat.ColorMaps > 0)
-                {
-                    flags |= DivinityModelFlag.Cloth;
-                }
-
-                if (!mesh.VertexFormat.HasBoneWeights)
-                {
-                    flags |= DivinityModelFlag.Rigid;
-                }
-
-                hasDefiniteModelType = false;
-            }
-
-            return flags;
-        }
-
-        public static DivinityMeshExtendedData MakeMeshExtendedData(Mesh mesh, DivinityModelInfoFormat format,
-            DivinityModelFlag modelFlagOverrides)
-        {
-            var extendedData = DivinityMeshExtendedData.Make();
-            DivinityModelFlag modelFlags = modelFlagOverrides;
-
-            if (mesh.HasDefiniteModelType)
-            {
-                modelFlags = mesh.ModelType;
-            }
-
-            if (mesh.VertexFormat.HasBoneWeights)
-            {
-                modelFlags |= DivinityModelFlag.Skinned;
-            }
-
-            if (mesh.VertexFormat.ColorMaps > 0)
-            {
-                modelFlags |= DivinityModelFlag.HasColor;
-            }
-            else
-            {
-                modelFlags &= ~DivinityModelFlag.Cloth;
-            }
-
-            extendedData.UserDefinedProperties =
-               DivinityHelpers.ModelFlagsToUserDefinedProperties(modelFlags);
-
-            if (format == DivinityModelInfoFormat.UserDefinedProperties)
-            {
-                extendedData.LSMVersion = 0;
-                extendedData.UserMeshProperties = null;
-            }
-            else
-            {
-                extendedData.UserMeshProperties.MeshFlags = modelFlags;
-
-                if (format == DivinityModelInfoFormat.LSMv3)
-                {
-                    extendedData.LSMVersion = 3;
-                    extendedData.UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
-                    extendedData.UserMeshProperties.LodDistance = new float[] { 3.40282347E+38f };
-                    extendedData.UserMeshProperties.IsImpostor = new Int32[] { 0 };
-                }
-                else if (format == DivinityModelInfoFormat.LSMv1)
-                {
-                    extendedData.LSMVersion = 1;
-                    extendedData.UserMeshProperties.FormatDescs = DivinityFormatDesc.FromVertexFormat(mesh.VertexFormat);
-                }
-                else
-                {
-                    extendedData.LSMVersion = 0;
-                    extendedData.UserMeshProperties.FormatDescs = new List<DivinityFormatDesc>();
-                }
-            }
-
-            return extendedData;
         }
     }
 }

@@ -4,6 +4,8 @@ using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.LS;
 using Alphaleonis.Win32.Filesystem;
+using System.Xml;
+using LSLib.LS.Story;
 
 namespace LSLib.Granny.Model
 {
@@ -81,7 +83,7 @@ namespace LSLib.Granny.Model
                             if (Options.ExportTangents)
                             {
                                 var tangents = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
-                                AddInput(tangents, "TANGENT");
+                                AddInput(tangents, "TEXTANGENT");
                             }
                             break;
                         }
@@ -91,13 +93,17 @@ namespace LSLib.Granny.Model
                             if (Options.ExportTangents)
                             {
                                 var binormals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
-                                AddInput(binormals, "BINORMAL");
+                                AddInput(binormals, "TEXBINORMAL");
                             }
                             break;
                         }
 
                     case "TextureCoordinates0":
                     case "TextureCoordinates1":
+                    case "TextureCoordinates2":
+                    case "TextureCoordinates3":
+                    case "TextureCoordinates4":
+                    case "TextureCoordinates5":
                         {
                             if (Options.ExportUVs)
                             {
@@ -168,14 +174,14 @@ namespace LSLib.Granny.Model
             if (desc.TangentType != NormalType.None && Options.ExportTangents)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
-                AddInput(normals, null, "TANGENT");
+                AddInput(normals, null, "TEXTANGENT");
             }
 
             // Binormals
             if (desc.BinormalType != NormalType.None && Options.ExportTangents)
             {
                 var normals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
-                AddInput(normals, null, "BINORMAL");
+                AddInput(normals, null, "TEXBINORMAL");
             }
 
             // Texture coordinates
@@ -201,8 +207,81 @@ namespace LSLib.Granny.Model
             // BoneWeights and BoneIndices are handled in ExportSkin()
         }
 
+        private void AddTechniqueProperty(XmlDocument xml, List<XmlElement> props, string property, string value)
+        {
+            var prop = xml.CreateElement(property);
+            prop.InnerText = value;
+            props.Add(prop);
+        }
+
+        private technique ExportLSLibProfile(XmlDocument xml)
+        {
+            var profile = new technique()
+            {
+                profile = "LSTools"
+            };
+
+            var props = new List<XmlElement>();
+
+            var userProps = ExportedMesh.ExtendedData?.UserMeshProperties;
+            if (userProps != null)
+            {
+                var flags = userProps.MeshFlags;
+
+                if (flags.IsMeshProxy())
+                {
+                    AddTechniqueProperty(xml, props, "DivModelType", "MeshProxy");
+                }
+
+                if (flags.IsCloth())
+                {
+                    AddTechniqueProperty(xml, props, "DivModelType", "Cloth");
+                }
+
+                if (flags.HasProxyGeometry())
+                {
+                    AddTechniqueProperty(xml, props, "DivModelType", "ProxyGeometry");
+                }
+
+                if (flags.IsRigid())
+                {
+                    AddTechniqueProperty(xml, props, "DivModelType", "Rigid");
+                }
+
+                if (flags.IsSpring())
+                {
+                    AddTechniqueProperty(xml, props, "DivModelType", "Spring");
+                }
+
+                if (flags.IsOccluder())
+                {
+                    AddTechniqueProperty(xml, props, "DivModelType", "Occluder");
+                }
+
+                if (userProps.IsImpostor != null && userProps.IsImpostor[0] == 1)
+                {
+                    AddTechniqueProperty(xml, props, "IsImpostor", "1");
+                }
+
+                if (userProps.Lod != null && userProps.Lod[0] != -1)
+                {
+                    AddTechniqueProperty(xml, props, "LOD", $"{userProps.Lod[0]}");
+                }
+
+                if (userProps.LodDistance != null && userProps.LodDistance[0] > 0 && userProps.LodDistance[0] < 1.0E+30f)
+                {
+                    AddTechniqueProperty(xml, props, "LODDistance", $"{userProps.LodDistance[0]}");
+                }
+            }
+
+            profile.Any = props.ToArray();
+            return profile;
+        }
+
         public mesh Export()
         {
+            // Jank we need to create XMLElements on the fly
+            var xml = new XmlDocument();
             Sources = new List<source>();
             Inputs = new List<InputLocal>();
             InputOffsets = new List<InputLocalOffset>();
@@ -236,6 +315,16 @@ namespace LSLib.Granny.Model
             colladaMesh.vertices.input = Inputs.ToArray();
             colladaMesh.source = Sources.ToArray();
             colladaMesh.Items = new object[] { triangles };
+            colladaMesh.extra = new extra[]
+            {
+                new extra
+                {
+                    technique = new technique[]
+                    {
+                        ExportLSLibProfile(xml)
+                    }
+                }
+            };
 
             return colladaMesh;
         }
@@ -247,6 +336,7 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public ExporterOptions Options = new ExporterOptions();
 
+        private XmlDocument Xml = new XmlDocument();
 
         private void ExportMeshBinding(Model model, string skelRef, MeshBinding meshBinding, List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
         {
@@ -476,7 +566,26 @@ namespace LSLib.Granny.Model
             }
         }
 
-        public List<animation> ExportKeyframeTrack(TransformTrack transformTrack, string name, string target)
+        private technique ExportAnimationLSLibProfile(BG3TrackGroupExtendedData extData)
+        {
+            var profile = new technique()
+            {
+                profile = "LSTools"
+            };
+
+            var props = new List<XmlElement>();
+            if (extData != null && extData.SkeletonResourceID != null && extData.SkeletonResourceID != "")
+            {
+                var prop = Xml.CreateElement("SkeletonResourceID");
+                prop.InnerText = extData.SkeletonResourceID;
+                props.Add(prop);
+            }
+
+            profile.Any = props.ToArray();
+            return profile;
+        }
+
+        public List<animation> ExportKeyframeTrack(TransformTrack transformTrack, BG3TrackGroupExtendedData extData, string name, string target)
         {
             var track = transformTrack.ToKeyframes();
             track.MergeAdjacentFrames();
@@ -559,17 +668,30 @@ namespace LSLib.Granny.Model
             animItems.Add(sampler);
             animItems.Add(channel);
             animation.Items = animItems.ToArray();
+
+            animation.extra = new extra[]
+            {
+                new extra
+                {
+                    technique = new technique[]
+                    {
+                        ExportAnimationLSLibProfile(extData)
+                    }
+                }
+            };
+
             anims.Add(animation);
             return anims;
         }
 
-        public List<animation> ExportTrack(TransformTrack track)
+        public List<animation> ExportTrack(TransformTrack track, BG3TrackGroupExtendedData extData)
         {
             var anims = new List<animation>();
-            var name = "Bone_" + track.Name.Replace(' ', '_');
+            var name = track.Name.Replace(' ', '_');
+            var boneName = "Bone_" + track.Name.Replace(' ', '_');
 
             // Export all tracks in a single transform
-            anims.AddRange(ExportKeyframeTrack(track, name + "_Transform", name + "/Transform"));
+            anims.AddRange(ExportKeyframeTrack(track, extData, name + "_Transform", boneName + "/Transform"));
 
             return anims;
         }
@@ -579,7 +701,7 @@ namespace LSLib.Granny.Model
             var anims = new List<animation>();
             foreach (var track in trackGroup.TransformTracks)
             {
-                anims.AddRange(ExportTrack(track));
+                anims.AddRange(ExportTrack(track, trackGroup.ExtendedData));
             }
 
             return anims;

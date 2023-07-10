@@ -187,16 +187,16 @@ namespace ConverterApp
 
             bool hasUndeterminedModelTypes = false;
             DivinityModelFlag accumulatedModelFlags = 0;
-            if (_root.Meshes != null)
+            foreach (var mesh in _root.Meshes ?? Enumerable.Empty<Mesh>())
             {
-                foreach (var mesh in _root.Meshes)
+                if (mesh.ExtendedData?.UserMeshProperties == null
+                    || mesh.ExtendedData.UserMeshProperties.MeshFlags == 0)
                 {
-                    if (!mesh.HasDefiniteModelType)
-                    {
-                        hasUndeterminedModelTypes = true;
-                    }
-
-                    accumulatedModelFlags |= mesh.ModelType;
+                    hasUndeterminedModelTypes = true;
+                }
+                else if (mesh.ExtendedData?.UserMeshProperties == null)
+                {
+                    accumulatedModelFlags |= mesh.ExtendedData.UserMeshProperties.MeshFlags;
                 }
             }
 

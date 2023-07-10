@@ -185,30 +185,16 @@ namespace LSLib.Granny.Model
             return exporterInfo;
         }
 
-        private DivinityModelFlag DetermineSkeletonModelFlagsFromModels(Root root, Skeleton skeleton, DivinityModelFlag modelFlagOverrides)
+        private DivinityModelFlag DetermineSkeletonModelFlagsFromModels(Root root, Skeleton skeleton, DivinityModelFlag meshFlagOverrides)
         {
             DivinityModelFlag accumulatedFlags = 0;
-            if (root.Meshes != null)
+            foreach (var model in root.Models ?? Enumerable.Empty<Model>())
             {
-                foreach (var model in root.Models)
+                if (model.Skeleton == skeleton && model.MeshBindings != null)
                 {
-                    if (model.Skeleton == skeleton)
+                    foreach (var meshBinding in model.MeshBindings)
                     {
-                        if (model.MeshBindings != null)
-                        {
-                            foreach (var meshBinding in model.MeshBindings)
-                            {
-                                var mesh = meshBinding.Mesh;
-                                if (mesh.HasDefiniteModelType)
-                                {
-                                    accumulatedFlags |= mesh.ModelType;
-                                }
-                                else
-                                {
-                                    accumulatedFlags |= modelFlagOverrides;
-                                }
-                            }
-                        }
+                        accumulatedFlags |= meshBinding.Mesh?.ExtendedData?.UserMeshProperties?.MeshFlags ?? meshFlagOverrides;
                     }
                 }
             }
@@ -216,7 +202,7 @@ namespace LSLib.Granny.Model
             return accumulatedFlags;
         }
 
-        private void UpdateUserDefinedProperties(Root root)
+        private void BuildExtendedData(Root root)
         {
             if (Options.ModelInfoFormat == DivinityModelInfoFormat.None)
             {
@@ -225,50 +211,42 @@ namespace LSLib.Granny.Model
 
             var modelFlagOverrides = Options.ModelType;
 
-            if (root.Meshes != null)
+            foreach (var mesh in root.Meshes ?? Enumerable.Empty<Mesh>())
             {
-                foreach (var mesh in root.Meshes)
+                DivinityModelFlag modelFlags = modelFlagOverrides;
+                if (modelFlags == 0 && mesh.ExtendedData != null)
                 {
-                    DivinityModelFlag modelFlags = modelFlagOverrides;
-                    if (mesh.HasDefiniteModelType)
-                    {
-                        modelFlags = mesh.ModelType;
-                    }
-
-                    var userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(modelFlags);
-                    mesh.ExtendedData = DivinityHelpers.MakeMeshExtendedData(mesh, Options.ModelInfoFormat, Options.ModelType);
+                    modelFlags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
                 }
+
+                mesh.ExtendedData = DivinityMeshExtendedData.Make();
+                mesh.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
+                mesh.ExtendedData.UpdateFromModelInfo(mesh, Options.ModelInfoFormat);
             }
 
-            if (root.Skeletons != null)
+            foreach (var skeleton in root.Skeletons ?? Enumerable.Empty<Skeleton>())
             {
-                foreach (var skeleton in root.Skeletons)
+                if (Options.ModelInfoFormat == DivinityModelInfoFormat.None || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
                 {
-                    if (skeleton.Bones != null)
+                    foreach (var bone in skeleton.Bones ?? Enumerable.Empty<Bone>())
                     {
-                        if (Options.ModelInfoFormat == DivinityModelInfoFormat.None || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
-                        {
-                            foreach (var bone in skeleton.Bones)
-                            {
-                                 bone.ExtendedData = null;
-                            }
-                        }
-                        else
-                        {
-                            var accumulatedFlags = DetermineSkeletonModelFlagsFromModels(root, skeleton, modelFlagOverrides);
+                        bone.ExtendedData = null;
+                    }
+                }
+                else
+                {
+                    var accumulatedFlags = DetermineSkeletonModelFlagsFromModels(root, skeleton, modelFlagOverrides);
 
-                            foreach (var bone in skeleton.Bones)
-                            {
-                                if (bone.ExtendedData == null)
-                                {
-                                    bone.ExtendedData = new DivinityBoneExtendedData();
-                                }
-
-                                var userDefinedProperties = DivinityHelpers.ModelFlagsToUserDefinedProperties(accumulatedFlags);
-                                bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
-                                bone.ExtendedData.IsRigid = (accumulatedFlags.IsRigid()) ? 1 : 0;
-                            }
+                    foreach (var bone in skeleton.Bones ?? Enumerable.Empty<Bone>())
+                    {
+                        if (bone.ExtendedData == null)
+                        {
+                            bone.ExtendedData = new DivinityBoneExtendedData();
                         }
+
+                        var userDefinedProperties = UserDefinedPropertiesHelpers.MeshFlagsToUserDefinedProperties(accumulatedFlags);
+                        bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
+                        bone.ExtendedData.IsRigid = (accumulatedFlags.IsRigid()) ? 1 : 0;
                     }
                 }
             }
@@ -320,36 +298,113 @@ namespace LSLib.Granny.Model
             return null;
         }
 
-        private DivinityModelFlag FindDivModelType(mesh mesh)
+        private void LoadLSLibProfileMeshType(DivinityMeshProperties props, string meshType)
         {
-            DivinityModelFlag flags = 0;
-
-            var technique = FindExporterExtraData(mesh.extra);
-            if (technique != null)
+            switch (meshType)
             {
-                if (technique.Any != null)
+                // Compatibility flag, not used anymore
+                case "Normal": break;
+                case "Cloth": props.MeshFlags |= DivinityModelFlag.Cloth; break;
+                case "Rigid": props.MeshFlags |= DivinityModelFlag.Rigid; break;
+                case "MeshProxy": props.MeshFlags |= DivinityModelFlag.MeshProxy | DivinityModelFlag.HasProxyGeometry; break;
+                case "ProxyGeometry": props.MeshFlags |= DivinityModelFlag.HasProxyGeometry; break;
+                case "Spring": props.MeshFlags |= DivinityModelFlag.Spring; break;
+                case "Occluder": props.MeshFlags |= DivinityModelFlag.Occluder; break;
+                default:
+                    Utils.Warn($"Unrecognized model type in <DivModelType> tag: {meshType}");
+                    break;
+            }
+        }
+
+        private void LoadLSLibProfileLOD(DivinityMeshExtendedData props, string lod)
+        {
+            if (Int32.TryParse(lod, out int parsedLod))
+            {
+                if (parsedLod >= 0 && parsedLod < 100)
                 {
-                    foreach (var setting in technique.Any)
+                    props.LOD = parsedLod;
+                    if (parsedLod == 0)
                     {
-                        if (setting.LocalName == "DivModelType")
-                        {
-                            switch (setting.InnerText.Trim())
-                            {
-                                // Compatibility flag, not used anymore
-                                case "Normal": break;
-                                case "Cloth": flags |= DivinityModelFlag.Cloth; break;
-                                case "Rigid": flags |= DivinityModelFlag.Rigid; break;
-                                case "MeshProxy": flags |= DivinityModelFlag.MeshProxy | DivinityModelFlag.HasProxyGeometry; break;
-                                default:
-                                    Utils.Warn($"Unrecognized model type in <DivModelType> tag: {setting.Value}");
-                                    break;
-                            }
-                        }
+                        props.UserMeshProperties.Lod[0] = -1;
+                    }
+                    else
+                    {
+                        props.UserMeshProperties.Lod[0] = parsedLod;
                     }
                 }
             }
+        }
 
-            return flags;
+        private void LoadLSLibProfileImpostor(DivinityMeshExtendedData props, string impostor)
+        {
+            if (Int32.TryParse(impostor, out int isImpostor))
+            {
+                if (isImpostor == 1)
+                {
+                    props.UserMeshProperties.IsImpostor[0] = 1;
+                }
+            }
+        }
+
+        private void LoadLSLibProfileLODDistance(DivinityMeshProperties props, string lodDistance)
+        {
+            if (Single.TryParse(lodDistance, out float parsedLodDistance))
+            {
+                if (parsedLodDistance >= 0.0f)
+                {
+                    props.LodDistance[0] = parsedLodDistance;
+                }
+            }
+        }
+
+        private void MakeExtendedData(mesh mesh, Mesh loaded)
+        {
+            var modelFlagOverrides = Options.ModelType;
+
+            DivinityModelFlag modelFlags = modelFlagOverrides;
+            if (modelFlags == 0 && loaded.ExtendedData != null)
+            {
+                modelFlags = loaded.ExtendedData.UserMeshProperties.MeshFlags;
+            }
+
+            loaded.ExtendedData = DivinityMeshExtendedData.Make();
+            loaded.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
+            loaded.ExtendedData.UpdateFromModelInfo(loaded, Options.ModelInfoFormat);
+            LoadColladaLSLibProfileData(mesh, loaded);
+        }
+
+        private void LoadColladaLSLibProfileData(mesh mesh, Mesh loaded)
+        {
+            var technique = FindExporterExtraData(mesh.extra);
+            if (technique == null || technique.Any == null) return;
+
+            var meshProps = loaded.ExtendedData.UserMeshProperties;
+
+            foreach (var setting in technique.Any)
+            {
+                switch (setting.LocalName)
+                {
+                    case "DivModelType":
+                        LoadLSLibProfileMeshType(meshProps, setting.InnerText.Trim());
+                        break;
+                        
+                    case "IsImpostor":
+                        LoadLSLibProfileImpostor(loaded.ExtendedData, setting.InnerText.Trim());
+                        break;
+                        
+                    case "LOD":
+                        LoadLSLibProfileLOD(loaded.ExtendedData, setting.InnerText.Trim());
+                        break;
+                        
+                    case "LODDistance":
+                        LoadLSLibProfileLODDistance(meshProps, setting.InnerText.Trim());
+                        break;
+
+                    default:
+                        Utils.Warn($"Unrecognized LSLib profile attribute: {setting.LocalName}");
+                        break;
+                }
+            }
         }
 
         private Mesh ImportMesh(geometry geom, mesh mesh, VertexDescriptor vertexFormat)
@@ -391,12 +446,7 @@ namespace LSLib.Granny.Model
 
             m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
 
-            var divModelType = FindDivModelType(mesh);
-            if (divModelType != 0)
-            {
-                m.ModelType = divModelType;
-                m.HasDefiniteModelType = true;
-            }
+            MakeExtendedData(mesh, m);
 
             Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
                 (m.VertexFormat.HasBoneWeights ? "skinned" : "rigid"), 
@@ -710,6 +760,29 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void LoadColladaLSLibProfileData(animation anim, TrackGroup loaded)
+        {
+            var technique = FindExporterExtraData(anim.extra);
+            if (technique == null || technique.Any == null) return;
+
+            foreach (var setting in technique.Any)
+            {
+                switch (setting.LocalName)
+                {
+                    case "SkeletonResourceID":
+                        loaded.ExtendedData = new BG3TrackGroupExtendedData
+                        {
+                            SkeletonResourceID = setting.InnerText.Trim()
+                        };
+                        break;
+
+                    default:
+                        Utils.Warn($"Unrecognized LSLib animation profile attribute: {setting.LocalName}");
+                        break;
+                }
+            }
+        }
+
         public void ImportAnimations(IEnumerable<animation> anims, Root root, Skeleton skeleton)
         {
             var trackGroup = new TrackGroup
@@ -769,6 +842,7 @@ namespace LSLib.Granny.Model
                     duration = Math.Max(duration, importAnim.Duration);
                     var track = importAnim.MakeTrack(Options.RemoveTrivialAnimationKeys);
                     trackGroup.TransformTracks.Add(track);
+                    LoadColladaLSLibProfileData(colladaAnim, trackGroup);
                 }
             }
 
@@ -935,7 +1009,7 @@ namespace LSLib.Granny.Model
             root.ZUp = ZUp;
             root.PostLoad(GR2.Header.DefaultTag);
 
-            this.UpdateUserDefinedProperties(root);
+            BuildExtendedData(root);
 
             return root;
         }
