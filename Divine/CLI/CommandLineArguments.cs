@@ -211,6 +211,10 @@ namespace Divine.CLI
                 case "dos2de":
                 {
                     return LSLib.LS.Enums.Game.DivinityOriginalSin2DE;
+                 }
+                case "unset":
+                {
+                    return LSLib.LS.Enums.Game.Unset;
                 }
                 default:
                 {

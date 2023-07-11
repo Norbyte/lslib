@@ -7,7 +7,8 @@
         DivinityOriginalSin2 = 2,
         DivinityOriginalSin2DE = 3,
         BaldursGate3PrePatch8 = 4,
-        BaldursGate3 = 5
+        BaldursGate3 = 5,
+        Unset = 6
     };
 
     public static class GameEnumExtensions

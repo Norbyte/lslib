@@ -5,7 +5,7 @@ using LSLib.Granny.GR2;
 using LSLib.LS;
 using Alphaleonis.Win32.Filesystem;
 using System.Xml;
-using LSLib.LS.Story;
+using System.Xml.Linq;
 
 namespace LSLib.Granny.Model
 {
@@ -17,6 +17,7 @@ namespace LSLib.Granny.Model
         private List<InputLocal> Inputs;
         private List<InputLocalOffset> InputOffsets;
         private ulong LastInputOffset = 0;
+        private XmlDocument Xml = new XmlDocument();
 
 
         public ColladaMeshExporter(Mesh mesh, ExporterOptions options)
@@ -207,14 +208,14 @@ namespace LSLib.Granny.Model
             // BoneWeights and BoneIndices are handled in ExportSkin()
         }
 
-        private void AddTechniqueProperty(XmlDocument xml, List<XmlElement> props, string property, string value)
+        private void AddTechniqueProperty(List<XmlElement> props, string property, string value)
         {
-            var prop = xml.CreateElement(property);
+            var prop = Xml.CreateElement(property);
             prop.InnerText = value;
             props.Add(prop);
         }
 
-        private technique ExportLSLibProfile(XmlDocument xml)
+        private technique ExportLSLibProfile()
         {
             var profile = new technique()
             {
@@ -230,47 +231,47 @@ namespace LSLib.Granny.Model
 
                 if (flags.IsMeshProxy())
                 {
-                    AddTechniqueProperty(xml, props, "DivModelType", "MeshProxy");
+                    AddTechniqueProperty(props, "DivModelType", "MeshProxy");
                 }
 
                 if (flags.IsCloth())
                 {
-                    AddTechniqueProperty(xml, props, "DivModelType", "Cloth");
+                    AddTechniqueProperty(props, "DivModelType", "Cloth");
                 }
 
                 if (flags.HasProxyGeometry())
                 {
-                    AddTechniqueProperty(xml, props, "DivModelType", "ProxyGeometry");
+                    AddTechniqueProperty(props, "DivModelType", "ProxyGeometry");
                 }
 
                 if (flags.IsRigid())
                 {
-                    AddTechniqueProperty(xml, props, "DivModelType", "Rigid");
+                    AddTechniqueProperty(props, "DivModelType", "Rigid");
                 }
 
                 if (flags.IsSpring())
                 {
-                    AddTechniqueProperty(xml, props, "DivModelType", "Spring");
+                    AddTechniqueProperty(props, "DivModelType", "Spring");
                 }
 
                 if (flags.IsOccluder())
                 {
-                    AddTechniqueProperty(xml, props, "DivModelType", "Occluder");
+                    AddTechniqueProperty(props, "DivModelType", "Occluder");
                 }
 
                 if (userProps.IsImpostor != null && userProps.IsImpostor[0] == 1)
                 {
-                    AddTechniqueProperty(xml, props, "IsImpostor", "1");
+                    AddTechniqueProperty(props, "IsImpostor", "1");
                 }
 
                 if (userProps.Lod != null && userProps.Lod[0] != -1)
                 {
-                    AddTechniqueProperty(xml, props, "LOD", $"{userProps.Lod[0]}");
+                    AddTechniqueProperty(props, "LOD", $"{userProps.Lod[0]}");
                 }
 
                 if (userProps.LodDistance != null && userProps.LodDistance[0] > 0 && userProps.LodDistance[0] < 1.0E+30f)
                 {
-                    AddTechniqueProperty(xml, props, "LODDistance", $"{userProps.LodDistance[0]}");
+                    AddTechniqueProperty(props, "LODDistance", $"{userProps.LodDistance[0]}");
                 }
             }
 
@@ -281,7 +282,6 @@ namespace LSLib.Granny.Model
         public mesh Export()
         {
             // Jank we need to create XMLElements on the fly
-            var xml = new XmlDocument();
             Sources = new List<source>();
             Inputs = new List<InputLocal>();
             InputOffsets = new List<InputLocalOffset>();
@@ -321,7 +321,7 @@ namespace LSLib.Granny.Model
                 {
                     technique = new technique[]
                     {
-                        ExportLSLibProfile(xml)
+                        ExportLSLibProfile()
                     }
                 }
             };
@@ -730,6 +730,38 @@ namespace LSLib.Granny.Model
             return animations;
         }
 
+        private technique ExportRootLSLibProfile()
+        {
+            var profile = new technique()
+            {
+                profile = "LSTools"
+            };
+
+            var props = new List<XmlElement>();
+
+            var prop = Xml.CreateElement("LSLibMajor");
+            prop.InnerText = Common.MajorVersion.ToString();
+            props.Add(prop);
+
+            prop = Xml.CreateElement("LSLibMinor");
+            prop.InnerText = Common.MinorVersion.ToString();
+            props.Add(prop);
+
+            prop = Xml.CreateElement("LSLibPatch");
+            prop.InnerText = Common.PatchVersion.ToString();
+            props.Add(prop);
+
+            if (Options.Game != LS.Enums.Game.Unset)
+            {
+                prop = Xml.CreateElement("Game");
+                prop.InnerText = Options.Game.ToString();
+                props.Add(prop);
+            }
+
+            profile.Any = props.ToArray();
+            return profile;
+        }
+
         public void Export(Root root, string outputPath)
         {
             var collada = new COLLADA();
@@ -759,30 +791,28 @@ namespace LSLib.Granny.Model
 
             var animations = new List<animation>();
             var animationClips = new List<animation_clip>();
-            if (root.Animations != null)
+
+            foreach (var anim in root.Animations ?? Enumerable.Empty<Animation>())
             {
-                foreach (var anim in root.Animations)
+                var anims = ExportAnimations(anim);
+                animations.AddRange(anims);
+                var clip = new animation_clip();
+                clip.id = anim.Name + "_Animation";
+                clip.name = anim.Name;
+                clip.start = 0.0;
+                clip.end = anim.Duration;
+                clip.endSpecified = true;
+
+                var animInstances = new List<InstanceWithExtra>();
+                foreach (var animChannel in anims)
                 {
-                    var anims = ExportAnimations(anim);
-                    animations.AddRange(anims);
-                    var clip = new animation_clip();
-                    clip.id = anim.Name + "_Animation";
-                    clip.name = anim.Name;
-                    clip.start = 0.0;
-                    clip.end = anim.Duration;
-                    clip.endSpecified = true;
-
-                    var animInstances = new List<InstanceWithExtra>();
-                    foreach (var animChannel in anims)
-                    {
-                        var instance = new InstanceWithExtra();
-                        instance.url = "#" + animChannel.id;
-                        animInstances.Add(instance);
-                    }
-
-                    clip.instance_animation = animInstances.ToArray();
-                    animationClips.Add(clip);
+                    var instance = new InstanceWithExtra();
+                    instance.url = "#" + animChannel.id;
+                    animInstances.Add(instance);
                 }
+
+                clip.instance_animation = animInstances.ToArray();
+                animationClips.Add(clip);
             }
 
             var rootElements = new List<object>();
@@ -832,6 +862,17 @@ namespace LSLib.Granny.Model
             collada.scene = scene;
 
             collada.Items = rootElements.ToArray();
+
+            collada.extra = new extra[]
+            {
+                new extra
+                {
+                    technique = new technique[]
+                    {
+                        ExportRootLSLibProfile()
+                    }
+                }
+            };
 
             using (var stream = File.Open(outputPath, System.IO.FileMode.Create))
             {
