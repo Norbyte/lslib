@@ -34,6 +34,8 @@ namespace LSLib.Granny.Model
 
         [Serialization(Kind = SerializationKind.None)]
         public bool ZUp = false;
+        [Serialization(Kind = SerializationKind.None)]
+        public UInt32 GR2Tag;
 
 
         public void TransformVertices(Matrix4 transformation)
@@ -106,6 +108,8 @@ namespace LSLib.Granny.Model
 
         public void PostLoad(UInt32 tag)
         {
+            GR2Tag = tag;
+
             if (tag == Header.Tag_DOS2DE)
             {
                 Flip(true, true);

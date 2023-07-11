@@ -6,6 +6,7 @@ using LSLib.LS;
 using Alphaleonis.Win32.Filesystem;
 using System.Xml;
 using System.Xml.Linq;
+using LSLib.LS.Enums;
 
 namespace LSLib.Granny.Model
 {
@@ -730,7 +731,43 @@ namespace LSLib.Granny.Model
             return animations;
         }
 
-        private technique ExportRootLSLibProfile()
+        private Game DetectGame(Root root)
+        {
+            if (root.GR2Tag == Header.Tag_DOS)
+            {
+                return Game.DivinityOriginalSin;
+            }
+
+            if (root.GR2Tag == Header.Tag_DOS2DE)
+            {
+                return Game.DivinityOriginalSin2DE;
+            }
+
+            if (root.GR2Tag == Header.Tag_DOSEE)
+            {
+                foreach (var mesh in root.Meshes ?? Enumerable.Empty<Mesh>())
+                {
+                    if (mesh.ExtendedData != null)
+                    {
+                        if (mesh.ExtendedData.LSMVersion == 0)
+                        {
+                            return Game.DivinityOriginalSinEE;
+                        }
+
+                        if (mesh.ExtendedData.LSMVersion == 1)
+                        {
+                            return Game.DivinityOriginalSin2DE;
+                        }
+                    }
+                }
+
+                return Game.BaldursGate3;
+            }
+
+            return Game.Unset;
+        }
+
+        private technique ExportRootLSLibProfile(Root root)
         {
             var profile = new technique()
             {
@@ -751,10 +788,11 @@ namespace LSLib.Granny.Model
             prop.InnerText = Common.PatchVersion.ToString();
             props.Add(prop);
 
-            if (Options.Game != LS.Enums.Game.Unset)
+            var game = DetectGame(root);
+            if (game != LS.Enums.Game.Unset)
             {
                 prop = Xml.CreateElement("Game");
-                prop.InnerText = Options.Game.ToString();
+                prop.InnerText = game.ToString();
                 props.Add(prop);
             }
 
@@ -869,7 +907,7 @@ namespace LSLib.Granny.Model
                 {
                     technique = new technique[]
                     {
-                        ExportRootLSLibProfile()
+                        ExportRootLSLibProfile(root)
                     }
                 }
             };

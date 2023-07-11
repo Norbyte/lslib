@@ -112,7 +112,6 @@ namespace LSLib.Granny.Model
         public bool RemoveTrivialAnimationKeys = false;
         // Recalculate mesh bone binding OBBs (
         public bool RecalculateOBBs = false;
-        public Game Game = Game.Unset;
 
         public List<string> DisabledAnimations = new List<string>();
         public List<string> DisabledModels = new List<string>();
@@ -120,7 +119,6 @@ namespace LSLib.Granny.Model
 
         public void LoadGameSettings(Game game)
         {
-            Game = game;
             switch (game)
             {
                 case Game.DivinityOriginalSin:
