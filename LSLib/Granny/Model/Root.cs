@@ -134,6 +134,10 @@ namespace LSLib.Granny.Model
             if (Meshes != null)
             {
                 Meshes.ForEach(m => m.PostLoad());
+                for (var i = 0; i < Meshes.Count; i++)
+                {
+                    Meshes[i].ExportOrder = i;
+                }
             }
 
             if (Skeletons != null)

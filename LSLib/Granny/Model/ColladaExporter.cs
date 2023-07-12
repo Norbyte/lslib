@@ -225,6 +225,11 @@ namespace LSLib.Granny.Model
 
             var props = new List<XmlElement>();
 
+            if (ExportedMesh.ExportOrder != -1)
+            {
+                AddTechniqueProperty(props, "ExportOrder", ExportedMesh.ExportOrder.ToString());
+            }
+
             var userProps = ExportedMesh.ExtendedData?.UserMeshProperties;
             if (userProps != null)
             {

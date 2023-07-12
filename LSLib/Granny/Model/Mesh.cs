@@ -600,6 +600,9 @@ namespace LSLib.Granny.Model
         [Serialization(Kind = SerializationKind.None)]
         public VertexDescriptor VertexFormat;
 
+        [Serialization(Kind = SerializationKind.None)]
+        public int ExportOrder = -1;
+
         public void PostLoad()
         {
             if (PrimaryVertexData.Vertices.Count > 0)

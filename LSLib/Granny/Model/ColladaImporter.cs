@@ -316,6 +316,17 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void LoadLSLibProfileExportOrder(Mesh mesh, string order)
+        {
+            if (Int32.TryParse(order, out int parsedOrder))
+            {
+                if (parsedOrder >= 0 && parsedOrder < 100)
+                {
+                    mesh.ExportOrder = parsedOrder;
+                }
+            }
+        }
+
         private void LoadLSLibProfileLOD(DivinityMeshExtendedData props, string lod)
         {
             if (Int32.TryParse(lod, out int parsedLod))
@@ -391,7 +402,11 @@ namespace LSLib.Granny.Model
                     case "IsImpostor":
                         LoadLSLibProfileImpostor(loaded.ExtendedData, setting.InnerText.Trim());
                         break;
-                        
+
+                    case "ExportOrder":
+                        LoadLSLibProfileExportOrder(loaded, setting.InnerText.Trim());
+                        break;
+
                     case "LOD":
                         LoadLSLibProfileLOD(loaded.ExtendedData, setting.InnerText.Trim());
                         break;
@@ -969,6 +984,12 @@ namespace LSLib.Granny.Model
                 Options.VertexFormats.TryGetValue(geometry.name, out vertexFormat);
                 var mesh = ImportMesh(root, geometry.name, geometry, geometry.Item as mesh, vertexFormat);
                 ColladaGeometries.Add(geometry.id, mesh);
+            }
+
+            // Reorder meshes based on their ExportOrder
+            if (root.Meshes.Any(m => m.ExportOrder > -1))
+            {
+                root.Meshes.Sort((a, b) => a.ExportOrder - b.ExportOrder);
             }
 
             // Import skinning controllers after skeleton and geometry loading has finished, as
