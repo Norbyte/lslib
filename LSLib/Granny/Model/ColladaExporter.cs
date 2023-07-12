@@ -793,6 +793,10 @@ namespace LSLib.Granny.Model
             prop.InnerText = Common.PatchVersion.ToString();
             props.Add(prop);
 
+            prop = Xml.CreateElement("MetadataVersion");
+            prop.InnerText = Common.ColladaMetadataVersion.ToString();
+            props.Add(prop);
+
             var game = DetectGame(root);
             if (game != LS.Enums.Game.Unset)
             {

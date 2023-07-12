@@ -9,12 +9,15 @@ namespace LSLib.LS
 
 		public const int MinorVersion = 16;
 
-		public const int PatchVersion = 0;
+		public const int PatchVersion = 1;
 
-		/// <summary>
-		/// Returns the version number of the LSLib library
-		/// </summary>
-		public static string LibraryVersion()
+		// Version of LSTools profile data in generated DAE files
+        public const int ColladaMetadataVersion = 1;
+
+        /// <summary>
+        /// Returns the version number of the LSLib library
+        /// </summary>
+        public static string LibraryVersion()
 		{
 			return String.Format("{0}.{1}.{2}", MajorVersion, MinorVersion, PatchVersion);
 		}
