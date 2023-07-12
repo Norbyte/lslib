@@ -422,6 +422,44 @@ namespace LSLib.Granny.Model
             }
         }
 
+        private void ValidateLSLibProfileMetadataVersion(string ver)
+        {
+            if (Int32.TryParse(ver, out int version))
+            {
+                if (version > Common.ColladaMetadataVersion)
+                {
+                    throw new ParsingException(
+                        $"Collada file is using a newer LSLib metadata format than this LSLib version supports, please upgrade.\r\n" +
+                        $"File version: {version}, exporter version: {Common.ColladaMetadataVersion}");
+                }
+            }
+        }
+
+        private void LoadColladaLSLibProfileData(Root root, COLLADA collada)
+        {
+            var technique = FindExporterExtraData(collada.extra);
+            if (technique == null || technique.Any == null) return;
+
+            foreach (var setting in technique.Any)
+            {
+                switch (setting.LocalName)
+                {
+                    case "MetadataVersion":
+                        ValidateLSLibProfileMetadataVersion(setting.InnerText.Trim());
+                        break;
+
+                    case "LSLibMajor":
+                    case "LSLibMinor":
+                    case "LSLibPatch":
+                        break;
+
+                    default:
+                        Utils.Warn($"Unrecognized LSLib root profile attribute: {setting.LocalName}");
+                        break;
+                }
+            }
+        }
+
         private Mesh ImportMesh(geometry geom, mesh mesh, VertexDescriptor vertexFormat)
         {
             var collada = new ColladaMesh();
@@ -873,6 +911,7 @@ namespace LSLib.Granny.Model
             }
 
             var root = new Root();
+            LoadColladaLSLibProfileData(root, collada);
             root.ArtToolInfo = ImportArtToolInfo(collada);
             if (!Options.StripMetadata)
             {
