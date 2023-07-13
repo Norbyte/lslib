@@ -881,9 +881,15 @@ namespace LSLib.Granny.GR2
                 case MemberType.BinormalInt16:
                 case MemberType.UInt16:
                 case MemberType.NormalUInt16:
+                case MemberType.Real16:
                     return 2;
 
                 case MemberType.Reference:
+                    if (gr2.Magic.Is32Bit)
+                        return 4;
+                    else
+                        return 8;
+
                 case MemberType.String:
                 case MemberType.Real32:
                 case MemberType.Int32:
@@ -891,12 +897,23 @@ namespace LSLib.Granny.GR2
                     return 4;
 
                 case MemberType.VariantReference:
+                    if (gr2.Magic.Is32Bit)
+                        return 8;
+                    else
+                        return 16;
+
                 case MemberType.ArrayOfReferences:
                 case MemberType.ReferenceToArray:
-                    return 8;
+                    if (gr2.Magic.Is32Bit)
+                        return 8;
+                    else
+                        return 12;
 
                 case MemberType.ReferenceToVariantArray:
-                    return 12;
+                    if (gr2.Magic.Is32Bit)
+                        return 12;
+                    else
+                        return 20;
 
                 case MemberType.Transform:
                     return 17 * 4;
