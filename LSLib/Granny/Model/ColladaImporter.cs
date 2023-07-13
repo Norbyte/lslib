@@ -219,7 +219,10 @@ namespace LSLib.Granny.Model
                     modelFlags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
                 }
 
-                mesh.ExtendedData = DivinityMeshExtendedData.Make();
+                if (mesh.ExtendedData == null)
+                {
+                    mesh.ExtendedData = DivinityMeshExtendedData.Make();
+                }
                 mesh.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
                 mesh.ExtendedData.UpdateFromModelInfo(mesh, Options.ModelInfoFormat);
             }
