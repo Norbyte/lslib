@@ -66,10 +66,7 @@ namespace LSLib.Granny.GR2
             header.offsetInFile = 0; // Set after serialization is finished
             header.compressedSize = 0; // Set after serialization is finished
             header.uncompressedSize = 0; // Set after serialization is finished
-            if (Type == SectionType.RigidVertex || Type == SectionType.DeformableVertex)
-                header.alignment = 32;
-            else
-                header.alignment = 4;
+            header.alignment = 4;
             header.first16bit = 0; // Set after serialization is finished
             header.first8bit = 0; // Set after serialization is finished
             header.relocationsOffset = 0; // Set after serialization is finished
@@ -606,6 +603,51 @@ namespace LSLib.Granny.GR2
         }
     };
 
+    public class RelocationArea
+    {
+        public MemoryStream Stream;
+        public BinaryWriter Writer;
+        public GR2Writer GR2;
+
+        public RelocationArea(GR2Writer writer)
+        {
+            Stream = new MemoryStream();
+            Writer = new BinaryWriter(Stream);
+            GR2 = writer;
+        }
+
+        internal void WriteSectionRelocations(WritableSection section)
+        {
+            section.Header.numRelocations = (UInt32)section.Fixups.Count;
+            section.Header.relocationsOffset = (UInt32)Stream.Position;
+
+            foreach (var fixup in section.Fixups)
+            {
+                Writer.Write(fixup.Key);
+                WriteSectionReference(GR2.ObjectOffsets[fixup.Value]);
+            }
+        }
+
+        internal void WriteSectionMixedMarshallingRelocations(WritableSection section)
+        {
+            section.Header.numMixedMarshallingData = (UInt32)section.MixedMarshalling.Count;
+            section.Header.mixedMarshallingDataOffset = (UInt32)Stream.Position;
+
+            foreach (var marshal in section.MixedMarshalling)
+            {
+                Writer.Write(marshal.Count);
+                Writer.Write(GR2.ObjectOffsets[marshal.Obj].Offset);
+                WriteSectionReference(GR2.ObjectOffsets[marshal.Type]);
+            }
+        }
+
+        internal void WriteSectionReference(SectionReference r)
+        {
+            Writer.Write((UInt32)r.Section);
+            Writer.Write(r.Offset);
+        }
+    };
+
     public class GR2Writer
     {
         struct QueuedSerialization
@@ -639,6 +681,7 @@ namespace LSLib.Granny.GR2
         internal WritableSection CurrentSection;
         internal List<WritableSection> Sections = new List<WritableSection>();
         internal Dictionary<Type, StructDefinition> Types = new Dictionary<Type, StructDefinition>();
+        internal RelocationArea Relocations;
 
         private List<QueuedSerialization> StructWrites = new List<QueuedSerialization>();
         private List<QueuedArraySerialization> ArrayWrites = new List<QueuedArraySerialization>();
@@ -728,15 +771,17 @@ namespace LSLib.Granny.GR2
             }
         }
 
-        public byte[] Write(object root)
+        public byte[] Write(object root, uint numCustomSections = 0)
         {
             using (this.Writer = new BinaryWriter(Stream))
             {
                 this.Magic = InitMagic();
                 WriteMagic(Magic);
 
-                this.Header = InitHeader();
+                this.Header = InitHeader(numCustomSections);
                 WriteHeader(Header);
+
+                this.Relocations = new RelocationArea(this);
 
                 for (int i = 0; i < Header.numSections; i++)
                 {
@@ -772,15 +817,14 @@ namespace LSLib.Granny.GR2
                     section.Finish();
                 }
 
-                var relocSection = Sections[(int)SectionType.Discardable];
                 foreach (var section in Sections)
                 {
-                    relocSection.WriteSectionRelocations(section);
+                    Relocations.WriteSectionRelocations(section);
                 }
 
                 foreach (var section in Sections)
                 {
-                    relocSection.WriteSectionMixedMarshallingRelocations(section);
+                    Relocations.WriteSectionMixedMarshallingRelocations(section);
                 }
 
                 foreach (var section in Sections)
@@ -796,10 +840,13 @@ namespace LSLib.Granny.GR2
                     Writer.Write(section.MainStream.ToArray());
                 }
 
+                var relocationsOffset = (UInt32)Stream.Position;
+                Writer.Write(Relocations.Stream.ToArray());
+
                 foreach (var section in Sections)
                 {
-                    section.Header.relocationsOffset += relocSection.Header.offsetInFile;
-                    section.Header.mixedMarshallingDataOffset += relocSection.Header.offsetInFile;
+                    section.Header.relocationsOffset += relocationsOffset;
+                    section.Header.mixedMarshallingDataOffset += relocationsOffset;
                 }
 
                 var rootStruct = LookupStructDefinition(root.GetType(), root);
