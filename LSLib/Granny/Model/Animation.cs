@@ -27,7 +27,7 @@ namespace LSLib.Granny.Model
 
     public class AnimationCurve
     {
-        [Serialization(TypeSelector = typeof(AnimationCurveDataTypeSelector), Type = MemberType.VariantReference, MinVersion = 0x80000011)]
+        [Serialization(Section = SectionType.CurveAndDiscardable, TypeSelector = typeof(AnimationCurveDataTypeSelector), Type = MemberType.VariantReference, MinVersion = 0x80000011)]
         public AnimationCurveData CurveData;
         [Serialization(MaxVersion = 0x80000010)]
         public Int32 Degree;

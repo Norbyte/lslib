@@ -15,17 +15,17 @@ namespace LSLib.Granny.Model
         public List<Texture> Textures;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Material> Materials;
-        [Serialization(Type = MemberType.ArrayOfReferences)]
+        [Serialization(Section = SectionType.Skeleton, Type = MemberType.ArrayOfReferences)]
         public List<Skeleton> Skeletons;
-        [Serialization(Type = MemberType.ArrayOfReferences)]
+        [Serialization(Type = MemberType.ArrayOfReferences, SectionSelector = typeof(VertexDataSectionSelector))]
         public List<VertexData> VertexDatas;
-        [Serialization(Type = MemberType.ArrayOfReferences)]
+        [Serialization(Type = MemberType.ArrayOfReferences, SectionSelector = typeof(TriTopologySectionSelector))]
         public List<TriTopology> TriTopologies;
-        [Serialization(Type = MemberType.ArrayOfReferences)]
+        [Serialization(Section = SectionType.Mesh, Type = MemberType.ArrayOfReferences)]
         public List<Mesh> Meshes;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Model> Models;
-        [Serialization(Type = MemberType.ArrayOfReferences)]
+        [Serialization(Section = SectionType.TrackGroup, Type = MemberType.ArrayOfReferences)]
         public List<TrackGroup> TrackGroups;
         [Serialization(Type = MemberType.ArrayOfReferences)]
         public List<Animation> Animations;

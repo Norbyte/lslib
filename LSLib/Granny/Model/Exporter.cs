@@ -213,7 +213,7 @@ namespace LSLib.Granny.Model
                 writer.VersionTag -= 1;
             }
 
-            var body = writer.Write(root);
+            var body = writer.Write(root, (root.Meshes != null) ? (uint)root.Meshes.Count : 0);
             writer.Dispose();
 
             FileStream f = File.Open(outPath, FileMode.Create, System.IO.FileAccess.Write, FileShare.None);

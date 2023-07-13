@@ -409,21 +409,9 @@ namespace LSLib.Granny.Model
     }
     
 
-    public class VertexSerializer : NodeSerializer, SectionSelector
+    public class VertexSerializer : NodeSerializer
     {
         private Dictionary<object, VertexDescriptor> VertexTypeCache = new Dictionary<object, VertexDescriptor>();
-
-        public SectionType SelectSection(MemberDefinition member, Type type, object obj)
-        {
-            var vertices = obj as List<Vertex>;
-            if (vertices == null || vertices.Count == 0)
-                return SectionType.RigidVertex;
-
-            if (vertices[0].Format.HasBoneWeights)
-                return SectionType.DeformableVertex;
-            else
-                return SectionType.RigidVertex;
-        }
 
         public VertexDescriptor ConstructDescriptor(MemberDefinition memberDefn, StructDefinition defn, object parent)
         {

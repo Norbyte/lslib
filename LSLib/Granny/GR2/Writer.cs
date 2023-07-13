@@ -802,7 +802,7 @@ namespace LSLib.Granny.GR2
 
                 foreach (var defn in Types.Values)
                 {
-                    Sections[(int)SectionType.Discardable].WriteStructDefinition(defn);
+                    Sections[(int)SectionType.CurveAndDiscardable].WriteStructDefinition(defn);
                 }
 
                 // We need to do this again to flush strings written by WriteMemberDefinition()
@@ -894,7 +894,7 @@ namespace LSLib.Granny.GR2
             Writer.Write(magic.reserved2);
         }
 
-        private Header InitHeader()
+        private Header InitHeader(uint numCustomSections)
         {
             var header = new Header();
             header.version = Header.Version;
@@ -903,7 +903,7 @@ namespace LSLib.Granny.GR2
             header.sectionsOffset = header.Size();
             header.rootType = new SectionReference(); // Updated after serialization is finished
             header.rootNode = new SectionReference(); // Updated after serialization is finished
-            header.numSections = (UInt32)SectionType.Max + 1;
+            header.numSections = (UInt32)SectionType.FirstVertexData + numCustomSections;
             header.tag = VersionTag;
             header.extraTags = new UInt32[Header.ExtraTagCount];
             for (int i = 0; i < Header.ExtraTagCount; i++)
@@ -994,9 +994,19 @@ namespace LSLib.Granny.GR2
             serialization.section = section;
             serialization.dataArea = dataArea;
             if (member.PreferredSection != SectionType.Invalid)
+            {
                 serialization.section = member.PreferredSection;
-            else if (member.SectionSelector != null)
-                serialization.section = member.SectionSelector.SelectSection(member, type, obj);
+            }
+
+            if (member.SectionSelector != null)
+            {
+                var selectedSection = member.SectionSelector.SelectSection(member, type, obj);
+                if (selectedSection != SectionType.Invalid)
+                {
+                    serialization.section = selectedSection;
+                }
+            }
+
             serialization.type = type;
             serialization.member = member;
             serialization.obj = obj;
@@ -1010,10 +1020,16 @@ namespace LSLib.Granny.GR2
             QueuedArraySerialization serialization;
             serialization.section = section;
             serialization.dataArea = dataArea;
-            if (member.PreferredSection != SectionType.Invalid)
-                serialization.section = member.PreferredSection;
-            else if (member.SectionSelector != null)
-                serialization.section = member.SectionSelector.SelectSection(member, elementType, list);
+
+            if (member.SectionSelector != null)
+            {
+                var selectedSection = member.SectionSelector.SelectSection(member, elementType, list);
+                if (selectedSection != SectionType.Invalid)
+                {
+                    serialization.section = selectedSection;
+                }
+            }
+
             serialization.elementType = elementType;
             serialization.member = member;
             serialization.list = list;

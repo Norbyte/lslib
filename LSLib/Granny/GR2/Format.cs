@@ -521,14 +521,11 @@ namespace LSLib.Granny.GR2
     public enum SectionType : uint
     {
         Main = 0,
-        RigidVertex = 1,
-        RigidIndex = 2,
-        DeformableVertex = 3,
-        DeformableIndex = 4,
-        Texture = 5,
-        Discardable = 6,
-        Unloaded = 7,
-        Max = Unloaded,
+        TrackGroup = 1,
+        Skeleton = 2,
+        Mesh = 3,
+        CurveAndDiscardable = 4,
+        FirstVertexData = 5,
         Invalid = 0xffffffff
     };
 
