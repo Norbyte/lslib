@@ -129,6 +129,12 @@
       <DependentUpon>ResourcePane.cs</DependentUpon>
     </Compile>
     <Compile Include="VariableDumper.cs" />
+    <Compile Include="VirtualTexturesPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="VirtualTexturesPane.Designer.cs">
+      <DependentUpon>VirtualTexturesPane.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="DebugPane.resx">
       <DependentUpon>DebugPane.cs</DependentUpon>
     </EmbeddedResource>
@@ -159,6 +165,9 @@
     </Compile>
     <EmbeddedResource Include="ResourcePane.resx">
       <DependentUpon>ResourcePane.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VirtualTexturesPane.resx">
+      <DependentUpon>VirtualTexturesPane.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

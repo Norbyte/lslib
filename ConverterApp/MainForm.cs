@@ -12,6 +12,7 @@ namespace ConverterApp
     {
         PackagePane packagePane;
         ResourcePane resourcePane;
+        VirtualTexturesPane virtualTexturesPane;
         OsirisPane osirisPane;
         DebugPane debugPane;
 
@@ -59,6 +60,13 @@ namespace ConverterApp
                 Size = resourceTab.ClientSize
             };
             resourceTab.Controls.Add(resourcePane);
+
+            virtualTexturesPane = new VirtualTexturesPane()
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Size = resourceTab.ClientSize
+            };
+            virtualTextureTab.Controls.Add(virtualTexturesPane);
 
             osirisPane = new OsirisPane(this)
             {

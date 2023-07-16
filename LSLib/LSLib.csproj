@@ -73,6 +73,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VirtualTextures\BC5Image.cs" />
+    <Compile Include="VirtualTextures\Compression.cs" />
+    <Compile Include="VirtualTextures\PageFile.cs" />
+    <Compile Include="VirtualTextures\VirtualTexture.cs" />
+    <Compile Include="VirtualTextures\VirtualTextureFormats.cs" />
     <None Include="LS\Stats\Parser\Stat.lex" />
     <None Include="LS\Stats\Parser\Stat.yy" />
     <None Include="LS\Stats\Parser\StatProperty.lex" />
