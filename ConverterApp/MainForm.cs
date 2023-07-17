@@ -61,7 +61,7 @@ namespace ConverterApp
             };
             resourceTab.Controls.Add(resourcePane);
 
-            virtualTexturesPane = new VirtualTexturesPane()
+            virtualTexturesPane = new VirtualTexturesPane(this)
             {
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 Size = resourceTab.ClientSize

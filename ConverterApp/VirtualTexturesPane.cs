@@ -15,9 +15,12 @@ namespace ConverterApp
 {
     public partial class VirtualTexturesPane : UserControl
     {
-        public VirtualTexturesPane()
+        public VirtualTexturesPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
+
+            gtsPath.DataBindings.Add("Text", settingsDataSource, "Settings.VirtualTextures.GTSPath", true, DataSourceUpdateMode.OnPropertyChanged);
+            destinationPath.DataBindings.Add("Text", settingsDataSource, "Settings.VirtualTextures.DestinationPath", true, DataSourceUpdateMode.OnPropertyChanged);
         }
 
         private void gtpBrowseBtn_Click(object sender, EventArgs e)

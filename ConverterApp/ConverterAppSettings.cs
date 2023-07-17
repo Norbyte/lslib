@@ -53,6 +53,13 @@ namespace ConverterApp
             set { resourceSettings = value; }
         }
 
+        private VirtualTexturesPaneSettings virtualTextureSettings;
+        public VirtualTexturesPaneSettings VirtualTextures
+        {
+            get { return virtualTextureSettings; }
+            set { virtualTextureSettings = value; }
+        }
+
         private OsirisPaneSettings storySettings;
 
         public OsirisPaneSettings Story
@@ -99,6 +106,7 @@ namespace ConverterApp
             GR2 = new GR2PaneSettings();
             PAK = new PackagePaneSettings();
             Resources = new ResourcePaneSettings();
+            VirtualTextures = new VirtualTexturesPaneSettings();
             Story = new OsirisPaneSettings();
             Debugging = new DebugPaneSettings();
         }
@@ -266,6 +274,25 @@ namespace ConverterApp
         {
             get { return batchOutputFormat; }
             set { batchOutputFormat = value; OnPropertyChanged(); }
+        }
+    }
+
+    public class VirtualTexturesPaneSettings : SettingsBase
+    {
+        private string gtsPath = "";
+
+        public string GTSPath
+        {
+            get { return gtsPath; }
+            set { gtsPath = value; OnPropertyChanged(); }
+        }
+
+        private string destinationPath = "";
+
+        public string DestinationPath
+        {
+            get { return destinationPath; }
+            set { destinationPath = value; OnPropertyChanged(); }
         }
     }
 
