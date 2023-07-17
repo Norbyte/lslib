@@ -5,13 +5,11 @@ VisualStudioVersion = 16.0.30330.147
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSLib", "LSLib\LSLib.csproj", "{46372C50-4288-4B8E-AF21-C934560600E0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LSLibNative", "LSLibNative\LSLibNative.vcxproj", "{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTK", "OpenTK\OpenTK.csproj", "{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConverterApp", "ConverterApp\ConverterApp.csproj", "{FAD67294-6223-47E0-8838-E4E7FBC53ED2}"
 	ProjectSection(ProjectDependencies) = postProject
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1} = {D8B26B12-E45C-47EA-88F7-56628EB2CCD1}
+		{C2464293-217D-4C11-A1BB-954FA5A00C74} = {C2464293-217D-4C11-A1BB-954FA5A00C74}
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Divine", "Divine\Divine.csproj", "{CBFEE38F-5F12-4D6F-B4FB-267FB68A6BEA}"
@@ -32,6 +30,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnpackGrid", "UnpackGrid\UnpackGrid.csproj", "{1948A6AF-41EE-4711-B617-B5CBA8434013}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainFixup", "TerrainFixup\TerrainFixup.csproj", "{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSLibNativeLinux", "LSLibNativeLinux\LSLibNativeLinux.csproj", "{C2464293-217D-4C11-A1BB-954FA5A00C74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,15 +55,6 @@ Global
 		{46372C50-4288-4B8E-AF21-C934560600E0}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
 		{46372C50-4288-4B8E-AF21-C934560600E0}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
 		{46372C50-4288-4B8E-AF21-C934560600E0}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.Debug|Any CPU.Build.0 = Debug|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.Debug|x64.ActiveCfg = Debug|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.Release|Any CPU.ActiveCfg = Release|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.Release|Any CPU.Build.0 = Release|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.Release|x64.ActiveCfg = Release|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.RelWithDebInfo|Any CPU.ActiveCfg = Release|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.RelWithDebInfo|Any CPU.Build.0 = Release|x64
-		{D8B26B12-E45C-47EA-88F7-56628EB2CCD1}.RelWithDebInfo|x64.ActiveCfg = Release|x64
 		{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -184,6 +175,18 @@ Global
 		{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
 		{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
 		{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Debug|x64.Build.0 = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Release|x64.ActiveCfg = Release|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.Release|x64.Build.0 = Release|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.RelWithDebInfo|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.RelWithDebInfo|Any CPU.Build.0 = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.RelWithDebInfo|x64.ActiveCfg = Debug|Any CPU
+		{C2464293-217D-4C11-A1BB-954FA5A00C74}.RelWithDebInfo|x64.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

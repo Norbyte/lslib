@@ -211,11 +211,21 @@
     <None Include="LS\Story\HeaderParser\StoryHeader.yy" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
+  <!--<ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Linux'))">
     <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj">
       <Project>{d8b26b12-e45c-47ea-88f7-56628eb2ccd1}</Project>
       <Name>LSLibNative</Name>
     </ProjectReference>
+    <ProjectReference Include="..\OpenTK\OpenTK.csproj">
+      <Project>{abb9db44-14f2-46e0-a4b8-b46c300ca982}</Project>
+      <Name>OpenTK</Name>
+    </ProjectReference>
+  </ItemGroup>-->
+  <ItemGroup>
+  <ProjectReference Include="..\LSLibNativeLinux\LSLibNativeLinux.csproj">
+      <Project>{c2464293-217d-4c11-a1bb-954fa5a00c74}</Project>
+      <Name>LSLibNativeLinux</Name>
+  </ProjectReference>
     <ProjectReference Include="..\OpenTK\OpenTK.csproj">
       <Project>{abb9db44-14f2-46e0-a4b8-b46c300ca982}</Project>
       <Name>OpenTK</Name>
