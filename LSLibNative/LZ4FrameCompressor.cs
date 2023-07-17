@@ -59,7 +59,7 @@ public class LZ4FrameCompressor {
 			 error = LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION);
 		}
 		if (LZ4F_isError(error) != 0) {
-			throw new Exception("Failed to create LZ4 decompression context");
+			throw new InvalidDataException("Failed to create LZ4 decompression context");
 		}
 
 		byte[] output = {};
@@ -84,14 +84,14 @@ public class LZ4FrameCompressor {
 						null);
 			}
 			if (LZ4F_isError(result) != 0) {
-				throw new Exception("LZ4 decompression failed: " + Marshal.PtrToStringAnsi(LZ4F_getErrorName(result)));
+				throw new InvalidDataException("LZ4 decompression failed: " + Marshal.PtrToStringAnsi(LZ4F_getErrorName(result)));
 			}
 
 			inputOffset += (long)inputAvailable;
 			outputOffset += (long)outputFree;
 
 			if (inputAvailable == 0) {
-				throw new Exception("LZ4 error: Not all input data was processed (input might be truncated or corrupted?)");
+				throw new InvalidDataException("LZ4 error: Not all input data was processed (input might be truncated or corrupted?)");
 			}
 		}
 
