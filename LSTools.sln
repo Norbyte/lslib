@@ -31,7 +31,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnpackGrid", "UnpackGrid\Un
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainFixup", "TerrainFixup\TerrainFixup.csproj", "{C3B44D0D-D7D8-4080-859B-90B391F8D5B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSLibNativeLinux", "LSLibNativeLinux\LSLibNativeLinux.csproj", "{C2464293-217D-4C11-A1BB-954FA5A00C74}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSLibNative", "LSLibNative\LSLibNative.csproj", "{C2464293-217D-4C11-A1BB-954FA5A00C74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

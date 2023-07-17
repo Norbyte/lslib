@@ -8,8 +8,8 @@
     <ProjectGuid>{C2464293-217D-4C11-A1BB-954FA5A00C74}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LSLibNativeLinux</RootNamespace>
-    <AssemblyName>LSLibNativeLinux</AssemblyName>
+    <RootNamespace>LSLibNative</RootNamespace>
+    <AssemblyName>LSLibNative</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
