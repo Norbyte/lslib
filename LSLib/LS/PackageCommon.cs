@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Hashing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LSLib.LS.Enums;
-using LSLib.Native;
 
 namespace LSLib.LS
 {
@@ -282,7 +282,7 @@ namespace LSLib.LS
 
             if (Crc != 0)
             {
-                UInt32 computedCrc = Crc32.Compute(compressed, 0);
+                UInt32 computedCrc = BitConverter.ToUInt32(Crc32.Hash(compressed), 0);
                 if (computedCrc != Crc)
                 {
                     string msg = $"CRC check failed on file '{Name}', archive is possibly corrupted. Expected {Crc,8:X}, got {computedCrc,8:X}";

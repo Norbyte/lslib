@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Hashing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using LSLib.LS.Enums;
-using LSLib.Native;
+//using LSLib.Native;
 using LZ4;
 
 namespace LSLib.LS
@@ -83,7 +84,7 @@ namespace LSLib.LS
             }
 
             packaged.SizeOnDisk = (UInt64) (stream.Position - (long)packaged.OffsetInFile);
-            packaged.Crc = Crc32.Compute(compressed, 0);
+            packaged.Crc = BitConverter.ToUInt32(Crc32.Hash(compressed), 0);
 
             if ((_package.Metadata.Flags & PackageFlags.Solid) == 0)
             {
