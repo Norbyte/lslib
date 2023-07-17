@@ -99,7 +99,7 @@
   <PropertyGroup>
     <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto
 $(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\ExpressionParser\Expression.lex.cs" "$(ProjectDir)\ExpressionParser\Expression.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\ExpressionParser\Expression.yy.cs" "$(ProjectDir)\ExpressionParser\Expression.yy"</PreBuildEvent>
+"$(SolutionDir)\External\gppg\binaries\Gplex" /out:"$(ProjectDir)\ExpressionParser\Expression.lex.cs" "$(ProjectDir)\ExpressionParser\Expression.lex"
+"$(SolutionDir)\External\gppg\binaries\Gppg" /out:"$(ProjectDir)\ExpressionParser\Expression.yy.cs" "$(ProjectDir)\ExpressionParser\Expression.yy"</PreBuildEvent>
   </PropertyGroup>
 </Project>

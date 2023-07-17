@@ -106,6 +106,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
+    <PreBuildEvent Condition="!$([MSBuild]::IsOSPlatform('Linux'))">$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
+    <PreBuildEvent Condition="$([MSBuild]::IsOSPlatform('Linux'))">protoc --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
   </PropertyGroup>
 </Project>
