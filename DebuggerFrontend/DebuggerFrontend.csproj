@@ -101,8 +101,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto
+    <PreBuildEvent Condition="!$([MSBuild]::IsOSPlatform('Linux'))">$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto
 $(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto
 "$(SolutionDir)\External\gppg\binaries\Gplex" /out:"$(ProjectDir)\ExpressionParser\Expression.lex.cs" "$(ProjectDir)\ExpressionParser\Expression.lex"
 "$(SolutionDir)\External\gppg\binaries\Gppg" /out:"$(ProjectDir)\ExpressionParser\Expression.yy.cs" "$(ProjectDir)\ExpressionParser\Expression.yy"</PreBuildEvent>
+    <PreBuildEvent Condition="$([MSBuild]::IsOSPlatform('Linux'))">protoc --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto
+protoc --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto
+"cd" "$(ProjectDir)"
+"mono" "$(SolutionDir)\External\gppg\binaries\Gplex.exe" /out:"ExpressionParser\Expression.lex.cs" "ExpressionParser\Expression.lex"
+"mono" "$(SolutionDir)\External\gppg\binaries\Gppg.exe" /out:"ExpressionParser\Expression.yy.cs" "ExpressionParser\Expression.yy"</PreBuildEvent>
+  </PropertyGroup>
 </Project>
