@@ -48,7 +48,7 @@ namespace LSLib.VirtualTextures
 
         private byte[] DoUnpackTileBC(GTPChunkHeader header, int outputSize)
         {
-            var parameterBlock = TileSet.ParameterBlocks[header.ParameterBlockID];
+            var parameterBlock = (GTSBCParameterBlock)TileSet.ParameterBlocks[header.ParameterBlockID];
             if (parameterBlock.CompressionName1 != "lz77" || parameterBlock.CompressionName2 != "fastlz0.1.0")
             {
                 throw new InvalidDataException($"Unsupported BC compression format: '{parameterBlock.CompressionName1}', '{parameterBlock.CompressionName2}'");
@@ -65,6 +65,8 @@ namespace LSLib.VirtualTextures
 
         private byte[] DoUnpackTileUniform(GTPChunkHeader header)
         {
+            var parameterBlock = (GTSUniformParameterBlock)TileSet.ParameterBlocks[header.ParameterBlockID];
+
             byte[] img = new byte[TileSet.Header.TileWidth * TileSet.Header.TileHeight];
             Array.Clear(img, 0, img.Length);
             return img;
@@ -76,8 +78,8 @@ namespace LSLib.VirtualTextures
             var chunkHeader = BinUtils.ReadStruct<GTPChunkHeader>(Reader);
             switch (chunkHeader.Codec)
             {
-                case 0: return DoUnpackTileUniform(chunkHeader);
-                case 9: return DoUnpackTileBC(chunkHeader, outputSize);
+                case GTSCodec.Uniform: return DoUnpackTileUniform(chunkHeader);
+                case GTSCodec.BC: return DoUnpackTileBC(chunkHeader, outputSize);
                 default: throw new InvalidDataException($"Unsupported codec: {chunkHeader.Codec}");
             }
         }

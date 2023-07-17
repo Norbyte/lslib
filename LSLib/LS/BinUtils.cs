@@ -13,8 +13,7 @@ namespace LSLib.LS
         {
             T outStruct;
             int count = Marshal.SizeOf(typeof(T));
-            byte[] readBuffer = new byte[count];
-            readBuffer = reader.ReadBytes(count);
+            byte[] readBuffer = reader.ReadBytes(count);
             GCHandle handle = GCHandle.Alloc(readBuffer, GCHandleType.Pinned);
             outStruct = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
             handle.Free();
@@ -25,8 +24,7 @@ namespace LSLib.LS
         {
             int elementSize = Marshal.SizeOf(typeof(T));
             int bytes = elementSize * elements.Length;
-            byte[] readBuffer = new byte[bytes];
-            readBuffer = reader.ReadBytes(bytes);
+            byte[] readBuffer = reader.ReadBytes(bytes);
             GCHandle handle = GCHandle.Alloc(readBuffer, GCHandleType.Pinned);
             var addr = handle.AddrOfPinnedObject();
             for (var i = 0; i < elements.Length; i++)
@@ -43,6 +41,22 @@ namespace LSLib.LS
             byte[] writeBuffer = new byte[count];
             GCHandle handle = GCHandle.Alloc(writeBuffer, GCHandleType.Pinned);
             Marshal.StructureToPtr(inStruct, handle.AddrOfPinnedObject(), true);
+            handle.Free();
+            writer.Write(writeBuffer);
+        }
+
+        public static void WriteStructs<T>(BinaryWriter writer, T[] elements)
+        {
+            int elementSize = Marshal.SizeOf(typeof(T));
+            int bytes = elementSize * elements.Length;
+            byte[] writeBuffer = new byte[bytes];
+            GCHandle handle = GCHandle.Alloc(writeBuffer, GCHandleType.Pinned);
+            var addr = handle.AddrOfPinnedObject();
+            for (var i = 0; i < elements.Length; i++)
+            {
+                var elementAddr = new IntPtr(addr.ToInt64() + elementSize * i);
+                Marshal.StructureToPtr(elements[i], elementAddr, true);
+            }
             handle.Free();
             writer.Write(writeBuffer);
         }
