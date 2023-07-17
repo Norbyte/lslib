@@ -55,7 +55,14 @@ namespace ConverterApp
 
                     for (var layer = 0; layer < tileSet.TileSetLayers.Length; layer++)
                     {
-                        var tex = tileSet.ExtractPageFileTexture(pfIdx, 0, layer);
+                        BC5Image tex = null;
+                        var level = 0;
+                        do
+                        {
+                            tex = tileSet.ExtractPageFileTexture(pfIdx, level, layer);
+                            level++;
+                        } while (tex == null && level < tileSet.TileSetLevels.Length);
+
                         if (tex != null)
                         {
                             var outputPath = destinationPath.Text + Path.DirectorySeparator + Path.GetFileNameWithoutExtension(fileInfo.Name) + $"_{layer}.dds";
@@ -64,6 +71,7 @@ namespace ConverterApp
                     }
 
                     tileSet.ReleasePageFiles();
+                    GC.Collect();
                 }
 
                 MessageBox.Show("Textures extracted successfully.");
