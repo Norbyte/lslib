@@ -208,7 +208,7 @@ public class LZ4FrameCompressor {
 			throw new InvalidDataException("Failed to create LZ4 decompression context");
 		}
 
-		byte[] output = {};
+		byte[] output = new byte[0];
 		long inputOffset = 0, outputOffset = 0;
 
 		while (inputOffset < input.Length) {
@@ -244,6 +244,8 @@ public class LZ4FrameCompressor {
 		unsafe {
 			LZ4F_freeDecompressionContext(dctx);
 		}
+
+		Array.Resize(ref output, (int)outputOffset);
 
 		return output;
 	}
