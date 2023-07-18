@@ -6,11 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LSLib.LS.Enums;
 using LSLib.Native;
-using Alphaleonis.Win32.Filesystem;
-using Path = Alphaleonis.Win32.Filesystem.Path;
-using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {

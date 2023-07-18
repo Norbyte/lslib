@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Alphaleonis.Win32.Filesystem;
 using LSLib.Granny.GR2;
 using LSLib.LS;
 using OpenTK;

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LZ4;
-using File = Alphaleonis.Win32.Filesystem.File;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS
