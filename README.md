@@ -19,6 +19,9 @@ To build the tools you'll need to get the following dependencies:
  - Protocol Buffers 3.23.4 compiler [from here (windows)](https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-win32.zip) or [from here (linux)](https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protoc-23.4-linux-x86_64.zip) and extract it to the `External\protoc\` directory
 
 
+Additionally, the liblz4 and granny2 library should be present in your library
+search path.
+
 Linux
 =====
 
