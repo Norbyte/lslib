@@ -59,7 +59,7 @@
     <Reference Include="QUT.ShiftReduceParser">
       <HintPath>..\External\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
     </Reference>
-    <Reference Include="System.IO.Hashing, Version=7.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="System.IO.Hashing">
       <HintPath>..\packages\System.IO.Hashing.7.0.0\lib\net462\System.IO.Hashing.dll</HintPath>
     </Reference>
     <Reference Include="System.Memory, Version=4.5.5, Culture=neutral, processorArchitecture=MSIL">
