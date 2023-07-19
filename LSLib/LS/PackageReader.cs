@@ -11,16 +11,41 @@ namespace LSLib.LS
 {
     public class NotAPackageException : Exception
     {
-        public NotAPackageException()
+        private string _fileName;
+        public string FileName => _fileName;
+
+        public NotAPackageException() { }
+
+        public NotAPackageException(string message) : base(message) { }
+
+        public NotAPackageException(string message, string fileName) : base(message)
         {
+            _fileName = fileName;
         }
 
-        public NotAPackageException(string message) : base(message)
-        {
-        }
+        public NotAPackageException(string message, Exception innerException) : base(message, innerException) { }
 
-        public NotAPackageException(string message, Exception innerException) : base(message, innerException)
+        public override string ToString()
         {
+            string s = GetType().FullName + ": " + Message;
+
+            if (_fileName != null && _fileName.Length != 0)
+            {
+                s += Environment.NewLine + "File: " + _fileName;
+            }
+
+            if (InnerException != null)
+            {
+                s = s + " ---> " + InnerException.ToString();
+            }
+
+            if (StackTrace != null)
+            {
+                s += Environment.NewLine + StackTrace;
+            }
+
+            return s;
+
         }
     }
 
@@ -72,7 +97,7 @@ namespace LSLib.LS
 
             if (_metadataOnly) return package;
 
-            OpenStreams(mainStream, (int) header.NumParts);
+            OpenStreams(mainStream, (int)header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
             {
                 var entry = BinUtils.ReadStruct<FileEntry7>(reader);
@@ -120,7 +145,7 @@ namespace LSLib.LS
             var package = new Package();
             var header = BinUtils.ReadStruct<LSPKHeader13>(reader);
 
-            if (header.Version != (ulong) PackageVersion.V13)
+            if (header.Version != (ulong)PackageVersion.V13)
             {
                 string msg = $"Unsupported package version {header.Version}; this package layout is only supported for {PackageVersion.V13}";
                 throw new InvalidDataException(msg);
@@ -136,7 +161,7 @@ namespace LSLib.LS
             mainStream.Seek(header.FileListOffset, SeekOrigin.Begin);
             int numFiles = reader.ReadInt32();
             int fileBufferSize = Marshal.SizeOf(typeof(FileEntry13)) * numFiles;
-            byte[] compressedFileList = reader.ReadBytes((int) header.FileListSize - 4);
+            byte[] compressedFileList = reader.ReadBytes((int)header.FileListSize - 4);
 
             var uncompressedList = new byte[fileBufferSize];
             int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, true);
@@ -342,7 +367,7 @@ namespace LSLib.LS
                     return ReadPackageV7(mainStream, reader);
                 }
 
-                throw new NotAPackageException("No valid signature found in package file");
+                throw new NotAPackageException("No valid signature found in package file", _path);
             }
         }
     }

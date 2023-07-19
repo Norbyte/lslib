@@ -105,14 +105,18 @@ namespace LSLib.LS.Story
 
         public uint FindBuiltinTypeId(uint typeId)
         {
-            var aliasId = typeId;
-
-            while (typeId != 0 && Types[aliasId].Alias != 0)
+            if (typeId != 0)
             {
-                aliasId = Types[aliasId].Alias;
+                if (Types.TryGetValue(typeId, out var osirisType))
+                {
+                    if (osirisType.Alias != 0)
+                    {
+                        return FindBuiltinTypeId(osirisType.Alias);
+                    }
+                }
             }
 
-            return aliasId;
+            return typeId;
         }
     }
 
@@ -422,7 +426,7 @@ namespace LSLib.LS.Story
                 type.Write(Writer);
                 if (type.Alias != 0)
                 {
-                    Writer.TypeAliases.Add(type.Index, story.FindBuiltinTypeId(type.Index));
+                    Writer.TypeAliases.Add(type.Index, story.FindBuiltinTypeId(type.Alias));
                 }
             }
         }
