@@ -392,9 +392,9 @@ namespace LSLib.Granny.Model
         public void Transform(Matrix4 transformation, Matrix4 inverse)
         {
             Position = Vector3.TransformPosition(Position, transformation);
-            Normal = Vector3.TransformNormalInverse(Normal, inverse);
-            Tangent = Vector3.TransformNormalInverse(Tangent, inverse);
-            Binormal = Vector3.TransformNormalInverse(Binormal, inverse);
+            Normal = Vector3.Normalize(Vector3.TransformNormalInverse(Normal, inverse));
+            Tangent = Vector3.Normalize(Vector3.TransformNormalInverse(Tangent, inverse));
+            Binormal = Vector3.Normalize(Vector3.TransformNormalInverse(Binormal, inverse));
         }
 
         public void Serialize(WritableSection section)
