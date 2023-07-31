@@ -189,7 +189,10 @@ namespace LSLib.LS
                     }
                     else
                     {
-                        attrTypeId = Convert.ToUInt32(reader["type"]);
+                        if (!UInt32.TryParse(reader["type"], out attrTypeId))
+                        {
+                            attrTypeId = (uint)TypeNames[reader["type"]];
+                        }
                     }
 
                     var attrName = reader["id"];
