@@ -115,57 +115,50 @@ namespace LSLib.Granny.Model
                 Flip(true, true);
             }
 
-            if (VertexDatas != null)
+            foreach (var vertexData in VertexDatas ?? Enumerable.Empty<VertexData>())
             {
-                foreach (var vertexData in VertexDatas)
-                {
-                    vertexData.PostLoad();
-                }
+                vertexData.PostLoad();
             }
 
-            if (TriTopologies != null)
+            foreach (var triTopology in TriTopologies ?? Enumerable.Empty<TriTopology>())
             {
-                foreach (var triTopology in TriTopologies)
-                {
-                    triTopology.PostLoad();
-                }
+                triTopology.PostLoad();
             }
 
             if (Meshes != null)
             {
                 Meshes.ForEach(m => m.PostLoad());
-                for (var i = 0; i < Meshes.Count; i++)
+            }
+
+            var modelIndex = 0;
+            foreach (var model in Models ?? Enumerable.Empty<Model>())
+            {
+                foreach (var binding in model.MeshBindings ?? Enumerable.Empty<MeshBinding>())
                 {
-                    Meshes[i].ExportOrder = i;
+                    binding.Mesh.ExportOrder = modelIndex++;
                 }
             }
 
-            if (Skeletons != null)
+            foreach (var skeleton in Skeletons ?? Enumerable.Empty<Skeleton>())
             {
-                foreach (var skeleton in Skeletons)
+                var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);
+                if (!hasSkinnedMeshes || skeleton.Bones.Count == 1)
                 {
-                    var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);
-                    if (!hasSkinnedMeshes || skeleton.Bones.Count == 1)
-                    {
-                        skeleton.IsDummy = true;
-                        Utils.Info(String.Format("Skeleton '{0}' marked as dummy", skeleton.Name));
-                    }
+                    skeleton.IsDummy = true;
+                    Utils.Info(String.Format("Skeleton '{0}' marked as dummy", skeleton.Name));
                 }
             }
 
             // Upgrade legacy animation formats
-            if (TrackGroups != null)
+            foreach (var group in TrackGroups ?? Enumerable.Empty<TrackGroup>())
             {
-                foreach (var group in TrackGroups)
+                if (group.TransformTracks != null)
                 {
-                    if (group.TransformTracks != null)
+                    foreach (var track in group.TransformTracks)
                     {
-                        foreach (var track in group.TransformTracks)
-                        {
-                            track.OrientationCurve.UpgradeToGr7();
-                            track.PositionCurve.UpgradeToGr7();
-                            track.ScaleShearCurve.UpgradeToGr7();
-                        }
+                        track.OrientationCurve.UpgradeToGr7();
+                        track.PositionCurve.UpgradeToGr7();
+                        track.ScaleShearCurve.UpgradeToGr7();
                     }
                 }
             }

@@ -625,6 +625,7 @@ namespace LSLib.Granny.Model
             if ((Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv0
                 || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv1
                 || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
+                && Options.EnableQTangents
                 && HasNormals 
                 && HasTangents)
             {

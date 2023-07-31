@@ -101,7 +101,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
             Description = "Set extra options for GR2/DAE conversion",
             AllowMultiple = true,
-            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;ignore-uv-nan;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform;conform-copy",
+            AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;ignore-uv-nan;disable-qtangents;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform;conform-copy",
             ValueOptional = false,
             Optional = true
         )]
@@ -354,6 +354,7 @@ namespace Divine.CLI
                 { "recalculate-iwt", false },
                 { "flip-uvs", true },
                 { "ignore-uv-nan", true },
+                { "disable-qtangents", false },
                 { "y-up-skeletons", true },
                 { "force-legacy-version", false },
                 { "compact-tris", true },

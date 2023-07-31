@@ -8,6 +8,7 @@ using OpenTK;
 using Alphaleonis.Win32.Filesystem;
 using File = Alphaleonis.Win32.Filesystem.File;
 using LSLib.LS.Enums;
+using System.Numerics;
 
 namespace LSLib.Granny.Model
 {
@@ -110,8 +111,11 @@ namespace LSLib.Granny.Model
         // Remove animation keys that are a linear interpolation of the preceding and following keys
         // Disabled by default, as D:OS doesn't support sparse knot values in anim curves.
         public bool RemoveTrivialAnimationKeys = false;
-        // Recalculate mesh bone binding OBBs (
+        // Recalculate mesh bone binding OBBs
         public bool RecalculateOBBs = false;
+        // Allow encoding tangents/binormals as QTangents
+        // See: Spherical Skinning with Dual-Quaternions and QTangents, Crytek R&D
+        public bool EnableQTangents = true;
 
         public List<string> DisabledAnimations = new List<string>();
         public List<string> DisabledModels = new List<string>();

@@ -47,7 +47,8 @@ namespace Divine.CLI
                 FlipSkeleton = GR2Options["x-flip-skeletons"],
                 FlipMesh = GR2Options["x-flip-meshes"],
                 TransformSkeletons = GR2Options["y-up-skeletons"],
-                IgnoreUVNaN = GR2Options["ignore-uv-nan"]
+                IgnoreUVNaN = GR2Options["ignore-uv-nan"],
+                EnableQTangents = !GR2Options["disable-qtangents"]
             };
 
             if (exporterOptions.ConformGR2Path != null)
