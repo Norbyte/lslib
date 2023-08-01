@@ -15,7 +15,7 @@ namespace ConverterApp
         {
             InitializeComponent();
 
-            packageVersion.SelectedIndex = 2;
+            packageVersion.SelectedIndex = 0;
             compressionMethod.SelectedIndex = 3;
 
             extractPackagePath.DataBindings.Add("Text", settingsDataSource, "Settings.PAK.ExtractInputPath", true, DataSourceUpdateMode.OnPropertyChanged);
@@ -97,12 +97,11 @@ namespace ConverterApp
         {
             switch (packageVersion.SelectedIndex)
             {
-                case 0: return PackageVersion.V16;
-                case 1: return PackageVersion.V15;
-                case 2: return PackageVersion.V13;
-                case 3: return PackageVersion.V10;
-                case 4: return PackageVersion.V9;
-                case 5: return PackageVersion.V7;
+                case 0: return PackageVersion.V18;
+                case 1: return PackageVersion.V13;
+                case 2: return PackageVersion.V10;
+                case 3: return PackageVersion.V9;
+                case 4: return PackageVersion.V7;
                 default: throw new InvalidDataException();
             }
         }
@@ -239,22 +238,22 @@ namespace ConverterApp
             switch (game.PAKVersion())
             {
                 case PackageVersion.V7:
-                    packageVersion.SelectedIndex = 5;
-                    break;
-
-                case PackageVersion.V9:
                     packageVersion.SelectedIndex = 4;
                     break;
 
-                case PackageVersion.V10:
+                case PackageVersion.V9:
                     packageVersion.SelectedIndex = 3;
                     break;
 
-                case PackageVersion.V13:
+                case PackageVersion.V10:
                     packageVersion.SelectedIndex = 2;
                     break;
 
-                case PackageVersion.V16:
+                case PackageVersion.V13:
+                    packageVersion.SelectedIndex = 1;
+                    break;
+
+                case PackageVersion.V18:
                     packageVersion.SelectedIndex = 0;
                     break;
             }

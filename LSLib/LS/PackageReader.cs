@@ -243,6 +243,33 @@ namespace LSLib.LS
             }
         }
 
+        private void ReadFileListV18(BinaryReader reader, Package package)
+        {
+            int numFiles = reader.ReadInt32();
+            int compressedSize = reader.ReadInt32();
+            byte[] compressedFileList = reader.ReadBytes(compressedSize);
+
+            int fileBufferSize = Marshal.SizeOf(typeof(FileEntry18)) * numFiles;
+            var uncompressedList = new byte[fileBufferSize];
+            int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, false);
+            if (uncompressedSize != fileBufferSize)
+            {
+                string msg = $"LZ4 compressor disagrees about the size of file headers; expected {fileBufferSize}, got {uncompressedSize}";
+                throw new InvalidDataException(msg);
+            }
+
+            var ms = new MemoryStream(uncompressedList);
+            var msr = new BinaryReader(ms);
+
+            var entries = new FileEntry18[numFiles];
+            BinUtils.ReadStructs(msr, entries);
+
+            foreach (var entry in entries)
+            {
+                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
+            }
+        }
+
         private Package ReadPackageV15(FileStream mainStream, BinaryReader reader)
         {
             var package = new Package();
@@ -291,6 +318,30 @@ namespace LSLib.LS
             return package;
         }
 
+        private Package ReadPackageV18(FileStream mainStream, BinaryReader reader)
+        {
+            var package = new Package();
+            var header = BinUtils.ReadStruct<LSPKHeader16>(reader);
+
+            if (header.Version != (ulong)PackageVersion.V18)
+            {
+                string msg = $"Unsupported package version {header.Version}; this layout is only supported for V18";
+                throw new InvalidDataException(msg);
+            }
+
+            package.Metadata.Flags = (PackageFlags)header.Flags;
+            package.Metadata.Priority = header.Priority;
+            package.Version = PackageVersion.V18;
+
+            if (_metadataOnly) return package;
+
+            OpenStreams(mainStream, header.NumParts);
+            mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
+            ReadFileListV18(reader, package);
+
+            return package;
+        }
+
         public Package Read()
         {
             var mainStream = File.Open(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -327,6 +378,11 @@ namespace LSLib.LS
                     {
                         mainStream.Seek(4, SeekOrigin.Begin);
                         return ReadPackageV16(mainStream, reader);
+                    }
+                    else if (version == 18)
+                    {
+                        mainStream.Seek(4, SeekOrigin.Begin);
+                        return ReadPackageV18(mainStream, reader);
                     }
                     else
                     {

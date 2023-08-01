@@ -6,9 +6,8 @@
         DivinityOriginalSinEE = 1,
         DivinityOriginalSin2 = 2,
         DivinityOriginalSin2DE = 3,
-        BaldursGate3PrePatch8 = 4,
-        BaldursGate3 = 5,
-        Unset = 6
+        BaldursGate3 = 4,
+        Unset = 5
     };
 
     public static class GameEnumExtensions
@@ -27,9 +26,8 @@
                 case Game.DivinityOriginalSinEE: return PackageVersion.V9;
                 case Game.DivinityOriginalSin2: return PackageVersion.V10;
                 case Game.DivinityOriginalSin2DE: return PackageVersion.V13;
-                case Game.BaldursGate3PrePatch8: return PackageVersion.V16;
-                case Game.BaldursGate3: return PackageVersion.V16;
-                default: return PackageVersion.V16;
+                case Game.BaldursGate3: return PackageVersion.V18;
+                default: return PackageVersion.V18;
             }
         }
 
@@ -41,7 +39,6 @@
                 case Game.DivinityOriginalSinEE: return Enums.LSFVersion.VerChunkedCompress;
                 case Game.DivinityOriginalSin2: return Enums.LSFVersion.VerExtendedNodes;
                 case Game.DivinityOriginalSin2DE: return Enums.LSFVersion.VerExtendedNodes;
-                case Game.BaldursGate3PrePatch8: return Enums.LSFVersion.VerBG3ExtendedHeader;
                 case Game.BaldursGate3: return Enums.LSFVersion.VerBG3AdditionalBlob;
                 default: return Enums.LSFVersion.VerBG3AdditionalBlob;
             }
@@ -57,7 +54,6 @@
                 case Game.DivinityOriginalSin2DE: 
                     return Enums.LSXVersion.V3;
 
-                case Game.BaldursGate3PrePatch8:
                 case Game.BaldursGate3: 
                     return Enums.LSXVersion.V4;
 

@@ -70,7 +70,7 @@
             this.packageProgress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.packageProgress.Location = new System.Drawing.Point(8, 428);
-            this.packageProgress.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.packageProgress.Margin = new System.Windows.Forms.Padding(4);
             this.packageProgress.Name = "packageProgress";
             this.packageProgress.Size = new System.Drawing.Size(1168, 28);
             this.packageProgress.TabIndex = 57;
@@ -81,7 +81,7 @@
             this.label5.Location = new System.Drawing.Point(4, 409);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(69, 17);
+            this.label5.Size = new System.Drawing.Size(65, 16);
             this.label5.TabIndex = 58;
             this.label5.Text = "Progress:";
             // 
@@ -95,7 +95,7 @@
             this.packageProgressLabel.Location = new System.Drawing.Point(93, 411);
             this.packageProgressLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.packageProgressLabel.Name = "packageProgressLabel";
-            this.packageProgressLabel.Size = new System.Drawing.Size(0, 17);
+            this.packageProgressLabel.Size = new System.Drawing.Size(0, 16);
             this.packageProgressLabel.TabIndex = 64;
             // 
             // groupBox1
@@ -110,9 +110,9 @@
             this.groupBox1.Controls.Add(this.extractionPath);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Location = new System.Drawing.Point(9, 16);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(1167, 170);
             this.groupBox1.TabIndex = 65;
             this.groupBox1.TabStop = false;
@@ -122,7 +122,7 @@
             // 
             this.extractPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.extractPackageBtn.Location = new System.Drawing.Point(945, 134);
-            this.extractPackageBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.extractPackageBtn.Margin = new System.Windows.Forms.Padding(4);
             this.extractPackageBtn.Name = "extractPackageBtn";
             this.extractPackageBtn.Size = new System.Drawing.Size(213, 28);
             this.extractPackageBtn.TabIndex = 62;
@@ -134,7 +134,7 @@
             // 
             this.extractPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.extractPathBrowseBtn.Location = new System.Drawing.Point(1105, 94);
-            this.extractPathBrowseBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.extractPathBrowseBtn.Margin = new System.Windows.Forms.Padding(4);
             this.extractPathBrowseBtn.Name = "extractPathBrowseBtn";
             this.extractPathBrowseBtn.Size = new System.Drawing.Size(55, 28);
             this.extractPathBrowseBtn.TabIndex = 61;
@@ -146,7 +146,7 @@
             // 
             this.extractPackageBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.extractPackageBrowseBtn.Location = new System.Drawing.Point(1105, 37);
-            this.extractPackageBrowseBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.extractPackageBrowseBtn.Margin = new System.Windows.Forms.Padding(4);
             this.extractPackageBrowseBtn.Name = "extractPackageBrowseBtn";
             this.extractPackageBrowseBtn.Size = new System.Drawing.Size(55, 28);
             this.extractPackageBrowseBtn.TabIndex = 58;
@@ -159,7 +159,7 @@
             this.extractPackagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.extractPackagePath.Location = new System.Drawing.Point(12, 39);
-            this.extractPackagePath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.extractPackagePath.Margin = new System.Windows.Forms.Padding(4);
             this.extractPackagePath.Name = "extractPackagePath";
             this.extractPackagePath.Size = new System.Drawing.Size(1093, 22);
             this.extractPackagePath.TabIndex = 56;
@@ -170,7 +170,7 @@
             this.label4.Location = new System.Drawing.Point(8, 20);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(99, 17);
+            this.label4.Size = new System.Drawing.Size(94, 16);
             this.label4.TabIndex = 57;
             this.label4.Text = "Package path:";
             // 
@@ -179,7 +179,7 @@
             this.extractionPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.extractionPath.Location = new System.Drawing.Point(12, 96);
-            this.extractionPath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.extractionPath.Margin = new System.Windows.Forms.Padding(4);
             this.extractionPath.Name = "extractionPath";
             this.extractionPath.Size = new System.Drawing.Size(1093, 22);
             this.extractionPath.TabIndex = 59;
@@ -190,7 +190,7 @@
             this.label3.Location = new System.Drawing.Point(8, 76);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(115, 17);
+            this.label3.Size = new System.Drawing.Size(106, 16);
             this.label3.TabIndex = 60;
             this.label3.Text = "Destination path:";
             // 
@@ -215,9 +215,9 @@
             this.groupBox2.Controls.Add(this.createSrcPath);
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Location = new System.Drawing.Point(9, 194);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox2.Size = new System.Drawing.Size(1167, 198);
             this.groupBox2.TabIndex = 66;
             this.groupBox2.TabStop = false;
@@ -227,9 +227,9 @@
             // 
             this.solid.AutoSize = true;
             this.solid.Location = new System.Drawing.Point(604, 137);
-            this.solid.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.solid.Margin = new System.Windows.Forms.Padding(4);
             this.solid.Name = "solid";
-            this.solid.Size = new System.Drawing.Size(61, 21);
+            this.solid.Size = new System.Drawing.Size(60, 20);
             this.solid.TabIndex = 76;
             this.solid.Text = "Solid";
             this.solid.UseVisualStyleBackColor = true;
@@ -238,9 +238,9 @@
             // 
             this.preloadIntoCache.AutoSize = true;
             this.preloadIntoCache.Location = new System.Drawing.Point(789, 138);
-            this.preloadIntoCache.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.preloadIntoCache.Margin = new System.Windows.Forms.Padding(4);
             this.preloadIntoCache.Name = "preloadIntoCache";
-            this.preloadIntoCache.Size = new System.Drawing.Size(148, 21);
+            this.preloadIntoCache.Size = new System.Drawing.Size(141, 20);
             this.preloadIntoCache.TabIndex = 75;
             this.preloadIntoCache.Text = "Preload into cache";
             this.preloadIntoCache.UseVisualStyleBackColor = true;
@@ -250,9 +250,9 @@
             // 
             this.allowMemoryMapping.AutoSize = true;
             this.allowMemoryMapping.Location = new System.Drawing.Point(604, 162);
-            this.allowMemoryMapping.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.allowMemoryMapping.Margin = new System.Windows.Forms.Padding(4);
             this.allowMemoryMapping.Name = "allowMemoryMapping";
-            this.allowMemoryMapping.Size = new System.Drawing.Size(174, 21);
+            this.allowMemoryMapping.Size = new System.Drawing.Size(169, 20);
             this.allowMemoryMapping.TabIndex = 74;
             this.allowMemoryMapping.Text = "Allow memory mapping";
             this.allowMemoryMapping.UseVisualStyleBackColor = true;
@@ -261,7 +261,7 @@
             // packagePriority
             // 
             this.packagePriority.Location = new System.Drawing.Point(513, 156);
-            this.packagePriority.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.packagePriority.Margin = new System.Windows.Forms.Padding(4);
             this.packagePriority.Maximum = new decimal(new int[] {
             255,
             0,
@@ -277,7 +277,7 @@
             this.label7.Location = new System.Drawing.Point(509, 135);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(56, 17);
+            this.label7.Size = new System.Drawing.Size(51, 16);
             this.label7.TabIndex = 72;
             this.label7.Text = "Priority:";
             // 
@@ -285,7 +285,7 @@
             // 
             this.createPackagePathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.createPackagePathBrowseBtn.Location = new System.Drawing.Point(1104, 96);
-            this.createPackagePathBrowseBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.createPackagePathBrowseBtn.Margin = new System.Windows.Forms.Padding(4);
             this.createPackagePathBrowseBtn.Name = "createPackagePathBrowseBtn";
             this.createPackagePathBrowseBtn.Size = new System.Drawing.Size(55, 28);
             this.createPackagePathBrowseBtn.TabIndex = 71;
@@ -298,7 +298,7 @@
             this.createPackagePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.createPackagePath.Location = new System.Drawing.Point(11, 98);
-            this.createPackagePath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.createPackagePath.Margin = new System.Windows.Forms.Padding(4);
             this.createPackagePath.Name = "createPackagePath";
             this.createPackagePath.Size = new System.Drawing.Size(1093, 22);
             this.createPackagePath.TabIndex = 69;
@@ -310,7 +310,7 @@
             this.label1.Location = new System.Drawing.Point(7, 79);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(99, 17);
+            this.label1.Size = new System.Drawing.Size(94, 16);
             this.label1.TabIndex = 70;
             this.label1.Text = "Package path:";
             // 
@@ -319,14 +319,13 @@
             this.packageVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.packageVersion.FormattingEnabled = true;
             this.packageVersion.Items.AddRange(new object[] {
-            "V16 (Baldur\'s Gate 3 EA Patch 4 and later)",
-            "V15 (Baldur\'s Gate 3 EA Patch 1-3)",
+            "V18 (Baldur\'s Gate 3 Release)",
             "V13 (Divinity Original Sin: EE, Original Sin 2)",
             "V10 (Divinity Original Sin)",
             "V9 (Divinity Original Sin Classic)",
             "V7 (Divinity Original Sin Classic - Old)"});
             this.packageVersion.Location = new System.Drawing.Point(12, 156);
-            this.packageVersion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.packageVersion.Margin = new System.Windows.Forms.Padding(4);
             this.packageVersion.Name = "packageVersion";
             this.packageVersion.Size = new System.Drawing.Size(315, 24);
             this.packageVersion.TabIndex = 68;
@@ -337,7 +336,7 @@
             this.label8.Location = new System.Drawing.Point(8, 135);
             this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(60, 17);
+            this.label8.Size = new System.Drawing.Size(56, 16);
             this.label8.TabIndex = 67;
             this.label8.Text = "Version:";
             // 
@@ -352,7 +351,7 @@
             "LZ4",
             "LZ4 HC"});
             this.compressionMethod.Location = new System.Drawing.Point(353, 156);
-            this.compressionMethod.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.compressionMethod.Margin = new System.Windows.Forms.Padding(4);
             this.compressionMethod.Name = "compressionMethod";
             this.compressionMethod.Size = new System.Drawing.Size(141, 24);
             this.compressionMethod.TabIndex = 66;
@@ -363,7 +362,7 @@
             this.label6.Location = new System.Drawing.Point(349, 135);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(94, 17);
+            this.label6.Size = new System.Drawing.Size(90, 16);
             this.label6.TabIndex = 65;
             this.label6.Text = "Compression:";
             // 
@@ -371,7 +370,7 @@
             // 
             this.createPackageBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.createPackageBtn.Location = new System.Drawing.Point(945, 162);
-            this.createPackageBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.createPackageBtn.Margin = new System.Windows.Forms.Padding(4);
             this.createPackageBtn.Name = "createPackageBtn";
             this.createPackageBtn.Size = new System.Drawing.Size(213, 28);
             this.createPackageBtn.TabIndex = 64;
@@ -383,7 +382,7 @@
             // 
             this.createSrcPathBrowseBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.createSrcPathBrowseBtn.Location = new System.Drawing.Point(1105, 43);
-            this.createSrcPathBrowseBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.createSrcPathBrowseBtn.Margin = new System.Windows.Forms.Padding(4);
             this.createSrcPathBrowseBtn.Name = "createSrcPathBrowseBtn";
             this.createSrcPathBrowseBtn.Size = new System.Drawing.Size(55, 28);
             this.createSrcPathBrowseBtn.TabIndex = 61;
@@ -396,7 +395,7 @@
             this.createSrcPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.createSrcPath.Location = new System.Drawing.Point(12, 46);
-            this.createSrcPath.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.createSrcPath.Margin = new System.Windows.Forms.Padding(4);
             this.createSrcPath.Name = "createSrcPath";
             this.createSrcPath.Size = new System.Drawing.Size(1093, 22);
             this.createSrcPath.TabIndex = 59;
@@ -407,7 +406,7 @@
             this.label2.Location = new System.Drawing.Point(8, 26);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(89, 17);
+            this.label2.Size = new System.Drawing.Size(82, 16);
             this.label2.TabIndex = 60;
             this.label2.Text = "Source path:";
             // 
@@ -425,7 +424,7 @@
             this.Controls.Add(this.packageProgressLabel);
             this.Controls.Add(this.packageProgress);
             this.Controls.Add(this.label5);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "PackagePane";
             this.Size = new System.Drawing.Size(1188, 480);
             this.groupBox1.ResumeLayout(false);

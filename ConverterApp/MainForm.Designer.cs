@@ -131,8 +131,7 @@
             "Divinity: Original Sin EE (64-bit)",
             "Divinity: Original Sin 2 (64-bit)",
             "Divinity: Original Sin 2 DE (64-bit)",
-            "Baldur\'s Gate 3 EA Patch 1-7 (64-bit)",
-            "Baldur\'s Gate 3 EA Patch 8+ (64-bit)"});
+            "Baldur\'s Gate 3 (64-bit)"});
             this.gr2Game.Location = new System.Drawing.Point(99, 15);
             this.gr2Game.Margin = new System.Windows.Forms.Padding(4);
             this.gr2Game.Name = "gr2Game";

@@ -143,7 +143,6 @@ namespace LSLib.Granny.Model
                     VersionTag = Header.Tag_DOSEE;
                     ModelInfoFormat = DivinityModelInfoFormat.LSMv1;
                     break;
-                case Game.BaldursGate3PrePatch8:
                 case Game.BaldursGate3:
                     Is64Bit = true;
                     AlternateSignature = false;

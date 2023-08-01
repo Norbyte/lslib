@@ -149,6 +149,20 @@ namespace LSLib.LS
         public UInt32 Unknown2;
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal struct FileEntry18
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+        public byte[] Name;
+
+        public UInt32 OffsetInFile1;
+        public UInt16 OffsetInFile2;
+        public Byte ArchivePart;
+        public Byte Flags;
+        public UInt32 SizeOnDisk;
+        public UInt32 UncompressedSize;
+    }
+
     public abstract class AbstractFileInfo
     {
         public String Name;
@@ -368,6 +382,36 @@ namespace LSLib.LS
             return info;
         }
 
+        internal static PackagedFileInfo CreateFromEntry(FileEntry18 entry, Stream dataStream)
+        {
+            var info = new PackagedFileInfo
+            {
+                PackageStream = dataStream,
+                OffsetInFile = entry.OffsetInFile1 | ((ulong)entry.OffsetInFile2 << 32),
+                SizeOnDisk = entry.SizeOnDisk,
+                UncompressedSize = entry.UncompressedSize,
+                ArchivePart = entry.ArchivePart,
+                Flags = entry.Flags,
+                Crc = 0,
+                Solid = false
+            };
+
+            int nameLen;
+            for (nameLen = 0; nameLen < entry.Name.Length && entry.Name[nameLen] != 0; nameLen++)
+            {
+            }
+            info.Name = Encoding.UTF8.GetString(entry.Name, 0, nameLen);
+
+            uint compressionMethod = (uint)entry.Flags & 0x0F;
+            if (compressionMethod > 2 || ((uint)entry.Flags & ~0x7F) != 0)
+            {
+                string msg = $"File '{info.Name}' has unsupported flags: {entry.Flags}";
+                throw new InvalidDataException(msg);
+            }
+
+            return info;
+        }
+
         internal static PackagedFileInfo CreateSolidFromEntry(FileEntry13 entry, Stream dataStream, uint solidOffset, Stream solidStream)
         {
             var info = CreateFromEntry(entry, dataStream);
@@ -447,6 +491,24 @@ namespace LSLib.LS
                 Crc = Crc,
                 ArchivePart = ArchivePart,
                 Unknown2 = 0
+            };
+            byte[] encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
+            Array.Copy(encodedName, entry.Name, encodedName.Length);
+
+            return entry;
+        }
+
+        internal FileEntry18 MakeEntryV18()
+        {
+            var entry = new FileEntry18
+            {
+                Name = new byte[256],
+                OffsetInFile1 = (uint)(OffsetInFile & 0xffffffff),
+                OffsetInFile2 = (ushort)((OffsetInFile >> 32) & 0xffff),
+                SizeOnDisk = (uint)SizeOnDisk,
+                UncompressedSize = (Flags & 0x0F) == 0 ? 0 : (uint)UncompressedSize,
+                Flags = (byte)Flags,
+                ArchivePart = (byte)ArchivePart
             };
             byte[] encodedName = Encoding.UTF8.GetBytes(Name.Replace('\\', '/'));
             Array.Copy(encodedName, entry.Name, encodedName.Length);
@@ -538,7 +600,7 @@ namespace LSLib.LS
 
     public class Package
     {
-        public const PackageVersion CurrentVersion = PackageVersion.V16;
+        public const PackageVersion CurrentVersion = PackageVersion.V18;
 
         public static byte[] Signature =
         {

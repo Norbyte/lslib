@@ -111,8 +111,7 @@ namespace ConverterApp
                 case 1: return Game.DivinityOriginalSinEE;
                 case 2: return Game.DivinityOriginalSin2;
                 case 3: return Game.DivinityOriginalSin2DE;
-                case 4: return Game.BaldursGate3PrePatch8;
-                case 5: return Game.BaldursGate3;
+                case 4: return Game.BaldursGate3;
                 default: throw new InvalidOperationException();
             }
         }

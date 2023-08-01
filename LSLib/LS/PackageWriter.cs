@@ -369,6 +369,58 @@ namespace LSLib.LS
             }
         }
 
+        private void WriteFileListV18(BinaryWriter metadataWriter, List<PackagedFileInfo> files)
+        {
+            byte[] fileListBuf;
+            using (var fileList = new MemoryStream())
+            using (var fileListWriter = new BinaryWriter(fileList))
+            {
+                foreach (PackagedFileInfo file in files)
+                {
+                    FileEntry18 entry = file.MakeEntryV18();
+                    BinUtils.WriteStruct(fileListWriter, ref entry);
+                }
+
+                fileListBuf = fileList.ToArray();
+            }
+
+            byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
+
+            metadataWriter.Write((UInt32)files.Count);
+            metadataWriter.Write((UInt32)compressedFileList.Length);
+            metadataWriter.Write(compressedFileList);
+        }
+
+        public void WriteV18(FileStream mainStream)
+        {
+            var header = new LSPKHeader16
+            {
+                Version = (uint)Version
+            };
+
+            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            {
+                writer.Write(Package.Signature);
+                BinUtils.WriteStruct(writer, ref header);
+            }
+
+            var writtenFiles = PackFiles();
+
+            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            {
+                header.FileListOffset = (UInt64)mainStream.Position;
+                WriteFileListV18(writer, writtenFiles);
+
+                header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
+                header.Priority = _package.Metadata.Priority;
+                header.Flags = (byte)_package.Metadata.Flags;
+                header.Md5 = ComputeArchiveHash();
+                header.NumParts = (UInt16)_streams.Count;
+                mainStream.Seek(4, SeekOrigin.Begin);
+                BinUtils.WriteStruct(writer, ref header);
+            }
+        }
+
         public byte[] ComputeArchiveHash()
         {
             // MD5 is computed over the contents of all files in an alphabetically sorted order
@@ -417,6 +469,11 @@ namespace LSLib.LS
 
             switch (Version)
             {
+                case PackageVersion.V18:
+                {
+                    WriteV18(mainStream);
+                    break;
+                }
                 case PackageVersion.V16:
                 {
                     WriteV16(mainStream);
