@@ -12,6 +12,7 @@ namespace LSLib.LS
 
         private Stream Stream;
         private BinaryWriter Writer;
+        private LSMetadata Meta;
 
         private MemoryStream NodeStream;
         private BinaryWriter NodeWriter;
@@ -45,6 +46,8 @@ namespace LSLib.LS
                 var msg = String.Format("Writing LSF version {0} is not supported (highest is {1})", Version, LSFVersion.MaxWriteVersion);
                 throw new InvalidDataException(msg);
             }
+
+            Meta = resource.Metadata;
 
             using (this.Writer = new BinaryWriter(Stream, Encoding.Default, true))
             using (this.NodeStream = new MemoryStream())
@@ -377,7 +380,10 @@ namespace LSLib.LS
 
         private void WriteTranslatedFSString(BinaryWriter writer, TranslatedFSString fs)
         {
-            if (Version >= LSFVersion.VerBG3)
+            if (Version >= LSFVersion.VerBG3 ||
+                (Meta.MajorVersion > 4 ||
+                (Meta.MajorVersion == 4 && Meta.Revision > 0) ||
+                (Meta.MajorVersion == 4 && Meta.Revision == 0 && Meta.BuildNumber >= 0x1a)))
             {
                 writer.Write(fs.Version);
             }

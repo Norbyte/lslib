@@ -156,7 +156,7 @@ namespace LSLib.LS
             using (var reader = new BinaryReader(s))
             {
 #if DEBUG_LSF_SERIALIZATION
-                var rawAttributes = new List<AttributeEntryV2>();
+                var rawAttributes = new List<LSFAttributeEntryV2>();
 #endif
 
                 var prevAttributeRefs = new List<Int32>();
@@ -272,7 +272,16 @@ namespace LSLib.LS
         {
             if (sizeOnDisk == 0 && uncompressedSize != 0) // data is not compressed
             {
-                return new MemoryStream(reader.ReadBytes((int)uncompressedSize));
+                var buf = reader.ReadBytes((int)uncompressedSize);
+
+#if DUMP_LSF_SERIALIZATION
+                using (var nodesFile = new FileStream(debugDumpTo, FileMode.Create, FileAccess.Write))
+                {
+                    nodesFile.Write(buf, 0, buf.Length);
+                }
+#endif
+
+                return new MemoryStream(buf);
             }
 
             if (sizeOnDisk == 0 && uncompressedSize == 0) // no data
@@ -494,7 +503,10 @@ namespace LSLib.LS
                         var attr = new NodeAttribute(type);
                         var str = new TranslatedString();
 
-                        if (Version >= LSFVersion.VerBG3)
+                        if (Version >= LSFVersion.VerBG3 || 
+                            (GameVersion.Major > 4 || 
+                            (GameVersion.Major == 4 && GameVersion.Revision > 0) ||
+                            (GameVersion.Major == 4 && GameVersion.Revision == 0 && GameVersion.Build >= 0x1a)))
                         {
                             str.Version = reader.ReadUInt16();
                         }
