@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("LSLib")]
-[assembly: AssemblyCopyright("Copyright © Norbyte 2012-2020")]
+[assembly: AssemblyCopyright("Copyright © Norbyte 2012-2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
