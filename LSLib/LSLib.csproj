@@ -73,6 +73,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LS\Localization.cs" />
     <Compile Include="VirtualTextures\BC5Image.cs" />
     <Compile Include="VirtualTextures\Compression.cs" />
     <Compile Include="VirtualTextures\PageFile.cs" />

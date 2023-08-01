@@ -102,6 +102,12 @@
     <Compile Include="GR2Pane.Designer.cs">
       <DependentUpon>GR2Pane.cs</DependentUpon>
     </Compile>
+    <Compile Include="LocalizationPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LocalizationPane.Designer.cs">
+      <DependentUpon>LocalizationPane.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -143,6 +149,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="GR2Pane.resx">
       <DependentUpon>GR2Pane.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LocalizationPane.resx">
+      <DependentUpon>LocalizationPane.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>

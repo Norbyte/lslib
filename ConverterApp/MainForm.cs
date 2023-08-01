@@ -13,6 +13,7 @@ namespace ConverterApp
         PackagePane packagePane;
         ResourcePane resourcePane;
         VirtualTexturesPane virtualTexturesPane;
+        LocalizationPane localizationPane;
         OsirisPane osirisPane;
         DebugPane debugPane;
 
@@ -67,6 +68,13 @@ namespace ConverterApp
                 Size = resourceTab.ClientSize
             };
             virtualTextureTab.Controls.Add(virtualTexturesPane);
+
+            localizationPane = new LocalizationPane()
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Size = resourceTab.ClientSize
+            };
+            locaTab.Controls.Add(localizationPane);
 
             osirisPane = new OsirisPane(this)
             {

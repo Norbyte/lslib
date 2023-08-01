@@ -37,6 +37,7 @@
             this.debugTab = new System.Windows.Forms.TabPage();
             this.gr2Game = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.locaTab = new System.Windows.Forms.TabPage();
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -49,6 +50,7 @@
             this.tabControl.Controls.Add(this.packageTab);
             this.tabControl.Controls.Add(this.resourceTab);
             this.tabControl.Controls.Add(this.virtualTextureTab);
+            this.tabControl.Controls.Add(this.locaTab);
             this.tabControl.Controls.Add(this.osirisTab);
             this.tabControl.Controls.Add(this.debugTab);
             this.tabControl.Location = new System.Drawing.Point(16, 52);
@@ -149,6 +151,16 @@
             this.label7.TabIndex = 29;
             this.label7.Text = "Game:";
             // 
+            // locaTab
+            // 
+            this.locaTab.Location = new System.Drawing.Point(4, 25);
+            this.locaTab.Name = "locaTab";
+            this.locaTab.Padding = new System.Windows.Forms.Padding(3);
+            this.locaTab.Size = new System.Drawing.Size(1215, 734);
+            this.locaTab.TabIndex = 6;
+            this.locaTab.Text = "Localization";
+            this.locaTab.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -176,6 +188,7 @@
         private System.Windows.Forms.ComboBox gr2Game;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TabPage debugTab;
+        private System.Windows.Forms.TabPage locaTab;
     }
 }
 
