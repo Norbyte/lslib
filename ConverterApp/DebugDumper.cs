@@ -147,21 +147,22 @@ namespace ConverterApp
                 var varDumper = new VariableDumper(outputStream);
                 varDumper.IncludeDeletedVars = IncludeDeletedVars;
                 varDumper.IncludeLocalScopes = IncludeLocalScopes;
-                varDumper.Load(SaveGlobals);
-
-                if (globals)
+                if (varDumper.Load(SaveGlobals))
                 {
-                    varDumper.DumpGlobals();
-                }
+                    if (globals)
+                    {
+                        varDumper.DumpGlobals();
+                    }
 
-                if (characters)
-                {
-                    varDumper.DumpCharacters();
-                }
+                    if (characters)
+                    {
+                        varDumper.DumpCharacters();
+                    }
 
-                if (items)
-                {
-                    varDumper.DumpItems();
+                    if (items)
+                    {
+                        varDumper.DumpItems();
+                    }
                 }
             }
         }

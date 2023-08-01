@@ -512,7 +512,14 @@ namespace LSLib.LS.Story
             {
                 writer.Write("(");
                 NodeRef.DebugDump(writer, story);
-                writer.Write(", Entry Point {0}, Goal {1})", EntryPoint, GoalRef.Resolve().Name);
+                if (GoalRef.IsValid)
+                {
+                    writer.Write(", Entry Point {0}, Goal {1})", EntryPoint, GoalRef.Resolve().Name);
+                }
+                else
+                {
+                    writer.Write(")");
+                }
             }
             else
             {

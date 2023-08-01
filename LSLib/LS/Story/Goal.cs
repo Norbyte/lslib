@@ -133,7 +133,7 @@ namespace LSLib.LS.Story
                 if (node.Value is RuleNode)
                 {
                     var rule = node.Value as RuleNode;
-                    if (rule.DerivedGoalRef.Index == Index)
+                    if (rule.DerivedGoalRef != null && rule.DerivedGoalRef.Index == Index)
                     {
                         node.Value.MakeScript(writer, story, nullTuple, false);
                         writer.WriteLine();

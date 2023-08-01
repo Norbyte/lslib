@@ -101,12 +101,18 @@ namespace ConverterApp
             }
         }
 
-        public void Load(Resource resource)
+        public bool Load(Resource resource)
         {
             Rsrc = resource;
             Node osiHelper = resource.Regions["OsirisVariableHelper"];
+            if (!osiHelper.Children.ContainsKey("IdentifierTable"))
+            {
+                return false;
+            }
+
             VariablesHelper = new OsirisVariableHelper();
             VariablesHelper.Load(osiHelper);
+            return true;
         }
 
         public void DumpGlobals()
