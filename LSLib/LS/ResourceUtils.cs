@@ -192,12 +192,24 @@ namespace LSLib.LS
             }
         }
 
-        private void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string extension)
+        private bool IsA(string path, ResourceFormat format)
+        {
+            var extension = Path.GetExtension(path).ToLower();
+            switch (format)
+            {
+                case ResourceFormat.LSX: return extension == ".lsx";
+                case ResourceFormat.LSB: return extension == ".lsb";
+                case ResourceFormat.LSF: return extension == ".lsf" || extension == ".lsbc" || extension == ".lsfx";
+                case ResourceFormat.LSJ: return extension == ".lsj";
+                default: return false;
+            }
+        }
+
+        private void EnumerateFiles(List<string> paths, string rootPath, string currentPath, ResourceFormat format)
         {
             foreach (string filePath in Directory.GetFiles(currentPath))
             {
-                var fileExtension = Path.GetExtension(filePath);
-                if (fileExtension.ToLower() == extension)
+                if (IsA(filePath, format))
                 {
                     var relativePath = filePath.Substring(rootPath.Length);
                     if (relativePath[0] == '/' || relativePath[0] == '\\')
@@ -211,7 +223,7 @@ namespace LSLib.LS
 
             foreach (string directoryPath in Directory.GetDirectories(currentPath))
             {
-                EnumerateFiles(paths, rootPath, directoryPath, extension);
+                EnumerateFiles(paths, rootPath, directoryPath, format);
             }
         }
 
@@ -219,7 +231,7 @@ namespace LSLib.LS
         {
             this.progressUpdate("Enumerating files ...", 0, 1);
             var paths = new List<string>();
-            EnumerateFiles(paths, inputDir, inputDir, "." + inputFormat.ToString().ToLower());
+            EnumerateFiles(paths, inputDir, inputDir, inputFormat);
 
             this.progressUpdate("Converting resources ...", 0, 1);
             for (var i = 0; i < paths.Count; i++)
