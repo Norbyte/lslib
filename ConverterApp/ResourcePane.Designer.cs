@@ -312,12 +312,12 @@
             // 
             // resourceInputFileDlg
             // 
-            this.resourceInputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf;*.lsj";
+            this.resourceInputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf;*.lsj;*.lsfx;*.lsbc;*.lsbs";
             this.resourceInputFileDlg.Title = "Select Input File";
             // 
             // resourceOutputFileDlg
             // 
-            this.resourceOutputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf;*.lsj";
+            this.resourceOutputFileDlg.Filter = "LS files|*.lsx;*.lsb;*.lsf;*.lsj;*.lsfx;*.lsbc;*.lsbs";
             this.resourceOutputFileDlg.Title = "Select Output File";
             // 
             // ResourcePane

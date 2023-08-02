@@ -85,6 +85,11 @@ namespace ConverterApp
             Application.DoEvents();
         }
 
+        public void ResourceError(string path, Exception e)
+        {
+            MessageBox.Show($"Failed to convert resource {path}{Environment.NewLine}{Environment.NewLine}{e}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
         private void resourceBulkConvertBtn_Click(object sender, EventArgs e)
         {
             var inputFormat = ResourceFormat.LSX;
@@ -144,6 +149,7 @@ namespace ConverterApp
                 resourceConvertBtn.Enabled = false;
                 var utils = new ResourceUtils();
                 utils.progressUpdate += ResourceProgressUpdate;
+                utils.errorDelegate += ResourceError;
                 utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, conversionParams);
 
                 MessageBox.Show("Resources converted successfully.");

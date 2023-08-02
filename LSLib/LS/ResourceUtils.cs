@@ -60,6 +60,9 @@ namespace LSLib.LS
     {
         public delegate void ProgressUpdateDelegate(string status, long numerator, long denominator);
         public ProgressUpdateDelegate progressUpdate = delegate { };
+        
+        public delegate void ErrorDelegate(string path, Exception e);
+        public ErrorDelegate errorDelegate = delegate { };
 
         public static ResourceFormat ExtensionToResourceFormat(string path)
         {
@@ -74,6 +77,9 @@ namespace LSLib.LS
                     return ResourceFormat.LSB;
 
                 case ".lsf":
+                case ".lsfx":
+                case ".lsbc":
+                case ".lsbs":
                     return ResourceFormat.LSF;
 
                 case ".lsj":
@@ -243,8 +249,15 @@ namespace LSLib.LS
                 FileManager.TryToCreateDirectory(outPath);
 
                 this.progressUpdate("Converting: " + inPath, i, paths.Count);
-                var resource = LoadResource(inPath, inputFormat);
-                SaveResource(resource, outPath, outputFormat, conversionParams);
+                try
+                {
+                    var resource = LoadResource(inPath, inputFormat);
+                    SaveResource(resource, outPath, outputFormat, conversionParams);
+                }
+                catch (Exception ex)
+                {
+                    errorDelegate(inPath, ex);
+                }
             }
         }
     }
