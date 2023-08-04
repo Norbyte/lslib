@@ -194,7 +194,7 @@ namespace ConverterApp
 
             // Re-package global.lsf
             var rewrittenPackage = new Package();
-            StreamFileInfo globalsRepacked = StreamFileInfo.CreateFromStream(rewrittenStream, "globals.lsf");
+            StreamFileInfo globalsRepacked = StreamFileInfo.CreateFromStream(rewrittenStream, globalsLsf.Name);
             rewrittenPackage.Files.Add(globalsRepacked);
 
             List<AbstractFileInfo> files = package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf").ToList();
