@@ -592,7 +592,8 @@ namespace LSLib.VirtualTextures
                 }
             }
 
-            if (!foundPages)
+            // Temporary workaround for page files that contain split textures
+            if (!foundPages || (maxX - minX) > 16 || (maxY - minY) > 16)
             {
                 return null;
             }
