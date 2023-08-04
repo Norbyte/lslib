@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Windows.Forms;
+using Alphaleonis.Win32.Filesystem;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
@@ -79,7 +79,14 @@ namespace ConverterApp
             }
             catch (NotAPackageException)
             {
-                MessageBox.Show($"The specified package ({extractPackagePath.Text}) is not an Original Sin package or savegame archive.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (ModPathVisitor.archivePartRe.IsMatch(Path.GetFileName(extractPackagePath.Text)))
+                {
+                    MessageBox.Show($"The specified file is part of a multi-part package; only the first part needs to be extracted.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else
+                {
+                    MessageBox.Show($"The specified file ({extractPackagePath.Text}) is not an PAK package or savegame archive.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             catch (Exception exc)
             {
@@ -102,7 +109,7 @@ namespace ConverterApp
                 case 2: return PackageVersion.V10;
                 case 3: return PackageVersion.V9;
                 case 4: return PackageVersion.V7;
-                default: throw new InvalidDataException();
+                default: throw new ArgumentException();
             }
         }
 
