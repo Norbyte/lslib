@@ -426,7 +426,8 @@ namespace LSLib.Granny.Model
                         {
                             desc.PositionType = PositionType.Float3;
                         }
-                        else if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        // Game incorrectly uses UInt16 instead of BinormalInt16 sometimes
+                        else if ((member.Type == MemberType.BinormalInt16 || member.Type == MemberType.UInt16) && member.ArraySize == 4)
                         {
                             desc.PositionType = PositionType.Word4;
                         }
@@ -478,7 +479,8 @@ namespace LSLib.Granny.Model
                         break;
 
                     case "QTangent":
-                        if (member.Type == MemberType.BinormalInt16 && member.ArraySize == 4)
+                        // Game incorrectly uses UInt16 instead of BinormalInt16 sometimes
+                        if ((member.Type == MemberType.BinormalInt16 || member.Type == MemberType.UInt16) && member.ArraySize == 4)
                         {
                             desc.NormalType = NormalType.QTangent;
                             desc.TangentType = NormalType.QTangent;
