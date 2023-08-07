@@ -313,6 +313,10 @@ namespace LSLib.Granny.Model
                 case "ProxyGeometry": props.MeshFlags |= DivinityModelFlag.HasProxyGeometry; break;
                 case "Spring": props.MeshFlags |= DivinityModelFlag.Spring; break;
                 case "Occluder": props.MeshFlags |= DivinityModelFlag.Occluder; break;
+                case "Cloth01": props.ClothFlags |= DivinityClothFlag.Cloth01; break;
+                case "Cloth02": props.ClothFlags |= DivinityClothFlag.Cloth02; break;
+                case "Cloth04": props.ClothFlags |= DivinityClothFlag.Cloth04; break;
+                case "ClothPhysics": props.ClothFlags |= DivinityClothFlag.ClothPhysics; break;
                 default:
                     Utils.Warn($"Unrecognized model type in <DivModelType> tag: {meshType}");
                     break;

@@ -234,6 +234,7 @@ namespace LSLib.Granny.Model
             if (userProps != null)
             {
                 var flags = userProps.MeshFlags;
+                var clothFlags = userProps.ClothFlags;
 
                 if (flags.IsMeshProxy())
                 {
@@ -263,6 +264,26 @@ namespace LSLib.Granny.Model
                 if (flags.IsOccluder())
                 {
                     AddTechniqueProperty(props, "DivModelType", "Occluder");
+                }
+
+                if (clothFlags.HasClothFlag01())
+                {
+                    AddTechniqueProperty(props, "DivModelType", "Cloth01");
+                }
+
+                if (clothFlags.HasClothFlag02())
+                {
+                    AddTechniqueProperty(props, "DivModelType", "Cloth02");
+                }
+
+                if (clothFlags.HasClothFlag04())
+                {
+                    AddTechniqueProperty(props, "DivModelType", "Cloth04");
+                }
+
+                if (clothFlags.HasClothPhysics())
+                {
+                    AddTechniqueProperty(props, "DivModelType", "ClothPhysics");
                 }
 
                 if (userProps.IsImpostor != null && userProps.IsImpostor[0] == 1)

@@ -17,6 +17,17 @@ namespace LSLib.Granny.Model
         Occluder = 0x80
     };
 
+
+    [Flags]
+    public enum DivinityClothFlag
+    {
+        // Unknown flags, possibly related to nudity filters
+        Cloth01 = 0x01,
+        Cloth02 = 0x02,
+        Cloth04 = 0x04,
+        ClothPhysics = 0x100
+    };
+
     public static class DivinityModelFlagMethods
     {
         public static bool IsMeshProxy(this DivinityModelFlag flag)
@@ -47,6 +58,26 @@ namespace LSLib.Granny.Model
         public static bool IsOccluder(this DivinityModelFlag flag)
         {
             return (flag & DivinityModelFlag.Occluder) == DivinityModelFlag.Occluder;
+        }
+
+        public static bool HasClothFlag01(this DivinityClothFlag flag)
+        {
+            return (flag & DivinityClothFlag.Cloth01) == DivinityClothFlag.Cloth01;
+        }
+
+        public static bool HasClothFlag02(this DivinityClothFlag flag)
+        {
+            return (flag & DivinityClothFlag.Cloth02) == DivinityClothFlag.Cloth02;
+        }
+
+        public static bool HasClothFlag04(this DivinityClothFlag flag)
+        {
+            return (flag & DivinityClothFlag.Cloth04) == DivinityClothFlag.Cloth04;
+        }
+
+        public static bool HasClothPhysics(this DivinityClothFlag flag)
+        {
+            return (flag & DivinityClothFlag.ClothPhysics) == DivinityClothFlag.ClothPhysics;
         }
     }
 
@@ -212,6 +243,12 @@ namespace LSLib.Granny.Model
         {
             get { return (DivinityModelFlag)Flags[0]; }
             set { Flags[0] = (UInt32)value; }
+        }
+
+        public DivinityClothFlag ClothFlags
+        {
+            get { return (DivinityClothFlag)Flags[2]; }
+            set { Flags[2] = (UInt32)value; }
         }
     }
 

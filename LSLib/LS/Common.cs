@@ -9,10 +9,10 @@ namespace LSLib.LS
 
 		public const int MinorVersion = 8;
 
-		public const int PatchVersion = 1;
+		public const int PatchVersion = 2;
 
 		// Version of LSTools profile data in generated DAE files
-        public const int ColladaMetadataVersion = 1;
+        public const int ColladaMetadataVersion = 2;
 
         /// <summary>
         /// Returns the version number of the LSLib library
