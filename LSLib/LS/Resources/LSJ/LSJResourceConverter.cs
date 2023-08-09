@@ -9,6 +9,8 @@ namespace LSLib.LS
 {
     public class LSJResourceConverter : JsonConverter
     {
+        private LSMetadata Metadata;
+
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Node)
@@ -72,7 +74,14 @@ namespace LSLib.LS
                 {
                     if (key == "value")
                     {
-                        fs.Value = reader.Value.ToString();
+                        if (reader.Value != null)
+                        {
+                            fs.Value = reader.Value.ToString();
+                        }
+                        else
+                        {
+                            fs.Value = null;
+                        }
                     }
                     else if (key == "handle")
                     {
@@ -145,8 +154,28 @@ namespace LSLib.LS
                 {
                     if (key == "type")
                     {
-                        var type = (NodeAttribute.DataType)Convert.ToUInt32(reader.Value);
-                        attribute = new NodeAttribute(type);
+                        uint type;
+                        if (!UInt32.TryParse((string)reader.Value, out type))
+                        {
+                            type = (uint)AttributeTypeMaps.TypeToId[(string)reader.Value];
+                        }
+
+                        attribute = new NodeAttribute((NodeAttribute.DataType)type);
+                        if (type == (uint)NodeAttribute.DataType.DT_TranslatedString)
+                        {
+                            attribute.Value = new TranslatedString
+                            {
+                                Handle = handle
+                            };
+                        }
+                        else if (type == (uint)NodeAttribute.DataType.DT_TranslatedFSString)
+                        {
+                            attribute.Value = new TranslatedFSString
+                            {
+                                Handle = handle,
+                                Arguments = fsStringArguments
+                            };
+                        }
                     }
                     else if (key == "value")
                     {
@@ -231,7 +260,12 @@ namespace LSLib.LS
 
                             case NodeAttribute.DataType.DT_TranslatedFSString:
                                 {
-                                    var fsString = new TranslatedFSString();
+                                    if (attribute.Value == null)
+                                    {
+                                        attribute.Value = new TranslatedFSString();
+                                    }
+
+                                    var fsString = (TranslatedFSString)attribute.Value;
                                     fsString.Value = reader.Value.ToString();
                                     fsString.Handle = handle;
                                     fsString.Arguments = fsStringArguments;
@@ -521,6 +555,7 @@ namespace LSLib.LS
 
         private void WriteResource(JsonWriter writer, Resource resource, JsonSerializer serializer)
         {
+            Metadata = resource.Metadata;
             writer.WriteStartObject();
 
             writer.WritePropertyName("save");
@@ -591,7 +626,14 @@ namespace LSLib.LS
                 writer.WritePropertyName(attribute.Key);
                 writer.WriteStartObject();
                 writer.WritePropertyName("type");
-                writer.WriteValue((int)attribute.Value.Type);
+                if (Metadata.MajorVersion >= 4)
+                {
+                    writer.WriteValue(AttributeTypeMaps.IdToType[attribute.Value.Type]);
+                }
+                else
+                {
+                    writer.WriteValue((int)attribute.Value.Type);
+                }
 
                 if (attribute.Value.Type != NodeAttribute.DataType.DT_TranslatedString)
                 {

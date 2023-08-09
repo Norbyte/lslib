@@ -10,44 +10,6 @@ namespace LSLib.LS
 {
     public class LSXReader : IDisposable
     {
-        private static Dictionary<string, NodeAttribute.DataType> TypeNames = new Dictionary<string, NodeAttribute.DataType>
-        {
-            { "None", NodeAttribute.DataType.DT_None },
-            { "uint8", NodeAttribute.DataType.DT_Byte },
-            { "int16", NodeAttribute.DataType.DT_Short },
-            { "uint16", NodeAttribute.DataType.DT_UShort },
-            { "int32", NodeAttribute.DataType.DT_Int },
-            { "uint32", NodeAttribute.DataType.DT_UInt },
-            { "float", NodeAttribute.DataType.DT_Float },
-            { "double", NodeAttribute.DataType.DT_Double },
-            { "ivec2", NodeAttribute.DataType.DT_IVec2 },
-            { "ivec3", NodeAttribute.DataType.DT_IVec3 },
-            { "ivec4", NodeAttribute.DataType.DT_IVec4 },
-            { "fvec2", NodeAttribute.DataType.DT_Vec2 },
-            { "fvec3", NodeAttribute.DataType.DT_Vec3 },
-            { "fvec4", NodeAttribute.DataType.DT_Vec4 },
-            { "mat2x2", NodeAttribute.DataType.DT_Mat2 },
-            { "mat3x3", NodeAttribute.DataType.DT_Mat3 },
-            { "mat3x4", NodeAttribute.DataType.DT_Mat3x4 },
-            { "mat4x3", NodeAttribute.DataType.DT_Mat4x3 },
-            { "mat4x4", NodeAttribute.DataType.DT_Mat4 },
-            { "bool", NodeAttribute.DataType.DT_Bool },
-            { "string", NodeAttribute.DataType.DT_String },
-            { "path", NodeAttribute.DataType.DT_Path },
-            { "FixedString", NodeAttribute.DataType.DT_FixedString },
-            { "LSString", NodeAttribute.DataType.DT_LSString },
-            { "uint64", NodeAttribute.DataType.DT_ULongLong },
-            { "ScratchBuffer", NodeAttribute.DataType.DT_ScratchBuffer },
-            { "old_int64", NodeAttribute.DataType.DT_Long },
-            { "int8", NodeAttribute.DataType.DT_Int8 },
-            { "TranslatedString", NodeAttribute.DataType.DT_TranslatedString },
-            { "WString", NodeAttribute.DataType.DT_WString },
-            { "LSWString", NodeAttribute.DataType.DT_LSWString },
-            { "guid", NodeAttribute.DataType.DT_UUID },
-            { "int64", NodeAttribute.DataType.DT_Int64 },
-            { "TranslatedFSString", NodeAttribute.DataType.DT_TranslatedFSString },
-        };
-
         private Stream stream;
         private XmlReader reader;
         private Resource resource;
@@ -185,13 +147,13 @@ namespace LSLib.LS
                     UInt32 attrTypeId;
                     if (Version >= LSXVersion.V4)
                     {
-                        attrTypeId = (uint)TypeNames[reader["type"]];
+                        attrTypeId = (uint)AttributeTypeMaps.TypeToId[reader["type"]];
                     }
                     else
                     {
                         if (!UInt32.TryParse(reader["type"], out attrTypeId))
                         {
-                            attrTypeId = (uint)TypeNames[reader["type"]];
+                            attrTypeId = (uint)AttributeTypeMaps.TypeToId[reader["type"]];
                         }
                     }
 
