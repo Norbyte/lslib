@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using LSLib.LS;
 using LSLib.LS.Enums;
+using LSLib.LS.Save;
 using LSLib.LS.Story;
 using Node = LSLib.LS.Story.Node;
 
@@ -54,11 +55,8 @@ namespace ConverterApp
             }
         }
 
-        private void LoadStory(Stream s)
+        private void LoadStory()
         {
-            var reader = new StoryReader();
-            _story = reader.Read(s);
-
             _databaseItems.Clear();
 
             uint index = 0;
@@ -117,13 +115,11 @@ namespace ConverterApp
             {
                 case ".lsv":
                 {
-                    var resource = LoadResourceFromSave(storyFilePath.Text);
-                    if (resource == null) return;
-
-                    LSLib.LS.Node storyNode = resource.Regions["Story"].Children["Story"][0];
-                    var storyStream = new MemoryStream(storyNode.Attributes["Story"].Value as byte[] ?? throw new InvalidOperationException("Cannot proceed with null Story node"));
-
-                    LoadStory(storyStream);
+                    using (var saveHelpers = new SavegameHelpers(storyFilePath.Text))
+                    {
+                        _story = saveHelpers.LoadStory();
+                        LoadStory();
+                    }
 
                     MessageBox.Show("Save game database loaded successfully.");
                     break;
@@ -132,7 +128,9 @@ namespace ConverterApp
                 {
                     using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        LoadStory(file);
+                        var reader = new StoryReader();
+                        reader.Read(file);
+                        LoadStory();
                     }
 
                     MessageBox.Show("Story file loaded successfully.");
@@ -148,68 +146,10 @@ namespace ConverterApp
 
         private void SaveSavegameDatabase()
         {
-            var conversionParams = ResourceConversionParameters.FromGameVersion(Game);
-            var packageReader = new PackageReader(storyFilePath.Text);
-            Package package = packageReader.Read();
-
-            AbstractFileInfo globalsLsf = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
-            if (globalsLsf == null)
+            using (var saveHelpers = new SavegameHelpers(storyFilePath.Text))
             {
-                MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                saveHelpers.ResaveStory(_story, Game, $"{storyFilePath.Text}.tmp");
             }
-
-            // Load globals.lsf
-            Resource resource;
-            Stream rsrcStream = globalsLsf.MakeStream();
-            try
-            {
-                using (var rsrcReader = new LSFReader(rsrcStream))
-                {
-                    resource = rsrcReader.Read();
-                }
-            }
-            finally
-            {
-                globalsLsf.ReleaseStream();
-            }
-
-            // Save story resource and pack into the Story.Story attribute in globals.lsf
-            using (var storyStream = new MemoryStream())
-            {
-                var storyWriter = new StoryWriter();
-                storyWriter.Write(storyStream, _story);
-
-                LSLib.LS.Node storyNode = resource.Regions["Story"].Children["Story"][0];
-                storyNode.Attributes["Story"].Value = storyStream.ToArray();
-            }
-
-            // Save globals.lsf
-            var rewrittenStream = new MemoryStream();
-            var rsrcWriter = new LSFWriter(rewrittenStream);
-            rsrcWriter.Version = conversionParams.LSF;
-            rsrcWriter.EncodeSiblingData = false;
-            rsrcWriter.Write(resource);
-            rewrittenStream.Seek(0, SeekOrigin.Begin);
-
-            // Re-package global.lsf
-            var rewrittenPackage = new Package();
-            StreamFileInfo globalsRepacked = StreamFileInfo.CreateFromStream(rewrittenStream, globalsLsf.Name);
-            rewrittenPackage.Files.Add(globalsRepacked);
-
-            List<AbstractFileInfo> files = package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf").ToList();
-            rewrittenPackage.Files.AddRange(files);
-
-            using (var packageWriter = new PackageWriter(rewrittenPackage, $"{storyFilePath.Text}.tmp"))
-            {
-                packageWriter.Version = conversionParams.PAKVersion;
-                packageWriter.Compression = CompressionMethod.Zlib;
-                packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
-                packageWriter.Write();
-            }
-
-            rewrittenStream.Dispose();
-            packageReader.Dispose();
 
             // Create a backup of the original .lsf
             string backupPath = $"{storyFilePath.Text}.backup";
@@ -231,7 +171,7 @@ namespace ConverterApp
             using (var file = new FileStream(storyFilePath.Text, FileMode.Create, FileAccess.Write))
             {
                 var writer = new StoryWriter();
-                writer.Write(file, _story);
+                writer.Write(file, _story, false);
             }
         }
 

@@ -467,9 +467,9 @@ namespace LSLib.LS.Story
             }
         }
 
-        public void Write(Stream stream, Story story)
+        public void Write(Stream stream, Story story, bool leaveOpen)
         {
-            using (Writer = new OsiWriter(stream))
+            using (Writer = new OsiWriter(stream, leaveOpen))
             {
                 foreach (var node in story.Nodes)
                 {

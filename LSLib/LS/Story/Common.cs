@@ -227,8 +227,8 @@ namespace LSLib.LS.Story
             get { return ((uint)MajorVersion << 8) | (uint)MinorVersion; }
         }
 
-        public OsiWriter(Stream stream)
-            : base(stream)
+        public OsiWriter(Stream stream, bool leaveOpen)
+            : base(stream, Encoding.UTF8, leaveOpen)
         {
         }
 
