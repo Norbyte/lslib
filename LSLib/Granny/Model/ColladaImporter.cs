@@ -301,22 +301,24 @@ namespace LSLib.Granny.Model
             return null;
         }
 
-        private void LoadLSLibProfileMeshType(DivinityMeshProperties props, string meshType)
+        private void LoadLSLibProfileMeshType(DivinityMeshExtendedData props, string meshType)
         {
+            var meshProps = props.UserMeshProperties;
+
             switch (meshType)
             {
                 // Compatibility flag, not used anymore
                 case "Normal": break;
-                case "Cloth": props.MeshFlags |= DivinityModelFlag.Cloth; break;
-                case "Rigid": props.MeshFlags |= DivinityModelFlag.Rigid; break;
-                case "MeshProxy": props.MeshFlags |= DivinityModelFlag.MeshProxy | DivinityModelFlag.HasProxyGeometry; break;
-                case "ProxyGeometry": props.MeshFlags |= DivinityModelFlag.HasProxyGeometry; break;
-                case "Spring": props.MeshFlags |= DivinityModelFlag.Spring; break;
-                case "Occluder": props.MeshFlags |= DivinityModelFlag.Occluder; break;
-                case "Cloth01": props.ClothFlags |= DivinityClothFlag.Cloth01; break;
-                case "Cloth02": props.ClothFlags |= DivinityClothFlag.Cloth02; break;
-                case "Cloth04": props.ClothFlags |= DivinityClothFlag.Cloth04; break;
-                case "ClothPhysics": props.ClothFlags |= DivinityClothFlag.ClothPhysics; break;
+                case "Cloth": meshProps.MeshFlags |= DivinityModelFlag.Cloth; props.Cloth = 1; break;
+                case "Rigid": meshProps.MeshFlags |= DivinityModelFlag.Rigid; props.Rigid = 1; break;
+                case "MeshProxy": meshProps.MeshFlags |= DivinityModelFlag.MeshProxy | DivinityModelFlag.HasProxyGeometry; props.MeshProxy = 1; break;
+                case "ProxyGeometry": meshProps.MeshFlags |= DivinityModelFlag.HasProxyGeometry; break;
+                case "Spring": meshProps.MeshFlags |= DivinityModelFlag.Spring; props.Spring = 1; break;
+                case "Occluder": meshProps.MeshFlags |= DivinityModelFlag.Occluder; props.Occluder = 1; break;
+                case "Cloth01": meshProps.ClothFlags |= DivinityClothFlag.Cloth01; break;
+                case "Cloth02": meshProps.ClothFlags |= DivinityClothFlag.Cloth02; break;
+                case "Cloth04": meshProps.ClothFlags |= DivinityClothFlag.Cloth04; break;
+                case "ClothPhysics": meshProps.ClothFlags |= DivinityClothFlag.ClothPhysics; break;
                 default:
                     Utils.Warn($"Unrecognized model type in <DivModelType> tag: {meshType}");
                     break;
@@ -403,7 +405,7 @@ namespace LSLib.Granny.Model
                 switch (setting.LocalName)
                 {
                     case "DivModelType":
-                        LoadLSLibProfileMeshType(meshProps, setting.InnerText.Trim());
+                        LoadLSLibProfileMeshType(loaded.ExtendedData, setting.InnerText.Trim());
                         break;
                         
                     case "IsImpostor":
