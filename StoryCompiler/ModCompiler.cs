@@ -496,7 +496,7 @@ namespace LSTools.StoryCompiler
                 using (var file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
                 {
                     var writer = new StoryWriter();
-                    writer.Write(file, story);
+                    writer.Write(file, story, false);
                 }
                 Logger.TaskFinished();
 

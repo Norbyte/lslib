@@ -188,9 +188,9 @@ namespace LSLib.Granny.Model
 
     public class VertexData
     {
-        [Serialization(Type = MemberType.ReferenceToVariantArray, 
+        [Serialization(Type = MemberType.ReferenceToVariantArray, MixedMarshal = true,
             TypeSelector = typeof(VertexSerializer), Serializer = typeof(VertexSerializer),
-            Kind = SerializationKind.UserElement)]
+            Kind = SerializationKind.UserMember)]
         public List<Vertex> Vertices;
         public List<GrannyString> VertexComponentNames;
         public List<VertexAnnotationSet> VertexAnnotationSets;

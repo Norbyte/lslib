@@ -286,7 +286,7 @@ namespace LSLib.Granny.Model
         }
     }
 
-    [StructSerialization(TypeSelector = typeof(VertexDefinitionSelector))]
+    [StructSerialization(TypeSelector = typeof(VertexDefinitionSelector), MixedMarshal = true)]
     public class Vertex
     {
         public const int MaxUVs = 4;
@@ -581,7 +581,14 @@ namespace LSLib.Granny.Model
             return desc;
         }
 
-        public object Read(GR2Reader reader, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)
+        public Vertex ReadVertex(GR2Reader reader, VertexDescriptor descriptor)
+        {
+            var vertex = descriptor.CreateInstance();
+            vertex.Unserialize(reader);
+            return vertex;
+        }
+
+        public object Read(GR2Reader gr2, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)
         {
             VertexDescriptor descriptor;
             if (!VertexTypeCache.TryGetValue(parent, out descriptor))
@@ -590,14 +597,25 @@ namespace LSLib.Granny.Model
                 VertexTypeCache.Add(parent, descriptor);
             }
 
-            var vertex = descriptor.CreateInstance();
-            vertex.Unserialize(reader);
-            return vertex;
+            var vertices = new List<Vertex>((int)arraySize);
+            for (int i = 0; i < arraySize; i++)
+                vertices.Add(ReadVertex(gr2, descriptor));
+            return vertices;
         }
 
         public void Write(GR2Writer writer, WritableSection section, MemberDefinition member, object obj)
         {
-            (obj as Vertex).Serialize(section);
+            var items = obj as List<Vertex>;
+
+            if (items.Count > 0)
+            {
+                section.StoreObjectOffset(items[0]);
+            }
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                items[i].Serialize(section);
+            }
         }
     }
 }

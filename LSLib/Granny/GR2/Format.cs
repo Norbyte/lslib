@@ -1275,6 +1275,10 @@ namespace LSLib.Granny.GR2
         /// Maximum GR2 file version this member should be exported to
         /// </summary>
         public UInt32 MaxVersion = 0;
+        /// <summary>
+        /// Should we do mixed marshalling on this struct?
+        /// </summary>
+        public bool MixedMarshal = false;
     }
 
     /// <summary>

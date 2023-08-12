@@ -232,7 +232,7 @@ namespace LSLib.Granny.GR2
             WriteStruct(GR2.LookupStructDefinition(type, node), node, allowRecursion, allowAlign);
         }
 
-        internal void StoreObjectOffset(object o)
+        public void StoreObjectOffset(object o)
         {
             if (Writer == MainWriter)
             {

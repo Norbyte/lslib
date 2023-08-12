@@ -542,7 +542,7 @@ namespace LSLib.Granny.Model
             var defn = new StructDefinition
             {
                 Members = new List<MemberDefinition>(),
-                MixedMarshal = false,
+                MixedMarshal = true,
                 Type = typeof(Vertex)
             };
 
