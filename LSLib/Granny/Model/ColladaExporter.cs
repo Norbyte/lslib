@@ -523,7 +523,7 @@ namespace LSLib.Granny.Model
 
         private node ExportBone(Skeleton skeleton, string name, int index, Bone bone)
         {
-            var node = bone.MakeCollada(name);
+            var node = bone.MakeCollada(Xml);
             var children = new List<node>();
             for (int i = 0; i < skeleton.Bones.Count; i++)
             {

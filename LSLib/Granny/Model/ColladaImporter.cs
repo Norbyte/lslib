@@ -259,11 +259,12 @@ namespace LSLib.Granny.Model
         {
             if (node.type == NodeType.JOINT)
             {
-                rootBones.Add(new RootBoneInfo
+                var root = new RootBoneInfo
                 {
                     Bone = node,
                     Parents = parents.Select(a => a).ToList()
-                });
+                };
+                rootBones.Add(root);
             }
             else if (node.type == NodeType.NODE)
             {
@@ -279,7 +280,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private technique FindExporterExtraData(extra[] extras)
+        public static technique FindExporterExtraData(extra[] extras)
         {
             if (extras != null)
             {
@@ -942,6 +943,7 @@ namespace LSLib.Granny.Model
 
             var collGeometries = new List<geometry>();
             var collSkins = new List<skin>();
+            var collNodes = new List<node>();
             var collAnimations = new List<animation>();
             var rootBones = new List<RootBoneInfo>();
 
@@ -979,6 +981,7 @@ namespace LSLib.Granny.Model
                             {
                                 foreach (var node in scene.node)
                                 {
+                                    collNodes.Add(node);
                                     FindRootBones(new List<node>(), node, rootBones);
                                 }
                             }
@@ -1022,6 +1025,7 @@ namespace LSLib.Granny.Model
                 var skeleton = Skeleton.FromCollada(bone.Bone);
                 var rootTransform = NodeHelpers.GetTransformHierarchy(bone.Parents);
                 skeleton.TransformRoots(rootTransform.Inverted());
+                skeleton.ReorderBones();
                 root.Skeletons.Add(skeleton);
             }
 

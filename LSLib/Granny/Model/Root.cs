@@ -141,12 +141,7 @@ namespace LSLib.Granny.Model
 
             foreach (var skeleton in Skeletons ?? Enumerable.Empty<Skeleton>())
             {
-                var hasSkinnedMeshes = Models.Any((model) => model.Skeleton == skeleton);
-                if (!hasSkinnedMeshes || skeleton.Bones.Count == 1)
-                {
-                    skeleton.IsDummy = true;
-                    Utils.Info(String.Format("Skeleton '{0}' marked as dummy", skeleton.Name));
-                }
+                skeleton.PostLoad(this);
             }
 
             // Upgrade legacy animation formats
