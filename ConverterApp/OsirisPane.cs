@@ -76,6 +76,7 @@ namespace ConverterApp
             }
             
             databaseSelectorCb_FilterDropdownList();
+            RefreshDataGrid();
         }
 
         public Resource LoadResourceFromSave(string path)
@@ -299,19 +300,27 @@ namespace ConverterApp
             }
         }
 
-        private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)
+        private void RefreshDataGrid()
         {
             databaseGrid.DataSource = null;
             databaseGrid.Columns.Clear();
 
-            var selectedIndex = ((KeyValuePair<uint, string>)databaseSelectorCb.SelectedItem).Key;
-            Database database = _story.Databases[selectedIndex + 1];
-            databaseGrid.DataSource = database.Facts;
-
-            for (var i = 0; i < database.Parameters.Types.Count; i++)
+            if (databaseSelectorCb.SelectedItem != null)
             {
-                databaseGrid.Columns[i].HeaderText = $"{i} ({_story.Types[database.Parameters.Types[i]].Name})";
+                var selectedIndex = ((KeyValuePair<uint, string>)databaseSelectorCb.SelectedItem).Key;
+                Database database = _story.Databases[selectedIndex + 1];
+                databaseGrid.DataSource = database.Facts;
+
+                for (var i = 0; i < database.Parameters.Types.Count; i++)
+                {
+                    databaseGrid.Columns[i].HeaderText = $"{i} ({_story.Types[database.Parameters.Types[i]].Name})";
+                }
             }
+        }
+
+        private void databaseSelectorCb_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            RefreshDataGrid();
         }
 
         private void btnDebugExport_Click(object sender, EventArgs e)

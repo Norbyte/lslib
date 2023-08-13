@@ -133,7 +133,7 @@ namespace LSLib.LS.Save
                 StreamFileInfo storyRepacked = StreamFileInfo.CreateFromStream(storyStream, "StorySave.bin");
                 rewrittenPackage.Files.Add(storyRepacked);
 
-                List<AbstractFileInfo> files = Package.Files.Where(x => x.Name.ToLowerInvariant() != "StorySave.bin").ToList();
+                List<AbstractFileInfo> files = Package.Files.Where(x => x.Name != "StorySave.bin").ToList();
                 rewrittenPackage.Files.AddRange(files);
             }
 
