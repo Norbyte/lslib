@@ -255,8 +255,18 @@ namespace ConverterApp
             }
 
             ReportProgress(70, "Loading story ...");
-            LSLib.LS.Node storyNode = SaveGlobals.Regions["Story"].Children["Story"][0];
-            var storyStream = new MemoryStream(storyNode.Attributes["Story"].Value as byte[]);
+            AbstractFileInfo storySave = SavePackage.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
+            Stream storyStream;
+            if (storySave != null)
+            {
+                storyStream = storySave.MakeStream();
+            }
+            else
+            {
+                LSLib.LS.Node storyNode = SaveGlobals.Regions["Story"].Children["Story"][0];
+                storyStream = new MemoryStream(storyNode.Attributes["Story"].Value as byte[]);
+            }
+
             var reader = new StoryReader();
             SaveStory = reader.Read(storyStream);
 
