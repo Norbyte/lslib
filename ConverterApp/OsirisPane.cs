@@ -130,7 +130,7 @@ namespace ConverterApp
                     using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         var reader = new StoryReader();
-                        reader.Read(file);
+                        _story = reader.Read(file);
                         LoadStory();
                     }
 
