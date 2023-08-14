@@ -77,3 +77,6 @@ DebuggerFrontend/DbgProtocol.cs
 WwiseTool
 UnpackGrid/Properties/launchSettings.json
 TerrainFixup/Properties/launchSettings.json
+
+# Other
+/LSLib/StatProperty.lst

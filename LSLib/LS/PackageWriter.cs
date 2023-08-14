@@ -8,8 +8,6 @@ using System.Text;
 using LSLib.LS.Enums;
 using LSLib.Native;
 using LZ4;
-using Alphaleonis.Win32.Filesystem;
-using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {

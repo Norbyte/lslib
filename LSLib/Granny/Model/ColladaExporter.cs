@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.LS;
-using Alphaleonis.Win32.Filesystem;
 using System.Xml;
 using System.Xml.Linq;
 using LSLib.LS.Enums;

@@ -1,5 +1,4 @@
 ﻿using System;
-using Alphaleonis.Win32.Filesystem;
 
 namespace LSLib.LS
 {

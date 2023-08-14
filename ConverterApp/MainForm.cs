@@ -1,5 +1,4 @@
 ﻿using System;
-using Alphaleonis.Win32.Filesystem;
 using System.Windows.Forms;
 using LSLib.LS;
 using LSLib.LS.Enums;

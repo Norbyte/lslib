@@ -486,7 +486,7 @@ namespace LSLib.Granny.Model
             }
 
             var an = new AssemblyName("VertexFactoryAssembly");
-            AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+            AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
             ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("VertexFactoryClasses");
             ModBuilder = moduleBuilder;
             return ModBuilder;

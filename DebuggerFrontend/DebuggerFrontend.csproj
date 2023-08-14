@@ -1,105 +1,40 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{31E71543-CBCF-43BB-AF77-D210D548118E}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>LSTools.DebuggerFrontend</RootNamespace>
-    <AssemblyName>DebuggerFrontend</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Title>Osiris VS Code Debugger Frontend</Title>
+    <Product>LSLib</Product>
+    <Copyright>Copyright © Norbyte 2012-2018</Copyright>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>x64</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>x64</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="CommandLineArgumentsParser, Version=3.0.19.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CommandLineArgumentsParser.3.0.19\lib\net452\CommandLineArgumentsParser.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Protobuf, Version=3.6.1.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Protobuf.3.6.1\lib\net45\Google.Protobuf.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="QUT.ShiftReduceParser">
-      <HintPath>..\External\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <PackageReference Include="CommandLineArgumentsParser">
+      <Version>3.0.19</Version>
+    </PackageReference>
+    <PackageReference Include="Google.Protobuf">
+      <Version>3.15.0</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.1</Version>
+    </PackageReference>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Breakpoints.cs" />
-    <Compile Include="DAPMessageHandler.cs" />
-    <Compile Include="DAPProtocol.cs" />
-    <Compile Include="DAPStream.cs" />
-    <Compile Include="DAPUtils.cs" />
-    <Compile Include="DatabaseEnumerator.cs" />
-    <Compile Include="DbgClient.cs" />
-    <Compile Include="DbgProtocol.cs" />
-    <Compile Include="Debuginfo.cs" />
-    <Compile Include="DebugInfoLoader.cs" />
-    <Compile Include="DebugInfoSync.cs" />
-    <Compile Include="EvaluationResults.cs" />
-    <Compile Include="ExpressionParser\Expression.lex.cs" />
-    <Compile Include="ExpressionParser\Expression.yy.cs" />
-    <Compile Include="ExpressionEvaluator.cs" />
-    <Compile Include="ExpressionParser\ExpressionNodes.cs" />
-    <Compile Include="ExpressionParser\ExpressionParser.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StackTracePrinter.cs" />
-    <Compile Include="ValueFormatter.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="DbgProtocol.proto" />
-    <None Include="ExpressionParser\Expression.lex" />
-    <None Include="ExpressionParser\Expression.yy" />
-    <None Include="packages.config" />
-  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\LSLib\LSLib.csproj">
       <Project>{46372c50-4288-4b8e-af21-c934560600e0}</Project>
       <Name>LSLib</Name>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto
-$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\ExpressionParser\Expression.lex.cs" "$(ProjectDir)\ExpressionParser\Expression.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\ExpressionParser\Expression.yy.cs" "$(ProjectDir)\ExpressionParser\Expression.yy"</PreBuildEvent>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="QUT.ShiftReduceParser">
+      <HintPath>..\External\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) DbgProtocol.proto&#xA;$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir)..\StoryCompiler\ --csharp_out=$(ProjectDir) debuginfo.proto&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(ProjectDir)\ExpressionParser\Expression.lex.cs&quot; &quot;$(ProjectDir)\ExpressionParser\Expression.lex&quot;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(ProjectDir)\ExpressionParser\Expression.yy.cs&quot; &quot;$(ProjectDir)\ExpressionParser\Expression.yy&quot;" />
+  </Target>
 </Project>

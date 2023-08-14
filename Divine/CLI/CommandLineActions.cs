@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Alphaleonis.Win32.Filesystem;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
