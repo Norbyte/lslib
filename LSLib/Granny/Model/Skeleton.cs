@@ -221,17 +221,9 @@ namespace LSLib.Granny.Model
 
         public void Flip()
         {
-            foreach (var bone in Bones)
+            foreach (var bone in Bones) if (bone.IsRoot)
             {
-                if (bone.IsRoot)
-                {
-                    bone.Transform.Flags |= (uint)Transform.TransformFlags.HasScaleShear;
-                    bone.Transform.ScaleShear = new Matrix3(
-                        -1.0f, 0.0f, 0.0f,
-                        0.0f, 1.0f, 0.0f,
-                        0.0f, 0.0f, 1.0f
-                    );
-                }
+               bone.Transform.SetScale(new Vector3(-1, 1, 1));
             }
 
             UpdateWorldTransforms();

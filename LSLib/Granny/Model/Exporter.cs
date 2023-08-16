@@ -758,8 +758,7 @@ namespace LSLib.Granny.Model
                 GenerateDummySkeleton(Root);
             }
 
-            if (Options.OutputFormat == ExportFormat.GR2 &&
-                (Options.FlipMesh || Options.FlipSkeleton))
+            if (Options.FlipMesh || Options.FlipSkeleton)
             {
                 Root.Flip(Options.FlipMesh, Options.FlipSkeleton);
             }
