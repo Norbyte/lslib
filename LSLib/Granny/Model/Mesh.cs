@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using OpenTK;
 using LSLib.Granny.GR2;
 
@@ -369,10 +370,29 @@ namespace LSLib.Granny.Model
         {
             foreach (var vertex in Vertices)
             {
-                vertex.Position.X = -vertex.Position.X;
-                vertex.Normal = new Vector3(-vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z);
-                vertex.Tangent = new Vector3(-vertex.Tangent.X, vertex.Tangent.Y, vertex.Tangent.Z);
-                vertex.Binormal = new Vector3(-vertex.Binormal.X, vertex.Binormal.Y, vertex.Binormal.Z);
+                vertex.Position.X *= -1;
+                vertex.Normal.X *= -1;
+                vertex.Tangent.X *= -1;
+                vertex.Binormal.X *= -1;
+            }
+
+            if (Deduplicator == null) return;
+
+            // Implements CollectionsMarshal.AsSpan from .NET 5 by reflection
+            Span<T> AsSpan<T>(List<T> list) => new Span<T>(list.GetType()
+                .GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(list) as T[], 0, list.Count);
+
+            foreach (ref SkinnedVertex vertex in AsSpan(Deduplicator.Vertices.Uniques))
+            {
+                vertex.Position.X *= -1;
+            }
+
+            foreach (ref Matrix3 matrix in AsSpan(Deduplicator.Normals.Uniques))
+            {
+                matrix.Row0.X *= -1; // vertex.Normal.X
+                matrix.Row1.X *= -1; // vertex.Tangent.X
+                matrix.Row2.X *= -1; // vertex.Binormal.X
             }
         }
     }
