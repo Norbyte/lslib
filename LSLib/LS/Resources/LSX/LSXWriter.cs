@@ -122,7 +122,8 @@ namespace LSLib.LS
                 }
                 else
                 {
-                    writer.WriteAttributeString("value", attribute.Value.ToString());
+                    // Replace bogus 001F characters found in certain LSF nodes
+                    writer.WriteAttributeString("value", attribute.Value.ToString().Replace("\x1f", ""));
                 }
 
                 writer.WriteEndElement();
