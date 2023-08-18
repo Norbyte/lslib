@@ -38,6 +38,27 @@ namespace Divine.CLI
             }
         }
 
+        public static void ConvertLoca()
+        {
+            ConvertLoca(CommandLineActions.SourcePath, CommandLineActions.DestinationPath);
+        }
+
+        private static void ConvertLoca(string sourcePath, string destinationPath)
+        {
+            try
+            {
+                var loca = LocaUtils.Load(sourcePath);
+                LocaUtils.Save(loca, destinationPath);
+                CommandLineLogger.LogInfo($"Wrote localization to: {destinationPath}");
+            }
+            catch (Exception e)
+            {
+                CommandLineLogger.LogFatal($"Failed to convert localization file: {e.Message}", 2);
+                CommandLineLogger.LogTrace($"{e.StackTrace}");
+            }
+        }
+
+
         private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, ResourceConversionParameters conversionParams)
         {
             try

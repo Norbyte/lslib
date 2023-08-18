@@ -185,6 +185,12 @@ namespace Divine.CLI
                 {
                     CommandLineDataProcessor.Convert();
                     break;
+                    }
+
+                case "convert-loca":
+                {
+                    CommandLineDataProcessor.ConvertLoca();
+                    break;
                 }
 
                 case "extract-packages":

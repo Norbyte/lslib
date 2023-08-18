@@ -81,7 +81,7 @@ namespace Divine.CLI
         [EnumeratedValueArgument(typeof(string), 'a', "action",
             Description = "Set action to execute",
             DefaultValue = "extract-package",
-            AllowedValues = "create-package;list-package;extract-single-file;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources",
+            AllowedValues = "create-package;list-package;extract-single-file;extract-package;extract-packages;convert-model;convert-models;convert-resource;convert-resources;convert-loca",
             ValueOptional = false,
             Optional = false
         )]
