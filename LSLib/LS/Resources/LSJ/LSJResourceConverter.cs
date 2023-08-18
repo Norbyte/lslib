@@ -150,7 +150,8 @@ namespace LSLib.LS
                 else if (reader.TokenType == JsonToken.String
                     || reader.TokenType == JsonToken.Integer
                     || reader.TokenType == JsonToken.Float
-                    || reader.TokenType == JsonToken.Boolean)
+                    || reader.TokenType == JsonToken.Boolean
+                    || reader.TokenType == JsonToken.Null)
                 {
                     if (key == "type")
                     {
@@ -266,7 +267,7 @@ namespace LSLib.LS
                                     }
 
                                     var fsString = (TranslatedFSString)attribute.Value;
-                                    fsString.Value = reader.Value.ToString();
+                                    fsString.Value = reader.Value != null ? reader.Value.ToString() : null;
                                     fsString.Handle = handle;
                                     fsString.Arguments = fsStringArguments;
                                     attribute.Value = fsString;
@@ -329,15 +330,26 @@ namespace LSLib.LS
                     }
                     else if (key == "handle")
                     {
-                        if (attribute != null && attribute.Type == NodeAttribute.DataType.DT_TranslatedString)
+                        if (attribute != null)
                         {
-                            if (attribute.Value == null)
+                            if (attribute.Type == NodeAttribute.DataType.DT_TranslatedString)
                             {
-                                attribute.Value = new TranslatedString();
-                            }
+                                if (attribute.Value == null)
+                                {
+                                    attribute.Value = new TranslatedString();
+                                }
 
-                            var ts = (TranslatedString)attribute.Value;
-                            ts.Handle = reader.Value.ToString();
+                                ((TranslatedString)attribute.Value).Handle = reader.Value.ToString();
+                            }
+                            else if (attribute.Type == NodeAttribute.DataType.DT_TranslatedFSString)
+                            {
+                                if (attribute.Value == null)
+                                {
+                                    attribute.Value = new TranslatedFSString();
+                                }
+
+                                ((TranslatedFSString)attribute.Value).Handle = reader.Value.ToString();
+                            }
                         }
                         else
                         {
