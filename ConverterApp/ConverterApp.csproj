@@ -197,6 +197,10 @@
       <Project>{46372c50-4288-4b8e-af21-c934560600e0}</Project>
       <Name>LSLib</Name>
     </ProjectReference>
+    <ProjectReference Include="..\OpenTK\OpenTK.csproj">
+      <Project>{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}</Project>
+      <Name>OpenTK</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">

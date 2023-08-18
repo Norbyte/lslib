@@ -187,7 +187,7 @@ namespace LSLib.LS
 
                 case "content":
                     var key = reader["contentuid"];
-                    var version = UInt16.Parse(reader["version"]);
+                    var version = reader["version"] != null ? UInt16.Parse(reader["version"]) : (UInt16)1;
                     var text = reader.ReadString();
 
                     resource.Entries.Add(new LocalizedText
