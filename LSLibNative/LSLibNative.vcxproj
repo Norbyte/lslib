@@ -147,6 +147,8 @@
     <ClCompile Include="physics.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- Disable the .NET SDK error that prevents using SelfContained=true -->
+  <Target Name="_CheckForLanguageAndFeatureCombinationSupport"></Target>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

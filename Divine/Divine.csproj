@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineArgumentsParser">
-      <Version>3.0.19</Version>
+      <Version>3.0.23</Version>
     </PackageReference>
   </ItemGroup>
 
