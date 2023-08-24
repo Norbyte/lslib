@@ -8,6 +8,7 @@
     <Title>StatParser</Title>
     <Product>StatParser</Product>
     <Copyright>Copyright ©  2019</Copyright>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>

@@ -7,6 +7,7 @@
     <Title>Osiris VS Code Debugger Frontend</Title>
     <Product>LSLib</Product>
     <Copyright>Copyright © Norbyte 2012-2018</Copyright>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>

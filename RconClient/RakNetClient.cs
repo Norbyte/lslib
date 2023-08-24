@@ -103,7 +103,7 @@ namespace LSLib.Rcon
                 ClientId = ClientId,
                 Address = new RakAddress
                 {
-                    Address = (UInt32)IPAddress.Parse("127.0.0.1").Address,
+                    Address = BitConverter.ToUInt32(IPAddress.Parse("127.0.0.1").GetAddressBytes()),
                     Port = Socket.Port
                 },
                 MTU = 1200
