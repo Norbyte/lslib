@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj" />
-    <ProjectReference Include="..\OpenTK\OpenTK.csproj" />
+    <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj" PrivateAssets="All" />
+    <ProjectReference Include="..\OpenTK\OpenTK.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,5 +32,29 @@
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs&quot; &quot;$(ProjectDir)\LS\Story\GoalParser\Goal.lex&quot;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(ProjectDir)\LS\Story\GoalParser\Goal.yy.cs&quot; &quot;$(ProjectDir)\LS\Story\GoalParser\Goal.yy&quot;&#xD;&#xA;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex.cs&quot; &quot;$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex&quot;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy.cs&quot; &quot;$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy&quot;&#xD;&#xA;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(ProjectDir)\LS\Stats\Parser\Stat.lex.cs&quot; &quot;$(ProjectDir)\LS\Stats\Parser\Stat.lex&quot;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(ProjectDir)\LS\Stats\Parser\Stat.yy.cs&quot; &quot;$(ProjectDir)\LS\Stats\Parser\Stat.yy&quot;&#xD;&#xA;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(ProjectDir)\LS\Stats\Parser\StatProperty.lex.cs&quot; &quot;$(ProjectDir)\LS\Stats\Parser\StatProperty.lex&quot;&#xD;&#xA;    &quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(ProjectDir)\LS\Stats\Parser\StatProperty.yy.cs&quot; &quot;$(ProjectDir)\LS\Stats\Parser\StatProperty.yy&quot;" />
+  </Target>
+
+  <!-- NuGet -->
+  <ItemGroup>
+    <Content Include="..\External\gppg\binaries\QUT.ShiftReduceParser.dll">
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFramework)</PackagePath>
+    </Content>
+    <Content Include="$(NetCoreTargetingPackRoot)\Microsoft.NETCore.App.Host.$(NETCoreSdkRuntimeIdentifier)\$(BundledNETCoreAppPackageVersion)\runtimes\$(NETCoreSdkRuntimeIdentifier)\native\ijwhost.dll" Link="ijwhost.dll">
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFramework)</PackagePath>
+    </Content>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+    <IncludeSymbols>True</IncludeSymbols>
+  </PropertyGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+    <ItemGroup>
+      <_ReferenceCopyLocalPaths Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')-&gt;WithMetadataValue('PrivateAssets', 'All'))" />
+      <BuildOutputInPackage Include="@(_ReferenceCopyLocalPaths)" TargetPath="%(_ReferenceCopyLocalPaths.DestinationSubDirectory)" />
+    </ItemGroup>
   </Target>
 </Project>
