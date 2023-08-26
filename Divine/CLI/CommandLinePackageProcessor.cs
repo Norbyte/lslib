@@ -157,7 +157,7 @@ namespace Divine.CLI
             var options = new PackageCreationOptions();
             options.Version = CommandLineActions.PackageVersion;
 
-            options.Priority = CommandLineActions.PackagePriority;
+            options.Priority = (byte)CommandLineActions.PackagePriority;
 
             Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, options.Version);
 
