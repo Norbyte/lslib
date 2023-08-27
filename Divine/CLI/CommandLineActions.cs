@@ -83,8 +83,8 @@ namespace Divine.CLI
 
             if (args.Action == "create-package")
             {
+                PackagePriority = args.PackagePriority;
                 PackageVersion = Game.PAKVersion();
-                PackagePriority = 25;
                 CommandLineLogger.LogDebug($"Using package version: {PackageVersion}");
             }
 
