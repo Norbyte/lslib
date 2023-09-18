@@ -21,6 +21,7 @@ namespace Divine.CLI
         public static ResourceFormat OutputFormat;
         public static PackageVersion PackageVersion;
         public static int PackagePriority;
+        public static bool LegacyGuids;
         public static Dictionary<string, bool> GR2Options;
 
         // TODO: OSI support
@@ -60,6 +61,8 @@ namespace Divine.CLI
 
             Game = CommandLineArguments.GetGameByString(args.Game);
             CommandLineLogger.LogDebug($"Using game: {Game}");
+
+            LegacyGuids = args.LegacyGuids;
 
             if (batchActions.Any(args.Action.Contains))
             {

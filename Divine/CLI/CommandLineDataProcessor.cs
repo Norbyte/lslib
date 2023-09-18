@@ -9,23 +9,28 @@ namespace Divine.CLI
         public static void Convert()
         {
             var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
-            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, conversionParams);
+            var loadParams = ResourceLoadParameters.FromGameVersion(CommandLineActions.Game);
+            loadParams.ByteSwapGuids = !CommandLineActions.LegacyGuids;
+            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, loadParams, conversionParams);
         }
 
         public static void BatchConvert()
         {
             var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
-            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, conversionParams);
+            var loadParams = ResourceLoadParameters.FromGameVersion(CommandLineActions.Game);
+            loadParams.ByteSwapGuids = !CommandLineActions.LegacyGuids;
+            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, loadParams, conversionParams);
         }
 
-        private static void ConvertResource(string sourcePath, string destinationPath, ResourceConversionParameters conversionParams)
+        private static void ConvertResource(string sourcePath, string destinationPath,
+            ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
         {
             try
             {
                 ResourceFormat resourceFormat = ResourceUtils.ExtensionToResourceFormat(destinationPath);
                 CommandLineLogger.LogDebug($"Using destination extension: {resourceFormat}");
 
-                Resource resource = ResourceUtils.LoadResource(sourcePath);
+                Resource resource = ResourceUtils.LoadResource(sourcePath, loadParams);
 
                 ResourceUtils.SaveResource(resource, destinationPath, resourceFormat, conversionParams);
 
@@ -59,14 +64,15 @@ namespace Divine.CLI
         }
 
 
-        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, ResourceConversionParameters conversionParams)
+        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, 
+            ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
         {
             try
             {
                 CommandLineLogger.LogDebug($"Using destination extension: {outputFormat}");
 
                 var resourceUtils = new ResourceUtils();
-                resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, conversionParams);
+                resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, loadParams, conversionParams);
 
                 CommandLineLogger.LogInfo($"Wrote resources to: {destinationPath}");
             }

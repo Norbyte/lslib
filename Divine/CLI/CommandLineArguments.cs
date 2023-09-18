@@ -134,6 +134,12 @@ namespace Divine.CLI
         )]
         public int PackagePriority;
 
+        // @formatter:off
+        [SwitchArgument("legacy-guids", false,
+            Description = "Use legacy GUID serialization format when serializing LSX/LSJ files",
+            Optional = true
+        )]
+        public bool LegacyGuids;
 
         // @formatter:off
         [SwitchArgument("use-package-name", false,

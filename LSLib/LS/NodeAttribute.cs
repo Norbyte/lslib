@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LSLib.LS
 {
@@ -25,6 +26,37 @@ namespace LSLib.LS
     public class TranslatedFSString : TranslatedString
     {
         public List<TranslatedFSStringArgument> Arguments;
+    }
+
+    public class NodeSerializationSettings
+    {
+        public bool DefaultByteSwapGuids = true;
+        public bool ByteSwapGuids = true;
+
+        public void InitFromMeta(string meta)
+        {
+            if (meta.Length == 0)
+            {
+                // No metadata available, use defaults
+                ByteSwapGuids = DefaultByteSwapGuids;
+            }
+            else
+            {
+                var tags = meta.Split(',');
+                ByteSwapGuids = tags.Contains("bswap_guids");
+            }
+        }
+
+        public string BuildMeta()
+        {
+            List<string> tags = new List<string> { "v1" };
+            if (ByteSwapGuids)
+            {
+                tags.Add("bswap_guids");
+            }
+
+            return String.Join(",", tags);
+        }
     }
 
     public class NodeAttribute
@@ -91,6 +123,22 @@ namespace LSLib.LS
 
         public override string ToString()
         {
+            throw new NotImplementedException("ToString() is not safe to use anymore, AsString(settings) instead");
+        }
+
+        public static Guid ByteSwapGuid(Guid g)
+        {
+            var bytes = g.ToByteArray();
+            for (var i = 8; i < 16; i += 2)
+            {
+                (bytes[i + 1], bytes[i]) = (bytes[i], bytes[i + 1]);
+            }
+
+            return new Guid(bytes);
+        }
+
+        public string AsString(NodeSerializationSettings settings)
+        {
             switch (this.type)
             {
                 case DataType.DT_ScratchBuffer:
@@ -106,6 +154,16 @@ namespace LSLib.LS
                 case DataType.DT_Vec3:
                 case DataType.DT_Vec4:
                     return String.Join(" ", new List<float>((float[])this.value).ConvertAll(i => i.ToString()).ToArray());
+
+                case DataType.DT_UUID:
+                    if (settings.ByteSwapGuids)
+                    {
+                        return ByteSwapGuid((Guid)this.value).ToString();
+                    }
+                    else
+                    {
+                        return this.value.ToString();
+                    }
 
                 default:
                     return this.value.ToString();
@@ -180,7 +238,7 @@ namespace LSLib.LS
                 || this.type == DataType.DT_Int8;
         }
 
-        public void FromString(string str)
+        public void FromString(string str, NodeSerializationSettings settings)
         {
             if (IsNumeric())
             {
@@ -326,7 +384,14 @@ namespace LSLib.LS
                     break;
 
                 case DataType.DT_UUID:
-                    value = new Guid(str);
+                    if (settings.ByteSwapGuids)
+                    {
+                        value = ByteSwapGuid(new Guid(str));
+                    }
+                    else
+                    {
+                        value = new Guid(str);
+                    }
                     break;
 
                 default:

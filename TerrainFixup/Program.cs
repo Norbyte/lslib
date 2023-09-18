@@ -128,7 +128,8 @@ namespace TerrainFixup
 
         private static void LoadTerrainsFromLSF(string path, string patchDir, Dictionary<string, Terrain> terrains)
         {
-            var terrainRes = ResourceUtils.LoadResource(path);
+            var loadParams = ResourceLoadParameters.FromGameVersion(LSLib.LS.Enums.Game.DivinityOriginalSin2DE);
+            var terrainRes = ResourceUtils.LoadResource(path, loadParams);
             var tmpls = terrainRes.Regions["Templates"];
             if (tmpls.Children.TryGetValue("GameObjects", out List<Node> terrainTemplates))
             {

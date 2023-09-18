@@ -4,12 +4,20 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Numerics;
 using System.Collections.Generic;
+using LSLib.LS.Story;
+using System.Runtime;
 
 namespace LSLib.LS
 {
     public class LSJResourceConverter : JsonConverter
     {
         private LSMetadata Metadata;
+        private NodeSerializationSettings SerializationSettings;
+
+        public LSJResourceConverter(NodeSerializationSettings settings)
+        {
+            SerializationSettings = settings;
+        }
 
         public override bool CanConvert(Type objectType)
         {
@@ -275,7 +283,14 @@ namespace LSLib.LS
                                 }
 
                             case NodeAttribute.DataType.DT_UUID:
-                                attribute.Value = new Guid(reader.Value.ToString());
+                                if (SerializationSettings.ByteSwapGuids)
+                                {
+                                    attribute.Value = NodeAttribute.ByteSwapGuid(new Guid(reader.Value.ToString()));
+                                }
+                                else
+                                {
+                                    attribute.Value = new Guid(reader.Value.ToString());
+                                }
                                 break;
 
                             case NodeAttribute.DataType.DT_IVec2:
@@ -742,7 +757,14 @@ namespace LSLib.LS
                         }
 
                     case NodeAttribute.DataType.DT_UUID:
-                        writer.WriteValue(((Guid)attribute.Value.Value).ToString());
+                        if (SerializationSettings.ByteSwapGuids)
+                        {
+                            writer.WriteValue((NodeAttribute.ByteSwapGuid((Guid)attribute.Value.Value)).ToString());
+                        }
+                        else
+                        {
+                            writer.WriteValue(((Guid)attribute.Value.Value).ToString());
+                        }
                         break;
 
                     // TODO: haven't seen any vectors/matrices in D:OS JSON files so far

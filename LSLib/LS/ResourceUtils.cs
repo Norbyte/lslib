@@ -9,6 +9,26 @@ using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
+    public class ResourceLoadParameters
+    {
+        /// <summary>
+        /// Byte-swap the last 8 bytes of GUIDs when serializing to/from string
+        /// </summary>
+        public bool ByteSwapGuids = true;
+
+        public static ResourceLoadParameters FromGameVersion(Game game)
+        {
+            var p = new ResourceLoadParameters();
+            // No game-specific settings yet
+            return p;
+        }
+
+        public void ToSerializationSettings(NodeSerializationSettings settings)
+        {
+            settings.DefaultByteSwapGuids = ByteSwapGuids;
+        }
+    }
+
     public class ResourceConversionParameters
     {
         /// <summary>
@@ -46,13 +66,23 @@ namespace LSLib.LS
         /// </summary>
         public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
 
+        /// <summary>
+        /// Byte-swap the last 8 bytes of GUIDs when serializing to/from string
+        /// </summary>
+        public bool ByteSwapGuids = true;
+
         public static ResourceConversionParameters FromGameVersion(Game game)
         {
-            ResourceConversionParameters p = new ResourceConversionParameters();
+            var p = new ResourceConversionParameters();
             p.PAKVersion = game.PAKVersion();
             p.LSF = game.LSFVersion();
             p.LSX = game.LSXVersion();
             return p;
+        }
+
+        public void ToSerializationSettings(NodeSerializationSettings settings)
+        {
+            settings.DefaultByteSwapGuids = ByteSwapGuids;
         }
     }
 
@@ -90,20 +120,20 @@ namespace LSLib.LS
             }
         }
 
-        public static Resource LoadResource(string inputPath)
+        public static Resource LoadResource(string inputPath, ResourceLoadParameters loadParams)
         {
-            return LoadResource(inputPath, ExtensionToResourceFormat(inputPath));
+            return LoadResource(inputPath, ExtensionToResourceFormat(inputPath), loadParams);
         }
 
-        public static Resource LoadResource(string inputPath, ResourceFormat format)
+        public static Resource LoadResource(string inputPath, ResourceFormat format, ResourceLoadParameters loadParams)
         {
             using (var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                return LoadResource(stream, format);
+                return LoadResource(stream, format, loadParams);
             }
         }
 
-        public static Resource LoadResource(Stream stream, ResourceFormat format)
+        public static Resource LoadResource(Stream stream, ResourceFormat format, ResourceLoadParameters loadParams)
         {
             switch (format)
             {
@@ -111,6 +141,7 @@ namespace LSLib.LS
                     {
                         using (var reader = new LSXReader(stream))
                         {
+                            loadParams.ToSerializationSettings(reader.SerializationSettings);
                             return reader.Read();
                         }
                     }
@@ -135,6 +166,7 @@ namespace LSLib.LS
                     {
                         using (var reader = new LSJReader(stream))
                         {
+                            loadParams.ToSerializationSettings(reader.SerializationSettings);
                             return reader.Read();
                         }
                     }
@@ -162,6 +194,7 @@ namespace LSLib.LS
                             var writer = new LSXWriter(file);
                             writer.Version = conversionParams.LSX;
                             writer.PrettyPrint = conversionParams.PrettyPrint;
+                            conversionParams.ToSerializationSettings(writer.SerializationSettings);
                             writer.Write(resource);
                             break;
                         }
@@ -188,6 +221,7 @@ namespace LSLib.LS
                         {
                             var writer = new LSJWriter(file);
                             writer.PrettyPrint = conversionParams.PrettyPrint;
+                            conversionParams.ToSerializationSettings(writer.SerializationSettings);
                             writer.Write(resource);
                             break;
                         }
@@ -233,7 +267,8 @@ namespace LSLib.LS
             }
         }
 
-        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, ResourceConversionParameters conversionParams)
+        public void ConvertResources(string inputDir, string outputDir, ResourceFormat inputFormat, ResourceFormat outputFormat, 
+            ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
         {
             this.progressUpdate("Enumerating files ...", 0, 1);
             var paths = new List<string>();
@@ -251,7 +286,7 @@ namespace LSLib.LS
                 this.progressUpdate("Converting: " + inPath, i, paths.Count);
                 try
                 {
-                    var resource = LoadResource(inPath, inputFormat);
+                    var resource = LoadResource(inPath, inputFormat, loadParams);
                     SaveResource(resource, outPath, outputFormat, conversionParams);
                 }
                 catch (Exception ex)

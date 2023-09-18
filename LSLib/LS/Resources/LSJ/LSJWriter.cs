@@ -8,6 +8,7 @@ namespace LSLib.LS
         private Stream stream;
         private JsonTextWriter writer;
         public bool PrettyPrint = false;
+        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
 
         public LSJWriter(Stream stream)
         {
@@ -18,7 +19,7 @@ namespace LSLib.LS
         {
             var settings = new JsonSerializerSettings();
             settings.Formatting = Newtonsoft.Json.Formatting.Indented;
-            settings.Converters.Add(new LSJResourceConverter());
+            settings.Converters.Add(new LSJResourceConverter(SerializationSettings));
             var serializer = JsonSerializer.Create(settings);
 
             using (var streamWriter = new StreamWriter(stream))

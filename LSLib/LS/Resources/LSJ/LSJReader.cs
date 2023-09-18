@@ -8,6 +8,7 @@ namespace LSLib.LS
     {
         private Stream stream;
         private JsonTextReader reader;
+        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
 
         public LSJReader(Stream stream)
         {
@@ -22,7 +23,7 @@ namespace LSLib.LS
         public Resource Read()
         {
             var settings = new JsonSerializerSettings();
-            settings.Converters.Add(new LSJResourceConverter());
+            settings.Converters.Add(new LSJResourceConverter(SerializationSettings));
             var serializer = JsonSerializer.Create(settings);
 
             using (var streamReader = new StreamReader(stream))

@@ -72,6 +72,7 @@ namespace ConverterApp
         private void DoLsxConversion()
         {
             var conversionParams = ResourceConversionParameters.FromGameVersion(GameVersion);
+            var loadParams = ResourceLoadParameters.FromGameVersion(GameVersion);
 
             var lsfList = SavePackage.Files.Where(p => p.Name.EndsWith(".lsf"));
             var numProcessed = 0;
@@ -81,7 +82,7 @@ namespace ConverterApp
                 var lsxPath = Path.Combine(ExtractionPath, lsf.Name.Substring(0, lsf.Name.Length - 4) + ".lsx");
 
                 ReportProgress(20 + (numProcessed * 30 / lsfList.Count()), "Converting to LSX: " + lsf.Name);
-                var resource = ResourceUtils.LoadResource(lsfPath, ResourceFormat.LSF);
+                var resource = ResourceUtils.LoadResource(lsfPath, ResourceFormat.LSF, loadParams);
                 ResourceUtils.SaveResource(resource, lsxPath, ResourceFormat.LSX, conversionParams);
                 numProcessed++;
             }

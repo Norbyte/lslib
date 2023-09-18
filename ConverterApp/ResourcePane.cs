@@ -30,19 +30,21 @@ namespace ConverterApp
 
         private void resourceConvertBtn_Click(object sender, EventArgs e)
         {
-            //try
-            //{
-                _resource = ResourceUtils.LoadResource(resourceInputPath.Text);
+            try
+            {
+                var loadParams = ResourceLoadParameters.FromGameVersion(_form.GetGame());
+                loadParams.ByteSwapGuids = !legacyGuids.Checked;
+                _resource = ResourceUtils.LoadResource(resourceInputPath.Text, loadParams);
                 ResourceFormat format = ResourceUtils.ExtensionToResourceFormat(resourceOutputPath.Text);
                 var conversionParams = ResourceConversionParameters.FromGameVersion(_form.GetGame());
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, conversionParams);
 
                 MessageBox.Show("Resource saved successfully.");
-            //}
-            //catch (Exception exc)
-            //{
-            //    MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //}
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void resourceInputBrowseBtn_Click(object sender, EventArgs e)
@@ -92,6 +94,10 @@ namespace ConverterApp
 
         private void resourceBulkConvertBtn_Click(object sender, EventArgs e)
         {
+            var loadParams = ResourceLoadParameters.FromGameVersion(_form.GetGame());
+            loadParams.ByteSwapGuids = !legacyGuids.Checked;
+            var conversionParams = ResourceConversionParameters.FromGameVersion(_form.GetGame());
+
             var inputFormat = ResourceFormat.LSX;
             switch (resourceInputFormatCb.SelectedIndex)
             {
@@ -118,8 +124,6 @@ namespace ConverterApp
             }
 
             var outputFormat = ResourceFormat.LSF;
-            var conversionParams = ResourceConversionParameters.FromGameVersion(_form.GetGame());
-
             switch (resourceOutputFormatCb.SelectedIndex)
             {
                 case 0:
@@ -150,7 +154,7 @@ namespace ConverterApp
                 var utils = new ResourceUtils();
                 utils.progressUpdate += ResourceProgressUpdate;
                 utils.errorDelegate += ResourceError;
-                utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, conversionParams);
+                utils.ConvertResources(resourceInputDir.Text, resourceOutputDir.Text, inputFormat, outputFormat, loadParams, conversionParams);
 
                 MessageBox.Show("Resources converted successfully.");
             }

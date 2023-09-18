@@ -17,6 +17,7 @@ namespace LSLib.LS
         private List<Node> stack;
         private int lastLine, lastColumn;
         private LSXVersion Version = LSXVersion.V3;
+        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
 
         public LSXReader(Stream stream)
         {
@@ -103,6 +104,8 @@ namespace LSLib.LS
                     resource.Metadata.Revision = Convert.ToUInt32(reader["revision"]);
                     resource.Metadata.BuildNumber = Convert.ToUInt32(reader["build"]);
                     Version = (resource.Metadata.MajorVersion >= 4) ? LSXVersion.V4 : LSXVersion.V3;
+                    var lslibMeta = reader["lslib_meta"];
+                    SerializationSettings.InitFromMeta(lslibMeta);
                     break;
 
                 case "region":
@@ -167,7 +170,7 @@ namespace LSLib.LS
                     var attrValue = reader["value"];
                     if (attrValue != null)
                     {
-                        attr.FromString(attrValue);
+                        attr.FromString(attrValue, SerializationSettings);
                     }
 
                     if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)

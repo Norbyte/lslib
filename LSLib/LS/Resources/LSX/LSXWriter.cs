@@ -12,6 +12,7 @@ namespace LSLib.LS
 
         public bool PrettyPrint = false;
         public LSXVersion Version = LSXVersion.V3;
+        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
 
         public LSXWriter(Stream stream)
         {
@@ -34,6 +35,7 @@ namespace LSLib.LS
                 writer.WriteAttributeString("minor", rsrc.Metadata.MinorVersion.ToString());
                 writer.WriteAttributeString("revision", rsrc.Metadata.Revision.ToString());
                 writer.WriteAttributeString("build", rsrc.Metadata.BuildNumber.ToString());
+                writer.WriteAttributeString("lslib_meta", SerializationSettings.BuildMeta());
                 writer.WriteEndElement();
 
                 WriteRegions(rsrc);
@@ -123,7 +125,7 @@ namespace LSLib.LS
                 else
                 {
                     // Replace bogus 001F characters found in certain LSF nodes
-                    writer.WriteAttributeString("value", attribute.Value.ToString().Replace("\x1f", ""));
+                    writer.WriteAttributeString("value", attribute.Value.AsString(SerializationSettings).Replace("\x1f", ""));
                 }
 
                 writer.WriteEndElement();
