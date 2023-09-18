@@ -126,6 +126,16 @@ namespace Divine.CLI
         public string ConformPath;
 
         // @formatter:off
+        [ValueArgument(typeof(int), "package-priority",
+            Description = "Set a custom package priority",
+            DefaultValue = 0,
+            ValueOptional = true,
+            Optional = true
+        )]
+        public int PackagePriority;
+
+
+        // @formatter:off
         [SwitchArgument("use-package-name", false,
             Description = "Use package name for destination folder",
             Optional = true

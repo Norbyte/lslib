@@ -20,6 +20,7 @@ namespace Divine.CLI
         public static ResourceFormat InputFormat;
         public static ResourceFormat OutputFormat;
         public static PackageVersion PackageVersion;
+        public static int PackagePriority;
         public static Dictionary<string, bool> GR2Options;
 
         // TODO: OSI support
@@ -82,6 +83,7 @@ namespace Divine.CLI
 
             if (args.Action == "create-package")
             {
+                PackagePriority = args.PackagePriority;
                 PackageVersion = Game.PAKVersion();
                 CommandLineLogger.LogDebug($"Using package version: {PackageVersion}");
             }
