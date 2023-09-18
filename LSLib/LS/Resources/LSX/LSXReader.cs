@@ -105,7 +105,7 @@ namespace LSLib.LS
                     resource.Metadata.BuildNumber = Convert.ToUInt32(reader["build"]);
                     Version = (resource.Metadata.MajorVersion >= 4) ? LSXVersion.V4 : LSXVersion.V3;
                     var lslibMeta = reader["lslib_meta"];
-                    SerializationSettings.InitFromMeta(lslibMeta);
+                    SerializationSettings.InitFromMeta(lslibMeta ?? "");
                     break;
 
                 case "region":
