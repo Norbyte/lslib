@@ -378,21 +378,20 @@ namespace LSLib.Granny.Model
 
             if (Deduplicator == null) return;
 
-            // Implements CollectionsMarshal.AsSpan from .NET 5 by reflection
-            Span<T> AsSpan<T>(List<T> list) => new Span<T>(list.GetType()
-                .GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance)
-                .GetValue(list) as T[], 0, list.Count);
-
-            foreach (ref SkinnedVertex vertex in AsSpan(Deduplicator.Vertices.Uniques))
+            for (var i = 0; i < Deduplicator.Vertices.Uniques.Count; i++)
             {
-                vertex.Position.X *= -1;
+                var vert = Deduplicator.Vertices.Uniques[i];
+                vert.Position.X *= -1;
+                Deduplicator.Vertices.Uniques[i] = vert;
             }
 
-            foreach (ref Matrix3 matrix in AsSpan(Deduplicator.Normals.Uniques))
+            for (var i = 0; i < Deduplicator.Normals.Uniques.Count; i++)
             {
-                matrix.Row0.X *= -1; // vertex.Normal.X
-                matrix.Row1.X *= -1; // vertex.Tangent.X
-                matrix.Row2.X *= -1; // vertex.Binormal.X
+                var normal = Deduplicator.Normals.Uniques[i];
+                normal.Row0.X *= -1; // vertex.Normal.X
+                normal.Row1.X *= -1; // vertex.Tangent.X
+                normal.Row2.X *= -1; // vertex.Binormal.X
+                Deduplicator.Normals.Uniques[i] = normal;
             }
         }
     }
