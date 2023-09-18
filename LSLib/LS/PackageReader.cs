@@ -42,7 +42,10 @@ namespace LSLib.LS
             {
                 foreach (Stream stream in _streams)
                 {
-                    stream.Dispose();
+                    if (stream != null)
+                    {
+                        stream.Dispose();
+                    }
                 }
             }
         }
