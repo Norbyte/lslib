@@ -33,9 +33,14 @@
         VerBG3AdditionalBlob = 0x06,
 
         /// <summary>
+        /// BG3 Patch 3 version with unknown additions
+        /// </summary>
+        VerBG3Patch3 = 0x07,
+
+        /// <summary>
         /// Latest input version supported by this library
         /// </summary>
-        MaxReadVersion = 0x06,
+        MaxReadVersion = 0x07,
 
         /// <summary>
         /// Latest output version supported by this library
