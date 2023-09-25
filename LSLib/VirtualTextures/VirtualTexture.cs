@@ -46,6 +46,7 @@ namespace LSLib.VirtualTextures
         public GTSThumbnailInfo[] ThumbnailInfos;
         public GTSPackedTileID[] PackedTileIDs;
         public GTSFlatTileInfo[] FlatTileInfos;
+        public byte[] SingleFileContents;
 
         private Dictionary<int, PageFile> PageFiles = new Dictionary<int, PageFile>();
 
@@ -504,20 +505,20 @@ namespace LSLib.VirtualTextures
             }
         }
 
-        public PageFile GetOrLoadPageFile(int pageFileIdx, byte[] data = null)
+        public PageFile GetOrLoadPageFile(int pageFileIdx)
         {
             PageFile file;
             if (!PageFiles.TryGetValue(pageFileIdx, out file))
             {
                 var meta = PageFileInfos[pageFileIdx];
-                file = PagePath != null ? new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.Name) : new PageFile(this, data);
+                file = PagePath != null ? new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.Name) : new PageFile(this, SingleFileContents);
                 PageFiles.Add(pageFileIdx, file);
             }
 
             return file;
         }
 
-        public void StitchTexture(int level, int layer, int minX, int minY, int maxX, int maxY, BC5Image output, byte[] data = null)
+        public void StitchTexture(int level, int layer, int minX, int minY, int maxX, int maxY, BC5Image output)
         {
             var tileWidth = Header.TileWidth - Header.TileBorder * 2;
             var tileHeight = Header.TileHeight - Header.TileBorder * 2;
@@ -528,7 +529,7 @@ namespace LSLib.VirtualTextures
                 {
                     if (GetTileInfo(level, layer, x, y, ref tileInfo))
                     {
-                        var pageFile = GetOrLoadPageFile(tileInfo.PageFileIndex, data);
+                        var pageFile = GetOrLoadPageFile(tileInfo.PageFileIndex);
                         var tile = pageFile.UnpackTileBC5(tileInfo.PageIndex, tileInfo.ChunkIndex);
                         tile.CopyTo(output, 8, 8, (x - minX) * tileWidth, (y - minY) * tileHeight, tileWidth, tileHeight);
                     }
@@ -536,12 +537,12 @@ namespace LSLib.VirtualTextures
             }
         }
 
-        public BC5Image ExtractTexture(int level, int layer, int minX, int minY, int maxX, int maxY, byte[] data = null)
+        public BC5Image ExtractTexture(int level, int layer, int minX, int minY, int maxX, int maxY)
         {
             var width = (maxX - minX + 1) * (Header.TileWidth - Header.TileBorder * 2);
             var height = (maxY - minY + 1) * (Header.TileHeight - Header.TileBorder * 2);
             var stitched = new BC5Image(width, height);
-            StitchTexture(level, layer, minX, minY, maxX, maxY, stitched, data);
+            StitchTexture(level, layer, minX, minY, maxX, maxY, stitched);
             return stitched;
         }
 
@@ -565,6 +566,7 @@ namespace LSLib.VirtualTextures
 
         public BC5Image ExtractPageFileTexture(int pageFileIndex, int levelIndex, int layer, byte[] data = null)
         {
+            SingleFileContents = data;
             int minX = 0, maxX = 0, minY = 0, maxY = 0;
             bool foundPages = false;
 
@@ -605,7 +607,7 @@ namespace LSLib.VirtualTextures
             }
             else
             {
-                return ExtractTexture(levelIndex, layer, minX, minY, maxX, maxY, data);
+                return ExtractTexture(levelIndex, layer, minX, minY, maxX, maxY);
             }
         }
     }
