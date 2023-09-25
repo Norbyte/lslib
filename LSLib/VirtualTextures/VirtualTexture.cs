@@ -3,9 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LSLib.VirtualTextures
 {
@@ -59,6 +57,14 @@ namespace LSLib.VirtualTextures
             using (var reader = new BinaryReader(fs))
             {
                 LoadFromStream(fs, reader, false);
+            }
+        }
+
+        public VirtualTileSet(Stream stream)
+        {
+            using (var reader = new BinaryReader(stream))
+            {
+                LoadFromStream(stream, reader, false);
             }
         }
 
