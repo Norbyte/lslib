@@ -13,7 +13,7 @@ namespace LSLib.VirtualTextures
         private const UInt32 PageSize = 0x100000;
 
         private VirtualTileSet TileSet;
-        private FileStream Stream;
+        private MemoryStream Stream;
         private BinaryReader Reader;
         public GTPHeader Header;
         private List<UInt32[]> ChunkOffsets;
@@ -21,7 +21,21 @@ namespace LSLib.VirtualTextures
         public PageFile(VirtualTileSet tileset, string path)
         {
             TileSet = tileset;
-            Stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            fileStream.CopyTo(Stream);
+            fileStream.Dispose();
+            Setup();
+        }
+
+        public PageFile(VirtualTileSet tileset, byte[] data)
+        {
+            TileSet = tileset;
+            Stream = new MemoryStream(data);
+            Setup();
+        }
+
+        private void Setup()
+        {
             Reader = new BinaryReader(Stream);
 
             Header = BinUtils.ReadStruct<GTPHeader>(Reader);
