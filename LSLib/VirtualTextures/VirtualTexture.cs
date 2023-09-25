@@ -511,7 +511,7 @@ namespace LSLib.VirtualTextures
             if (!PageFiles.TryGetValue(pageFileIdx, out file))
             {
                 var meta = PageFileInfos[pageFileIdx];
-                file = PagePath != null ? new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.Name) : new PageFile(this, SingleFileContents);
+                file = SingleFileContents == null ? new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.Name) : new PageFile(this, SingleFileContents);
                 PageFiles.Add(pageFileIdx, file);
             }
 
@@ -564,9 +564,8 @@ namespace LSLib.VirtualTextures
             this.PageFiles.Clear();
         }
 
-        public BC5Image ExtractPageFileTexture(int pageFileIndex, int levelIndex, int layer, byte[] data = null)
+        public BC5Image ExtractPageFileTexture(int pageFileIndex, int levelIndex, int layer)
         {
-            SingleFileContents = data;
             int minX = 0, maxX = 0, minY = 0, maxY = 0;
             bool foundPages = false;
 
