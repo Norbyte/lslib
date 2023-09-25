@@ -21,8 +21,10 @@ namespace LSLib.VirtualTextures
         public PageFile(VirtualTileSet tileset, string path)
         {
             TileSet = tileset;
+            Stream = new MemoryStream();
             using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
                 fileStream.CopyTo(Stream);
+            Stream.Position = 0;
             Setup();
         }
 
