@@ -148,16 +148,9 @@ namespace LSLib.LS
 
                 case "attribute":
                     UInt32 attrTypeId;
-                    if (Version >= LSXVersion.V4)
+                    if (!UInt32.TryParse(reader["type"], out attrTypeId))
                     {
                         attrTypeId = (uint)AttributeTypeMaps.TypeToId[reader["type"]];
-                    }
-                    else
-                    {
-                        if (!UInt32.TryParse(reader["type"], out attrTypeId))
-                        {
-                            attrTypeId = (uint)AttributeTypeMaps.TypeToId[reader["type"]];
-                        }
                     }
 
                     var attrName = reader["id"];
