@@ -523,7 +523,7 @@ namespace LSLib.Granny.GR2
                     break;
 
                 case MemberType.Real16:
-                    Writer.Write((Half)node);
+                    Writer.Write((System.Half)node);
                     break;
 
                 case MemberType.Real32:

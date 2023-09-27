@@ -1,9 +1,10 @@
-﻿using zlib;
-using LZ4;
+﻿using LZ4;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using LSLib.LS.Enums;
+using CompressionLevel = LSLib.LS.Enums.CompressionLevel;
 
 namespace LSLib.LS
 {
@@ -338,11 +339,11 @@ namespace LSLib.LS
                     {
                         using (var compressedStream = new MemoryStream(compressed))
                         using (var decompressedStream = new MemoryStream())
-                        using (var stream = new ZInputStream(compressedStream))
+                        using (var stream = new ZLibStream(compressedStream, CompressionMode.Decompress))
                         {
                             byte[] buf = new byte[0x10000];
                             int length = 0;
-                            while ((length = stream.read(buf, 0, buf.Length)) > 0)
+                            while ((length = stream.Read(buf, 0, buf.Length)) > 0)
                             {
                                 decompressedStream.Write(buf, 0, length);
                             }
@@ -397,27 +398,29 @@ namespace LSLib.LS
 
         public static byte[] CompressZlib(byte[] uncompressed, CompressionLevel compressionLevel)
         {
-            int level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
+            System.IO.Compression.CompressionLevel level = System.IO.Compression.CompressionLevel.Optimal;
+
             switch (compressionLevel)
             {
                 case CompressionLevel.FastCompression:
-                    level = zlib.zlibConst.Z_BEST_SPEED;
+                    level = System.IO.Compression.CompressionLevel.Fastest;
                     break;
 
                 case CompressionLevel.DefaultCompression:
-                    level = zlib.zlibConst.Z_DEFAULT_COMPRESSION;
+                    level = System.IO.Compression.CompressionLevel.Optimal;
                     break;
 
                 case CompressionLevel.MaxCompression:
-                    level = zlib.zlibConst.Z_BEST_COMPRESSION;
+                    level = System.IO.Compression.CompressionLevel.SmallestSize;
                     break;
             }
 
             using (var outputStream = new MemoryStream())
-            using (var compressor = new ZOutputStream(outputStream, level))
+            using (var compressor = new ZLibStream(outputStream, level))
             {
                 compressor.Write(uncompressed, 0, uncompressed.Length);
-                compressor.finish();
+                compressor.Flush();
+
                 return outputStream.ToArray();
             }
         }

@@ -1,5 +1,4 @@
-﻿using Alphaleonis.Win32.Filesystem;
-using LSLib.LS;
+﻿using LSLib.LS;
 using LSLib.VirtualTextures;
 using System;
 using System.Collections.Generic;
@@ -65,7 +64,7 @@ namespace ConverterApp
 
                         if (tex != null)
                         {
-                            var outputPath = destinationPath.Text + Path.DirectorySeparator + Path.GetFileNameWithoutExtension(fileInfo.Name) + $"_{layer}.dds";
+                            var outputPath = destinationPath.Text + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileInfo.Name) + $"_{layer}.dds";
                             tex.SaveDDS(outputPath);
                         }
                     }

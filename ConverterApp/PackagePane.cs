@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Windows.Forms;
-using Alphaleonis.Win32.Filesystem;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
