@@ -707,7 +707,7 @@ namespace LSLib.LS
                     case NodeAttribute.DataType.DT_LSString:
                     case NodeAttribute.DataType.DT_WString:
                     case NodeAttribute.DataType.DT_LSWString:
-                        writer.WriteValue(attribute.Value.ToString());
+                        writer.WriteValue(attribute.Value.AsString(SerializationSettings));
                         break;
 
                     case NodeAttribute.DataType.DT_ULongLong:
