@@ -57,7 +57,18 @@
       <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="QUT.ShiftReduceParser">
-      <HintPath>..\external\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
+      <HintPath>..\External\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Hashing">
+      <HintPath>..\packages\System.IO.Hashing.7.0.0\lib\net462\System.IO.Hashing.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.5.5, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.5.3, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -212,10 +223,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj">
-      <Project>{d8b26b12-e45c-47ea-88f7-56628eb2ccd1}</Project>
+  <ProjectReference Include="..\LSLibNative\LSLibNative.csproj">
+      <Project>{c2464293-217d-4c11-a1bb-954fa5a00c74}</Project>
       <Name>LSLibNative</Name>
-    </ProjectReference>
+  </ProjectReference>
     <ProjectReference Include="..\OpenTK\OpenTK.csproj">
       <Project>{abb9db44-14f2-46e0-a4b8-b46c300ca982}</Project>
       <Name>OpenTK</Name>
@@ -228,7 +239,7 @@
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.lex"
+  <PreBuildEvent Condition="!$([MSBuild]::IsOSPlatform('Linux'))">"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.lex"
 "$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.yy.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.yy"
 
 "$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex"
@@ -239,6 +250,18 @@
 
 "$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.lex.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.lex"
 "$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.yy.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.yy"
+</PreBuildEvent>
+  <PreBuildEvent Condition="$([MSBuild]::IsOSPlatform('Linux'))">"cd" "$(ProjectDir)"; "mono" "$(SolutionDir)\External\gppg\binaries\Gplex.exe" /out:"LS\Story\GoalParser\Goal.lex.cs" "LS\Story\GoalParser\Goal.lex"
+"mono" "$(SolutionDir)\External\gppg\binaries\Gppg.exe" /out:"LS\Story\GoalParser\Goal.yy.cs" "LS\Story\GoalParser\Goal.yy"
+
+"mono" "$(SolutionDir)\External\gppg\binaries\Gplex.exe" /out:"LS\Story\HeaderParser\StoryHeader.lex.cs" "LS\Story\HeaderParser\StoryHeader.lex"
+"mono" "$(SolutionDir)\External\gppg\binaries\Gppg.exe" /out:"LS\Story\HeaderParser\StoryHeader.yy.cs" "LS\Story\HeaderParser\StoryHeader.yy"
+
+"mono" "$(SolutionDir)\External\gppg\binaries\Gplex.exe" /out:"LS\Stats\Parser\Stat.lex.cs" "LS\Stats\Parser\Stat.lex"
+"mono" "$(SolutionDir)\External\gppg\binaries\Gppg.exe" /out:"LS\Stats\Parser\Stat.yy.cs" "LS\Stats\Parser\Stat.yy"
+
+"mono" "$(SolutionDir)\External\gppg\binaries\Gplex.exe" /out:"LS\Stats\Parser\StatProperty.lex.cs" "LS\Stats\Parser\StatProperty.lex"
+"mono" "$(SolutionDir)\External\gppg\binaries\Gppg.exe" /out:"LS\Stats\Parser\StatProperty.yy.cs" "LS\Stats\Parser\StatProperty.yy"
 </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

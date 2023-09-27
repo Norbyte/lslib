@@ -7,9 +7,7 @@ GlassesAltEditor/bin/*
 GlassesAltEditor/obj/*
 LSLib/obj/*
 ipch/*
-LSLibNative/Release/*
 Release/*
-LSLibNative/LSLibNative.vcxproj.user
 LSTools.v11.suo
 LSTools.v12.suo
 GlassesAltEditor.v12.suo

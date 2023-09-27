@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using System.IO;
+using System.IO.Hashing;
 using System.Reflection;
 
 namespace LSLib.Granny.GR2
@@ -512,7 +513,7 @@ namespace LSLib.Granny.GR2
             stream.Seek(totalHeaderSize, SeekOrigin.Begin);
             byte[] body = new byte[fileSize - totalHeaderSize];
             stream.Read(body, 0, (int)(fileSize - totalHeaderSize));
-            UInt32 crc = Native.Crc32.Compute(body, 0);
+            UInt32 crc = BitConverter.ToUInt32(Crc32.Hash(body), 0);
             stream.Seek(originalPos, SeekOrigin.Begin);
             return crc;
         }

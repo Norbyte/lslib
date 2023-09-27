@@ -53,8 +53,8 @@
     <Reference Include="CommandLineArgumentsParser, Version=3.0.19.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\CommandLineArgumentsParser.3.0.19\lib\net452\CommandLineArgumentsParser.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Protobuf, Version=3.6.1.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Protobuf.3.6.1\lib\net45\Google.Protobuf.dll</HintPath>
+    <Reference Include="Google.Protobuf, Version=3.23.4.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Protobuf.3.23.4\lib\net45\Google.Protobuf.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -106,6 +106,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
+    <PreBuildEvent Condition="!$([MSBuild]::IsOSPlatform('Linux'))">$(SolutionDir)\External\protoc\bin\protoc.exe --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
+    <PreBuildEvent Condition="$([MSBuild]::IsOSPlatform('Linux'))">"$(SolutionDir)\External\protoc\bin\protoc" --proto_path=$(ProjectDir) --csharp_out=$(ProjectDir) debuginfo.proto</PreBuildEvent>
   </PropertyGroup>
 </Project>
