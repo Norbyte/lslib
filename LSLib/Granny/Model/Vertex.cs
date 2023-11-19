@@ -363,7 +363,13 @@ namespace LSLib.Granny.Model
             return MemberwiseClone() as Vertex;
         }
 
+        [Obsolete("Using this method may accidentally lead to a vertex having improperly normalized weights. Consider using AddInfluence(byte, byte) instead.")]
         public void AddInfluence(byte boneIndex, float weight)
+        {
+            AddInfluence(boneIndex, (byte)Math.Round(weight * 255));
+        }
+
+        public void AddInfluence(byte boneIndex, byte weight)
         {
             // Get the first zero vertex influence and update it with the new one
             for (var influence = 0; influence < 4; influence++)
@@ -372,7 +378,7 @@ namespace LSLib.Granny.Model
                 {
                     // BoneIndices refers to Mesh.BoneBindings[index], not Skeleton.Bones[index] !
                     BoneIndices[influence] = boneIndex;
-                    BoneWeights[influence] = (byte)(Math.Round(weight * 255));
+                    BoneWeights[influence] = weight;
                     break;
                 }
             }

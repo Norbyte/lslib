@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Alphaleonis.Win32.Filesystem;
 using LSLib.Granny.GR2;
@@ -710,12 +711,20 @@ namespace LSLib.Granny.Model
                     influenceSum += weights[weightIndex];
                 }
 
+                byte total = 0;
+                float remainder = 0;
+
                 for (var i = 0; i < influenceCount; i++)
                 {
                     var jointIndex = influences[offset + jointInputIndex];
                     var weightIndex = influences[offset + weightInputIndex];
                     var joint = joints[jointIndex];
-                    var weight = weights[weightIndex] / influenceSum;
+
+                    float weightF = weights[weightIndex] / influenceSum * 255 + remainder;
+                    byte weight = (byte)Math.Round(weightF);
+                    remainder = weightF - weight;
+                    total += weight;
+
                     // Not all vertices are actually used in triangles, we may have unused verts in the
                     // source list (though this is rare) which won't show up in the consolidated vertex map.
                     if (mesh.OriginalToConsolidatedVertexIndexMap.TryGetValue(vertexIndex, out List<int> consolidatedIndices))
@@ -729,6 +738,8 @@ namespace LSLib.Granny.Model
 
                     offset += stride;
                 }
+
+                Debug.Assert(total == 0 || total == 255);
             }
 
             foreach (var vertex in mesh.PrimaryVertexData.Vertices)
