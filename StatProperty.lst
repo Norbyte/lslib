@@ -1,4 +1,15 @@
-﻿%namespace LSLib.LS.Stats.Properties
+
+// ==========================================================================
+//  GPPG error listing for yacc source file <LSLib\LS\Stats\Parser\StatProperty.yy - 16/11/2023 19:11:10>
+// ==========================================================================
+//  Version:  1.5.2
+//  Machine:  DESKTOP-8T9LV7S
+//  DateTime: 16/11/2023 19:11:14
+//  UserName: Norbyte
+// ==========================================================================
+
+
+%namespace LSLib.LS.Stats.Properties
 %partial 
 %visibility public
 %parsertype StatPropertyParser
@@ -9,7 +20,6 @@
 
 /* Trigger Lexemes */
 %token EXPR_PROPERTIES
-%token EXPR_DESCRIPTION_PARAMS
 %token EXPR_REQUIREMENTS
 
 /* Requirements */
@@ -17,6 +27,9 @@
 
 /* Reserved words */
 %token IF
+
+/* Special token for invalid characters */
+%token BAD
 
 /* Functor Context */
 %token CONTEXT
@@ -28,21 +41,37 @@
 %token INTEGER
 /* Text-like (unquoted) literal */
 %token TEXT
-/* eg. 1d10 */
-%token DICE_ROLL
+
+/* Lua binary operator */
+%token BINOP
+/* Lua unary operator */
+%token UNOP
+/* Lua binary or unary operator */
+%token BIN_OR_UNOP
+/* nil, true, false */
+%token LUA_RESERVED_VAL
+/* quoted strings */
+%token LITERAL_STRING
 
 %%
+// Warning: NonTerminal symbol "LuaSymbol" is unreachable
+// Warning: NonTerminal symbol "LFuncName" is unreachable
+// Warning: NonTerminal symbol "LuaExpr" is unreachable
+// Warning: NonTerminal symbol "LuaRootX" is unreachable
+// Warning: NonTerminal symbol "LuaRootSymbol" is unreachable
+// ----------------------------------------------------------
 
 /* A special "trigger word" is prepended to support parsing multiple types from the same lexer/parser */
 Root : EXPR_PROPERTIES Properties { $$ = $2; }
-     | EXPR_DESCRIPTION_PARAMS OptionalFunctorArgs { $$ = $2; }
      | EXPR_REQUIREMENTS Requirements { $$ = $2; }
      ;
 
 
 /******************************************************************
  *
- *                      REQUIREMENTS PARSING
+ *
+ *                        REQUIREMENTS PARSING
+ *
  *
  ******************************************************************/
  
@@ -65,31 +94,9 @@ Requirement : NAME { $$ = MakeRequirement($1); }
 
 /******************************************************************
  *
- *                   DESCRIPTION PARAM PARSING
- *
- ******************************************************************/
- 
-OptionalDescriptionParams : /* empty */ { $$ = MakePropertyList(); }
-                          | DescriptionParams
-                          ;
- 
-DescriptionParams : DescriptionParam { $$ = AddProperty(MakePropertyList(), $1); }
-                  | DescriptionParams ';'
-                  | DescriptionParams ';' DescriptionParam { $$ = AddProperty($1, $3); }
-                  ;
-
-DescriptionParam : FunctorName '(' OptionalFunctorArgs ')' { $$ = MakeProperty(null, null, MakeAction($1, $3)); }
-                 | INTEGER
-                 | '-' INTEGER
-                 | NAME
-                 | DICE_ROLL
-                 | '-' DICE_ROLL
-                 ;
-
-
-/******************************************************************
  *
  *                        PROPERTY PARSING
+ *
  *
  ******************************************************************/
  
@@ -116,38 +123,22 @@ PropContextList : PropContext { $$ = $1; }
 PropContext : CONTEXT ':' { $$ = $1; };
 
 PropCondition : /* empty */
-              | IF '(' NonEmptyFunctorArg ')' ':' { $$ = $3; }
+              | IF '(' LuaRoot ')' ':' { $$ = $3; }
               ;
 
-FunctorCall : FunctorName OptionalFunctorArgList { $$ = MakeAction($1, $2); };
-
-FunctorName : NAME
-            | REQUIREMENT_TAG
-            ;
-
-OptionalFunctorArgList : /* empty */ { $$ = MakeArgumentList(); }
-                       | '(' OptionalFunctorArgs ')' { $$ = $2; }
-                       ;
+FunctorCall : NAME '(' OptionalFunctorArgs ')' { $$ = MakeAction($1, $3); };
 
 OptionalFunctorArgs : /* empty */ { $$ = MakeArgumentList(); }
                     | FunctorArgs
                     ;
 
-FunctorArgs : NonEmptyFunctorArg { $$ = AddArgument(MakeArgumentList(), $1); }
-            | FunctorArgs ',' FunctorArg { $$ = AddArgument($1, $3); }
-            ;
-
-FunctorArg : /* empty */
-           | NonEmptyFunctorArg
+FunctorArgs : FunctorArg { $$ = AddArgument(MakeArgumentList(), $1); }
+           | FunctorArgs ',' FunctorArg { $$ = AddArgument($1, $3); }
            ;
 
-NonEmptyFunctorArg : FunctorArgStart LuaRoot FunctorArgEnd { $$ = $3; };
+FunctorArg : LuaRoot { $$ = MakeArgument($1); };
 
-FunctorArgStart : /* empty */ { InitLiteral(); };
-
-FunctorArgEnd : /* empty */ { $$ = MakeLiteral(); };
-
-LuaRoot : LuaRootSymbol
+LuaRootX : LuaRootSymbol
         | LuaRoot LuaRootSymbol
         | LuaRoot '(' LuaExpr ')'
         | LuaRoot '(' ')'
@@ -165,13 +156,83 @@ LuaRootSymbol : NAME
               | INTEGER
               | TEXT
               | CONTEXT
-              | DICE_ROLL
               | ':'
               | '!'
-              | ';'
-              | '-'
               ;
 
 LuaSymbol : LuaRootSymbol
           | ','
           ;
+
+LuaRoot : LExp;
+
+
+LFuncName : NAME;
+// Ignore x.x.x and x:y {'.' Name} [':' Name]
+
+LVar : NAME 
+     | LPrefixExp '[' LExp ']' 
+     | LPrefixExp '.' NAME
+     ;
+
+LOptionalExpList : /* empty */
+                 | LExpList
+                 ;
+
+LExpList : LExp 
+         | LExpList ',' LExp
+         ;
+
+LExp : LExpNoUnOp
+     | LUnOp LExp
+     ;
+
+LExpNoUnOp : LUA_RESERVED_VAL
+     | INTEGER 
+     | LITERAL_STRING
+     | LPrefixExp 
+     | LTableConstructor 
+     | LExpNoUnOp LBinOp LExp 
+     ;
+
+LPrefixExp : LVar 
+           | LFunctionCall 
+           | '(' LExp ')'
+           ;
+
+LFunctionCall : LPrefixExp LArgs 
+               | LPrefixExp ':' NAME LArgs
+               ;
+
+LArgs : '(' LOptionalExpList ')' 
+      | LTableConstructor 
+      | LITERAL_STRING
+      ;
+
+LTableConstructor : '{' LOptionalFieldList '}';
+
+LOptionalFieldList : /* empty */
+                   | LFieldList
+                   ;
+
+LFieldList : LField 
+           | LFieldList LFieldSep LField
+           ;
+
+LField : '[' LExp ']' '=' LExp 
+       | NAME '=' LExp 
+       | LExp
+       ;
+
+LFieldSep : ',';
+// Why was there ';' ?
+
+LBinOp : BINOP
+       | BIN_OR_UNOP
+       ;
+
+LUnOp : UNOP
+      | BIN_OR_UNOP
+      ;
+// ==========================================================================
+

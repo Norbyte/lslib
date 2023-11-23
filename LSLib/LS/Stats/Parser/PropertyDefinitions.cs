@@ -15,19 +15,10 @@ namespace LSLib.LS.Stats.Properties
         public string TagParam;
     }
 
-    public enum PropertyContext
-    {
-        None,
-        Self,
-        SelfOnHit,
-        SelfOnEquip,
-        Target,
-        AoE
-    }
-
     public class Property
     {
-        public PropertyContext Context;
+        public string TextKey;
+        public string Context;
         public object Condition;
         public PropertyAction Action;
     }
@@ -35,25 +26,7 @@ namespace LSLib.LS.Stats.Properties
     public class PropertyAction
     {
         public string Action;
-        public List<object> Arguments;
-    }
-
-    public class PropertyStatusBoost : PropertyAction
-    {
-        public StatusBoost Boost;
-    }
-
-    public enum StatusBoostType
-    {
-        None,
-        AoE,
-        Surface
-    };
-
-    public class StatusBoost
-    {
-        public StatusBoostType Type;
-        public List<string> SurfaceTypes;
+        public List<string> Arguments;
     }
 
     public enum ConditionOperator

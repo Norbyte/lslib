@@ -4,13 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
 
 namespace LSTools.StatParser
 {
     class StatChecker : IDisposable
     {
         private string GameDataPath;
-        private string SODPath;
         private ModResources Mods = new ModResources();
         private StatDefinitionRepository Definitions;
         private StatLoadingContext Context;
@@ -19,10 +19,9 @@ namespace LSTools.StatParser
         public bool LoadPackages = true;
 
 
-        public StatChecker(string gameDataPath, string sodPath)
+        public StatChecker(string gameDataPath)
         {
             GameDataPath = gameDataPath;
-            SODPath = sodPath;
         }
 
         public void Dispose()
@@ -46,6 +45,38 @@ namespace LSTools.StatParser
             }
         }
 
+        private XmlDocument LoadXml(AbstractFileInfo file)
+        {
+            if (file == null) return null;
+
+            var stream = file.MakeStream();
+            try
+            {
+                var doc = new XmlDocument();
+                doc.Load(stream);
+                return doc;
+            }
+            finally
+            {
+                file.ReleaseStream();
+            }
+        }
+
+        private void LoadGuidResources(ModInfo mod)
+        {
+            var actionResources = LoadXml(mod.ActionResourcesFile);
+            if (actionResources != null)
+            {
+                Loader.LoadActionResources(actionResources);
+            }
+
+            var actionResourceGroups = LoadXml(mod.ActionResourceGroupsFile);
+            if (actionResourceGroups != null)
+            {
+                Loader.LoadActionResourceGroups(actionResourceGroups);
+            }
+        }
+
         private void LoadMod(string modName)
         {
             if (!Mods.Mods.TryGetValue(modName, out ModInfo mod))
@@ -54,15 +85,14 @@ namespace LSTools.StatParser
             }
 
             LoadStats(mod);
+            LoadGuidResources(mod);
         }
 
-        private void LoadStatDefinitions()
+        private void LoadStatDefinitions(ModResources resources)
         {
             Definitions = new StatDefinitionRepository();
-            var enumerationsPath = Path.Combine(SODPath, "Enumerations.xml");
-            Definitions.LoadEnumerations(enumerationsPath);
-            var sodPath = Path.Combine(SODPath, "StatObjectDefinitions.sod");
-            Definitions.LoadDefinitions(sodPath);
+            Definitions.LoadEnumerations(resources.Mods["Shared"].ValueListsFile.MakeStream());
+            Definitions.LoadDefinitions(resources.Mods["Shared"].ModifiersFile.MakeStream());
         }
 
         private void CompilationDiagnostic(StatLoadingError message)
@@ -88,12 +118,9 @@ namespace LSTools.StatParser
             Console.ResetColor();
         }
 
-        public void Check(List<string> mods, List<string> packagePaths)
+        public void Check(List<string> mods, List<string> dependencies, List<string> packagePaths)
         {
             Context = new StatLoadingContext();
-
-            LoadStatDefinitions();
-            Context.Definitions = Definitions;
 
             Loader = new StatLoader(Context);
             
@@ -101,24 +128,32 @@ namespace LSTools.StatParser
             {
                 Game = LSLib.LS.Story.Compiler.TargetGame.DOS2DE,
                 CollectStats = true,
+                CollectGuidResources = true,
                 LoadPackages = LoadPackages
             };
             visitor.Discover(GameDataPath);
             packagePaths.ForEach(path => visitor.DiscoverUserPackages(path));
 
-            // Wildcard value "*" means "all mods"
-            if (mods.Count == 1 && mods[0] == "*")
+            LoadStatDefinitions(visitor.Resources);
+            Context.Definitions = Definitions;
+
+            foreach (var modName in dependencies)
             {
-                mods = Mods.Mods.Keys.ToList();
+                LoadMod(modName);
             }
-                
+
+            Loader.ResolveUsageRef();
+            Loader.InstantiateEntries();
+
+            Context.Errors.Clear();
+
             foreach (var modName in mods)
             {
                 LoadMod(modName);
             }
-            
-            Loader.ResolveBaseClasses();
-            Loader.InstantiateEntities();
+
+            Loader.ResolveUsageRef();
+            Loader.InstantiateEntries();
 
             foreach (var message in Context.Errors)
             {

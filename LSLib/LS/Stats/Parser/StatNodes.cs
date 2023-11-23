@@ -12,6 +12,7 @@ namespace LSLib.LS.Stats.StatParser
         public CodeLocation Location;
         public Dictionary<String, object> Properties = new Dictionary<String, object>();
         public Dictionary<String, CodeLocation> PropertyLocations = new Dictionary<String, CodeLocation>();
+        public bool WasInstantiated = false;
     }
 
     /// <summary>

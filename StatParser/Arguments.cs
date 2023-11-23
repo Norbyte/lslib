@@ -18,19 +18,20 @@ namespace LSTools.StatParser
         )]
         public string[] Mods;
 
+        [ValueArgument(typeof(string), "dependency",
+            Description = "Dependencies to add",
+            AllowMultiple = true,
+            ValueOptional = false,
+            Optional = true
+        )]
+        public string[] Dependencies;
+
         [ValueArgument(typeof(string), "game-data-path",
             Description = "Game data path",
             ValueOptional = false,
             Optional = true
         )]
         public string GameDataPath;
-
-        [ValueArgument(typeof(string), "sod-path",
-            Description = "Stat object definitions path",
-            ValueOptional = false,
-            Optional = true
-        )]
-        public string SODPath;
 
         [ValueArgument(typeof(string), "package-paths",
             Description = "Additional package path(s)",

@@ -8,13 +8,14 @@ namespace LSTools.StatParser
     {
         static int Run(CommandLineArguments args)
         {
-            using (var statChecker = new StatChecker(args.GameDataPath, args.SODPath))
+            using (var statChecker = new StatChecker(args.GameDataPath))
             {
                 statChecker.LoadPackages = !args.NoPackages;
 
                 var mods = new List<string>(args.Mods);
+                var dependencies = new List<string>(args.Dependencies);
                 var packagePaths = new List<string>(args.PackagePaths);
-                statChecker.Check(mods, packagePaths);
+                statChecker.Check(mods, dependencies, packagePaths);
             }
 
             return 0;
@@ -26,8 +27,8 @@ namespace LSTools.StatParser
             {
                 Console.WriteLine("Usage: StatParser <args>");
                 Console.WriteLine("    --game-data-path <path> - Location of the game Data folder");
-                Console.WriteLine("    --sod-path <path>       - Location of StatObjectDefinitions.sod and Enumerations.xml");
                 Console.WriteLine("    --package-paths <path>  - Location of additional packages to load");
+                Console.WriteLine("    --dependency <name>     - Load stat files from the specified mod as a dependency");
                 Console.WriteLine("    --mod <name>            - Check all stat files from the specified mod");
                 Console.WriteLine("    --no-packages           - Don't load files from packages");
                 Environment.Exit(1);

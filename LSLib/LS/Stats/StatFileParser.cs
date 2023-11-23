@@ -2,16 +2,18 @@
 using LSLib.LS.Story.GoalParser;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
+using System.Xml;
 
 namespace LSLib.LS.Stats
 {
-    public class StatEntity
+    public class StatEntry
     {
         public string Name;
-        public StatSubtypeDefinition Type;
-        public StatEntity BaseClass;
+        public StatEntryType Type;
+        public StatEntry BasedOn;
         public CodeLocation Location;
         public Dictionary<string, object> Properties = new Dictionary<string, object>();
         public Dictionary<string, CodeLocation> PropertyLocations = new Dictionary<string, CodeLocation>();
@@ -72,6 +74,7 @@ namespace LSLib.LS.Stats
         public List<StatLoadingError> Errors = new List<StatLoadingError>();
         public Dictionary<string, Dictionary<string, StatDeclaration>> DeclarationsByType = new Dictionary<string, Dictionary<string, StatDeclaration>>();
         public Dictionary<string, Dictionary<string, StatDeclaration>> ResolvedDeclarationsByType = new Dictionary<string, Dictionary<string, StatDeclaration>>();
+        public Dictionary<string, Dictionary<string, object>> GuidResources = new Dictionary<string, Dictionary<string, object>>();
 
         public void LogError(string code, string message, string path = null, int line = 0, string statObjectName = null)
         {
@@ -86,7 +89,7 @@ namespace LSLib.LS.Stats
         }
     }
 
-    class StatBaseClassResolver
+    class StatEntryReferenceResolver
     {
         private readonly StatLoadingContext Context;
         public bool AllowMappingErrors = false;
@@ -97,37 +100,37 @@ namespace LSLib.LS.Stats
             public StatDeclaration BaseClass;
         }
         
-        public StatBaseClassResolver(StatLoadingContext context)
+        public StatEntryReferenceResolver(StatLoadingContext context)
         {
             Context = context;
         }
 
-        public bool ResolveBaseClass(
-            StatTypeDefinition definition, StatDeclaration declaration, 
+        public bool ResolveUsageRef(
+            StatEntryType type,StatDeclaration declaration, 
             Dictionary<string, StatDeclaration> declarations,
-            out StatDeclaration baseClassDeclaration)
+            out StatDeclaration basedOn)
         {
             var props = declaration.Properties;
-            var name = (string)props[definition.NameProperty];
-            if (definition.BaseClassProperty != null && props.ContainsKey(definition.BaseClassProperty))
+            var name = (string)props[type.NameProperty];
+            if (type.BasedOnProperty != null && props.ContainsKey(type.BasedOnProperty))
             {
-                var baseClass = (string)props[definition.BaseClassProperty];
+                var baseClass = (string)props[type.BasedOnProperty];
 
                 if (declarations.TryGetValue(baseClass, out StatDeclaration baseDeclaration))
                 {
-                    baseClassDeclaration = baseDeclaration;
+                    basedOn = baseDeclaration;
                     return true;
                 }
                 else
                 {
-                    Context.LogError(DiagnosticCode.StatBaseClassNotKnown, $"Stat declaration '{name}' references nonexistent base class '{baseClass}'",
+                    Context.LogError(DiagnosticCode.StatBaseClassNotKnown, $"Stats entry '{name}' references nonexistent base '{baseClass}'",
                         declaration.Location.FileName, declaration.Location.StartLine, name);
-                    baseClassDeclaration = null;
+                    basedOn = null;
                     return false;
                 }
             }
 
-            baseClassDeclaration = null;
+            basedOn = null;
             return true;
         }
 
@@ -154,14 +157,16 @@ namespace LSLib.LS.Stats
             }
         }
 
-        public Dictionary<string, StatDeclaration> ResolveBaseClasses(StatTypeDefinition definition, Dictionary<string, StatDeclaration> declarations)
+        public Dictionary<string, StatDeclaration> ResolveUsageRefs(StatEntryType type, Dictionary<string, StatDeclaration> declarations)
         {
             var mappings = new List<BaseClassMapping>();
             var resolved = new Dictionary<string, StatDeclaration>();
 
             foreach (var declaration in declarations)
             {
-                var succeeded = ResolveBaseClass(definition, declaration.Value, declarations, out StatDeclaration baseClass);
+                if (declaration.Value.WasInstantiated) continue;
+
+                var succeeded = ResolveUsageRef(type, declaration.Value, declarations, out StatDeclaration baseClass);
                 if (succeeded && baseClass != null)
                 {
                     mappings.Add(new BaseClassMapping
@@ -192,31 +197,21 @@ namespace LSLib.LS.Stats
             Context = ctx;
         }
 
-        public bool IsValidReference(string reference, string statType, string statSubtype)
+        public bool IsValidReference(string reference, string statType)
         {
             if (Context.DeclarationsByType.TryGetValue(statType, out var stats))
             {
-                if (stats.TryGetValue(reference, out var stat))
-                {
-                    if (statSubtype == null)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        var subtypeProperty = Context.Definitions.Definitions[statType].SubtypeProperty;
-                        if (subtypeProperty == null)
-                        {
-                            throw new Exception($"Reference constraint found for stat type '{statType}' that has no subtype.");
-                        }
+                return stats.TryGetValue(reference, out var stat);
+            }
 
-                        var subtype = (string)stat.Properties[subtypeProperty];
-                        if (statSubtype == subtype)
-                        {
-                            return true;
-                        }
-                    }
-                }
+            return false;
+        }
+
+        public bool IsValidGuidResource(string name, string resourceType)
+        {
+            if (Context.GuidResources.TryGetValue(resourceType, out var resources))
+            {
+                return resources.TryGetValue(name, out var resource);
             }
 
             return false;
@@ -263,24 +258,16 @@ namespace LSLib.LS.Stats
                 }
                 
                 var statType = declaration.Properties["EntityType"].ToString();
-                if (statType == "CraftingStations")
-                {
-                    statType = "CraftingStationsItemComboPreviewData";
-                }
-                if (statType == "ObjectCategories")
-                {
-                    statType = "ObjectCategoriesItemComboPreviewData";
-                }
 
-                if (!Context.Definitions.Definitions.TryGetValue(statType, out StatTypeDefinition definition))
+                if (!Context.Definitions.Types.TryGetValue(statType, out StatEntryType type))
                 {
                     Context.LogError(DiagnosticCode.StatEntityTypeUnknown, $"No definition exists for stat type '{statType}'", declaration.Location.FileName, declaration.Location.StartLine);
                     continue;
                 }
 
-                if (!declaration.Properties.ContainsKey(definition.NameProperty))
+                if (!declaration.Properties.ContainsKey(type.NameProperty))
                 {
-                    Context.LogError(DiagnosticCode.StatNameMissing, $"Stat entry has no '{definition.NameProperty}' property", declaration.Location.FileName, declaration.Location.StartLine);
+                    Context.LogError(DiagnosticCode.StatNameMissing, $"Stat entry has no '{type.NameProperty}' property", declaration.Location.FileName, declaration.Location.StartLine);
                     continue;
                 }
                 
@@ -292,7 +279,7 @@ namespace LSLib.LS.Stats
                 }
 
                 // TODO - duplicate declaration check?
-                var name = declaration.Properties[definition.NameProperty].ToString();
+                var name = declaration.Properties[type.NameProperty].ToString();
                 declarationsByType[name] = declaration;
             }
         }
@@ -306,51 +293,22 @@ namespace LSLib.LS.Stats
             }
         }
 
-        public void ResolveBaseClasses()
+        public void ResolveUsageRef()
         {
+            var resolver = new StatEntryReferenceResolver(Context);
             foreach (var type in Context.DeclarationsByType)
             {
-                var resolver = new StatBaseClassResolver(Context);
-                var definition = Context.Definitions.Definitions[type.Key];
-                Context.ResolvedDeclarationsByType[type.Key] = resolver.ResolveBaseClasses(definition, type.Value);
+                var typeDefn = Context.Definitions.Types[type.Key];
+                Context.ResolvedDeclarationsByType[type.Key] = resolver.ResolveUsageRefs(typeDefn, type.Value);
             }
         }
 
-        private StatSubtypeDefinition FindSubtype(StatTypeDefinition type, string declarationName, StatDeclaration declaration)
-        {
-            if (type.SubtypeProperty == null)
-            {
-                return type.Subtypes.Values.First();
-            }
-
-            if (declaration.Properties.TryGetValue(type.SubtypeProperty, out object subtypeName))
-            {
-                var name = (string)subtypeName;
-                if (type.Subtypes.TryGetValue(name, out StatSubtypeDefinition subtype))
-                {
-                    return subtype;
-                }
-                else
-                {
-                    Context.LogError(DiagnosticCode.StatSubtypeMissing, $"Stat declaration '{declarationName}' references unknown subtype '{name}'", 
-                        declaration.Location.FileName, declaration.Location.StartLine);
-                    return null;
-                }
-            }
-            else
-            {
-                Context.LogError(DiagnosticCode.StatSubtypeMissing, $"Stat declaration '{declarationName}' is missing subtype property '{type.SubtypeProperty}'",
-                    declaration.Location.FileName, declaration.Location.StartLine);
-                return null;
-            }
-        }
-
-        private object ParseProperty(StatSubtypeDefinition subtype, string propertyName, object value, CodeLocation location,
+        private object ParseProperty(StatEntryType type, string propertyName, object value, CodeLocation location,
             string declarationName)
         {
-            if (!subtype.Fields.TryGetValue(propertyName, out StatField field))
+            if (!type.Fields.TryGetValue(propertyName, out StatField field))
             {
-                Context.LogError(DiagnosticCode.StatPropertyUnsupported, $"Property '{propertyName}' is not supported on {subtype.Name} '{declarationName}'",
+                Context.LogError(DiagnosticCode.StatPropertyUnsupported, $"Property '{propertyName}' is not supported on {type.Name} '{declarationName}'",
                     location?.FileName, location?.StartLine ?? 0, declarationName);
                 return null;
             }
@@ -359,7 +317,13 @@ namespace LSLib.LS.Stats
             string errorText = null;
             object parsed;
 
-            if (field.Type != "Passthrough")
+            if (value is String && propertyName.Length + ((string)value).Length > 4085)
+            {
+                parsed = null;
+                Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: Line cannot be longer than 4095 characters",
+                    location?.FileName, location?.StartLine ?? 0, declarationName);
+            }
+            else if (field.Type != "Passthrough")
             {
                 var parser = field.GetParser(ParserFactory, Context.Definitions);
                 parsed = parser.Parse((string)value, ref succeeded, ref errorText);
@@ -372,8 +336,16 @@ namespace LSLib.LS.Stats
 
             if (errorText != null)
             {
-                Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{subtype.Name} '{declarationName}' has invalid {propertyName}: '{value}' ({errorText})",
-                    location?.FileName, location?.StartLine ?? 0, declarationName);
+                if (value is string && ((string)value).Length > 500)
+                {
+                    Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: {errorText}",
+                        location?.FileName, location?.StartLine ?? 0, declarationName);
+                }
+                else
+                {
+                    Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: '{value}' ({errorText})",
+                        location?.FileName, location?.StartLine ?? 0, declarationName);
+                }
             }
 
             if (succeeded)
@@ -386,20 +358,20 @@ namespace LSLib.LS.Stats
             }
         }
 
-        private StatEntity InstantiateEntity(StatSubtypeDefinition subtype, string declarationName, StatDeclaration declaration)
+        private StatEntry InstantiateEntry(StatEntryType type, string declarationName, StatDeclaration declaration)
         {
-            return InstantiateEntityInternal(subtype, declarationName, declaration.Location,
+            return InstantiateEntryInternal(type, declarationName, declaration.Location,
                 declaration.Properties, declaration.PropertyLocations);
         }
 
-        private StatEntity InstantiateEntityInternal(StatSubtypeDefinition subtype, string declarationName, 
+        private StatEntry InstantiateEntryInternal(StatEntryType type, string declarationName, 
             CodeLocation location, Dictionary<string, object> properties, Dictionary<string, CodeLocation> propertyLocations)
         {
-            var entity = new StatEntity
+            var entity = new StatEntry
             {
                 Name = declarationName,
-                Type = subtype,
-                BaseClass = null, // FIXME
+                Type = type,
+                BasedOn = null, // FIXME
                 Location = location,
                 Properties = new Dictionary<string, object>(),
                 PropertyLocations = propertyLocations
@@ -413,7 +385,7 @@ namespace LSLib.LS.Stats
                 }
 
                 propertyLocations.TryGetValue(property.Key, out CodeLocation propLocation);
-                var parsed = ParseProperty(subtype, property.Key, property.Value, propLocation, declarationName);
+                var parsed = ParseProperty(type, property.Key, property.Value, propLocation, declarationName);
                 if (parsed != null)
                 {
                     entity.Properties.Add(property.Key, parsed);
@@ -423,20 +395,76 @@ namespace LSLib.LS.Stats
             return entity;
         }
 
-        public void InstantiateEntities()
+        public void InstantiateEntries()
         {
             foreach (var type in Context.ResolvedDeclarationsByType)
             {
-                var definition = Context.Definitions.Definitions[type.Key];
+                var typeDefn = Context.Definitions.Types[type.Key];
                 foreach (var declaration in type.Value)
                 {
-                    var subtype = FindSubtype(definition, declaration.Key, declaration.Value);
-                    if (subtype != null)
+                    if (!declaration.Value.WasInstantiated)
                     {
-                        InstantiateEntity(subtype, declaration.Key, declaration.Value);
+                        InstantiateEntry(typeDefn, declaration.Key, declaration.Value);
+                        declaration.Value.WasInstantiated = true;
                     }
                 }
             }
+        }
+
+        private void LoadGuidResources(Dictionary<string, object> guidResources, XmlNodeList nodes)
+        {
+            foreach (var node in nodes)
+            {
+                var attributes = (node as XmlElement).GetElementsByTagName("attribute");
+                foreach (var attribute in attributes)
+                {
+                    var attr = attribute as XmlElement;
+                    if (attr.GetAttribute("id") == "Name")
+                    {
+                        var name = attr.GetAttribute("value");
+                        guidResources[name] = name;
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void LoadGuidResources(XmlDocument doc, string typeName, string regionName)
+        {
+            Dictionary<string, object> guidResources;
+            if (!Context.GuidResources.TryGetValue(typeName, out guidResources))
+            {
+                guidResources = new Dictionary<string, object>();
+                Context.GuidResources[typeName] = guidResources;
+            }
+
+            var regions = doc.DocumentElement.GetElementsByTagName("region");
+            foreach (var region in regions)
+            {
+                if ((region as XmlElement).GetAttribute("id") == regionName)
+                {
+                    var root = (region as XmlElement).GetElementsByTagName("node");
+                    if (root.Count > 0)
+                    {
+                        var children = (root[0] as XmlElement).GetElementsByTagName("children");
+                        if (children.Count > 0)
+                        {
+                            var resources = (children[0] as XmlElement).GetElementsByTagName("node");
+                            LoadGuidResources(guidResources, resources);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void LoadActionResources(XmlDocument doc)
+        {
+            LoadGuidResources(doc, "ActionResource", "ActionResourceDefinitions");
+        }
+
+        public void LoadActionResourceGroups(XmlDocument doc)
+        {
+            LoadGuidResources(doc, "ActionResourceGroup", "ActionResourceGroupDefinitions");
         }
     }
 

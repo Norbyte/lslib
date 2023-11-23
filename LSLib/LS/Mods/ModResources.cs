@@ -1,7 +1,7 @@
-﻿using LSLib.LS.Story.Compiler;
+﻿using Alphaleonis.Win32.Filesystem;
+using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -18,6 +18,11 @@ namespace LSLib.LS
         public AbstractFileInfo OrphanQueryIgnoreList;
         public AbstractFileInfo StoryHeaderFile;
         public AbstractFileInfo TypeCoercionWhitelistFile;
+        public AbstractFileInfo ModifiersFile;
+        public AbstractFileInfo ValueListsFile;
+        public AbstractFileInfo ActionResourcesFile;
+        public AbstractFileInfo ActionResourceGroupsFile;
+        public List<AbstractFileInfo> TagFiles = new List<AbstractFileInfo>();
 
         public ModInfo(string name)
         {
@@ -42,6 +47,8 @@ namespace LSLib.LS
         private static readonly Regex metaRe = new Regex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex scriptRe = new Regex("^Mods/([^/]+)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex statRe = new Regex("^Public/([^/]+)/Stats/Generated/Data/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex staticLsxRe = new Regex("^Public/([^/]+)/(.*\\.lsx)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex statStructureRe = new Regex("^Public/([^/]+)/Stats/Generated/Structure/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/([^/]+)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex storyDefinitionsRe = new Regex("^Mods/([^/]+)/Story/RawFiles/story_header\\.div$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex typeCoercionWhitelistRe = new Regex("^Mods/([^/]+)/Story/RawFiles/TypeCoercionWhitelist\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -50,12 +57,13 @@ namespace LSLib.LS
         // Pattern for excluding subsequent parts of a multi-part archive
         public static readonly Regex archivePartRe = new Regex("^(.*)_[0-9]+\\.pak$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        private readonly ModResources Resources;
+        public readonly ModResources Resources;
 
         public bool CollectStoryGoals = false;
         public bool CollectStats = false;
         public bool CollectGlobals = false;
         public bool CollectLevels = false;
+        public bool CollectGuidResources = false;
         public bool LoadPackages = true;
         public TargetGame Game = TargetGame.DOS2;
 
@@ -173,12 +181,53 @@ namespace LSLib.LS
 
             if (CollectStats)
             {
-                if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Stats/Generated/Data"))
+                if (file.Name.EndsWith(".txt", StringComparison.Ordinal))
                 {
-                    var match = statRe.Match(file.Name);
+                    if (file.Name.Contains("/Stats/Generated/Data"))
+                    {
+                        var match = statRe.Match(file.Name);
+                        if (match != null && match.Success)
+                        {
+                            AddStatToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                        }
+                    }
+                    else if (file.Name.Contains("/Stats/Generated/Structure"))
+                    {
+                        var match = statStructureRe.Match(file.Name);
+                        if (match != null && match.Success)
+                        {
+                            if (file.Name.EndsWith("Modifiers.txt"))
+                            {
+                                GetMod(match.Groups[1].Value).ModifiersFile = file;
+                            }
+                            else if (file.Name.EndsWith("ValueLists.txt"))
+                            {
+                                GetMod(match.Groups[1].Value).ValueListsFile = file;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (CollectGuidResources)
+            {
+                if (file.Name.EndsWith(".lsx", StringComparison.Ordinal))
+                {
+                    var match = staticLsxRe.Match(file.Name);
                     if (match != null && match.Success)
                     {
-                        AddStatToMod(match.Groups[1].Value, match.Groups[2].Value, file);
+                        if (match.Groups[2].Value == "ActionResourceDefinitions/ActionResourceDefinitions.lsx")
+                        {
+                            GetMod(match.Groups[1].Value).ActionResourcesFile = file;
+                        }
+                        else if (match.Groups[2].Value == "ActionResourceGroupDefinitions/ActionResourceGroupDefinitions.lsx")
+                        {
+                            GetMod(match.Groups[1].Value).ActionResourceGroupsFile = file;
+                        }
+                        else if (match.Groups[2].Value.StartsWith("Tags/"))
+                        {
+                            GetMod(match.Groups[1].Value).TagFiles.Add(file);
+                        }
                     }
                 }
             }
@@ -233,12 +282,15 @@ namespace LSLib.LS
                 "EngineShaders.pak",
                 "Game.pak",
                 "GamePlatform.pak",
+                "Gustav_NavCloud.pak",
                 "Gustav_Textures.pak",
+                "Gustav_Video.pak",
                 "Icons.pak",
                 "LowTex.pak",
                 "Materials.pak",
                 "Minimaps.pak",
                 "Models.pak",
+                "PsoCache.pak",
                 "SharedSoundBanks.pak",
                 "SharedSounds.pak",
                 "Textures.pak",

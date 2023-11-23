@@ -75,6 +75,9 @@
   <ItemGroup>
     <Compile Include="LS\Localization.cs" />
     <Compile Include="LS\Save\SavegameHelpers.cs" />
+    <Compile Include="LS\Stats\Parser\StatLua.lex.cs" />
+    <Compile Include="LS\Stats\Parser\StatLua.yy.cs" />
+    <Compile Include="LS\Stats\Parser\StatLuaParser.cs" />
     <Compile Include="VirtualTextures\BC5Image.cs" />
     <Compile Include="VirtualTextures\Compression.cs" />
     <Compile Include="VirtualTextures\PageFile.cs" />
@@ -82,6 +85,8 @@
     <Compile Include="VirtualTextures\VirtualTextureFormats.cs" />
     <None Include="LS\Stats\Parser\Stat.lex" />
     <None Include="LS\Stats\Parser\Stat.yy" />
+    <None Include="LS\Stats\Parser\StatLua.lex" />
+    <None Include="LS\Stats\Parser\StatLua.yy" />
     <None Include="LS\Stats\Parser\StatProperty.lex" />
     <None Include="LS\Stats\Parser\StatProperty.yy" />
     <None Include="LS\Story\GoalParser\Goal.lex" />
@@ -170,7 +175,7 @@
     <Compile Include="LS\Stats\Parser\StatPropertyParser.cs" />
     <Compile Include="LS\Stats\StatDefinitions.cs" />
     <Compile Include="LS\Stats\StatFileParser.cs" />
-    <Compile Include="LS\Stats\StatPropertyParsers.cs" />
+    <Compile Include="LS\Stats\StatValueParsers.cs" />
     <Compile Include="LS\Story\Adapter.cs" />
     <Compile Include="LS\Story\Call.cs" />
     <Compile Include="LS\Story\Common.cs" />
@@ -239,6 +244,9 @@
 
 "$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.lex.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.lex"
 "$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.yy.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.yy"
+
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\StatLua.lex.cs" "$(ProjectDir)\LS\Stats\Parser\StatLua.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\StatLua.yy.cs" "$(ProjectDir)\LS\Stats\Parser\StatLua.yy"
 </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
