@@ -383,12 +383,12 @@ namespace LSLib.VirtualTextures
             TileSetLevels = new GTSTileSetLevel[Header.NumLevels];
             BinUtils.ReadStructs<GTSTileSetLevel>(reader, TileSetLevels);
 
-            PerLevelFlatTileIndices = new List<Int32[]>();
+            PerLevelFlatTileIndices = new List<UInt32[]>();
             foreach (var level in TileSetLevels)
             {
                 fs.Position = (uint)level.FlatTileIndicesOffset;
-                var tileIndices = new Int32[level.Height * level.Width * Header.NumLayers];
-                BinUtils.ReadStructs<Int32>(reader, tileIndices);
+                var tileIndices = new UInt32[level.Height * level.Width * Header.NumLayers];
+                BinUtils.ReadStructs<UInt32>(reader, tileIndices);
                 PerLevelFlatTileIndices.Add(tileIndices);
             }
 
@@ -485,7 +485,7 @@ namespace LSLib.VirtualTextures
                 var tileIndices = PerLevelFlatTileIndices[i];
                 Debug.Assert(tileIndices.Length == level.Height * level.Width * Header.NumLayers);
 
-                BinUtils.WriteStructs<Int32>(writer, tileIndices);
+                BinUtils.WriteStructs<UInt32>(writer, tileIndices);
             }
 
             Header.LevelsOffset = (ulong)fs.Position;
@@ -568,7 +568,7 @@ namespace LSLib.VirtualTextures
         {
             var tileIndices = PerLevelFlatTileIndices[level];
             var tileIndex = tileIndices[layer + Header.NumLayers * (x + y * TileSetLevels[level].Width)];
-            if (tileIndex >= 0)
+            if ((tileIndex & 0x80000000) == 0)
             {
                 tile = FlatTileInfos[tileIndex];
                 return true;
