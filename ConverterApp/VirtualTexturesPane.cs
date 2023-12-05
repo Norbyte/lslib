@@ -49,7 +49,7 @@ namespace ConverterApp
                 for (var pfIdx = 0; pfIdx < tileSet.PageFileInfos.Count; pfIdx++)
                 {
                     var fileInfo = tileSet.PageFileInfos[pfIdx];
-                    actionProgressLabel.Text = fileInfo.Name;
+                    actionProgressLabel.Text = fileInfo.FileName;
                     actionProgress.Value = pfIdx * 100 / tileSet.PageFileInfos.Count;
                     Application.DoEvents();
 
@@ -65,7 +65,7 @@ namespace ConverterApp
 
                         if (tex != null)
                         {
-                            var outputPath = destinationPath.Text + Path.DirectorySeparator + Path.GetFileNameWithoutExtension(fileInfo.Name) + $"_{layer}.dds";
+                            var outputPath = destinationPath.Text + Path.DirectorySeparator + Path.GetFileNameWithoutExtension(fileInfo.FileName) + $"_{layer}.dds";
                             tex.SaveDDS(outputPath);
                         }
                     }

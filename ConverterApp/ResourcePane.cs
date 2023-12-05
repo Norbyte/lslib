@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
+using LSLib.Granny.GR2;
 using LSLib.LS;
 using LSLib.LS.Enums;
 
@@ -40,6 +42,10 @@ namespace ConverterApp
                 ResourceUtils.SaveResource(_resource, resourceOutputPath.Text, format, conversionParams);
 
                 MessageBox.Show("Resource saved successfully.");
+            }
+            catch (InvalidDataException exc)
+            {
+                MessageBox.Show($"Unable to convert resource.{Environment.NewLine}{Environment.NewLine}{exc.Message}", "Conversion Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             catch (Exception exc)
             {
