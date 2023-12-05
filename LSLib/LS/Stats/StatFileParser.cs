@@ -83,7 +83,7 @@ namespace LSLib.LS.Stats
                 Code = code,
                 Message = message,
                 Path = path,
-                Line = line,
+                Line = line > 0 ? (line + 1) : 0,
                 StatObjectName = statObjectName
             });
         }
