@@ -115,6 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32.h" />
+    <ClInclude Include="fastlz.h" />
     <ClInclude Include="granny2wrapper.h" />
     <ClInclude Include="lz4wrapper.h" />
     <ClInclude Include="lz4\lz4.h" />
@@ -127,6 +128,10 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="crc32.cpp" />
+    <ClCompile Include="fastlz.c">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+    </ClCompile>
     <ClCompile Include="granny2wrapper.cpp" />
     <ClCompile Include="lz4wrapper.cpp" />
     <ClCompile Include="lz4\lz4.c">

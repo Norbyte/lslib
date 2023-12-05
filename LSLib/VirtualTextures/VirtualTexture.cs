@@ -261,9 +261,8 @@ namespace LSLib.VirtualTextures
                 // Decompress thumbnail blob
                 fs.Position = (uint)thumb.OffsetInFile;
                 var inb = new byte[thumb.CompressedSize];
-                var outb = new byte[Math.Max(thumb.Unknown2, thumb.Unknown3) * 0x100];
                 reader.Read(inb, 0, inb.Length);
-                var thumbnailBlob = FastLZ.fastlz1_decompress(inb, inb.Length, outb);
+                var thumbnailBlob = Native.FastLZCompressor.Decompress(inb, Math.Max(thumb.Unknown2, thumb.Unknown3) * 0x100);
 
                 var numSections = reader.ReadUInt32();
                 var parameterBlockSize = reader.ReadUInt32();

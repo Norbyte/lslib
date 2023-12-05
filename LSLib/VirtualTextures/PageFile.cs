@@ -49,18 +49,19 @@ namespace LSLib.VirtualTextures
         private byte[] DoUnpackTileBC(GTPChunkHeader header, int outputSize)
         {
             var parameterBlock = (GTSBCParameterBlock)TileSet.ParameterBlocks[header.ParameterBlockID];
-            if (parameterBlock.CompressionName1 != "lz77" || parameterBlock.CompressionName2 != "fastlz0.1.0")
+            if (parameterBlock.CompressionName1 == "lz77" && parameterBlock.CompressionName2 == "fastlz0.1.0")
+            {
+                var buf = Reader.ReadBytes((int)header.Size);
+                return Native.FastLZCompressor.Decompress(buf, outputSize);
+            }
+            else if (parameterBlock.CompressionName1 == "raw")
+            {
+                return Reader.ReadBytes((int)header.Size);
+            }
+            else
             {
                 throw new InvalidDataException($"Unsupported BC compression format: '{parameterBlock.CompressionName1}', '{parameterBlock.CompressionName2}'");
             }
-
-            var buf = Reader.ReadBytes((int)header.Size);
-            byte[] outb = new byte[outputSize];
-            var decd = FastLZ.fastlz1_decompress(buf, buf.Length, outb);
-
-            byte[] outb2 = new byte[decd];
-            Array.Copy(outb, outb2, decd);
-            return outb2;
         }
 
         private byte[] DoUnpackTileUniform(GTPChunkHeader header)

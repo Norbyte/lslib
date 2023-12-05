@@ -156,5 +156,33 @@ namespace LSLib {
 
 			return decompressed;
 		}
+
+		array<byte> ^ FastLZCompressor::Compress(array<byte> ^ input, int level)
+		{
+			std::vector<byte> output(max(66, input->Length + (input->Length >> 4)));
+
+			pin_ptr<byte> inputPin(&input[input->GetLowerBound(0)]);
+			int outputLength = fastlz_compress_level(level, inputPin, input->Length, output.data());
+
+			// Copy the output to a managed array
+			array<byte> ^ compressed = gcnew array<byte>(outputLength);
+			pin_ptr<byte> compPtr(&compressed[compressed->GetLowerBound(0)]);
+			memcpy(compPtr, output.data(), outputLength);
+			return compressed;
+		}
+
+		array<byte> ^ FastLZCompressor::Decompress(array<byte> ^ compressed, int maxOutput)
+		{
+			std::vector<byte> output(maxOutput);
+
+			pin_ptr<byte> compressedPin(&compressed[compressed->GetLowerBound(0)]);
+			int outputLength = fastlz_decompress(compressedPin, compressed->Length, output.data(), maxOutput);
+
+			// Copy the output to a managed array
+			array<byte>^ decompressed = gcnew array<byte>(outputLength);
+			pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
+			memcpy(decompPtr, output.data(), outputLength);
+			return decompressed;
+		}
 	}
 }
