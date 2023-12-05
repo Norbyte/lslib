@@ -10,8 +10,6 @@ namespace LSLib.VirtualTextures
 {
     public class PageFile : IDisposable
     {
-        private const UInt32 PageSize = 0x100000;
-
         private VirtualTileSet TileSet;
         private FileStream Stream;
         private BinaryReader Reader;
@@ -26,7 +24,7 @@ namespace LSLib.VirtualTextures
 
             Header = BinUtils.ReadStruct<GTPHeader>(Reader);
 
-            var numPages = Stream.Length / PageSize;
+            var numPages = Stream.Length / tileset.Header.PageSize;
             ChunkOffsets = new List<UInt32[]>();
 
             for (var page = 0; page < numPages; page++)
@@ -36,7 +34,7 @@ namespace LSLib.VirtualTextures
                 BinUtils.ReadStructs<UInt32>(Reader, offsets);
                 ChunkOffsets.Add(offsets);
 
-                Stream.Position = (page + 1) * PageSize;
+                Stream.Position = (page + 1) * tileset.Header.PageSize;
             }
         }
 
@@ -75,7 +73,7 @@ namespace LSLib.VirtualTextures
 
         public byte[] UnpackTile(int pageIndex, int chunkIndex, int outputSize)
         {
-            Stream.Position = ChunkOffsets[pageIndex][chunkIndex] + (pageIndex * PageSize);
+            Stream.Position = ChunkOffsets[pageIndex][chunkIndex] + (pageIndex * TileSet.Header.PageSize);
             var chunkHeader = BinUtils.ReadStruct<GTPChunkHeader>(Reader);
             switch (chunkHeader.Codec)
             {

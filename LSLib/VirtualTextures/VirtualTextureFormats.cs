@@ -136,7 +136,7 @@ namespace LSLib.VirtualTextures
         public UInt32 R;
         public UInt32 S;
 
-        public UInt32 T; // 0x10000
+        public UInt32 PageSize;
         public UInt32 NumPageFiles;
         public UInt64 PageFileMetadataOffset;
 
