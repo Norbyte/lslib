@@ -85,7 +85,8 @@ namespace LSLib.VirtualTextures
 
         public BC5Image UnpackTileBC5(int pageIndex, int chunkIndex)
         {
-            var compressedSize = TileSet.Header.TileWidth * TileSet.Header.TileHeight * 2;
+            var compressedSize = 16 * ((TileSet.Header.TileWidth + 3) / 4) * ((TileSet.Header.TileHeight + 3) / 4)
+                + 16 * ((TileSet.Header.TileWidth/2 + 3) / 4) * ((TileSet.Header.TileHeight/2 + 3) / 4);
             var chunk = UnpackTile(pageIndex, chunkIndex, compressedSize);
             return new BC5Image(chunk, TileSet.Header.TileWidth, TileSet.Header.TileHeight);
         }
