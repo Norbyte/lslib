@@ -21,6 +21,11 @@ namespace LSLib.LS
 
         public void Write(Resource rsrc)
         {
+            if (Version == LSXVersion.V3 && rsrc.Metadata.MajorVersion == 4)
+            {
+                throw new InvalidDataException("Cannot resave a BG3 (v4.x) resource in D:OS2 (v3.x) file format, maybe you have the wrong game selected?");
+            }
+
             var settings = new XmlWriterSettings();
             settings.Indent = PrettyPrint;
             settings.IndentChars = "\t";
