@@ -258,7 +258,8 @@ namespace LSLib.VirtualTextures
     {
         public UInt32 FourCC;
         public Byte Format;
-        public Byte Subformat;
+        public Byte ExtendedLength;
+        public UInt16 Length;
 
         public string FourCCName
         {

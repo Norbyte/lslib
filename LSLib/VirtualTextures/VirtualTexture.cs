@@ -21,10 +21,11 @@ namespace LSLib.VirtualTextures
         Node,
         Int,
         String,
-        Binary
+        BinaryInt,
+        BinaryGuid
     };
 
-    public struct FourCCElement
+    public class FourCCElement
     {
         public FourCCElementType Type;
         public string FourCC;
@@ -32,6 +33,247 @@ namespace LSLib.VirtualTextures
         public uint UInt;
         public byte[] Blob;
         public List<FourCCElement> Children;
+
+
+        public static FourCCElement Make(string fourCC)
+        {
+            return new FourCCElement
+            {
+                Type = FourCCElementType.Node,
+                FourCC = fourCC,
+                Children = new List<FourCCElement>()
+            };
+        }
+
+        public static FourCCElement Make(string fourCC, uint value)
+        {
+            return new FourCCElement
+            {
+                Type = FourCCElementType.Int,
+                FourCC = fourCC,
+                UInt = value
+            };
+        }
+
+        public static FourCCElement Make(string fourCC, string value)
+        {
+            return new FourCCElement
+            {
+                Type = FourCCElementType.String,
+                FourCC = fourCC,
+                Str = value
+            };
+        }
+
+        public static FourCCElement Make(string fourCC, FourCCElementType type, byte[] value)
+        {
+            return new FourCCElement
+            {
+                Type = type,
+                FourCC = fourCC,
+                Blob = value
+            };
+    }
+
+    public class TileSetFourCC
+    {
+        public FourCCElement Root;
+        public void Read(Stream fs, BinaryReader reader, long length)
+        {
+            var fourCCs = new List<FourCCElement>();
+            Read(fs, reader, length, fourCCs);
+            Root = fourCCs[0];
+        }
+
+        public void Read(Stream fs, BinaryReader reader, long length, List<FourCCElement> elements)
+        {
+            var end = fs.Position + length;
+            while (fs.Position < end)
+            {
+                var cc = new FourCCElement();
+                var header = BinUtils.ReadStruct<GTSFourCCMetadata>(reader);
+                cc.FourCC = header.FourCCName;
+
+                Int32 valueSize = header.Length;
+                if (header.ExtendedLength == 1)
+                {
+                    valueSize = valueSize | ((int)reader.ReadUInt32() << 16);
+                }
+
+                switch (header.Format)
+                {
+                    case 1:
+                        {
+                            cc.Type = FourCCElementType.Node;
+                            cc.Children = new List<FourCCElement>();
+                            Read(fs, reader, valueSize, cc.Children);
+                            break;
+                        }
+
+                    case 2:
+                        {
+                            cc.Type = FourCCElementType.String;
+
+                            var str = reader.ReadBytes(valueSize - 2);
+                            cc.Str = Encoding.Unicode.GetString(str);
+                            var nullterm = reader.ReadUInt16(); // null terminator
+                            Debug.Assert(nullterm == 0);
+                            break;
+                        }
+
+                    case 3:
+                        {
+                            cc.Type = FourCCElementType.Int;
+                            Debug.Assert(valueSize == 4);
+                            cc.UInt = reader.ReadUInt32();
+                            break;
+                        }
+
+                    case 8:
+                        {
+                            cc.Type = FourCCElementType.BinaryInt;
+                            cc.Blob = reader.ReadBytes(valueSize);
+                            break;
+                        }
+
+                    case 0x0D:
+                        {
+                            cc.Type = FourCCElementType.BinaryGuid;
+                            cc.Blob = reader.ReadBytes(valueSize);
+                            break;
+                        }
+
+                    default:
+                        throw new Exception($"Unrecognized FourCC type tag: {header.Format}");
+                }
+
+                if ((fs.Position % 4) != 0)
+                {
+                    fs.Position += 4 - (fs.Position % 4);
+                }
+
+                elements.Add(cc);
+            }
+
+            Debug.Assert(fs.Position == end);
+        }
+
+        public void Write(Stream fs, BinaryWriter writer)
+        {
+
+        public void Write(Stream fs, BinaryWriter writer, FourCCElement element)
+        {
+            var header = new GTSFourCCMetadata();
+            header.FourCCName = element.FourCC;
+
+            UInt32 length;
+            switch (element.Type)
+            {
+                case FourCCElementType.Node:
+                    length = 0x10000000;
+                    break;
+
+                case FourCCElementType.Int:
+                    length = 4;
+                    break;
+
+                case FourCCElementType.String:
+                    length = (UInt32)Encoding.Unicode.GetBytes(element.Str).Length + 2;
+                    break;
+
+                case FourCCElementType.BinaryInt:
+                case FourCCElementType.BinaryGuid:
+                    length = (UInt32)element.Blob.Length;
+                    break;
+
+                default:
+                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
+            }
+
+            switch (element.Type)
+            {
+                case FourCCElementType.Node:
+                    header.Format = 1;
+                    break;
+
+                case FourCCElementType.Int:
+                    header.Format = 3;
+                    break;
+
+                case FourCCElementType.String:
+                    header.Format = 2;
+                    break;
+
+                case FourCCElementType.BinaryInt:
+                    header.Format = 8;
+                    break;
+
+                case FourCCElementType.BinaryGuid:
+                    header.Format = 0xD;
+                    break;
+
+                default:
+                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
+            }
+
+            header.Length = (UInt16)(length & 0xffff);
+            if (length > 0xffff)
+            {
+                header.ExtendedLength = 1;
+            }
+
+            BinUtils.WriteStruct<GTSFourCCMetadata>(writer, ref header);
+
+            if (length > 0xffff)
+            {
+                UInt32 extraLength = length >> 16;
+                writer.Write(extraLength);
+            }
+
+            switch (element.Type)
+            {
+                case FourCCElementType.Node:
+                    {
+                        var lengthOffset = fs.Position - 6;
+                        var childrenOffset = fs.Position;
+                        foreach (var child in element.Children)
+                        {
+                            Write(fs, writer, child);
+                        }
+                        var endOffset = fs.Position;
+                        var childrenSize = (UInt32)(endOffset - childrenOffset);
+
+                        // Re-write node header with final node size
+                        fs.Position = lengthOffset;
+                        writer.Write((UInt32)childrenSize);
+                        fs.Position = endOffset;
+
+                        break;
+                    }
+
+                case FourCCElementType.Int:
+                    writer.Write(element.UInt);
+                    break;
+
+                case FourCCElementType.String:
+                    writer.Write(Encoding.Unicode.GetBytes(element.Str));
+                    writer.Write((UInt16)0); // null terminator
+                    break;
+
+                case FourCCElementType.BinaryInt:
+                case FourCCElementType.BinaryGuid:
+                    writer.Write(element.Blob);
+                    break;
+
+                default:
+                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
+            }
+
+            while ((fs.Position % 4) != 0)
+            {
+                writer.Write((Byte)0);
+            }
+        }
     }
 
     public class VirtualTileSet : IDisposable
@@ -40,11 +282,11 @@ namespace LSLib.VirtualTextures
         public GTSHeader Header;
         public GTSTileSetLayer[] TileSetLayers;
         public GTSTileSetLevel[] TileSetLevels;
-        public List<Int32[]> PerLevelFlatTileIndices;
+        public List<UInt32[]> PerLevelFlatTileIndices;
         public GTSParameterBlockHeader[] ParameterBlockHeaders;
         public Dictionary<UInt32, object> ParameterBlocks;
         public List<PageFileInfo> PageFileInfos;
-        public FourCCElement FourCCMetadata;
+        public TileSetFourCC FourCCMetadata;
         public GTSThumbnailInfo[] ThumbnailInfos;
         public GTSPackedTileID[] PackedTileIDs;
         public GTSFlatTileInfo[] FlatTileInfos;
@@ -66,6 +308,10 @@ namespace LSLib.VirtualTextures
         {
         }
 
+        public VirtualTileSet()
+        {
+        }
+
         public void Save(string path)
         {
             using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
@@ -80,172 +326,6 @@ namespace LSLib.VirtualTextures
             foreach (var pageFile in PageFiles)
             {
                 pageFile.Value.Dispose();
-            }
-        }
-
-        private void ParseFourCCMeta(Stream fs, BinaryReader reader, long length, List<FourCCElement> elements)
-        {
-            var end = fs.Position + length;
-            while (fs.Position < end)
-            {
-                var cc = new FourCCElement();
-                var header = BinUtils.ReadStruct<GTSFourCCMetadata>(reader);
-                cc.FourCC = header.FourCCName;
-
-                switch (header.Format)
-                {
-                    case 1:
-                        {
-                            cc.Type = FourCCElementType.Node;
-                            cc.Children = new List<FourCCElement>();
-                            var elementBytes = reader.ReadUInt32();
-                            reader.ReadUInt16();
-                            ParseFourCCMeta(fs, reader, elementBytes, cc.Children);
-                            break;
-                        }
-
-                    case 2:
-                        {
-                            Int32 len;
-                            cc.Type = FourCCElementType.String;
-                            if (header.Subformat == 1)
-                            {
-                                len = (int)reader.ReadUInt32();
-                                var unk = reader.ReadUInt16();
-                                Debug.Assert(unk == 0);
-                            }
-                            else
-                            {
-                                len = reader.ReadUInt16();
-                            }
-
-                            var str = reader.ReadBytes(len - 2);
-                            cc.Str = Encoding.Unicode.GetString(str);
-                            var nullterm = reader.ReadUInt16(); // null terminator
-                            Debug.Assert(nullterm == 0);
-                            break;
-                        }
-
-                    case 3:
-                        {
-                            cc.Type = FourCCElementType.Int;
-                            var len = reader.ReadUInt16();
-                            Debug.Assert(len == 4);
-                            cc.UInt = reader.ReadUInt32();
-                            break;
-                        }
-
-                    case 8:
-                    case 0x0D:
-                        {
-                            cc.Type = FourCCElementType.Binary;
-                            var len = reader.ReadUInt16();
-                            cc.Blob = reader.ReadBytes(len);
-                            break;
-                        }
-
-                    default:
-                        throw new Exception($"Unrecognized FourCC type tag: {header.Format}");
-                }
-
-                if ((fs.Position % 4) != 0)
-                {
-                    fs.Position += 4 - (fs.Position % 4);
-                }
-
-                elements.Add(cc);
-            }
-        }
-
-        private void WriteFourCCMeta(Stream fs, BinaryWriter writer, FourCCElement element)
-        {
-            var header = new GTSFourCCMetadata();
-            header.FourCCName = element.FourCC;
-
-            switch (element.Type)
-            {
-                case FourCCElementType.Node:
-                    header.Format = 1;
-                    break;
-
-                case FourCCElementType.Int:
-                    header.Format = 3;
-                    break;
-
-
-                case FourCCElementType.String:
-                    header.Format = 2;
-                    header.Subformat = (byte)((element.Str.Length >= 0x7fff) ? 1 : 0);
-                    break;
-
-
-                case FourCCElementType.Binary:
-                    header.Format = 0xD;
-                    break;
-
-                default:
-                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
-            }
-
-            BinUtils.WriteStruct<GTSFourCCMetadata>(writer, ref header);
-
-            switch (element.Type)
-            {
-                case FourCCElementType.Node:
-                    {
-                        var headerOffset = fs.Position;
-                        writer.Write((UInt32)0);
-                        writer.Write((UInt16)0); // Padding
-
-                        var childrenOffset = fs.Position;
-                        foreach (var child in element.Children)
-                        {
-                            WriteFourCCMeta(fs, writer, child);
-                        }
-                        var endOffset = fs.Position;
-                        var childrenSize = (UInt32)(endOffset - childrenOffset);
-
-                        // Re-write node header with final node size
-                        fs.Position = headerOffset;
-                        writer.Write((UInt32)childrenSize);
-                        fs.Position = endOffset;
-
-                        break;
-                    }
-
-                case FourCCElementType.Int:
-                    writer.Write((UInt16)4);
-                    writer.Write(element.UInt);
-                    break;
-
-                case FourCCElementType.String:
-                    if (header.Subformat == 1)
-                    {
-                        writer.Write((UInt32)(element.Str.Length * 2 + 2));
-                        writer.Write((UInt16)0); // Padding
-                    }
-                    else
-                    {
-                        writer.Write((UInt16)(element.Str.Length * 2 + 2));
-                    }
-
-                    writer.Write(Encoding.Unicode.GetBytes(element.Str));
-                    writer.Write((UInt16)0); // null terminator
-                    break;
-
-                // TODO - 0x08 vs 0x0D type ID?
-                case FourCCElementType.Binary:
-                    writer.Write((UInt16)element.Blob.Length);
-                    writer.Write(element.Blob);
-                    break;
-
-                default:
-                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
-            }
-
-            while ((fs.Position % 4) != 0)
-            {
-                writer.Write((Byte)0);
             }
         }
 
@@ -369,9 +449,8 @@ namespace LSLib.VirtualTextures
             }
 
             fs.Position = (long)Header.FourCCListOffset;
-            var fourCCs = new List<FourCCElement>();
-            ParseFourCCMeta(fs, reader, Header.FourCCListSize, fourCCs);
-            FourCCMetadata = fourCCs[0];
+            FourCCMetadata = new TileSetFourCC();
+            FourCCMetadata.Read(fs, reader, Header.FourCCListSize);
 
             if (loadThumbnails)
             {
@@ -458,7 +537,7 @@ namespace LSLib.VirtualTextures
             }
 
             Header.FourCCListOffset = (ulong)fs.Position;
-            WriteFourCCMeta(fs, writer, FourCCMetadata);
+            FourCCMetadata.Write(fs, writer);
             Header.FourCCListSize = (uint)((ulong)fs.Position - Header.FourCCListOffset);
 
             Header.ThumbnailsOffset = (ulong)fs.Position;
