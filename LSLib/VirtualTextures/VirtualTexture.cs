@@ -34,7 +34,6 @@ namespace LSLib.VirtualTextures
         public byte[] Blob;
         public List<FourCCElement> Children;
 
-
         public static FourCCElement Make(string fourCC)
         {
             return new FourCCElement
@@ -73,11 +72,13 @@ namespace LSLib.VirtualTextures
                 FourCC = fourCC,
                 Blob = value
             };
+        }
     }
 
     public class TileSetFourCC
     {
         public FourCCElement Root;
+
         public void Read(Stream fs, BinaryReader reader, long length)
         {
             var fourCCs = new List<FourCCElement>();
@@ -160,6 +161,8 @@ namespace LSLib.VirtualTextures
 
         public void Write(Stream fs, BinaryWriter writer)
         {
+            Write(fs, writer, Root);
+        }
 
         public void Write(Stream fs, BinaryWriter writer, FourCCElement element)
         {
