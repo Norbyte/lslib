@@ -13,7 +13,7 @@ namespace LSLib.VirtualTextures
     {
         public GTSPageFileInfo Meta;
         public uint FirstPageIndex;
-        public string Name;
+        public string FileName;
     }
 
     public enum FourCCElementType
@@ -446,7 +446,7 @@ namespace LSLib.VirtualTextures
                 {
                     Meta = info,
                     FirstPageIndex = nextPageIndex,
-                    Name = info.Name
+                    FileName = info.FileName
                 });
                 nextPageIndex += info.NumPages;
             }
@@ -585,7 +585,7 @@ namespace LSLib.VirtualTextures
             if (!PageFiles.TryGetValue(pageFileIdx, out file))
             {
                 var meta = PageFileInfos[pageFileIdx];
-                file = new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.Name);
+                file = new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.FileName);
                 PageFiles.Add(pageFileIdx, file);
             }
 
@@ -624,7 +624,7 @@ namespace LSLib.VirtualTextures
         {
             for (var i = 0; i < PageFileInfos.Count; i++)
             {
-                if (PageFileInfos[i].Name.Contains(name))
+                if (PageFileInfos[i].FileName.Contains(name))
                 {
                     return i;
                 }

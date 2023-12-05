@@ -119,7 +119,7 @@ namespace LSLib.VirtualTextures
         public Int32 TileHeight;
         public Int32 TileBorder;
 
-        public UInt32 I2;
+        public UInt32 I2; // Some tile count?
         public UInt32 NumFlatTileInfos;
         public UInt64 FlatTileInfoOffset;
         public UInt32 I6;
@@ -163,9 +163,9 @@ namespace LSLib.VirtualTextures
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct GTSTileSetLevel
     {
-        public UInt32 Width;
-        public UInt32 Height;
-        public UInt64 FlatTileIndicesOffset;
+        public UInt32 Width; // Width in tiles
+        public UInt32 Height; // Height in tiles
+        public UInt64 FlatTileIndicesOffset; // Flat tiles offset in file
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -234,21 +234,21 @@ namespace LSLib.VirtualTextures
     public struct GTSPageFileInfo
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 512)]
-        public byte[] NameBuf;
+        public byte[] FileNameBuf;
 
         public UInt32 NumPages;
         public Guid Checksum;
         public UInt32 F; // 2
 
-        public string Name
+        public string FileName
         {
             get
             {
                 int nameLen;
-                for (nameLen = 0; nameLen < NameBuf.Length && NameBuf[nameLen] != 0; nameLen += 2)
+                for (nameLen = 0; nameLen < FileNameBuf.Length && FileNameBuf[nameLen] != 0; nameLen += 2)
                 {
                 }
-                return Encoding.Unicode.GetString(NameBuf, 0, nameLen);
+                return Encoding.Unicode.GetString(FileNameBuf, 0, nameLen);
             }
         }
     }
@@ -341,11 +341,11 @@ namespace LSLib.VirtualTextures
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct GTSFlatTileInfo
     {
-        public UInt16 PageFileIndex;
-        public UInt16 PageIndex;
-        public UInt16 ChunkIndex;
-        public UInt16 D; // 1?
-        public UInt32 PackedTileIndex;
+        public UInt16 PageFileIndex; // Index of file in PageFileInfos
+        public UInt16 PageIndex; // Index of 1MB page
+        public UInt16 ChunkIndex; // Index of entry within page
+        public UInt16 D; // Always 1?
+        public UInt32 PackedTileIndex; // Index of tile in PackedTileIDs
     }
 
 
