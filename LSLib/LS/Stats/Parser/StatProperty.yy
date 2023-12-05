@@ -65,30 +65,6 @@ Requirement : NAME { $$ = MakeRequirement($1); }
 
 /******************************************************************
  *
- *                   DESCRIPTION PARAM PARSING
- *
- ******************************************************************/
- 
-OptionalDescriptionParams : /* empty */ { $$ = MakePropertyList(); }
-                          | DescriptionParams
-                          ;
- 
-DescriptionParams : DescriptionParam { $$ = AddProperty(MakePropertyList(), $1); }
-                  | DescriptionParams ';'
-                  | DescriptionParams ';' DescriptionParam { $$ = AddProperty($1, $3); }
-                  ;
-
-DescriptionParam : FunctorName '(' OptionalFunctorArgs ')' { $$ = MakeProperty(null, null, MakeAction($1, $3)); }
-                 | INTEGER
-                 | '-' INTEGER
-                 | NAME
-                 | DICE_ROLL
-                 | '-' DICE_ROLL
-                 ;
-
-
-/******************************************************************
- *
  *                        PROPERTY PARSING
  *
  ******************************************************************/
