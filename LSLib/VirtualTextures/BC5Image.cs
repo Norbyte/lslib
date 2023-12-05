@@ -1,6 +1,7 @@
 ﻿using LSLib.Granny;
 using LSLib.LS;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace LSLib.VirtualTextures
@@ -39,7 +40,16 @@ namespace LSLib.VirtualTextures
         {
             if ((srcX % 4) != 0 || (srcY % 4) != 0 || (dstX % 4) != 0 || (dstY % 4) != 0 || (width % 4) != 0 || (height % 4) != 0)
             {
-                throw new ArgumentException("BC coordinates must be multiples if 4");
+                throw new ArgumentException("BC coordinates must be multiples of 4");
+            }
+
+            if (srcX < 0 || dstX < 0 || srcY < 0 || dstY < 0
+                || srcX + width > Width
+                || srcY + height > Height
+                || dstX + width > destination.Width
+                || dstY + height > destination.Height)
+            {
+                throw new ArgumentException("Texture coordinates out of bounds");
             }
 
             var wrX = dstX;
@@ -62,8 +72,8 @@ namespace LSLib.VirtualTextures
         public void SaveDDS(string path)
         {
             var header = new DDSHeader();
-            header.dwMagic = 0x20534444;
-            header.dwSize = 0x7c;
+            header.dwMagic = DDSHeader.DDSMagic;
+            header.dwSize = DDSHeader.HeaderSize;
             header.dwFlags = 0x1007;
             header.dwWidth = (uint)Width;
             header.dwHeight = (uint)Height;
@@ -73,7 +83,7 @@ namespace LSLib.VirtualTextures
 
             header.dwPFSize = 32;
             header.dwPFFlags = 0x04;
-            header.dwFourCC = 0x35545844;
+            header.dwFourCC = DDSHeader.FourCC_DXT5;
 
             header.dwCaps = 0x1000;
 
@@ -82,6 +92,67 @@ namespace LSLib.VirtualTextures
             {
                 BinUtils.WriteStruct<DDSHeader>(bw, ref header);
                 bw.Write(Data, 0, Data.Length);
+            }
+        }
+    }
+
+    public class BC5Mips
+    {
+        public List<BC5Image> Mips;
+
+        public void LoadDDS(string path)
+        {
+            using (var f = new FileStream(path, FileMode.Open, FileAccess.Read))
+            using (var reader = new BinaryReader(f))
+            {
+                var header = BinUtils.ReadStruct<DDSHeader>(reader);
+                Mips = new List<BC5Image>();
+
+                if (header.dwMagic != DDSHeader.DDSMagic)
+                {
+                    throw new InvalidDataException($"{path}: Incorrect DDS signature, or file is not a DDS file");
+                }
+
+                if (header.dwSize != DDSHeader.HeaderSize)
+                {
+                    throw new InvalidDataException($"{path}: Incorrect DDS header size");
+                }
+
+                if ((header.dwFlags & 0xffff) != 0x1007)
+                {
+                    throw new InvalidDataException($"{path}: Incorrect DDS texture flags");
+                }
+
+                if (header.dwDepth != 0 && header.dwDepth != 1)
+                {
+                    throw new InvalidDataException($"{path}: Only single-layer textures are supported");
+                }
+
+                if ((header.dwPFFlags & 4) != 4)
+                {
+                    throw new InvalidDataException($"{path}: DDS does not have a valid FourCC code");
+                }
+
+                if (header.FourCCName != "DXT5")
+                {
+                    throw new InvalidDataException($"{path}: Expected a DXT5 encoded texture, got: " + header.FourCCName);
+                }
+
+                Int32 mips = 1;
+                if ((header.dwFlags & 0x20000) == 0x20000)
+                {
+                    mips = (Int32)header.dwMipMapCount;
+                }
+
+                Mips = new List<BC5Image>(mips);
+                for (var i = 0; i < mips; i++)
+                {
+                    var width = Math.Max((int)header.dwWidth >> i, 1);
+                    var height = Math.Max((int)header.dwHeight >> i, 1);
+                    var bytes = Math.Max(width / 4, 1) * Math.Max(height / 4, 1) * 16;
+                    var blob = reader.ReadBytes(bytes);
+                    Mips.Add(new BC5Image(blob, width, height));
+                }
             }
         }
     }

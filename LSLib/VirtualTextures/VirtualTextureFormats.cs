@@ -7,6 +7,10 @@ namespace LSLib.VirtualTextures
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct DDSHeader
     {
+        public static UInt32 DDSMagic = 0x20534444;
+        public static UInt32 HeaderSize = 0x7c;
+        public static UInt32 FourCC_DXT5 = 0x35545844;
+
         public UInt32 dwMagic;
         public UInt32 dwSize;
         public UInt32 dwFlags;
@@ -32,6 +36,25 @@ namespace LSLib.VirtualTextures
         public UInt32 dwCaps3;
         public UInt32 dwCaps4;
         public UInt32 dwReserved2;
+
+        public string FourCCName
+        {
+            get
+            {
+                return Char.ToString((char)(dwFourCC & 0xff))
+                    + Char.ToString((char)((dwFourCC >> 8) & 0xff))
+                    + Char.ToString((char)((dwFourCC >> 16) & 0xff))
+                    + Char.ToString((char)((dwFourCC >> 24) & 0xff));
+            }
+
+            set
+            {
+                dwFourCC = (uint)value[0]
+                    | ((uint)value[1] << 8)
+                    | ((uint)value[2] << 16)
+                    | ((uint)value[3] << 24);
+            }
+        }
     };
 
     public enum GTSDataType : UInt32
