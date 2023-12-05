@@ -648,8 +648,12 @@ namespace LSLib.LS.Stats
                 "DamageType", "DamageTypeOrDealDamageWeaponDamageType",
                 "Magical", "Magical",
                 "Nonlethal", "Nonlethal",
-                "Arg5", "Int",
+                "CoinMultiplier", "Int",
                 "Tooltip", "Guid",
+                "Arg7", "Boolean",
+                "Arg8", "Boolean",
+                "Arg9", "Boolean",
+                "Arg10", "Boolean",
             });
             AddFunctor("ExecuteWeaponFunctors", 0, new List<string> {
                 "WeaponType", "ExecuteWeaponFunctorsType"
