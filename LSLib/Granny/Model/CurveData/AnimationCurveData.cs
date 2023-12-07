@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model.CurveData
@@ -23,8 +23,8 @@ namespace LSLib.Granny.Model.CurveData
                 return;
             }
 
-            TypeToFormatMap = new Dictionary<Type, CurveFormat>();
-            NameToTypeMap = new Dictionary<String, Type>();
+            TypeToFormatMap = [];
+            NameToTypeMap = [];
 
             Register(typeof(DaKeyframes32f), CurveFormat.DaKeyframes32f);
             Register(typeof(DaK32fC32f), CurveFormat.DaK32fC32f);
@@ -58,8 +58,7 @@ namespace LSLib.Granny.Model.CurveData
         {
             Init();
 
-            Type type = null;
-            if (!NameToTypeMap.TryGetValue(name, out type))
+            if (!NameToTypeMap.TryGetValue(name, out Type type))
                 throw new ParsingException("Unsupported curve type: " + name);
 
             return type;
@@ -181,10 +180,10 @@ namespace LSLib.Granny.Model.CurveData
         public Type SelectType(MemberDefinition member, StructDefinition defn, object parent)
         {
             var fieldName = defn.Members[0].Name;
-            if (fieldName.Substring(0, 16) != "CurveDataHeader_")
+            if (fieldName[..16] != "CurveDataHeader_")
                 throw new ParsingException("Unrecognized curve data header type: " + fieldName);
 
-            var curveType = fieldName.Substring(16);
+            var curveType = fieldName[16..];
             return CurveRegistry.Resolve(curveType);
         }
     }
@@ -204,7 +203,7 @@ namespace LSLib.Granny.Model.CurveData
 
         protected float ConvertOneOverKnotScaleTrunc(UInt16 oneOverKnotScaleTrunc)
         {
-            UInt32[] i = new UInt32[] { (UInt32)oneOverKnotScaleTrunc << 16 };
+            UInt32[] i = [(UInt32)oneOverKnotScaleTrunc << 16];
             float[] f = new float[1];
             Buffer.BlockCopy(i, 0, f, 0, i.Length * 4);
             return f[0];
@@ -231,7 +230,7 @@ namespace LSLib.Granny.Model.CurveData
         public virtual List<Quaternion> GetQuaternions()
         {
             var matrices = GetMatrices();
-            List<Quaternion> quats = new List<Quaternion>(matrices.Count);
+            List<Quaternion> quats = new(matrices.Count);
             foreach (var matrix in matrices)
             {
                 // Check that the matrix is orthogonal

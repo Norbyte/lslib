@@ -7,9 +7,9 @@ namespace LSLib.LS
 	{
 		public const int MajorVersion = 1;
 
-		public const int MinorVersion = 18;
+		public const int MinorVersion = 19;
 
-		public const int PatchVersion = 7;
+		public const int PatchVersion = 0;
 
 		// Version of LSTools profile data in generated DAE files
         public const int ColladaMetadataVersion = 3;

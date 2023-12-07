@@ -5,11 +5,8 @@ using System.Runtime.InteropServices;
 
 namespace LSLib.LS
 {
-    public class InvalidFormatException : Exception
+    public class InvalidFormatException(string message) : Exception(message)
     {
-        public InvalidFormatException(string message)
-            : base(message)
-        { }
     }
 
     public struct PackedVersion
@@ -41,7 +38,7 @@ namespace LSLib.LS
             };
         }
 
-        public Int32 ToVersion32()
+        public readonly Int32 ToVersion32()
         {
             return (Int32)((Major & 0x0f) << 28 |
                 (Minor & 0x0f) << 24 |
@@ -49,7 +46,7 @@ namespace LSLib.LS
                 (Build & 0xffff) << 0);
         }
 
-        public Int64 ToVersion64()
+        public readonly Int64 ToVersion64()
         {
             return (Int64)(((Int64)Major & 0x7f) << 55 |
                 ((Int64)Minor & 0xff) << 47 |
@@ -76,7 +73,7 @@ namespace LSLib.LS
         /// <summary>
         /// LSB file signature since BG3
         /// </summary>
-        public static byte[] SignatureBG3 = new byte[] { 0x4C, 0x53, 0x46, 0x4D };
+        public readonly static byte[] SignatureBG3 = "LSFM"u8.ToArray();
 
         /// <summary>
         /// LSB signature up to FW3 (DOS2 DE)
@@ -92,7 +89,7 @@ namespace LSLib.LS
 
     public static class AttributeTypeMaps
     {
-        public static Dictionary<string, NodeAttribute.DataType> TypeToId = new Dictionary<string, NodeAttribute.DataType>
+        public readonly static Dictionary<string, NodeAttribute.DataType> TypeToId = new()
         {
             { "None", NodeAttribute.DataType.DT_None },
             { "uint8", NodeAttribute.DataType.DT_Byte },
@@ -130,7 +127,7 @@ namespace LSLib.LS
             { "TranslatedFSString", NodeAttribute.DataType.DT_TranslatedFSString },
         };
 
-        public static Dictionary<NodeAttribute.DataType, string> IdToType = new Dictionary<NodeAttribute.DataType, string>
+        public readonly static Dictionary<NodeAttribute.DataType, string> IdToType = new()
         {
             { NodeAttribute.DataType.DT_None, "None" },
             { NodeAttribute.DataType.DT_Byte, "uint8" },
@@ -172,7 +169,7 @@ namespace LSLib.LS
     public class Resource
     {
         public LSMetadata Metadata;
-        public Dictionary<string, Region> Regions = new Dictionary<string,Region>();
+        public Dictionary<string, Region> Regions = [];
 
         public Resource()
         {
@@ -189,8 +186,8 @@ namespace LSLib.LS
     {
         public string Name;
         public Node Parent;
-        public Dictionary<string, NodeAttribute> Attributes = new Dictionary<string, NodeAttribute>();
-        public Dictionary<string, List<Node>> Children = new Dictionary<string, List<Node>>();
+        public Dictionary<string, NodeAttribute> Attributes = [];
+        public Dictionary<string, List<Node>> Children = [];
 
         public int ChildCount
         {
@@ -218,10 +215,9 @@ namespace LSLib.LS
 
         public void AppendChild(Node child)
         {
-            List<Node> children;
-            if (!Children.TryGetValue(child.Name, out children))
+            if (!Children.TryGetValue(child.Name, out List<Node> children))
             {
-                children = new List<Node>();
+                children = [];
                 Children.Add(child.Name, children);
             }
 

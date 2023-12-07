@@ -2,10 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using LSLib.LS.Enums;
-using Alphaleonis.Win32.Filesystem;
-using Path = Alphaleonis.Win32.Filesystem.Path;
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
@@ -64,7 +60,7 @@ namespace LSLib.LS
         /// <summary>
         /// LSF/LSB compression level (i.e. size/compression time tradeoff)
         /// </summary>
-        public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
+        public LSCompressionLevel LSCompressionLevel = LSCompressionLevel.DefaultCompression;
 
         /// <summary>
         /// Byte-swap the last 8 bytes of GUIDs when serializing to/from string
@@ -73,11 +69,12 @@ namespace LSLib.LS
 
         public static ResourceConversionParameters FromGameVersion(Game game)
         {
-            var p = new ResourceConversionParameters();
-            p.PAKVersion = game.PAKVersion();
-            p.LSF = game.LSFVersion();
-            p.LSX = game.LSXVersion();
-            return p;
+            return new ResourceConversionParameters
+            {
+                PAKVersion = game.PAKVersion(),
+                LSF = game.LSFVersion(),
+                LSX = game.LSXVersion()
+            };
         }
 
         public void ToSerializationSettings(NodeSerializationSettings settings)
@@ -98,26 +95,14 @@ namespace LSLib.LS
         {
             var extension = Path.GetExtension(path).ToLower();
 
-            switch (extension)
+            return extension switch
             {
-                case ".lsx":
-                    return ResourceFormat.LSX;
-
-                case ".lsb":
-                    return ResourceFormat.LSB;
-
-                case ".lsf":
-                case ".lsfx":
-                case ".lsbc":
-                case ".lsbs":
-                    return ResourceFormat.LSF;
-
-                case ".lsj":
-                    return ResourceFormat.LSJ;
-
-                default:
-                    throw new ArgumentException("Unrecognized file extension: " + extension);
-            }
+                ".lsx" => ResourceFormat.LSX,
+                ".lsb" => ResourceFormat.LSB,
+                ".lsf" or ".lsfx" or ".lsbc" or ".lsbs" => ResourceFormat.LSF,
+                ".lsj" => ResourceFormat.LSJ,
+                _ => throw new ArgumentException("Unrecognized file extension: " + extension),
+            };
         }
 
         public static Resource LoadResource(string inputPath, ResourceLoadParameters loadParams)
@@ -127,10 +112,8 @@ namespace LSLib.LS
 
         public static Resource LoadResource(string inputPath, ResourceFormat format, ResourceLoadParameters loadParams)
         {
-            using (var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return LoadResource(stream, format, loadParams);
-            }
+            using var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return LoadResource(stream, format, loadParams);
         }
 
         public static Resource LoadResource(Stream stream, ResourceFormat format, ResourceLoadParameters loadParams)
@@ -139,36 +122,28 @@ namespace LSLib.LS
             {
                 case ResourceFormat.LSX:
                     {
-                        using (var reader = new LSXReader(stream))
-                        {
-                            loadParams.ToSerializationSettings(reader.SerializationSettings);
-                            return reader.Read();
-                        }
+                        using var reader = new LSXReader(stream);
+                        loadParams.ToSerializationSettings(reader.SerializationSettings);
+                        return reader.Read();
                     }
 
                 case ResourceFormat.LSB:
                     {
-                        using (var reader = new LSBReader(stream))
-                        {
-                            return reader.Read();
-                        }
+                        using var reader = new LSBReader(stream);
+                        return reader.Read();
                     }
 
                 case ResourceFormat.LSF:
                     {
-                        using (var reader = new LSFReader(stream))
-                        {
-                            return reader.Read();
-                        }
+                        using var reader = new LSFReader(stream);
+                        return reader.Read();
                     }
 
                 case ResourceFormat.LSJ:
                     {
-                        using (var reader = new LSJReader(stream))
-                        {
-                            loadParams.ToSerializationSettings(reader.SerializationSettings);
-                            return reader.Read();
-                        }
+                        using var reader = new LSJReader(stream);
+                        loadParams.ToSerializationSettings(reader.SerializationSettings);
+                        return reader.Read();
                     }
 
                 default:
@@ -185,64 +160,68 @@ namespace LSLib.LS
         {
             FileManager.TryToCreateDirectory(outputPath);
 
-            using (var file = File.Open(outputPath, FileMode.Create, FileAccess.Write))
+            using var file = File.Open(outputPath, FileMode.Create, FileAccess.Write);
+            switch (format)
             {
-                switch (format)
-                {
-                    case ResourceFormat.LSX:
+                case ResourceFormat.LSX:
+                    {
+                        var writer = new LSXWriter(file)
                         {
-                            var writer = new LSXWriter(file);
-                            writer.Version = conversionParams.LSX;
-                            writer.PrettyPrint = conversionParams.PrettyPrint;
-                            conversionParams.ToSerializationSettings(writer.SerializationSettings);
-                            writer.Write(resource);
-                            break;
-                        }
+                            Version = conversionParams.LSX,
+                            PrettyPrint = conversionParams.PrettyPrint
+                        };
+                        conversionParams.ToSerializationSettings(writer.SerializationSettings);
+                        writer.Write(resource);
+                        break;
+                    }
 
-                    case ResourceFormat.LSB:
+                case ResourceFormat.LSB:
+                    {
+                        var writer = new LSBWriter(file);
+                        writer.Write(resource);
+                        break;
+                    }
+
+                case ResourceFormat.LSF:
+                    {
+                        var writer = new LSFWriter(file)
                         {
-                            var writer = new LSBWriter(file);
-                            writer.Write(resource);
-                            break;
-                        }
+                            Version = conversionParams.LSF,
+                            EncodeSiblingData = conversionParams.LSFEncodeSiblingData,
+                            Compression = conversionParams.Compression,
+                            LSCompressionLevel = conversionParams.LSCompressionLevel
+                        };
+                        writer.Write(resource);
+                        break;
+                    }
 
-                    case ResourceFormat.LSF:
+                case ResourceFormat.LSJ:
+                    {
+                        var writer = new LSJWriter(file)
                         {
-                            var writer = new LSFWriter(file);
-                            writer.Version = conversionParams.LSF;
-                            writer.EncodeSiblingData = conversionParams.LSFEncodeSiblingData;
-                            writer.Compression = conversionParams.Compression;
-                            writer.CompressionLevel = conversionParams.CompressionLevel;
-                            writer.Write(resource);
-                            break;
-                        }
+                            PrettyPrint = conversionParams.PrettyPrint
+                        };
+                        conversionParams.ToSerializationSettings(writer.SerializationSettings);
+                        writer.Write(resource);
+                        break;
+                    }
 
-                    case ResourceFormat.LSJ:
-                        {
-                            var writer = new LSJWriter(file);
-                            writer.PrettyPrint = conversionParams.PrettyPrint;
-                            conversionParams.ToSerializationSettings(writer.SerializationSettings);
-                            writer.Write(resource);
-                            break;
-                        }
-
-                    default:
-                        throw new ArgumentException("Invalid resource format");
-                }
+                default:
+                    throw new ArgumentException("Invalid resource format");
             }
         }
 
         private bool IsA(string path, ResourceFormat format)
         {
             var extension = Path.GetExtension(path).ToLower();
-            switch (format)
+            return format switch
             {
-                case ResourceFormat.LSX: return extension == ".lsx";
-                case ResourceFormat.LSB: return extension == ".lsb";
-                case ResourceFormat.LSF: return extension == ".lsf" || extension == ".lsbc" || extension == ".lsfx";
-                case ResourceFormat.LSJ: return extension == ".lsj";
-                default: return false;
-            }
+                ResourceFormat.LSX => extension == ".lsx",
+                ResourceFormat.LSB => extension == ".lsb",
+                ResourceFormat.LSF => extension == ".lsf" || extension == ".lsbc" || extension == ".lsfx",
+                ResourceFormat.LSJ => extension == ".lsj",
+                _ => false,
+            };
         }
 
         private void EnumerateFiles(List<string> paths, string rootPath, string currentPath, ResourceFormat format)
@@ -251,10 +230,10 @@ namespace LSLib.LS
             {
                 if (IsA(filePath, format))
                 {
-                    var relativePath = filePath.Substring(rootPath.Length);
+                    var relativePath = filePath[rootPath.Length..];
                     if (relativePath[0] == '/' || relativePath[0] == '\\')
                     {
-                        relativePath = relativePath.Substring(1);
+                        relativePath = relativePath[1..];
                     }
 
                     paths.Add(relativePath);

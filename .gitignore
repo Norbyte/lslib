@@ -77,3 +77,4 @@ DebuggerFrontend/DbgProtocol.cs
 WwiseTool
 UnpackGrid/Properties/launchSettings.json
 TerrainFixup/Properties/launchSettings.json
+VTexTool/Properties/launchSettings.json

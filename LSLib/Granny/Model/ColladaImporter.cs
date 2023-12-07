@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Alphaleonis.Win32.Filesystem;
 using LSLib.Granny.GR2;
 using LSLib.LS;
-using OpenTK;
+using OpenTK.Mathematics;
 
 namespace LSLib.Granny.Model
 {
@@ -17,8 +17,10 @@ namespace LSLib.Granny.Model
 
         public static ColladaSource FromCollada(source src)
         {
-            var source = new ColladaSource();
-            source.id = src.id;
+            var source = new ColladaSource
+            {
+                id = src.id
+            };
 
             var accessor = src.technique_common.accessor;
             // TODO: check src.#ID?
@@ -29,8 +31,7 @@ namespace LSLib.Granny.Model
             {
                 floats = src.Item as float_array;
                 // Workaround for empty arrays being null
-                if (floats.Values == null)
-                    floats.Values = new double[] { };
+                floats.Values ??= [];
 
                 if ((int)floats.count != floats.Values.Length || floats.count < accessor.stride * accessor.count + accessor.offset)
                     throw new ParsingException("Float source data size mismatch. Check source and accessor item counts.");
@@ -39,8 +40,7 @@ namespace LSLib.Granny.Model
             {
                 names = src.Item as Name_array;
                 // Workaround for empty arrays being null
-                if (names.Values == null)
-                    names.Values = new string[] { };
+                names.Values ??= [];
 
                 if ((int)names.count != names.Values.Length || names.count < accessor.stride * accessor.count + accessor.offset)
                     throw new ParsingException("Name source data size mismatch. Check source and accessor item counts.");
@@ -51,8 +51,7 @@ namespace LSLib.Granny.Model
             var paramOffset = 0;
             foreach (var param in accessor.param)
             {
-                if (param.name == null)
-                    param.name = "default";
+                param.name ??= "default";
                 if (param.type == "float" || param.type == "double")
                 {
                     var items = new List<Single>((int)accessor.count);
@@ -115,7 +114,7 @@ namespace LSLib.Granny.Model
     public class ColladaImporter
     {
         [Serialization(Kind = SerializationKind.None)]
-        public ExporterOptions Options = new ExporterOptions();
+        public ExporterOptions Options = new();
 
         private bool ZUp = false;
 
@@ -128,12 +127,14 @@ namespace LSLib.Granny.Model
         private ArtToolInfo ImportArtToolInfo(COLLADA collada)
         {
             ZUp = false;
-            var toolInfo = new ArtToolInfo();
-            toolInfo.FromArtToolName = "Unknown";
-            toolInfo.ArtToolMajorRevision = 1;
-            toolInfo.ArtToolMinorRevision = 0;
-            toolInfo.ArtToolPointerSize = Options.Is64Bit ? 64 : 32;
-            toolInfo.Origin = new float[] { 0, 0, 0 };
+            var toolInfo = new ArtToolInfo
+            {
+                FromArtToolName = "Unknown",
+                ArtToolMajorRevision = 1,
+                ArtToolMinorRevision = 0,
+                ArtToolPointerSize = Options.Is64Bit ? 64 : 32,
+                Origin = [0, 0, 0]
+            };
             toolInfo.SetYUp();
 
             if (collada.asset != null)
@@ -176,13 +177,14 @@ namespace LSLib.Granny.Model
 
         private ExporterInfo ImportExporterInfo(COLLADA collada)
         {
-            var exporterInfo = new ExporterInfo();
-            exporterInfo.ExporterName = String.Format("LSLib GR2 Exporter v{0}", Common.LibraryVersion());
-            exporterInfo.ExporterMajorRevision = Common.MajorVersion;
-            exporterInfo.ExporterMinorRevision = Common.MinorVersion;
-            exporterInfo.ExporterBuildNumber = 0;
-            exporterInfo.ExporterCustomization = Common.PatchVersion;
-            return exporterInfo;
+            return new ExporterInfo
+            {
+                ExporterName = $"LSLib GR2 Exporter v{Common.LibraryVersion()}",
+                ExporterMajorRevision = Common.MajorVersion,
+                ExporterMinorRevision = Common.MinorVersion,
+                ExporterBuildNumber = 0,
+                ExporterCustomization = Common.PatchVersion
+            };
         }
 
         private DivinityModelFlag DetermineSkeletonModelFlagsFromModels(Root root, Skeleton skeleton, DivinityModelFlag meshFlagOverrides)
@@ -219,10 +221,7 @@ namespace LSLib.Granny.Model
                     modelFlags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
                 }
 
-                if (mesh.ExtendedData == null)
-                {
-                    mesh.ExtendedData = DivinityMeshExtendedData.Make();
-                }
+                mesh.ExtendedData ??= DivinityMeshExtendedData.Make();
                 mesh.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
                 mesh.ExtendedData.UpdateFromModelInfo(mesh, Options.ModelInfoFormat);
             }
@@ -242,11 +241,7 @@ namespace LSLib.Granny.Model
 
                     foreach (var bone in skeleton.Bones ?? Enumerable.Empty<Bone>())
                     {
-                        if (bone.ExtendedData == null)
-                        {
-                            bone.ExtendedData = new DivinityBoneExtendedData();
-                        }
-
+                        bone.ExtendedData ??= new DivinityBoneExtendedData();
                         var userDefinedProperties = UserDefinedPropertiesHelpers.MeshFlagsToUserDefinedProperties(accumulatedFlags);
                         bone.ExtendedData.UserDefinedProperties = userDefinedProperties;
                         bone.ExtendedData.IsRigid = (accumulatedFlags.IsRigid()) ? 1 : 0;
@@ -282,19 +277,13 @@ namespace LSLib.Granny.Model
 
         public static technique FindExporterExtraData(extra[] extras)
         {
-            if (extras != null)
+            foreach (var extra in extras ?? Enumerable.Empty<extra>())
             {
-                foreach (var extra in extras)
+                foreach (var technique in extra.technique ?? Enumerable.Empty<technique>())
                 {
-                    if (extra.technique != null)
+                    if (technique.profile == "LSTools")
                     {
-                        foreach (var technique in extra.technique)
-                        {
-                            if (technique.profile == "LSTools")
-                            {
-                                return technique;
-                            }
-                        }
+                        return technique;
                     }
                 }
             }
@@ -445,7 +434,7 @@ namespace LSLib.Granny.Model
             }
         }
 
-        private void LoadColladaLSLibProfileData(Root root, COLLADA collada)
+        private void LoadColladaLSLibProfileData(COLLADA collada)
         {
             var technique = FindExporterExtraData(collada.extra);
             if (technique == null || technique.Any == null) return;
@@ -476,12 +465,32 @@ namespace LSLib.Granny.Model
             bool isSkinned = SkinnedMeshes.Contains(geom.id);
             collada.ImportFromCollada(mesh, vertexFormat, isSkinned, Options);
 
-            var m = new Mesh();
-            m.VertexFormat = collada.InternalVertexType;
-            m.Name = "Unnamed";
+            var m = new Mesh
+            {
+                VertexFormat = collada.InternalVertexType,
+                Name = "Unnamed",
 
-            m.PrimaryVertexData = new VertexData();
-            m.PrimaryVertexData.Vertices = collada.ConsolidatedVertices;
+                PrimaryVertexData = new VertexData
+                {
+                    Vertices = collada.ConsolidatedVertices
+                },
+
+                PrimaryTopology = new TriTopology
+                {
+                    Indices = collada.ConsolidatedIndices,
+                    Groups = [
+                        new TriTopologyGroup
+                        {
+                            MaterialIndex = 0,
+                            TriFirst = 0,
+                            TriCount = collada.TriangleCount
+                        }
+                    ]
+                },
+
+                MaterialBindings = [new MaterialBinding()],
+                OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap
+            };
 
             if (!Options.StripMetadata)
             {
@@ -492,22 +501,6 @@ namespace LSLib.Granny.Model
             {
                 m.PrimaryVertexData.VertexComponentNames = null;
             }
-
-            m.PrimaryTopology = new TriTopology();
-            m.PrimaryTopology.Indices = collada.ConsolidatedIndices;
-            m.PrimaryTopology.Groups = new List<TriTopologyGroup>();
-            var triGroup = new TriTopologyGroup();
-            triGroup.MaterialIndex = 0;
-            triGroup.TriFirst = 0;
-            triGroup.TriCount = collada.TriangleCount;
-            m.PrimaryTopology.Groups.Add(triGroup);
-
-            m.MaterialBindings = new List<MaterialBinding>();
-            m.MaterialBindings.Add(new MaterialBinding());
-
-            // m.BoneBindings; - TODO
-
-            m.OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap;
 
             MakeExtendedData(mesh, m);
 
@@ -534,8 +527,7 @@ namespace LSLib.Granny.Model
             if (skin.source1[0] != '#')
                 throw new ParsingException("Only ID references are supported for skin geometries");
 
-            Mesh mesh = null;
-            if (!ColladaGeometries.TryGetValue(skin.source1.Substring(1), out mesh))
+            if (!ColladaGeometries.TryGetValue(skin.source1[1..], out Mesh mesh))
                 throw new ParsingException("Skin references nonexistent mesh: " + skin.source1);
 
             if (!mesh.VertexFormat.HasBoneWeights)
@@ -559,8 +551,7 @@ namespace LSLib.Granny.Model
                 if (input.source[0] != '#')
                     throw new ParsingException("Only ID references are supported for joint input sources");
 
-                ColladaSource inputSource = null;
-                if (!sources.TryGetValue(input.source.Substring(1), out inputSource))
+                if (!sources.TryGetValue(input.source.Substring(1), out ColladaSource inputSource))
                     throw new ParsingException("Joint input source does not exist: " + input.source);
 
                 if (input.semantic == "JOINT")
@@ -570,12 +561,11 @@ namespace LSLib.Granny.Model
                         throw new ParsingException("Joint input source 'JOINT' must contain array of names.");
 
                     var skeleton = root.Skeletons[0];
-                    joints = new List<Bone>();
+                    joints = [];
                     foreach (var name in jointNames)
                     {
-                        Bone bone = null;
                         var lookupName = name.Replace("_x0020_", " ");
-                        if (!skeleton.BonesBySID.TryGetValue(lookupName, out bone))
+                        if (!skeleton.BonesBySID.TryGetValue(lookupName, out Bone bone))
                             throw new ParsingException("Joint name list references nonexistent bone: " + lookupName);
 
                         joints.Add(bone);
@@ -628,8 +618,7 @@ namespace LSLib.Granny.Model
                     if (input.source[0] != '#')
                         throw new ParsingException("Only ID references are supported for weight input sources");
 
-                    ColladaSource inputSource = null;
-                    if (!sources.TryGetValue(input.source.Substring(1), out inputSource))
+                    if (!sources.TryGetValue(input.source[1..], out ColladaSource inputSource))
                         throw new ParsingException("Weight input source does not exist: " + input.source);
 
                     if (!inputSource.FloatParams.TryGetValue("WEIGHT", out weights))
@@ -658,8 +647,7 @@ namespace LSLib.Granny.Model
                 var weightIndex = influences[offset + weightInputIndex];
                 var joint = joints[jointIndex];
                 var weight = weights[weightIndex];
-                if (!boundBones.Contains(joint))
-                    boundBones.Add(joint);
+                boundBones.Add(joint);
 
                 offset += stride;
             }
@@ -667,7 +655,7 @@ namespace LSLib.Granny.Model
             if (boundBones.Count > 127)
                 throw new ParsingException("D:OS supports at most 127 bound bones per mesh.");
 
-            mesh.BoneBindings = new List<BoneBinding>();
+            mesh.BoneBindings = [];
             var boneToIndexMaps = new Dictionary<Bone, int>();
             for (var i = 0; i < joints.Count; i++)
             {
@@ -678,22 +666,24 @@ namespace LSLib.Granny.Model
                     // Hopefully the Collada ones are all equal ...
                     var iwt = invBindMatrices[i];
                     // iwt.Transpose();
-                    joints[i].InverseWorldTransform = new float[] {
+                    joints[i].InverseWorldTransform = [
                         iwt[0, 0], iwt[1, 0], iwt[2, 0], iwt[3, 0],
                         iwt[0, 1], iwt[1, 1], iwt[2, 1], iwt[3, 1],
                         iwt[0, 2], iwt[1, 2], iwt[2, 2], iwt[3, 2],
                         iwt[0, 3], iwt[1, 3], iwt[2, 3], iwt[3, 3]
-                    };
+                    ];
 
                     // Bind all bones that affect vertices to the mesh, so we can reference them
                     // later from the vertexes BoneIndices.
-                    var binding = new BoneBinding();
-                    binding.BoneName = joints[i].Name;
-                    // TODO
-                    // Use small bounding box values, as it interferes with object placement
-                    // in D:OS 2 (after the Gift Bag 2 update)
-                    binding.OBBMin = new float[] { -0.1f, -0.1f, -0.1f };
-                    binding.OBBMax = new float[] { 0.1f, 0.1f, 0.1f };
+                    var binding = new BoneBinding
+                    {
+                        BoneName = joints[i].Name,
+                        // TODO
+                        // Use small bounding box values, as it interferes with object placement
+                        // in D:OS 2 (after the Gift Bag 2 update)
+                        OBBMin = [-0.1f, -0.1f, -0.1f],
+                        OBBMax = [0.1f, 0.1f, 0.1f]
+                    };
                     mesh.BoneBindings.Add(binding);
                     boneToIndexMaps.Add(joints[i], boneToIndexMaps.Count);
                 }
@@ -748,7 +738,7 @@ namespace LSLib.Granny.Model
 
             if (skin.bind_shape_matrix != null)
             {
-                var bindShapeFloats = skin.bind_shape_matrix.Trim().Split(new char[] { ' ' }).Select(s => Single.Parse(s)).ToArray();
+                var bindShapeFloats = skin.bind_shape_matrix.Trim().Split([' ']).Select(s => Single.Parse(s)).ToArray();
                 var bindShapeMat = ColladaHelpers.FloatsToMatrix(bindShapeFloats);
                 bindShapeMat.Transpose();
 
@@ -794,7 +784,7 @@ namespace LSLib.Granny.Model
 
                         var bone = skeleton.GetBoneByName(mesh.BoneBindings[bi].BoneName);
                         var invWorldTransform = ColladaHelpers.FloatsToMatrix(bone.InverseWorldTransform);
-                        var transformed = Vector3.Transform(vert.Position, invWorldTransform);
+                        var transformed = Vector3.TransformPosition(vert.Position, invWorldTransform);
 
                         obb.Min.X = Math.Min(obb.Min.X, transformed.X);
                         obb.Min.Y = Math.Min(obb.Min.Y, transformed.Y);
@@ -812,13 +802,13 @@ namespace LSLib.Granny.Model
                 var obb = obbs[i];
                 if (obb.NumVerts > 0)
                 {
-                    mesh.BoneBindings[i].OBBMin = new float[] { obb.Min.X, obb.Min.Y, obb.Min.Z };
-                    mesh.BoneBindings[i].OBBMax = new float[] { obb.Max.X, obb.Max.Y, obb.Max.Z };
+                    mesh.BoneBindings[i].OBBMin = [obb.Min.X, obb.Min.Y, obb.Min.Z];
+                    mesh.BoneBindings[i].OBBMax = [obb.Max.X, obb.Max.Y, obb.Max.Z];
                 }
                 else
                 {
-                    mesh.BoneBindings[i].OBBMin = new float[] { 0.0f, 0.0f, 0.0f };
-                    mesh.BoneBindings[i].OBBMax = new float[] { 0.0f, 0.0f, 0.0f };
+                    mesh.BoneBindings[i].OBBMin = [0.0f, 0.0f, 0.0f];
+                    mesh.BoneBindings[i].OBBMax = [0.0f, 0.0f, 0.0f];
                 }
             }
         }
@@ -851,10 +841,10 @@ namespace LSLib.Granny.Model
             var trackGroup = new TrackGroup
             {
                 Name = (skeleton != null) ? skeleton.Name : "Dummy_Root",
-                TransformTracks = new List<TransformTrack>(),
+                TransformTracks = [],
                 InitialPlacement = new Transform(),
                 AccumulationFlags = 2,
-                LoopTranslation = new float[] { 0, 0, 0 }
+                LoopTranslation = [0, 0, 0]
             };
 
             var animation = new Animation
@@ -865,7 +855,7 @@ namespace LSLib.Granny.Model
                 DefaultLoopCount = 1,
                 Flags = 1,
                 Duration = .0f,
-                TrackGroups = new List<TrackGroup> { trackGroup }
+                TrackGroups = [trackGroup]
             };
 
             foreach (var colladaTrack in anims)
@@ -899,7 +889,7 @@ namespace LSLib.Granny.Model
             var duration = .0f;
             if (childAnims < colladaAnim.Items.Length)
             {
-                ColladaAnimation importAnim = new ColladaAnimation();
+                ColladaAnimation importAnim = new();
                 if (importAnim.ImportFromCollada(colladaAnim, skeleton))
                 {
                     duration = Math.Max(duration, importAnim.Duration);
@@ -920,26 +910,26 @@ namespace LSLib.Granny.Model
                 collada = COLLADA.Load(stream);
             }
 
-            var root = new Root();
-            LoadColladaLSLibProfileData(root, collada);
-            root.ArtToolInfo = ImportArtToolInfo(collada);
-            if (!Options.StripMetadata)
+            LoadColladaLSLibProfileData(collada);
+
+            var root = new Root
             {
-                root.ExporterInfo = ImportExporterInfo(collada);
-            }
+                ArtToolInfo = ImportArtToolInfo(collada),
+                ExporterInfo = Options.StripMetadata ? null : ImportExporterInfo(collada),
 
-            root.FromFileName = inputPath;
+                FromFileName = inputPath,
 
-            root.Skeletons = new List<Skeleton>();
-            root.VertexDatas = new List<VertexData>();
-            root.TriTopologies = new List<TriTopology>();
-            root.Meshes = new List<Mesh>();
-            root.Models = new List<Model>();
-            root.TrackGroups = new List<TrackGroup>();
-            root.Animations = new List<Animation>();
+                Skeletons = [],
+                VertexDatas = [],
+                TriTopologies = [],
+                Meshes = [],
+                Models = [],
+                TrackGroups = [],
+                Animations = []
+            };
 
-            ColladaGeometries = new Dictionary<string, Mesh>();
-            SkinnedMeshes = new HashSet<string>();
+            ColladaGeometries = [];
+            SkinnedMeshes = [];
 
             var collGeometries = new List<geometry>();
             var collSkins = new List<skin>();
@@ -961,7 +951,7 @@ namespace LSLib.Granny.Model
                             if (controller.Item is skin)
                             {
                                 collSkins.Add(controller.Item as skin);
-                                SkinnedMeshes.Add((controller.Item as skin).source1.Substring(1));
+                                SkinnedMeshes.Add((controller.Item as skin).source1[1..]);
                             }
                             else
                             {
@@ -982,7 +972,7 @@ namespace LSLib.Granny.Model
                                 foreach (var node in scene.node)
                                 {
                                     collNodes.Add(node);
-                                    FindRootBones(new List<node>(), node, rootBones);
+                                    FindRootBones([], node, rootBones);
                                 }
                             }
                         }
@@ -1016,7 +1006,7 @@ namespace LSLib.Granny.Model
                 }
                 else
                 {
-                    Utils.Warn(String.Format("Library {0} is unsupported and will be ignored", item.GetType().Name));
+                    Utils.Warn($"Library {item.GetType().Name} is unsupported and will be ignored");
                 }
             }
 
@@ -1031,9 +1021,8 @@ namespace LSLib.Granny.Model
 
             foreach (var geometry in collGeometries)
             {
-                VertexDescriptor vertexFormat = null;
                 // Use the override vertex format, if one was specified
-                Options.VertexFormats.TryGetValue(geometry.name, out vertexFormat);
+                Options.VertexFormats.TryGetValue(geometry.name, out VertexDescriptor vertexFormat);
                 var mesh = ImportMesh(root, geometry.name, geometry, geometry.Item as mesh, vertexFormat);
                 ColladaGeometries.Add(geometry.id, mesh);
             }

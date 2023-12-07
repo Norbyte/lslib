@@ -76,7 +76,7 @@ namespace ConverterApp
             set { debugSettings = value; }
         }
 
-        private Game selectedGame = Game.DivinityOriginalSin2DE;
+        private Game selectedGame = Game.BaldursGate3;
 
         public int SelectedGame
         {

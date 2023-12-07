@@ -4,18 +4,12 @@ using System.IO;
 
 namespace LSLib.LS
 {
-    public class LSBWriter
+    public class LSBWriter(Stream stream)
     {
-        private Stream stream;
         private BinaryWriter writer;
-        private Dictionary<string, UInt32> staticStrings = new Dictionary<string, UInt32>();
+        private Dictionary<string, UInt32> staticStrings = [];
         private UInt32 nextStaticStringId = 0;
         private UInt32 Version;
-
-        public LSBWriter(Stream stream)
-        {
-            this.stream = stream;
-        }
 
         public void Write(Resource rsrc)
         {
@@ -62,7 +56,7 @@ namespace LSLib.LS
                 writer.Write((UInt32)0); // Offset of region, will be updater after we finished serializing
             }
 
-            List<UInt32> regionPositions = new List<UInt32>();
+            List<UInt32> regionPositions = [];
             foreach (var rgn in rsrc.Regions)
             {
                 regionPositions.Add((UInt32)stream.Position);

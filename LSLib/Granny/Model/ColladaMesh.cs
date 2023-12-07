@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
@@ -24,8 +24,8 @@ namespace LSLib.Granny.Model
         private int NormalsInputIndex = -1;
         private int TangentsInputIndex = -1;
         private int BinormalsInputIndex = -1;
-        private List<int> UVInputIndices = new List<int>();
-        private List<int> ColorInputIndices = new List<int>();
+        private List<int> UVInputIndices = [];
+        private List<int> ColorInputIndices = [];
         private VertexDescriptor InputVertexType;
         private VertexDescriptor OutputVertexType;
         private bool HasNormals = false;
@@ -77,7 +77,7 @@ namespace LSLib.Granny.Model
         void computeTangents()
         {
             // Check if the vertex format has at least one UV set
-            if (ConsolidatedVertices.Count() > 0)
+            if (ConsolidatedVertices.Count > 0)
             {
                 var v = ConsolidatedVertices[0];
                 if (v.Format.TextureCoordinates == 0)
@@ -194,7 +194,7 @@ namespace LSLib.Granny.Model
         {
             for (var vertexIdx = 0; vertexIdx < Vertices.Count; vertexIdx++)
             {
-                Vector3 N = new Vector3(0, 0, 0);
+                Vector3 N = new(0, 0, 0);
                 var numIndices = VertexIndexCount();
                 for (int triVertIdx = 0; triVertIdx < numIndices; triVertIdx++)
                 {
@@ -206,7 +206,7 @@ namespace LSLib.Granny.Model
                             VertexIndex(baseIdx + 1),
                             VertexIndex(baseIdx + 2)
                         };
-                        N = N + triangleNormalFromVertex(indices, triVertIdx - baseIdx);
+                        N += triangleNormalFromVertex(indices, triVertIdx - baseIdx);
                     }
                 }
 
@@ -266,8 +266,7 @@ namespace LSLib.Granny.Model
             if (id.Length == 0 || id[0] != '#')
                 throw new ParsingException("Only ID references are supported for input sources: " + id);
 
-            ColladaSource inputSource = null;
-            if (!Sources.TryGetValue(id.Substring(1), out inputSource))
+            if (!Sources.TryGetValue(id.Substring(1), out ColladaSource inputSource))
                 throw new ParsingException("Input source does not exist: " + id);
 
             return inputSource;
@@ -361,7 +360,7 @@ namespace LSLib.Granny.Model
         private void ImportColors()
         {
             ColorInputIndices.Clear();
-            Colors = new List<List<Vector4>>();
+            Colors = [];
             foreach (var input in Inputs)
             {
                 if (input.semantic == "COLOR")
@@ -402,7 +401,7 @@ namespace LSLib.Granny.Model
         {
             bool flip = Options.FlipUVs;
             UVInputIndices.Clear();
-            UVs = new List<List<Vector2>>();
+            UVs = [];
             foreach (var input in Inputs)
             {
                 if (input.semantic == "TEXCOORD")
@@ -413,7 +412,7 @@ namespace LSLib.Granny.Model
                         throw new ParsingException("Only ID references are supported for UV input sources");
 
                     ColladaSource inputSource = null;
-                    if (!Sources.TryGetValue(input.source.Substring(1), out inputSource))
+                    if (!Sources.TryGetValue(input.source[1..], out inputSource))
                         throw new ParsingException("UV input source does not exist: " + input.source);
 
                     List<Single> s = null, t = null;
@@ -434,7 +433,7 @@ namespace LSLib.Granny.Model
 
         private void ImportSources()
         {
-            Sources = new Dictionary<String, ColladaSource>();
+            Sources = [];
             foreach (var source in Mesh.source)
             {
                 var src = ColladaSource.FromCollada(source);
@@ -444,8 +443,10 @@ namespace LSLib.Granny.Model
 
         private VertexDescriptor FindVertexFormat(bool isSkinned)
         {
-            var desc = new VertexDescriptor();
-            desc.PositionType = PositionType.Float3;
+            var desc = new VertexDescriptor
+            {
+                PositionType = PositionType.Float3
+            };
             if (isSkinned)
             {
                 desc.HasBoneWeights = true;
@@ -497,10 +498,7 @@ namespace LSLib.Granny.Model
             ImportSources();
             ImportFaces();
 
-            if (vertexFormat == null)
-            {
-                vertexFormat = FindVertexFormat(isSkinned);
-            }
+            vertexFormat ??= FindVertexFormat(isSkinned);
 
             InputVertexType = vertexFormat;
             OutputVertexType = new VertexDescriptor
@@ -534,13 +532,13 @@ namespace LSLib.Granny.Model
             ImportColors();
             ImportUVs();
 
-            if (UVInputIndices.Count() > 0 || ColorInputIndices.Count() > 0 
+            if (UVInputIndices.Count > 0 || ColorInputIndices.Count > 0
                 || NormalsInputIndex != -1 || TangentsInputIndex != -1 || BinormalsInputIndex != -1)
             {
                 var outVertexIndices = new Dictionary<int[], int>(new VertexIndexComparer());
                 ConsolidatedIndices = new List<int>(TriangleCount * 3);
                 ConsolidatedVertices = new List<Vertex>(Vertices.Count);
-                OriginalToConsolidatedVertexIndexMap = new Dictionary<int, List<int>>();
+                OriginalToConsolidatedVertexIndexMap = [];
                 for (var vert = 0; vert < TriangleCount * 3; vert++)
                 {
                     var index = new int[InputOffsetCount];
@@ -549,8 +547,7 @@ namespace LSLib.Granny.Model
                         index[i] = Indices[vert * InputOffsetCount + i];
                     }
 
-                    int consolidatedIndex;
-                    if (!outVertexIndices.TryGetValue(index, out consolidatedIndex))
+                    if (!outVertexIndices.TryGetValue(index, out int consolidatedIndex))
                     {
                         var vertexIndex = index[VertexInputIndex];
                         consolidatedIndex = ConsolidatedVertices.Count;
@@ -567,21 +564,20 @@ namespace LSLib.Granny.Model
                         {
                             vertex.Binormal = Binormals[index[BinormalsInputIndex]];
                         }
-                        for (int uv = 0; uv < UVInputIndices.Count(); uv++ )
+                        for (int uv = 0; uv < UVInputIndices.Count; uv++)
                         {
                             vertex.SetUV(uv, UVs[uv][index[UVInputIndices[uv]]]);
                         }
-                        for (int color = 0; color < ColorInputIndices.Count(); color++)
+                        for (int color = 0; color < ColorInputIndices.Count; color++)
                         {
                             vertex.SetColor(color, Colors[color][index[ColorInputIndices[color]]]);
                         }
                         outVertexIndices.Add(index, consolidatedIndex);
                         ConsolidatedVertices.Add(vertex);
 
-                        List<int> mappedIndices = null;
-                        if (!OriginalToConsolidatedVertexIndexMap.TryGetValue(vertexIndex, out mappedIndices))
+                        if (!OriginalToConsolidatedVertexIndexMap.TryGetValue(vertexIndex, out List<int> mappedIndices))
                         {
-                            mappedIndices = new List<int>();
+                            mappedIndices = [];
                             OriginalToConsolidatedVertexIndexMap.Add(vertexIndex, mappedIndices);
                         }
 
@@ -603,9 +599,9 @@ namespace LSLib.Granny.Model
                 for (var vert = 0; vert < TriangleCount * 3; vert++)
                     ConsolidatedIndices.Add(VertexIndex(vert));
 
-                OriginalToConsolidatedVertexIndexMap = new Dictionary<int, List<int>>();
+                OriginalToConsolidatedVertexIndexMap = [];
                 for (var i = 0; i < Vertices.Count; i++)
-                    OriginalToConsolidatedVertexIndexMap.Add(i, new List<int> { i });
+                    OriginalToConsolidatedVertexIndexMap.Add(i, [i]);
             }
 
             if ((InputVertexType.TangentType == NormalType.None 

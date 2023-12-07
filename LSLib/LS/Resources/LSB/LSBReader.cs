@@ -4,17 +4,11 @@ using System.IO;
 
 namespace LSLib.LS
 {
-    public class LSBReader : IDisposable
+    public class LSBReader(Stream stream) : IDisposable
     {
-        private Stream stream;
         private BinaryReader reader;
-        private Dictionary<UInt32, string> staticStrings = new Dictionary<UInt32, string>();
+        private Dictionary<UInt32, string> staticStrings = [];
         private bool IsBG3;
-
-        public LSBReader(Stream stream)
-        {
-            this.stream = stream;
-        }
 
         public void Dispose()
         {
@@ -40,8 +34,10 @@ namespace LSLib.LS
                 IsBG3 = (header.Signature == BitConverter.ToUInt32(LSBHeader.SignatureBG3, 0));
                 ReadStaticStrings();
 
-                Resource rsrc = new Resource();
-                rsrc.Metadata = header.Metadata;
+                Resource rsrc = new Resource
+                {
+                    Metadata = header.Metadata
+                };
                 ReadRegions(rsrc);
                 return rsrc;
             }
@@ -55,8 +51,10 @@ namespace LSLib.LS
                 UInt32 regionNameId = reader.ReadUInt32();
                 UInt32 regionOffset = reader.ReadUInt32();
 
-                Region rgn = new Region();
-                rgn.RegionName = staticStrings[regionNameId];
+                Region rgn = new Region
+                {
+                    RegionName = staticStrings[regionNameId]
+                };
                 var lastRegionPos = stream.Position;
 
                 stream.Seek(regionOffset, SeekOrigin.Begin);
@@ -85,8 +83,10 @@ namespace LSLib.LS
 
             for (UInt32 i = 0; i < childCount; i++)
             {
-                Node child = new Node();
-                child.Parent = node;
+                Node child = new Node
+                {
+                    Parent = node
+                };
                 ReadNode(child);
                 node.AppendChild(child);
             }
@@ -101,16 +101,20 @@ namespace LSLib.LS
                 case NodeAttribute.DataType.DT_FixedString:
                 case NodeAttribute.DataType.DT_LSString:
                     {
-                        var attr = new NodeAttribute(type);
-                        attr.Value = ReadString(true);
+                        var attr = new NodeAttribute(type)
+                        {
+                            Value = ReadString(true)
+                        };
                         return attr;
                     }
 
                 case NodeAttribute.DataType.DT_WString:
                 case NodeAttribute.DataType.DT_LSWString:
                     {
-                        var attr = new NodeAttribute(type);
-                        attr.Value = ReadWideString(true);
+                        var attr = new NodeAttribute(type)
+                        {
+                            Value = ReadWideString(true)
+                        };
                         return attr;
                     }
 

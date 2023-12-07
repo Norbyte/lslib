@@ -8,21 +8,16 @@ using System.Xml;
 
 namespace LSLib.LS
 {
-    public class LSXReader : IDisposable
+    public class LSXReader(Stream stream) : IDisposable
     {
-        private Stream stream;
+        private Stream stream = stream;
         private XmlReader reader;
         private Resource resource;
         private Region currentRegion;
         private List<Node> stack;
         private int lastLine, lastColumn;
         private LSXVersion Version = LSXVersion.V3;
-        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
-
-        public LSXReader(Stream stream)
-        {
-            this.stream = stream;
-        }
+        public NodeSerializationSettings SerializationSettings = new();
 
         public void Dispose()
         {
@@ -55,9 +50,11 @@ namespace LSLib.LS
                             throw new InvalidFormatException(String.Format("Expected <argument>: {0}", reader.Name));
                         }
 
-                        var arg = new TranslatedFSStringArgument();
-                        arg.Key = reader["key"];
-                        arg.Value = reader["value"];
+                        var arg = new TranslatedFSStringArgument
+                        {
+                            Key = reader["key"],
+                            Value = reader["value"]
+                        };
 
                         while (reader.Read() && reader.NodeType != XmlNodeType.Element);
                         if (reader.Name != "string")
@@ -88,7 +85,7 @@ namespace LSLib.LS
             {
                 case "save":
                     // Root element
-                    if (stack.Count() > 0)
+                    if (stack.Count > 0)
                         throw new InvalidFormatException("Node <save> was unexpected.");
                     break;
 
@@ -125,7 +122,7 @@ namespace LSLib.LS
                         throw new InvalidFormatException("A <node> must be located inside a region.");
 
                     Node node;
-                    if (stack.Count() == 0)
+                    if (stack.Count == 0)
                     {
                         // The node is the root node of the region
                         node = currentRegion;
@@ -133,14 +130,15 @@ namespace LSLib.LS
                     else
                     {
                         // New node under the current parent
-                        node = new Node();
-                        node.Parent = stack.Last();
+                        node = new Node
+                        {
+                            Parent = stack.Last()
+                        };
                     }
 
                     node.Name = reader["id"];
                     Debug.Assert(node.Name != null);
-                    if (node.Parent != null)
-                        node.Parent.AppendChild(node);
+                    node.Parent?.AppendChild(node);
 
                     if (!reader.IsEmptyElement)
                         stack.Add(node);
@@ -168,10 +166,7 @@ namespace LSLib.LS
 
                     if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)
                     {
-                        if (attr.Value == null)
-                        {
-                            attr.Value = new TranslatedString();
-                        }
+                        attr.Value ??= new TranslatedString();
 
                         var ts = ((TranslatedString)attr.Value);
                         ts.Handle = reader["handle"];
@@ -258,7 +253,7 @@ namespace LSLib.LS
         {
             resource = new Resource();
             currentRegion = null;
-            stack = new List<Node>();
+            stack = [];
             lastLine = lastColumn = 0;
             var resultResource = resource;
 

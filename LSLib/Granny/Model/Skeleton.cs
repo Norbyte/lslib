@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.GR2;
 using System.Xml;
-using LSLib.LS.Story;
-using System.Reflection;
 
 namespace LSLib.Granny.Model
 {
@@ -51,12 +49,12 @@ namespace LSLib.Granny.Model
             }
 
             var iwt = WorldTransform.Inverted();
-            InverseWorldTransform = new float[] {
+            InverseWorldTransform = [
                 iwt[0, 0], iwt[0, 1], iwt[0, 2], iwt[0, 3],
                 iwt[1, 0], iwt[1, 1], iwt[1, 2], iwt[1, 3],
                 iwt[2, 0], iwt[2, 1], iwt[2, 2], iwt[2, 3],
                 iwt[3, 0], iwt[3, 1], iwt[3, 2], iwt[3, 3]
-            };
+            ];
         }
 
         private void ImportLSLibProfile(node node)
@@ -83,21 +81,25 @@ namespace LSLib.Granny.Model
         public static Bone FromCollada(node bone, int parentIndex, List<Bone> bones, Dictionary<string, Bone> boneSIDs, Dictionary<string, Bone> boneIDs)
         {
             var transMat = ColladaHelpers.TransformFromNode(bone);
-            var colladaBone = new Bone();
-            colladaBone.TransformSID = transMat.TransformSID;
             var myIndex = bones.Count;
-            bones.Add(colladaBone);
-            boneSIDs.Add(bone.sid, colladaBone);
+            var colladaBone = new Bone
+            {
+                TransformSID = transMat.TransformSID,
+                ParentIndex = parentIndex,
+                Name = bone.name,
+                LODError = 0, // TODO
+                OriginalTransform = transMat.transform,
+                Transform = Transform.FromMatrix4(transMat.transform)
+            };
+
             if (bone.id != null)
             {
                 boneIDs.Add(bone.id, colladaBone);
             }
 
-            colladaBone.ParentIndex = parentIndex;
-            colladaBone.Name = bone.name;
-            colladaBone.LODError = 0; // TODO
-            colladaBone.OriginalTransform = transMat.transform;
-            colladaBone.Transform = Transform.FromMatrix4(transMat.transform);
+            bones.Add(colladaBone);
+            boneSIDs.Add(bone.sid, colladaBone);
+
             colladaBone.UpdateWorldTransforms(bones);
             colladaBone.ImportLSLibProfile(bone);
 
@@ -131,43 +133,41 @@ namespace LSLib.Granny.Model
 
         public node MakeCollada(XmlDocument Xml)
         {
-            var node = new node();
-            node.id = "Bone_" + Name.Replace(' ', '_');
-            node.name = Name; // .Replace(' ', '_');
-            node.sid = Name.Replace(' ', '_');
-            node.type = NodeType.JOINT;
-
-            var transforms = new List<object>();
-            var transformTypes = new List<ItemsChoiceType2>();
-
-            var transform = new matrix();
-            transform.sid = "Transform";
             var mat = Transform.ToMatrix4();
             mat.Transpose();
-            transform.Values = new double[] {
-                mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
-                mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
-                mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
-                mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3]
-            };
-            transforms.Add(transform);
-            transformTypes.Add(ItemsChoiceType2.matrix);
 
-            node.Items = transforms.ToArray();
-            node.ItemsElementName = transformTypes.ToArray();
-
-            node.extra = new extra[]
+            return new node
             {
-                new extra
-                {
-                    technique = new technique[]
-                    {
-                        ExportLSLibProfile(Xml)
-                    }
-                }
-            };
+                id = "Bone_" + Name.Replace(' ', '_'),
+                name = Name, // .Replace(' ', '_');
+                sid = Name.Replace(' ', '_'),
+                type = NodeType.JOINT,
 
-            return node;
+                Items = [
+                    new matrix
+                    {
+                        sid = "Transform",
+                        Values = [
+                            mat[0, 0], mat[0, 1], mat[0, 2], mat[0, 3],
+                            mat[1, 0], mat[1, 1], mat[1, 2], mat[1, 3],
+                            mat[2, 0], mat[2, 1], mat[2, 2], mat[2, 3],
+                            mat[3, 0], mat[3, 1], mat[3, 2], mat[3, 3]
+                        ]
+                    }
+                ],
+                ItemsElementName = [ItemsChoiceType2.matrix],
+
+                extra =
+                [
+                    new extra
+                    {
+                        technique =
+                        [
+                            ExportLSLibProfile(Xml)
+                        ]
+                    }
+                ]
+            };
         }
     }
 
@@ -190,12 +190,14 @@ namespace LSLib.Granny.Model
 
         public static Skeleton FromCollada(node root)
         {
-            var skeleton = new Skeleton();
-            skeleton.Bones = new List<Bone>();
-            skeleton.LODType = 1;
-            skeleton.Name = root.name;
-            skeleton.BonesBySID = new Dictionary<string, Bone>();
-            skeleton.BonesByID = new Dictionary<string, Bone>();
+            var skeleton = new Skeleton
+            {
+                Bones = [],
+                LODType = 1,
+                Name = root.name,
+                BonesBySID = [],
+                BonesByID = []
+            };
             Bone.FromCollada(root, -1, skeleton.Bones, skeleton.BonesBySID, skeleton.BonesByID);
             return skeleton;
         }

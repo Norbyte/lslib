@@ -15,8 +15,8 @@ namespace LSLib.LS.Stats
         public StatEntryType Type;
         public StatEntry BasedOn;
         public CodeLocation Location;
-        public Dictionary<string, object> Properties = new Dictionary<string, object>();
-        public Dictionary<string, CodeLocation> PropertyLocations = new Dictionary<string, CodeLocation>();
+        public Dictionary<string, object> Properties = [];
+        public Dictionary<string, CodeLocation> PropertyLocations = [];
     }
 
     /// <summary>
@@ -71,10 +71,10 @@ namespace LSLib.LS.Stats
     public class StatLoadingContext
     {
         public StatDefinitionRepository Definitions;
-        public List<StatLoadingError> Errors = new List<StatLoadingError>();
-        public Dictionary<string, Dictionary<string, StatDeclaration>> DeclarationsByType = new Dictionary<string, Dictionary<string, StatDeclaration>>();
-        public Dictionary<string, Dictionary<string, StatDeclaration>> ResolvedDeclarationsByType = new Dictionary<string, Dictionary<string, StatDeclaration>>();
-        public Dictionary<string, Dictionary<string, object>> GuidResources = new Dictionary<string, Dictionary<string, object>>();
+        public List<StatLoadingError> Errors = [];
+        public Dictionary<string, Dictionary<string, StatDeclaration>> DeclarationsByType = [];
+        public Dictionary<string, Dictionary<string, StatDeclaration>> ResolvedDeclarationsByType = [];
+        public Dictionary<string, Dictionary<string, object>> GuidResources = [];
 
         public void LogError(string code, string message, string path = null, int line = 0, string statObjectName = null)
         {
@@ -89,20 +89,14 @@ namespace LSLib.LS.Stats
         }
     }
 
-    class StatEntryReferenceResolver
+    class StatEntryReferenceResolver(StatLoadingContext context)
     {
-        private readonly StatLoadingContext Context;
         public bool AllowMappingErrors = false;
 
         private class BaseClassMapping
         {
             public StatDeclaration Declaration;
             public StatDeclaration BaseClass;
-        }
-        
-        public StatEntryReferenceResolver(StatLoadingContext context)
-        {
-            Context = context;
         }
 
         public bool ResolveUsageRef(
@@ -112,9 +106,9 @@ namespace LSLib.LS.Stats
         {
             var props = declaration.Properties;
             var name = (string)props[type.NameProperty];
-            if (type.BasedOnProperty != null && props.ContainsKey(type.BasedOnProperty))
+            if (type.BasedOnProperty != null && props.TryGetValue(type.BasedOnProperty, out object value))
             {
-                var baseClass = (string)props[type.BasedOnProperty];
+                var baseClass = (string)value;
 
                 if (declarations.TryGetValue(baseClass, out StatDeclaration baseDeclaration))
                 {
@@ -123,7 +117,7 @@ namespace LSLib.LS.Stats
                 }
                 else
                 {
-                    Context.LogError(DiagnosticCode.StatBaseClassNotKnown, $"Stats entry '{name}' references nonexistent base '{baseClass}'",
+                    context.LogError(DiagnosticCode.StatBaseClassNotKnown, $"Stats entry '{name}' references nonexistent base '{baseClass}'",
                         declaration.Location.FileName, declaration.Location.StartLine, name);
                     basedOn = null;
                     return false;
@@ -188,20 +182,13 @@ namespace LSLib.LS.Stats
         }
     }
 
-    class StatLoaderReferenceValidator : IStatReferenceValidator
+    class StatLoaderReferenceValidator(StatLoadingContext ctx) : IStatReferenceValidator
     {
-        private readonly StatLoadingContext Context;
-
-        public StatLoaderReferenceValidator(StatLoadingContext ctx)
-        {
-            Context = ctx;
-        }
-
         public bool IsValidReference(string reference, string statType)
         {
-            if (Context.DeclarationsByType.TryGetValue(statType, out var stats))
+            if (ctx.DeclarationsByType.TryGetValue(statType, out var stats))
             {
-                return stats.TryGetValue(reference, out var stat);
+                return stats.TryGetValue(reference, out _);
             }
 
             return false;
@@ -209,9 +196,9 @@ namespace LSLib.LS.Stats
 
         public bool IsValidGuidResource(string name, string resourceType)
         {
-            if (Context.GuidResources.TryGetValue(resourceType, out var resources))
+            if (ctx.GuidResources.TryGetValue(resourceType, out var resources))
             {
-                return resources.TryGetValue(name, out var resource);
+                return resources.TryGetValue(name, out _);
             }
 
             return false;
@@ -221,8 +208,8 @@ namespace LSLib.LS.Stats
     public class StatLoader
     {
         private readonly StatLoadingContext Context;
-        private StatValueParserFactory ParserFactory;
-        private StatLoaderReferenceValidator ReferenceValidator;
+        private readonly StatValueParserFactory ParserFactory;
+        private readonly StatLoaderReferenceValidator ReferenceValidator;
 
         public StatLoader(StatLoadingContext ctx)
         {
@@ -246,7 +233,7 @@ namespace LSLib.LS.Stats
             return parsed ? parser.GetDeclarations() : null;
         }
 
-        private void AddDeclarations(string path, List<StatDeclaration> declarations)
+        private void AddDeclarations(List<StatDeclaration> declarations)
         {
             foreach (var declaration in declarations)
             {
@@ -270,11 +257,10 @@ namespace LSLib.LS.Stats
                     Context.LogError(DiagnosticCode.StatNameMissing, $"Stat entry has no '{type.NameProperty}' property", declaration.Location.FileName, declaration.Location.StartLine);
                     continue;
                 }
-                
-                Dictionary<String, StatDeclaration> declarationsByType;
-                if (!Context.DeclarationsByType.TryGetValue(statType, out declarationsByType))
+
+                if (!Context.DeclarationsByType.TryGetValue(statType, out Dictionary<string, StatDeclaration> declarationsByType))
                 {
-                    declarationsByType = new Dictionary<string, StatDeclaration>();
+                    declarationsByType = [];
                     Context.DeclarationsByType[statType] = declarationsByType;
                 }
 
@@ -289,7 +275,7 @@ namespace LSLib.LS.Stats
             var stats = ParseStatStream(path, stream);
             if (stats != null)
             {
-                AddDeclarations(path, stats);
+                AddDeclarations(stats);
             }
         }
 
@@ -336,7 +322,7 @@ namespace LSLib.LS.Stats
 
             if (errorText != null)
             {
-                if (value is string && ((string)value).Length > 500)
+                if (value is string v && v.Length > 500)
                 {
                     Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: {errorText}",
                         location?.FileName, location?.StartLine ?? 0, declarationName);
@@ -373,7 +359,7 @@ namespace LSLib.LS.Stats
                 Type = type,
                 BasedOn = null, // FIXME
                 Location = location,
-                Properties = new Dictionary<string, object>(),
+                Properties = [],
                 PropertyLocations = propertyLocations
             };
 
@@ -431,10 +417,9 @@ namespace LSLib.LS.Stats
 
         public void LoadGuidResources(XmlDocument doc, string typeName, string regionName)
         {
-            Dictionary<string, object> guidResources;
-            if (!Context.GuidResources.TryGetValue(typeName, out guidResources))
+            if (!Context.GuidResources.TryGetValue(typeName, out Dictionary<string, object> guidResources))
             {
-                guidResources = new Dictionary<string, object>();
+                guidResources = [];
                 Context.GuidResources[typeName] = guidResources;
             }
 

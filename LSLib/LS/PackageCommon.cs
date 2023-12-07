@@ -6,11 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LSLib.LS.Enums;
 using LSLib.Native;
-using Alphaleonis.Win32.Filesystem;
-using Path = Alphaleonis.Win32.Filesystem.Path;
-using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
@@ -440,7 +435,7 @@ namespace LSLib.LS
             info.ArchivePart = entry.ArchivePart;
             info.Crc = 0;
 
-            info.Flags = entry.UncompressedSize > 0 ? BinUtils.MakeCompressionFlags(CompressionMethod.Zlib, CompressionLevel.DefaultCompression) : (uint) 0;
+            info.Flags = entry.UncompressedSize > 0 ? BinUtils.MakeCompressionFlags(CompressionMethod.Zlib, LSCompressionLevel.DefaultCompression) : (uint) 0;
 
             return info;
         }
@@ -537,15 +532,11 @@ namespace LSLib.LS
 
         public override UInt32 CRC() => throw new NotImplementedException("!");
 
-        public override Stream MakeStream() => _stream ?? (_stream = File.Open(FilesystemPath, FileMode.Open, FileAccess.Read, FileShare.Read));
+        public override Stream MakeStream() => _stream ??= File.Open(FilesystemPath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
         public override void ReleaseStream()
         {
-            if (_stream == null)
-            {
-                return;
-            }
-            _stream.Dispose();
+            _stream?.Dispose();
             _stream = null;
         }
 
@@ -602,16 +593,10 @@ namespace LSLib.LS
     {
         public const PackageVersion CurrentVersion = PackageVersion.V18;
 
-        public static byte[] Signature =
-        {
-            0x4C,
-            0x53,
-            0x50,
-            0x4B
-        };
+        public readonly static byte[] Signature = [ 0x4C, 0x53, 0x50, 0x4B ];
 
-        public PackageMetadata Metadata = new PackageMetadata();
-        public List<AbstractFileInfo> Files = new List<AbstractFileInfo>();
+        public PackageMetadata Metadata = new();
+        public List<AbstractFileInfo> Files = [];
         public PackageVersion Version;
 
         public static string MakePartFilename(string path, int part)
@@ -676,16 +661,12 @@ namespace LSLib.LS
 
                 try
                 {
-                    using (var inReader = new BinaryReader(inStream))
+                    using var inReader = new BinaryReader(inStream);
+                    using var outFile = File.Open(outPath, FileMode.Create, FileAccess.Write);
+                    int read;
+                    while ((read = inReader.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        using (FileStream outFile = File.Open(outPath, FileMode.Create, FileAccess.Write))
-                        {
-                            int read;
-                            while ((read = inReader.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                outFile.Write(buffer, 0, read);
-                            }
-                        }
+                        outFile.Write(buffer, 0, read);
                     }
                 }
                 finally
@@ -698,11 +679,9 @@ namespace LSLib.LS
         public void UncompressPackage(string packagePath, string outputPath, Func<AbstractFileInfo, bool> filter = null)
         {
             ProgressUpdate("Reading package headers ...", 0, 1, null);
-            using (var reader = new PackageReader(packagePath))
-            {
-                Package package = reader.Read();
-                UncompressPackage(package, outputPath, filter);
-            }
+            using var reader = new PackageReader(packagePath);
+            Package package = reader.Read();
+            UncompressPackage(package, outputPath, filter);
         }
 
         private static Package CreatePackageFromPath(string path)
@@ -737,14 +716,12 @@ namespace LSLib.LS
             package.Metadata.Priority = options.Priority;
 
             ProgressUpdate("Creating archive ...", 0, 1, null);
-            using (var writer = new PackageWriter(package, packagePath))
-            {
-                writer.WriteProgress += WriteProgressUpdate;
-                writer.Version = options.Version;
-                writer.Compression = options.Compression;
-                writer.CompressionLevel = options.FastCompression ? CompressionLevel.FastCompression : CompressionLevel.DefaultCompression;
-                writer.Write();
-            }
+            using var writer = new PackageWriter(package, packagePath);
+            writer.WriteProgress += WriteProgressUpdate;
+            writer.Version = options.Version;
+            writer.Compression = options.Compression;
+            writer.LSCompressionLevel = options.FastCompression ? LSCompressionLevel.FastCompression : LSCompressionLevel.DefaultCompression;
+            writer.Write();
         }
     }
 }

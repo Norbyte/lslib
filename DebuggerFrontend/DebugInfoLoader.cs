@@ -1,5 +1,4 @@
 ﻿using System;
-using Google.Protobuf;
 using System.IO;
 using LSLib.LS;
 using LSLib.LS.Story.Compiler;
@@ -204,7 +203,7 @@ namespace LSTools.DebuggerFrontend
             var compressed = new byte[msgPayload.Length - 4];
             Array.Copy(msgPayload, 0, compressed, 0, msgPayload.Length - 4);
 
-            byte flags = BinUtils.MakeCompressionFlags(LSLib.LS.Enums.CompressionMethod.LZ4, LSLib.LS.Enums.CompressionLevel.FastCompression);
+            byte flags = BinUtils.MakeCompressionFlags(LSLib.LS.Enums.CompressionMethod.LZ4, LSLib.LS.Enums.LSCompressionLevel.FastCompression);
             byte[] decompressed = BinUtils.Decompress(compressed, (int)decompressedSize, flags);
             var msg = StoryDebugInfoMsg.Parser.ParseFrom(decompressed);
             var debugInfo = FromProtobuf(msg);

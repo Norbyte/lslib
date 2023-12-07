@@ -4,16 +4,10 @@ using Newtonsoft.Json;
 
 namespace LSLib.LS
 {
-    public class LSJReader : IDisposable
+    public class LSJReader(Stream stream) : IDisposable
     {
-        private Stream stream;
-        private JsonTextReader reader;
-        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
-
-        public LSJReader(Stream stream)
-        {
-            this.stream = stream;
-        }
+        private readonly Stream stream = stream;
+        public NodeSerializationSettings SerializationSettings = new();
 
         public void Dispose()
         {
@@ -26,11 +20,9 @@ namespace LSLib.LS
             settings.Converters.Add(new LSJResourceConverter(SerializationSettings));
             var serializer = JsonSerializer.Create(settings);
 
-            using (var streamReader = new StreamReader(stream))
-            using (this.reader = new JsonTextReader(streamReader))
-            {
-                return serializer.Deserialize<Resource>(this.reader);
-            }
+            using var streamReader = new StreamReader(stream);
+            using var reader = new JsonTextReader(streamReader);
+            return serializer.Deserialize<Resource>(reader);
         }
     }
 }

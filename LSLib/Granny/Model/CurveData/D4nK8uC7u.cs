@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model.CurveData
 {
     public class D4nK8uC7u : AnimationCurveData
     {
-        private static float[] ScaleTable = {
+        private static readonly float[] ScaleTable = [
             1.4142135f, 0.70710677f, 0.35355338f, 0.35355338f,
             0.35355338f, 0.17677669f, 0.17677669f, 0.17677669f,
             -1.4142135f, -0.70710677f, -0.35355338f, -0.35355338f,
             -0.35355338f, -0.17677669f, -0.17677669f, -0.17677669f
-        };
+        ];
 
-        private static float[] OffsetTable = {
+        private static readonly float[] OffsetTable = [
             -0.70710677f, -0.35355338f, -0.53033006f, -0.17677669f,
             0.17677669f, -0.17677669f, -0.088388346f, 0.0f,
             0.70710677f, 0.35355338f, 0.53033006f, 0.17677669f,
             -0.17677669f, 0.17677669f, 0.088388346f, -0.0f
-        };
+        ];
 
         [Serialization(Type = MemberType.Inline)]
         public CurveDataHeader CurveDataHeader_D4nK8uC7u;

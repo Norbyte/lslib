@@ -6,8 +6,8 @@ namespace LSLib.Granny.GR2
 {
     public static class Helpers
     {
-        private static Dictionary<Type, ObjectCtor> CachedConstructors = new Dictionary<Type, ObjectCtor>();
-        private static Dictionary<Type, ArrayCtor> CachedArrayConstructors = new Dictionary<Type, ArrayCtor>();
+        private static readonly Dictionary<Type, ObjectCtor> CachedConstructors = [];
+        private static readonly Dictionary<Type, ArrayCtor> CachedArrayConstructors = [];
 
         public delegate object ObjectCtor();
         public delegate object ArrayCtor(int size);
@@ -34,8 +34,7 @@ namespace LSLib.Granny.GR2
 
         public static object CreateArrayInstance(Type type, int size)
         {
-            ArrayCtor ctor;
-            if (!CachedArrayConstructors.TryGetValue(type, out ctor))
+            if (!CachedArrayConstructors.TryGetValue(type, out ArrayCtor ctor))
             {
                 var typeCtor = type.GetConstructor(new Type[] { typeof(int) });
                 var sizeParam = Expression.Parameter(typeof(int), "");

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
-using LSLib.Granny.Model.CurveData;
-using OpenTK;
+using OpenTK.Mathematics;
 
 namespace LSLib.Granny
 {
@@ -23,7 +22,7 @@ namespace LSLib.Granny
 
         private void ImportSources()
         {
-            Sources = new Dictionary<String, ColladaSource>();
+            Sources = [];
             foreach (var item in Animation.Items)
             {
                 if (item is source)
@@ -55,8 +54,7 @@ namespace LSLib.Granny
                 if (input.source[0] != '#')
                     throw new ParsingException("Only ID references are supported for animation input sources");
 
-                ColladaSource source;
-                if (!Sources.TryGetValue(input.source.Substring(1), out source))
+                if (!Sources.TryGetValue(input.source.Substring(1), out ColladaSource source))
                     throw new ParsingException("Animation sampler " + input.semantic + " references nonexistent source: " + input.source);
 
                 switch (input.semantic)
@@ -119,14 +117,13 @@ namespace LSLib.Granny
             if (channel == null)
                 throw new ParsingException("Animation " + Animation.id + " has no channel!");
 
-            var parts = channel.target.Split(new char[] { '/' });
+            var parts = channel.target.Split(['/']);
             if (parts.Length != 2)
                 throw new ParsingException("Unsupported channel target format: " + channel.target);
 
             if (skeleton != null)
             {
-                Bone bone = null;
-                if (!skeleton.BonesByID.TryGetValue(parts[0], out bone))
+                if (!skeleton.BonesByID.TryGetValue(parts[0], out Bone bone))
                     throw new ParsingException("Animation channel references nonexistent bone: " + parts[0]);
 
                 if (bone.TransformSID != parts[1])

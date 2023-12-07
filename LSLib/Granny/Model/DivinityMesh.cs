@@ -130,12 +130,12 @@ namespace LSLib.Granny.Model
         {
             return new DivinityFormatDesc
             {
-                Stream = new SByte[] { 0 },
-                Usage = new Byte[] { (byte)usage },
-                UsageIndex = new Byte[] { usageIndex },
-                RefType = new Byte[] { 0 },
-                Format = new Byte[] { (byte)format },
-                Size = new Byte[] { size }
+                Stream = [0],
+                Usage = [(byte)usage],
+                UsageIndex = [usageIndex],
+                RefType = [0],
+                Format = [(byte)format],
+                Size = [size]
             };
         }
 
@@ -278,12 +278,12 @@ namespace LSLib.Granny.Model
                 UserDefinedProperties = "",
                 UserMeshProperties = new DivinityMeshProperties
                 {
-                    Flags = new UInt32[] { 0, 0, 0, 0 },
-                    Lod = new Int32[] { -1 },
+                    Flags = [0, 0, 0, 0],
+                    Lod = [-1],
                     FormatDescs = null,
                     ExtendedData = null,
-                    LodDistance = new float[] { 3.40282347E+38f },
-                    IsImpostor = new Int32[] { 0 }
+                    LodDistance = [3.40282347E+38f],
+                    IsImpostor = [0]
                 },
                 LSMVersion = CurrentLSMVersion
             };
@@ -336,7 +336,7 @@ namespace LSLib.Granny.Model
                 else
                 {
                     LSMVersion = 0;
-                    UserMeshProperties.FormatDescs = new List<DivinityFormatDesc>();
+                    UserMeshProperties.FormatDescs = [];
                 }
             }
         }
@@ -357,7 +357,7 @@ namespace LSLib.Granny.Model
 
         public static string MeshFlagsToUserDefinedProperties(DivinityModelFlag meshFlags)
         {
-            List<string> properties = new List<string>();
+            List<string> properties = new();
             if (meshFlags.IsRigid())
             {
                 properties.Add(UserDefinedProperties_Rigid);

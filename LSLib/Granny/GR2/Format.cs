@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using OpenTK;
+using OpenTK.Mathematics;
 using System.IO;
 using System.Reflection;
 
@@ -183,29 +183,7 @@ namespace LSLib.Granny.GR2
 
         public override string ToString()
         {
-            var sb = new StringBuilder();
-            sb.Append("Rotation: (");
-            sb.Append(Rotation.X);
-            sb.Append(", ");
-            sb.Append(Rotation.Y);
-            sb.Append(", ");
-            sb.Append(Rotation.Z);
-            sb.Append(", ");
-            sb.Append(Rotation.W);
-            sb.Append("); Translation: (");
-            sb.Append(Translation.X);
-            sb.Append(", ");
-            sb.Append(Translation.Y);
-            sb.Append(", ");
-            sb.Append(Translation.Z);
-            sb.Append("); Scale: (");
-            sb.Append(ScaleShear[0, 0]);
-            sb.Append(", ");
-            sb.Append(ScaleShear[1, 1]);
-            sb.Append(", ");
-            sb.Append(ScaleShear[2, 2]);
-            sb.Append(")");
-            return sb.ToString();
+            return $"Rotation: ({Rotation.X}, {Rotation.Y}, {Rotation.Z}); Translation: ({Translation.X}, {Translation.Y}, {Translation.Z}); Scale: ({ScaleShear[0, 0]}, {ScaleShear[1, 1]}, {ScaleShear[2, 2]})";
         }
     }
 
@@ -217,47 +195,47 @@ namespace LSLib.Granny.GR2
         /// <summary>
         /// Magic value used for version 7 little-endian 32-bit Granny files
         /// </summary>
-        private static byte[] LittleEndian32Magic = new byte[] { 0x29, 0xDE, 0x6C, 0xC0, 0xBA, 0xA4, 0x53, 0x2B, 0x25, 0xF5, 0xB7, 0xA5, 0xF6, 0x66, 0xE2, 0xEE };
+        private static readonly byte[] LittleEndian32Magic = [0x29, 0xDE, 0x6C, 0xC0, 0xBA, 0xA4, 0x53, 0x2B, 0x25, 0xF5, 0xB7, 0xA5, 0xF6, 0x66, 0xE2, 0xEE];
 
         /// <summary>
         /// Magic value used for version 7 little-endian 32-bit Granny files
         /// </summary>
-        private static byte[] LittleEndian32Magic2 = new byte[] { 0x29, 0x75, 0x31, 0x82, 0xBA, 0x02, 0x11, 0x77, 0x25, 0x3A, 0x60, 0x2F, 0xF6, 0x6A, 0x8C, 0x2E };
+        private static readonly byte[] LittleEndian32Magic2 = [0x29, 0x75, 0x31, 0x82, 0xBA, 0x02, 0x11, 0x77, 0x25, 0x3A, 0x60, 0x2F, 0xF6, 0x6A, 0x8C, 0x2E];
         
         /// <summary>
         /// Magic value used for version 6 little-endian 32-bit Granny files
         /// </summary>
-        private static byte[] LittleEndian32MagicV6 = new byte[] { 0xB8, 0x67, 0xB0, 0xCA, 0xF8, 0x6D, 0xB1, 0x0F, 0x84, 0x72, 0x8C, 0x7E, 0x5E, 0x19, 0x00, 0x1E };
+        private static readonly byte[] LittleEndian32MagicV6 = [0xB8, 0x67, 0xB0, 0xCA, 0xF8, 0x6D, 0xB1, 0x0F, 0x84, 0x72, 0x8C, 0x7E, 0x5E, 0x19, 0x00, 0x1E];
 
         /// <summary>
         /// Magic value used for version 7 big-endian 32-bit Granny files
         /// </summary>
-        private static byte[] BigEndian32Magic = new byte[] { 0x0E, 0x11, 0x95, 0xB5, 0x6A, 0xA5, 0xB5, 0x4B, 0xEB, 0x28, 0x28, 0x50, 0x25, 0x78, 0xB3, 0x04 };
+        private static readonly byte[] BigEndian32Magic = [0x0E, 0x11, 0x95, 0xB5, 0x6A, 0xA5, 0xB5, 0x4B, 0xEB, 0x28, 0x28, 0x50, 0x25, 0x78, 0xB3, 0x04];
 
         /// <summary>
         /// Magic value used for version 7 big-endian 32-bit Granny files
         /// </summary>
-        private static byte[] BigEndian32Magic2 = new byte[] { 0x0E, 0x74, 0xA2, 0x0A, 0x6A, 0xEB, 0xEB, 0x64, 0xEB, 0x4E, 0x1E, 0xAB, 0x25, 0x91, 0xDB, 0x8F };
+        private static readonly byte[] BigEndian32Magic2 = [0x0E, 0x74, 0xA2, 0x0A, 0x6A, 0xEB, 0xEB, 0x64, 0xEB, 0x4E, 0x1E, 0xAB, 0x25, 0x91, 0xDB, 0x8F];
 
         /// <summary>
         /// Magic value used for version 7 little-endian 64-bit Granny files
         /// </summary>
-        private static byte[] LittleEndian64Magic = new byte[] { 0xE5, 0x9B, 0x49, 0x5E, 0x6F, 0x63, 0x1F, 0x14, 0x1E, 0x13, 0xEB, 0xA9, 0x90, 0xBE, 0xED, 0xC4 };
+        private static readonly byte[] LittleEndian64Magic = [0xE5, 0x9B, 0x49, 0x5E, 0x6F, 0x63, 0x1F, 0x14, 0x1E, 0x13, 0xEB, 0xA9, 0x90, 0xBE, 0xED, 0xC4];
 
         /// <summary>
         /// Magic value used for version 7 little-endian 64-bit Granny files
         /// </summary>
-        private static byte[] LittleEndian64Magic2 = new byte[] { 0xE5, 0x2F, 0x4A, 0xE1, 0x6F, 0xC2, 0x8A, 0xEE, 0x1E, 0xD2, 0xB4, 0x4C, 0x90, 0xD7, 0x55, 0xAF };
+        private static readonly byte[] LittleEndian64Magic2 = [0xE5, 0x2F, 0x4A, 0xE1, 0x6F, 0xC2, 0x8A, 0xEE, 0x1E, 0xD2, 0xB4, 0x4C, 0x90, 0xD7, 0x55, 0xAF];
 
         /// <summary>
         /// Magic value used for version 7 big-endian 64-bit Granny files
         /// </summary>
-        private static byte[] BigEndian64Magic = new byte[] { 0x31, 0x95, 0xD4, 0xE3, 0x20, 0xDC, 0x4F, 0x62, 0xCC, 0x36, 0xD0, 0x3A, 0xB1, 0x82, 0xFF, 0x89 };
+        private static readonly byte[] BigEndian64Magic = [0x31, 0x95, 0xD4, 0xE3, 0x20, 0xDC, 0x4F, 0x62, 0xCC, 0x36, 0xD0, 0x3A, 0xB1, 0x82, 0xFF, 0x89];
 
         /// <summary>
         /// Magic value used for version 7 big-endian 64-bit Granny files
         /// </summary>
-        private static byte[] BigEndian64Magic2 = new byte[] { 0x31, 0xC2, 0x4E, 0x7C, 0x20, 0x40, 0xA3, 0x25, 0xCC, 0xE1, 0xC2, 0x7A, 0xB1, 0x32, 0x49, 0xF3 };
+        private static readonly byte[] BigEndian64Magic2 = [0x31, 0xC2, 0x4E, 0x7C, 0x20, 0x40, 0xA3, 0x25, 0xCC, 0xE1, 0xC2, 0x7A, 0xB1, 0x32, 0x49, 0xF3];
 
         /// <summary>
         /// Size of magic value structure, in bytes
@@ -344,23 +322,14 @@ namespace LSLib.Granny.GR2
 
         public static byte[] SignatureFromFormat(Format format)
         {
-            switch (format)
+            return format switch
             {
-                case Format.LittleEndian32:
-                    return LittleEndian32Magic;
-
-                case Format.LittleEndian64:
-                    return LittleEndian64Magic;
-
-                case Format.BigEndian32:
-                    return BigEndian32Magic;
-
-                case Format.BigEndian64:
-                    return BigEndian64Magic;
-
-                default:
-                    throw new ArgumentException();
-            }
+                Format.LittleEndian32 => LittleEndian32Magic,
+                Format.LittleEndian64 => LittleEndian64Magic,
+                Format.BigEndian32 => BigEndian32Magic,
+                Format.BigEndian64 => BigEndian64Magic,
+                _ => throw new ArgumentException(),
+            };
         }
 
         public void SetFormat(Format format, bool alternateSignature)
@@ -369,45 +338,23 @@ namespace LSLib.Granny.GR2
 
             if (alternateSignature)
             {
-                switch (format)
+                this.signature = format switch
                 {
-                    case Format.LittleEndian32:
-                        this.signature = LittleEndian32Magic2;
-                        break;
-
-                    case Format.LittleEndian64:
-                        this.signature = LittleEndian64Magic2;
-                        break;
-
-                    case Format.BigEndian32:
-                        this.signature = BigEndian32Magic2;
-                        break;
-
-                    case Format.BigEndian64:
-                        this.signature = BigEndian64Magic2;
-                        break;
-                }
+                    Format.LittleEndian32 => LittleEndian32Magic2,
+                    Format.LittleEndian64 => LittleEndian64Magic2,
+                    Format.BigEndian32 => BigEndian32Magic2,
+                    Format.BigEndian64 => BigEndian64Magic2
+                };
             }
             else
             {
-                switch (format)
+                this.signature = format switch
                 {
-                    case Format.LittleEndian32:
-                        this.signature = LittleEndian32Magic;
-                        break;
-
-                    case Format.LittleEndian64:
-                        this.signature = LittleEndian64Magic;
-                        break;
-
-                    case Format.BigEndian32:
-                        this.signature = BigEndian32Magic;
-                        break;
-
-                    case Format.BigEndian64:
-                        this.signature = BigEndian64Magic;
-                        break;
-                }
+                    Format.LittleEndian32 => LittleEndian32Magic,
+                    Format.LittleEndian64 => LittleEndian64Magic,
+                    Format.BigEndian32 => BigEndian32Magic,
+                    Format.BigEndian64 => BigEndian64Magic
+                };
             }
         }
     }
@@ -494,14 +441,12 @@ namespace LSLib.Granny.GR2
 
         public UInt32 Size()
         {
-            UInt32 headerSize;
-            switch (version)
+            var headerSize = version switch
             {
-                case 6: headerSize = HeaderSize_V6; break;
-                case 7: headerSize = HeaderSize_V7; break;
-                default: throw new InvalidDataException("Cannot calculate CRC for unknown header versions.");
-            }
-
+                6 => HeaderSize_V6,
+                7 => HeaderSize_V7,
+                _ => throw new InvalidDataException("Cannot calculate CRC for unknown header versions."),
+            };
             return headerSize;
         }
 
@@ -642,8 +587,7 @@ namespace LSLib.Granny.GR2
             if (o == null)
                 return false;
 
-            var reference = o as SectionReference;
-            return reference != null && reference.Section == Section && reference.Offset == Offset;
+            return o is SectionReference reference && reference.Section == Section && reference.Offset == Offset;
         }
 
         public bool Equals(SectionReference reference)
@@ -680,8 +624,7 @@ namespace LSLib.Granny.GR2
             if (o == null)
                 return false;
 
-            var reference = o as RelocatableReference;
-            return reference != null && reference.Offset == Offset;
+            return o is RelocatableReference reference && reference.Offset == Offset;
         }
 
         public bool Equals(RelocatableReference reference)
@@ -792,7 +735,7 @@ namespace LSLib.Granny.GR2
 #endif
                 var originalPos = gr2.Stream.Position;
                 gr2.Seek(this);
-                Items = new List<RelocatableReference>();
+                Items = [];
                 for (int i = 0; i < Size; i++)
                 {
                     Items.Add(gr2.ReadReference());
@@ -863,61 +806,37 @@ namespace LSLib.Granny.GR2
 
         public UInt32 Size(GR2Reader gr2)
         {
-            switch (Type)
+            return Type switch
             {
-                case MemberType.Inline:
-                    return Definition.Resolve(gr2).Size(gr2);
+                MemberType.Inline => Definition.Resolve(gr2).Size(gr2),
 
-                case MemberType.Int8:
-                case MemberType.BinormalInt8:
-                case MemberType.UInt8:
-                case MemberType.NormalUInt8:
-                    return 1;
+                MemberType.Int8 => 1,
+                MemberType.BinormalInt8 => 1,
+                MemberType.UInt8 => 1,
+                MemberType.NormalUInt8 => 1,
 
-                case MemberType.Int16:
-                case MemberType.BinormalInt16:
-                case MemberType.UInt16:
-                case MemberType.NormalUInt16:
-                case MemberType.Real16:
-                    return 2;
+                MemberType.Int16 => 2,
+                MemberType.BinormalInt16 => 2,
+                MemberType.UInt16 => 2,
+                MemberType.NormalUInt16 => 2,
+                MemberType.Real16 => 2,
 
-                case MemberType.Reference:
-                    if (gr2.Magic.Is32Bit)
-                        return 4;
-                    else
-                        return 8;
+                MemberType.Reference => gr2.Magic.Is32Bit ? 4u : 8,
 
-                case MemberType.String:
-                case MemberType.Real32:
-                case MemberType.Int32:
-                case MemberType.UInt32:
-                    return 4;
+                MemberType.String => 4,
+                MemberType.Real32 => 4,
+                MemberType.Int32 => 4,
+                MemberType.UInt32 => 4,
 
-                case MemberType.VariantReference:
-                    if (gr2.Magic.Is32Bit)
-                        return 8;
-                    else
-                        return 16;
+                MemberType.VariantReference => gr2.Magic.Is32Bit ? 8u : 16,
+                MemberType.ArrayOfReferences => gr2.Magic.Is32Bit ? 8u : 12,
+                MemberType.ReferenceToArray => gr2.Magic.Is32Bit ? 8u : 12,
+                MemberType.ReferenceToVariantArray => gr2.Magic.Is32Bit ? 12u : 20,
 
-                case MemberType.ArrayOfReferences:
-                case MemberType.ReferenceToArray:
-                    if (gr2.Magic.Is32Bit)
-                        return 8;
-                    else
-                        return 12;
+                MemberType.Transform => 17 * 4,
 
-                case MemberType.ReferenceToVariantArray:
-                    if (gr2.Magic.Is32Bit)
-                        return 12;
-                    else
-                        return 20;
-
-                case MemberType.Transform:
-                    return 17 * 4;
-
-                default:
-                    throw new ParsingException(String.Format("Unhandled member type: {0}", Type.ToString()));
-            }
+                _ => throw new ParsingException($"Unhandled member type: {Type}")
+            };
         }
 
         public UInt32 MarshallingSize()
@@ -1028,7 +947,7 @@ namespace LSLib.Granny.GR2
             var type = info.FieldType;
             member.Name = info.Name;
             member.GrannyName = info.Name;
-            member.Extra = new UInt32[] { 0, 0, 0 };
+            member.Extra = [0, 0, 0];
             member.CachedField = info;
             member.HasCachedField = true;
 
@@ -1055,7 +974,7 @@ namespace LSLib.Granny.GR2
                     member.Type = MemberType.Int32;
                 else if (type == typeof(UInt32))
                     member.Type = MemberType.UInt32;
-                else if (type == typeof(Half))
+                else if (type == typeof(OpenTK.Mathematics.Half))
                     member.Type = MemberType.Real16;
                 else if (type == typeof(Single))
                     member.Type = MemberType.Real32;

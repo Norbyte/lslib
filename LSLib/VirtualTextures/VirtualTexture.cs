@@ -3,9 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LSLib.VirtualTextures
 {
@@ -40,7 +38,7 @@ namespace LSLib.VirtualTextures
             {
                 Type = FourCCElementType.Node,
                 FourCC = fourCC,
-                Children = new List<FourCCElement>()
+                Children = []
             };
         }
 
@@ -73,6 +71,28 @@ namespace LSLib.VirtualTextures
                 Blob = value
             };
         }
+
+        public FourCCElement GetChild(string fourCC)
+        {
+            foreach (var child in Children)
+            {
+                if (child.FourCC == fourCC)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public class FourCCTextureMeta
+    {
+        public string Name;
+        public int X;
+        public int Y;
+        public int Width;
+        public int Height;
     }
 
     public class TileSetFourCC
@@ -98,7 +118,7 @@ namespace LSLib.VirtualTextures
                 Int32 valueSize = header.Length;
                 if (header.ExtendedLength == 1)
                 {
-                    valueSize = valueSize | ((int)reader.ReadUInt32() << 16);
+                    valueSize |= ((int)reader.ReadUInt32() << 16);
                 }
 
                 switch (header.Format)
@@ -106,7 +126,7 @@ namespace LSLib.VirtualTextures
                     case 1:
                         {
                             cc.Type = FourCCElementType.Node;
-                            cc.Children = new List<FourCCElement>();
+                            cc.Children = [];
                             Read(fs, reader, valueSize, cc.Children);
                             break;
                         }
@@ -159,6 +179,27 @@ namespace LSLib.VirtualTextures
             Debug.Assert(fs.Position == end);
         }
 
+
+        public List<FourCCTextureMeta> ExtractTextureMetadata()
+        {
+            var metaList = new List<FourCCTextureMeta>();
+            var textures = Root.GetChild("ATLS").GetChild("TXTS").Children;
+            foreach (var tex in textures)
+            {
+                var meta = new FourCCTextureMeta
+                {
+                    Name = tex.GetChild("NAME").Str,
+                    Width = (int)tex.GetChild("WDTH").UInt,
+                    Height = (int)tex.GetChild("HGHT").UInt,
+                    X = (int)tex.GetChild("XXXX").UInt,
+                    Y = (int)tex.GetChild("YYYY").UInt
+                };
+                metaList.Add(meta);
+            }
+
+            return metaList;
+        }
+
         public void Write(Stream fs, BinaryWriter writer)
         {
             Write(fs, writer, Root);
@@ -166,58 +207,29 @@ namespace LSLib.VirtualTextures
 
         public void Write(Stream fs, BinaryWriter writer, FourCCElement element)
         {
-            var header = new GTSFourCCMetadata();
-            header.FourCCName = element.FourCC;
-
-            UInt32 length;
-            switch (element.Type)
+            var header = new GTSFourCCMetadata
             {
-                case FourCCElementType.Node:
-                    length = 0x10000000;
-                    break;
+                FourCCName = element.FourCC
+            };
 
-                case FourCCElementType.Int:
-                    length = 4;
-                    break;
-
-                case FourCCElementType.String:
-                    length = (UInt32)Encoding.Unicode.GetBytes(element.Str).Length + 2;
-                    break;
-
-                case FourCCElementType.BinaryInt:
-                case FourCCElementType.BinaryGuid:
-                    length = (UInt32)element.Blob.Length;
-                    break;
-
-                default:
-                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
-            }
-
-            switch (element.Type)
+            var length = element.Type switch
             {
-                case FourCCElementType.Node:
-                    header.Format = 1;
-                    break;
+                FourCCElementType.Node => (uint)0x10000000,
+                FourCCElementType.Int => (uint)4,
+                FourCCElementType.String => (UInt32)Encoding.Unicode.GetBytes(element.Str).Length + 2,
+                FourCCElementType.BinaryInt or FourCCElementType.BinaryGuid => (UInt32)element.Blob.Length,
+                _ => throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}"),
+            };
 
-                case FourCCElementType.Int:
-                    header.Format = 3;
-                    break;
-
-                case FourCCElementType.String:
-                    header.Format = 2;
-                    break;
-
-                case FourCCElementType.BinaryInt:
-                    header.Format = 8;
-                    break;
-
-                case FourCCElementType.BinaryGuid:
-                    header.Format = 0xD;
-                    break;
-
-                default:
-                    throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}");
-            }
+            header.Format = element.Type switch
+            {
+                FourCCElementType.Node => 1,
+                FourCCElementType.Int => 3,
+                FourCCElementType.String => 2,
+                FourCCElementType.BinaryInt => 8,
+                FourCCElementType.BinaryGuid => 0xD,
+                _ => throw new InvalidDataException($"Unsupported FourCC value type: {element.Type}"),
+            };
 
             header.Length = (UInt16)(length & 0xffff);
             if (length > 0xffff)
@@ -294,17 +306,17 @@ namespace LSLib.VirtualTextures
         public GTSPackedTileID[] PackedTileIDs;
         public GTSFlatTileInfo[] FlatTileInfos;
 
-        private Dictionary<int, PageFile> PageFiles = new Dictionary<int, PageFile>();
+        private readonly Dictionary<int, PageFile> PageFiles = [];
+        private readonly TileCompressor Compressor;
 
         public VirtualTileSet(string path, string pagePath)
         {
             PagePath = pagePath;
+            Compressor = new TileCompressor();
 
-            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-            using (var reader = new BinaryReader(fs))
-            {
-                LoadFromStream(fs, reader, false);
-            }
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+            using var reader = new BinaryReader(fs);
+            LoadFromStream(fs, reader, false);
         }
 
         public VirtualTileSet(string path) : this(path, Path.GetDirectoryName(path))
@@ -317,11 +329,9 @@ namespace LSLib.VirtualTextures
 
         public void Save(string path)
         {
-            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-            using (var writer = new BinaryWriter(fs))
-            {
-                SaveToStream(fs, writer);
-            }
+            using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+            using var writer = new BinaryWriter(fs);
+            SaveToStream(fs, writer);
         }
 
         public void Dispose()
@@ -383,7 +393,7 @@ namespace LSLib.VirtualTextures
             TileSetLevels = new GTSTileSetLevel[Header.NumLevels];
             BinUtils.ReadStructs<GTSTileSetLevel>(reader, TileSetLevels);
 
-            PerLevelFlatTileIndices = new List<UInt32[]>();
+            PerLevelFlatTileIndices = [];
             foreach (var level in TileSetLevels)
             {
                 fs.Position = (uint)level.FlatTileIndicesOffset;
@@ -396,7 +406,7 @@ namespace LSLib.VirtualTextures
             ParameterBlockHeaders = new GTSParameterBlockHeader[Header.ParameterBlockHeadersCount];
             BinUtils.ReadStructs<GTSParameterBlockHeader>(reader, ParameterBlockHeaders);
 
-            ParameterBlocks = new Dictionary<UInt32, object>();
+            ParameterBlocks = [];
             foreach (var hdr in ParameterBlockHeaders)
             {
                 fs.Position = (uint)hdr.FileInfoOffset;
@@ -409,15 +419,15 @@ namespace LSLib.VirtualTextures
                     Debug.Assert(bc.B == 0);
                     Debug.Assert(bc.C1 == 0);
                     Debug.Assert(bc.C2 == 0);
-                    Debug.Assert(bc.DataType == (Byte)GTSDataType.R8G8B8A8_SRGB || bc.DataType == (Byte)GTSDataType.X8Y8Z8W8);
                     Debug.Assert(bc.BCField3 == 0);
-                    Debug.Assert(bc.E1 == 0);
-                    Debug.Assert(bc.E3 == 0);
-                    Debug.Assert(bc.SaveMip == 1);
-                    Debug.Assert(bc.E4 == 0);
+                    Debug.Assert(bc.DataType == (Byte)GTSDataType.R8G8B8A8_SRGB || bc.DataType == (Byte)GTSDataType.X8Y8Z8W8);
                     Debug.Assert(bc.D == 0);
-                    Debug.Assert(bc.F == 0);
                     Debug.Assert(bc.FourCC == 0x20334342);
+                    Debug.Assert(bc.E1 == 0);
+                    Debug.Assert(bc.SaveMip == 1);
+                    Debug.Assert(bc.E3 == 0);
+                    Debug.Assert(bc.E4 == 0);
+                    Debug.Assert(bc.F == 0);
                 }
                 else
                 {
@@ -438,7 +448,7 @@ namespace LSLib.VirtualTextures
             var pageFileInfos = new GTSPageFileInfo[Header.NumPageFiles];
             BinUtils.ReadStructs<GTSPageFileInfo>(reader, pageFileInfos);
 
-            PageFileInfos = new List<PageFileInfo>();
+            PageFileInfos = [];
             uint nextPageIndex = 0;
             foreach (var info in pageFileInfos)
             {
@@ -504,15 +514,6 @@ namespace LSLib.VirtualTextures
                 if (hdr.Codec == GTSCodec.BC)
                 {
                     var block = (GTSBCParameterBlock)ParameterBlocks[hdr.ParameterBlockID];
-                    hdr.ParameterBlockSize = 0x38;
-                    block.Version = 0x238e;
-                    var comp1 = Encoding.UTF8.GetBytes("lz77");
-                    Array.Copy(comp1, block.Compression1, comp1.Length);
-                    var comp2 = Encoding.UTF8.GetBytes("fastlz0.1.0");
-                    Array.Copy(comp2, block.Compression2, comp2.Length);
-                    block.DataType = (Byte)GTSDataType.R8G8B8A8_SRGB; // X8Y8Z8W8 for normal/phys
-                    block.SaveMip = 1;
-                    block.FourCC = 0x20334342;
                     BinUtils.WriteStruct<GTSBCParameterBlock>(writer, ref block);
                 }
                 else
@@ -521,11 +522,6 @@ namespace LSLib.VirtualTextures
                     hdr.ParameterBlockSize = 0x10;
 
                     var block = (GTSUniformParameterBlock)ParameterBlocks[hdr.ParameterBlockID];
-                    block.Version = 0x42;
-                    block.A_Unused = 0;
-                    block.Width = 4;
-                    block.Height = 1;
-                    block.DataType = GTSDataType.R8G8B8A8_SRGB; // X8Y8Z8W8 for normal/phys
                     BinUtils.WriteStruct<GTSUniformParameterBlock>(writer, ref block);
                 }
             }
@@ -544,8 +540,10 @@ namespace LSLib.VirtualTextures
             Header.FourCCListSize = (uint)((ulong)fs.Position - Header.FourCCListOffset);
 
             Header.ThumbnailsOffset = (ulong)fs.Position;
-            var thumbHdr = new GTSThumbnailInfoHeader();
-            thumbHdr.NumThumbnails = 0;
+            var thumbHdr = new GTSThumbnailInfoHeader
+            {
+                NumThumbnails = 0
+            };
             BinUtils.WriteStruct<GTSThumbnailInfoHeader>(writer, ref thumbHdr);
 
             Header.PackedTileIDsOffset = (ulong)fs.Position;
@@ -581,8 +579,7 @@ namespace LSLib.VirtualTextures
 
         public PageFile GetOrLoadPageFile(int pageFileIdx)
         {
-            PageFile file;
-            if (!PageFiles.TryGetValue(pageFileIdx, out file))
+            if (!PageFiles.TryGetValue(pageFileIdx, out PageFile file))
             {
                 var meta = PageFileInfos[pageFileIdx];
                 file = new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.FileName);
@@ -596,7 +593,7 @@ namespace LSLib.VirtualTextures
         {
             var tileWidth = Header.TileWidth - Header.TileBorder * 2;
             var tileHeight = Header.TileHeight - Header.TileBorder * 2;
-            GTSFlatTileInfo tileInfo = new GTSFlatTileInfo();
+            GTSFlatTileInfo tileInfo = new();
             for (var y = minY; y <= maxY; y++)
             {
                 for (var x = minX; x <= maxX; x++)
@@ -604,7 +601,7 @@ namespace LSLib.VirtualTextures
                     if (GetTileInfo(level, layer, x, y, ref tileInfo))
                     {
                         var pageFile = GetOrLoadPageFile(tileInfo.PageFileIndex);
-                        var tile = pageFile.UnpackTileBC5(tileInfo.PageIndex, tileInfo.ChunkIndex);
+                        var tile = pageFile.UnpackTileBC5(tileInfo.PageIndex, tileInfo.ChunkIndex, Compressor);
                         tile.CopyTo(output, 8, 8, (x - minX) * tileWidth, (y - minY) * tileHeight, tileWidth, tileHeight);
                     }
                 }
@@ -638,50 +635,39 @@ namespace LSLib.VirtualTextures
             this.PageFiles.Clear();
         }
 
-        public BC5Image ExtractPageFileTexture(int pageFileIndex, int levelIndex, int layer)
+        public BC5Image ExtractTexture(int level, int layer, FourCCTextureMeta tex)
         {
-            int minX = 0, maxX = 0, minY = 0, maxY = 0;
-            bool foundPages = false;
+            var tlW = Header.TileWidth - Header.TileBorder * 2;
+            var tlH = Header.TileHeight - Header.TileBorder * 2;
+            var tX = tex.X / tlW;
+            var tY = tex.Y / tlH;
+            var tW = tex.Width / tlW;
+            var tH = tex.Height / tlH;
+            var lv = (1 << level);
 
-            GTSFlatTileInfo tile = new GTSFlatTileInfo();
-            var level = TileSetLevels[levelIndex];
-            for (var x = 0; x < level.Width; x++)
+            var minX = (tX / lv) + ((tX % lv) > 0 ? 1 : 0);
+            var minY = (tY / lv) + ((tY % lv) > 0 ? 1 : 0);
+            var maxX = ((tX+tW) / lv) + (((tX + tW) % lv) > 0 ? 1 : 0) - 1;
+            var maxY = ((tY+tH) / lv) + (((tY + tH) % lv) > 0 ? 1 : 0) - 1;
+
+             return ExtractTextureIfExists(level, layer, minX, minY, maxX, maxY);
+        }
+
+        public BC5Image ExtractTextureIfExists(int levelIndex, int layer, int minX, int minY, int maxX, int maxY)
+        {
+            GTSFlatTileInfo tile = new();
+            for (var x = minX; x <= maxX; x++)
             {
-                for (var y = 0; y < level.Height; y++)
+                for (var y = minY; y <= maxY; y++)
                 {
-                    if (GetTileInfo(levelIndex, layer, x, y, ref tile))
+                    if (!GetTileInfo(levelIndex, layer, x, y, ref tile))
                     {
-                        if (tile.PageFileIndex == pageFileIndex)
-                        {
-                            if (!foundPages)
-                            {
-                                minX = x;
-                                maxX = x;
-                                minY = y;
-                                maxY = y;
-                                foundPages = true;
-                            }
-                            else
-                            {
-                                minX = Math.Min(minX, x);
-                                maxX = Math.Max(maxX, x);
-                                minY = Math.Min(minY, y);
-                                maxY = Math.Max(maxY, y);
-                            }
-                        }
+                        return null;
                     }
                 }
             }
 
-            // Temporary workaround for page files that contain split textures
-            if (!foundPages || (maxX - minX) > 16 || (maxY - minY) > 16)
-            {
-                return null;
-            }
-            else
-            {
-                return ExtractTexture(levelIndex, layer, minX, minY, maxX, maxY);
-            }
+            return ExtractTexture(levelIndex, layer, minX, minY, maxX, maxY);
         }
     }
 }

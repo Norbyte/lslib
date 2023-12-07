@@ -25,6 +25,8 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
 
+#pragma warning disable 8981
+
 namespace LSLib.Granny
 {
     // 
@@ -9975,3 +9977,5 @@ namespace LSLib.Granny
         }
     }
 }
+
+#pragma warning restore 8981

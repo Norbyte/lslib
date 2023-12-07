@@ -1,14 +1,7 @@
-﻿using Alphaleonis.Win32.Filesystem;
-using LSLib.LS;
-using LSLib.VirtualTextures;
+﻿using LSLib.VirtualTextures;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ConverterApp
@@ -46,11 +39,13 @@ namespace ConverterApp
             try
             {
                 var tileSet = new VirtualTileSet(gtsPath.Text);
-                for (var pfIdx = 0; pfIdx < tileSet.PageFileInfos.Count; pfIdx++)
+                var textures = tileSet.FourCCMetadata.ExtractTextureMetadata();
+
+                var i = 0;
+                foreach (var texture in textures)
                 {
-                    var fileInfo = tileSet.PageFileInfos[pfIdx];
-                    actionProgressLabel.Text = fileInfo.FileName;
-                    actionProgress.Value = pfIdx * 100 / tileSet.PageFileInfos.Count;
+                    actionProgressLabel.Text = "GTex: " + texture.Name;
+                    actionProgress.Value = i++ * 100 / textures.Count;
                     Application.DoEvents();
 
                     for (var layer = 0; layer < tileSet.TileSetLayers.Length; layer++)
@@ -59,13 +54,13 @@ namespace ConverterApp
                         var level = 0;
                         do
                         {
-                            tex = tileSet.ExtractPageFileTexture(pfIdx, level, layer);
+                            tex = tileSet.ExtractTexture(level, layer, texture);
                             level++;
                         } while (tex == null && level < tileSet.TileSetLevels.Length);
 
                         if (tex != null)
                         {
-                            var outputPath = destinationPath.Text + Path.DirectorySeparator + Path.GetFileNameWithoutExtension(fileInfo.FileName) + $"_{layer}.dds";
+                            var outputPath = destinationPath.Text + Path.PathSeparator + texture.Name + $"_{layer}.dds";
                             tex.SaveDDS(outputPath);
                         }
                     }
@@ -86,6 +81,70 @@ namespace ConverterApp
                 actionProgress.Value = 0;
                 extractTileSetBtn.Enabled = true;
             }
+        }
+
+        private void tileSetConfigBrowseBtn_Click(object sender, EventArgs e)
+        {
+            if (tileSetConfigDlg.ShowDialog(this) == DialogResult.OK)
+            {
+                tileSetConfigPath.Text = tileSetConfigDlg.FileName;
+            }
+        }
+
+        private void modRootPathBrowseBtn_Click(object sender, EventArgs e)
+        {
+            DialogResult result = modRootPathDlg.ShowDialog(this);
+            if (result == DialogResult.OK)
+            {
+                modRootPath.Text = modRootPathDlg.SelectedPath;
+            }
+        }
+
+        private void tileSetBuildBtn_Click(object sender, EventArgs ev)
+        {
+            try
+            {
+                var descriptor = new TileSetDescriptor();
+                descriptor.RootPath = modRootPath.Text;
+                descriptor.Load(tileSetConfigPath.Text);
+
+                var builder = new TileSetBuilder(descriptor.Config);
+                builder.OnStepStarted += (step) => { 
+                    actionProgressLabel.Text = step;
+                    Application.DoEvents();
+                };
+                builder.OnStepProgress += (numerator, denumerator) => {
+                    actionProgress.Maximum = denumerator;
+                    actionProgress.Value = numerator;
+                    Application.DoEvents();
+                };
+
+                builder.OnStepStarted("Adding textures");
+                foreach (var texture in descriptor.Textures)
+                {
+                    var layerPaths = texture.Layers.Select(name => name != null ? Path.Combine(descriptor.SourceTexturePath, name) : null).ToList();
+                    builder.AddTexture(texture.Name, layerPaths);
+                }
+
+                builder.Build(descriptor.VirtualTexturePath);
+
+                MessageBox.Show("Tile set build completed.");
+            }
+            catch (InvalidDataException e)
+            {
+                MessageBox.Show($"{e.Message}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (FileNotFoundException e)
+            {
+                MessageBox.Show($"{e.Message}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{e}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            actionProgressLabel.Text = "";
+            actionProgress.Value = 0;
         }
     }
 }

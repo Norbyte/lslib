@@ -2,19 +2,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LSLib.VirtualTextures
 {
     public class PageFile : IDisposable
     {
-        private VirtualTileSet TileSet;
-        private FileStream Stream;
-        private BinaryReader Reader;
+        private readonly VirtualTileSet TileSet;
+        private readonly FileStream Stream;
+        private readonly BinaryReader Reader;
         public GTPHeader Header;
-        private List<UInt32[]> ChunkOffsets;
+        private readonly List<UInt32[]> ChunkOffsets;
 
         public PageFile(VirtualTileSet tileset, string path)
         {
@@ -25,7 +22,7 @@ namespace LSLib.VirtualTextures
             Header = BinUtils.ReadStruct<GTPHeader>(Reader);
 
             var numPages = Stream.Length / tileset.Header.PageSize;
-            ChunkOffsets = new List<UInt32[]>();
+            ChunkOffsets = [];
 
             for (var page = 0; page < numPages; page++)
             {
@@ -44,22 +41,11 @@ namespace LSLib.VirtualTextures
             Stream.Dispose();
         }
 
-        private byte[] DoUnpackTileBC(GTPChunkHeader header, int outputSize)
+        private byte[] DoUnpackTileBC(GTPChunkHeader header, int outputSize, TileCompressor compressor)
         {
             var parameterBlock = (GTSBCParameterBlock)TileSet.ParameterBlocks[header.ParameterBlockID];
-            if (parameterBlock.CompressionName1 == "lz77" && parameterBlock.CompressionName2 == "fastlz0.1.0")
-            {
-                var buf = Reader.ReadBytes((int)header.Size);
-                return Native.FastLZCompressor.Decompress(buf, outputSize);
-            }
-            else if (parameterBlock.CompressionName1 == "raw")
-            {
-                return Reader.ReadBytes((int)header.Size);
-            }
-            else
-            {
-                throw new InvalidDataException($"Unsupported BC compression format: '{parameterBlock.CompressionName1}', '{parameterBlock.CompressionName2}'");
-            }
+            var compressed = Reader.ReadBytes((int)header.Size);
+            return compressor.Decompress(compressed, outputSize, parameterBlock.CompressionName1, parameterBlock.CompressionName2);
         }
 
         private byte[] DoUnpackTileUniform(GTPChunkHeader header)
@@ -71,23 +57,23 @@ namespace LSLib.VirtualTextures
             return img;
         }
 
-        public byte[] UnpackTile(int pageIndex, int chunkIndex, int outputSize)
+        public byte[] UnpackTile(int pageIndex, int chunkIndex, int outputSize, TileCompressor compressor)
         {
             Stream.Position = ChunkOffsets[pageIndex][chunkIndex] + (pageIndex * TileSet.Header.PageSize);
             var chunkHeader = BinUtils.ReadStruct<GTPChunkHeader>(Reader);
-            switch (chunkHeader.Codec)
+            return chunkHeader.Codec switch
             {
-                case GTSCodec.Uniform: return DoUnpackTileUniform(chunkHeader);
-                case GTSCodec.BC: return DoUnpackTileBC(chunkHeader, outputSize);
-                default: throw new InvalidDataException($"Unsupported codec: {chunkHeader.Codec}");
-            }
+                GTSCodec.Uniform => DoUnpackTileUniform(chunkHeader),
+                GTSCodec.BC => DoUnpackTileBC(chunkHeader, outputSize, compressor),
+                _ => throw new InvalidDataException($"Unsupported codec: {chunkHeader.Codec}"),
+            };
         }
 
-        public BC5Image UnpackTileBC5(int pageIndex, int chunkIndex)
+        public BC5Image UnpackTileBC5(int pageIndex, int chunkIndex, TileCompressor compressor)
         {
             var compressedSize = 16 * ((TileSet.Header.TileWidth + 3) / 4) * ((TileSet.Header.TileHeight + 3) / 4)
                 + 16 * ((TileSet.Header.TileWidth/2 + 3) / 4) * ((TileSet.Header.TileHeight/2 + 3) / 4);
-            var chunk = UnpackTile(pageIndex, chunkIndex, compressedSize);
+            var chunk = UnpackTile(pageIndex, chunkIndex, compressedSize, compressor);
             return new BC5Image(chunk, TileSet.Header.TileWidth, TileSet.Header.TileHeight);
         }
     }

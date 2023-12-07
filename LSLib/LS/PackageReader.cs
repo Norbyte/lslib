@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LZ4;
-using File = Alphaleonis.Win32.Filesystem.File;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS
@@ -24,29 +23,15 @@ namespace LSLib.LS
         }
     }
 
-    public class PackageReader : IDisposable
+    public class PackageReader(string path, bool metadataOnly = false) : IDisposable
     {
-        private readonly String _path;
-        private readonly bool _metadataOnly;
         private Stream[] _streams;
-
-        public PackageReader(string path, bool metadataOnly = false)
-        {
-            this._path = path;
-            this._metadataOnly = metadataOnly;
-        }
 
         public void Dispose()
         {
-            if (_streams != null)
+            foreach (Stream stream in _streams ?? [])
             {
-                foreach (Stream stream in _streams)
-                {
-                    if (stream != null)
-                    {
-                        stream.Dispose();
-                    }
-                }
+                stream?.Dispose();
             }
         }
 
@@ -58,7 +43,7 @@ namespace LSLib.LS
 
             for (var part = 1; part < numParts; part++)
             {
-                string partPath = Package.MakePartFilename(_path, part);
+                string partPath = Package.MakePartFilename(path, part);
                 _streams[part] = File.Open(partPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
         }
@@ -73,7 +58,7 @@ namespace LSLib.LS
             package.Metadata.Priority = 0;
             package.Version = PackageVersion.V7;
 
-            if (_metadataOnly) return package;
+            if (metadataOnly) return package;
 
             OpenStreams(mainStream, (int) header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
@@ -99,7 +84,7 @@ namespace LSLib.LS
             package.Metadata.Priority = header.Priority;
             package.Version = PackageVersion.V10;
 
-            if (_metadataOnly) return package;
+            if (metadataOnly) return package;
 
             OpenStreams(mainStream, header.NumParts);
             for (uint i = 0; i < header.NumFiles; i++)
@@ -133,7 +118,7 @@ namespace LSLib.LS
             package.Metadata.Priority = header.Priority;
             package.Version = PackageVersion.V13;
 
-            if (_metadataOnly) return package;
+            if (metadataOnly) return package;
 
             OpenStreams(mainStream, header.NumParts);
             mainStream.Seek(header.FileListOffset, SeekOrigin.Begin);
@@ -288,7 +273,7 @@ namespace LSLib.LS
             package.Metadata.Priority = header.Priority;
             package.Version = PackageVersion.V15;
 
-            if (_metadataOnly) return package;
+            if (metadataOnly) return package;
 
             OpenStreams(mainStream, 1);
             mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
@@ -312,7 +297,7 @@ namespace LSLib.LS
             package.Metadata.Priority = header.Priority;
             package.Version = PackageVersion.V16;
 
-            if (_metadataOnly) return package;
+            if (metadataOnly) return package;
 
             OpenStreams(mainStream, header.NumParts);
             mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
@@ -336,7 +321,7 @@ namespace LSLib.LS
             package.Metadata.Priority = header.Priority;
             package.Version = PackageVersion.V18;
 
-            if (_metadataOnly) return package;
+            if (metadataOnly) return package;
 
             OpenStreams(mainStream, header.NumParts);
             mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
@@ -347,62 +332,60 @@ namespace LSLib.LS
 
         public Package Read()
         {
-            var mainStream = File.Open(_path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var mainStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var reader = new BinaryReader(mainStream, new UTF8Encoding(), true);
 
-            using (var reader = new BinaryReader(mainStream, new UTF8Encoding(), true))
+            // Check for v13 package headers
+            mainStream.Seek(-8, SeekOrigin.End);
+            Int32 headerSize = reader.ReadInt32();
+            byte[] signature = reader.ReadBytes(4);
+            if (Package.Signature.SequenceEqual(signature))
             {
-                // Check for v13 package headers
-                mainStream.Seek(-8, SeekOrigin.End);
-                Int32 headerSize = reader.ReadInt32();
-                byte[] signature = reader.ReadBytes(4);
-                if (Package.Signature.SequenceEqual(signature))
-                {
-                    mainStream.Seek(-headerSize, SeekOrigin.End);
-                    return ReadPackageV13(mainStream, reader);
-                }
-
-                // Check for v10 package headers
-                mainStream.Seek(0, SeekOrigin.Begin);
-                signature = reader.ReadBytes(4);
-                Int32 version;
-                if (Package.Signature.SequenceEqual(signature))
-                {
-                    version = reader.ReadInt32();
-                    if (version == 10)
-                    {
-                        return ReadPackageV10(mainStream, reader);
-                    }
-                    else if (version == 15)
-                    {
-                        mainStream.Seek(4, SeekOrigin.Begin);
-                        return ReadPackageV15(mainStream, reader);
-                    }
-                    else if (version == 16)
-                    {
-                        mainStream.Seek(4, SeekOrigin.Begin);
-                        return ReadPackageV16(mainStream, reader);
-                    }
-                    else if (version == 18)
-                    {
-                        mainStream.Seek(4, SeekOrigin.Begin);
-                        return ReadPackageV18(mainStream, reader);
-                    }
-                    else
-                    {
-                        throw new InvalidDataException($"Package version v{version} not supported");
-                    }
-                }
-
-                // Check for v9 and v7 package headers
-                mainStream.Seek(0, SeekOrigin.Begin);
-                version = reader.ReadInt32();
-                if (version == 7 || version == 9)
-                {
-                    return ReadPackageV7(mainStream, reader);
-                }
-
-                throw new NotAPackageException("No valid signature found in package file");
+                mainStream.Seek(-headerSize, SeekOrigin.End);
+                return ReadPackageV13(mainStream, reader);
             }
+
+            // Check for v10 package headers
+            mainStream.Seek(0, SeekOrigin.Begin);
+            signature = reader.ReadBytes(4);
+            Int32 version;
+            if (Package.Signature.SequenceEqual(signature))
+            {
+                version = reader.ReadInt32();
+                if (version == 10)
+                {
+                    return ReadPackageV10(mainStream, reader);
+                }
+                else if (version == 15)
+                {
+                    mainStream.Seek(4, SeekOrigin.Begin);
+                    return ReadPackageV15(mainStream, reader);
+                }
+                else if (version == 16)
+                {
+                    mainStream.Seek(4, SeekOrigin.Begin);
+                    return ReadPackageV16(mainStream, reader);
+                }
+                else if (version == 18)
+                {
+                    mainStream.Seek(4, SeekOrigin.Begin);
+                    return ReadPackageV18(mainStream, reader);
+                }
+                else
+                {
+                    throw new InvalidDataException($"Package version v{version} not supported");
+                }
+            }
+
+            // Check for v9 and v7 package headers
+            mainStream.Seek(0, SeekOrigin.Begin);
+            version = reader.ReadInt32();
+            if (version == 7 || version == 9)
+            {
+                return ReadPackageV7(mainStream, reader);
+            }
+
+            throw new NotAPackageException("No valid signature found in package file");
         }
     }
 }

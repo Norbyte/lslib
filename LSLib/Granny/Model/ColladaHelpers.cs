@@ -1,5 +1,5 @@
 ﻿using LSLib.Granny.GR2;
-using OpenTK;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
@@ -38,15 +38,13 @@ namespace LSLib.Granny.Model
 
         public static Matrix4 TranslationToMatrix4(this TargetableFloat3 t)
         {
-            Matrix4 trans;
-            Matrix4.CreateTranslation((float)t.Values[0], (float)t.Values[1], (float)t.Values[2], out trans);
+            Matrix4.CreateTranslation((float)t.Values[0], (float)t.Values[1], (float)t.Values[2], out Matrix4 trans);
             return trans;
         }
 
         public static Matrix4 ScaleToMatrix4(this TargetableFloat3 t)
         {
-            Matrix4 scale;
-            Matrix4.CreateScale((float)t.Values[0], (float)t.Values[1], (float)t.Values[2], out scale);
+            Matrix4.CreateScale((float)t.Values[0], (float)t.Values[1], (float)t.Values[2], out Matrix4 scale);
             return scale;
         }
 
@@ -59,27 +57,14 @@ namespace LSLib.Granny.Model
                 for (var i = 0; i < n.ItemsElementName.Length; i++)
                 {
                     var name = n.ItemsElementName[i];
-                    switch (name)
+                    accum = name switch
                     {
-                        case ItemsChoiceType2.matrix:
-                            accum = (n.Items[i] as matrix).ToMatrix4() * Matrix4.Identity;
-                            break;
-
-                        case ItemsChoiceType2.translate:
-                            accum = (n.Items[i] as TargetableFloat3).TranslationToMatrix4() * Matrix4.Identity;
-                            break;
-
-                        case ItemsChoiceType2.rotate:
-                            accum = (n.Items[i] as rotate).ToMatrix4() * Matrix4.Identity;
-                            break;
-
-                        case ItemsChoiceType2.scale:
-                            accum = (n.Items[i] as TargetableFloat3).ScaleToMatrix4() * Matrix4.Identity;
-                            break;
-
-                        default:
-                            throw new Exception("Unsupported Collada NODE transform: " + name);
-                    }
+                        ItemsChoiceType2.matrix => (n.Items[i] as matrix).ToMatrix4() * Matrix4.Identity,
+                        ItemsChoiceType2.translate => (n.Items[i] as TargetableFloat3).TranslationToMatrix4() * Matrix4.Identity,
+                        ItemsChoiceType2.rotate => (n.Items[i] as rotate).ToMatrix4() * Matrix4.Identity,
+                        ItemsChoiceType2.scale => (n.Items[i] as TargetableFloat3).ScaleToMatrix4() * Matrix4.Identity,
+                        _ => throw new Exception("Unsupported Collada NODE transform: " + name),
+                    };
                 }
             }
 
@@ -203,14 +188,14 @@ namespace LSLib.Granny.Model
                 {
                     if (startingPos != -1)
                     {
-                        floats.Add(int.Parse(s.Substring(startingPos, i - startingPos)));
+                        floats.Add(int.Parse(s[startingPos..i]));
                         startingPos = -1;
                     }
                 }
             }
 
             if (startingPos != -1)
-                floats.Add(int.Parse(s.Substring(startingPos, s.Length - startingPos)));
+                floats.Add(int.Parse(s[startingPos..]));
 
             return floats;
         }

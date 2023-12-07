@@ -9,7 +9,7 @@ namespace LSLib.LS
         /// <summary>
         /// LSOF file signature
         /// </summary>
-        public static byte[] Signature = new byte[] { 0x4C, 0x53, 0x4F, 0x46 };
+        public readonly static byte[] Signature = "LSOF"u8.ToArray();
 
         /// <summary>
         /// LSOF file signature; should be the same as LSFHeader.Signature

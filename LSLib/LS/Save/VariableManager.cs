@@ -1,19 +1,17 @@
-﻿using OpenTK;
+﻿using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LSLib.LS.Save
 {
     public class OsirisVariableHelper
     {
         private Int32 NumericStringId;
-        private Dictionary<string, Int32> IdentifierToKey = new Dictionary<string, Int32>();
-        private Dictionary<Int32, string> KeyToIdentifier = new Dictionary<Int32, string>();
+        private Dictionary<string, Int32> IdentifierToKey = [];
+        private Dictionary<Int32, string> KeyToIdentifier = [];
 
         public void Load(Node helper)
         {
@@ -41,14 +39,14 @@ namespace LSLib.LS.Save
 
     abstract public class VariableHolder<TValue>
     {
-        protected List<TValue> Values = new List<TValue>();
-        private List<UInt16> Remaps = new List<UInt16>();
+        protected List<TValue> Values = [];
+        private List<UInt16> Remaps = [];
         
         public TValue GetRaw(int index)
         {
             if (index == 0)
             {
-                return default(TValue);
+                return default;
             }
 
             var valueSlot = Remaps[index - 1];
@@ -64,13 +62,11 @@ namespace LSLib.LS.Save
             Remaps.Clear();
             Remaps.Capacity = remaps.Length / 2;
 
-            using (var ms = new MemoryStream(remaps))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(remaps);
+            using var reader = new BinaryReader(ms);
+            for (var i = 0; i < remaps.Length / 2; i++)
             {
-                for (var i = 0; i < remaps.Length/2; i++)
-                {
-                    Remaps.Add(reader.ReadUInt16());
-                }
+                Remaps.Add(reader.ReadUInt16());
             }
         }
 
@@ -100,13 +96,11 @@ namespace LSLib.LS.Save
             Values.Clear();
             Values.Capacity = numVars;
 
-            using (var ms = new MemoryStream(variables))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(variables);
+            using var reader = new BinaryReader(ms);
+            for (var i = 0; i < numVars; i++)
             {
-                for (var i = 0; i < numVars; i++)
-                {
-                    Values.Add(reader.ReadInt32());
-                }
+                Values.Add(reader.ReadInt32());
             }
         }
     }
@@ -134,13 +128,11 @@ namespace LSLib.LS.Save
             Values.Clear();
             Values.Capacity = numVars;
 
-            using (var ms = new MemoryStream(variables))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(variables);
+            using var reader = new BinaryReader(ms);
+            for (var i = 0; i < numVars; i++)
             {
-                for (var i = 0; i < numVars; i++)
-                {
-                    Values.Add(reader.ReadInt64());
-                }
+                Values.Add(reader.ReadInt64());
             }
         }
     }
@@ -169,13 +161,11 @@ namespace LSLib.LS.Save
             Values.Clear();
             Values.Capacity = numVars;
 
-            using (var ms = new MemoryStream(variables))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(variables);
+            using var reader = new BinaryReader(ms);
+            for (var i = 0; i < numVars; i++)
             {
-                for (var i = 0; i < numVars; i++)
-                {
-                    Values.Add(reader.ReadSingle());
-                }
+                Values.Add(reader.ReadSingle());
             }
         }
     }
@@ -199,21 +189,19 @@ namespace LSLib.LS.Save
         {
             var variables = (byte[])variableList.Attributes["Variables"].Value;
 
-            using (var ms = new MemoryStream(variables))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(variables);
+            using var reader = new BinaryReader(ms);
+            var numVars = reader.ReadInt32();
+
+            Values.Clear();
+            Values.Capacity = numVars;
+
+            for (var i = 0; i < numVars; i++)
             {
-                var numVars = reader.ReadInt32();
-
-                Values.Clear();
-                Values.Capacity = numVars;
-
-                for (var i = 0; i < numVars; i++)
-                {
-                    var length = reader.ReadUInt16();
-                    var bytes = reader.ReadBytes(length);
-                    var str = Encoding.UTF8.GetString(bytes);
-                    Values.Add(str);
-                }
+                var length = reader.ReadUInt16();
+                var bytes = reader.ReadBytes(length);
+                var str = Encoding.UTF8.GetString(bytes);
+                Values.Add(str);
             }
         }
     }
@@ -242,19 +230,17 @@ namespace LSLib.LS.Save
             Values.Clear();
             Values.Capacity = numVars;
 
-            using (var ms = new MemoryStream(variables))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(variables);
+            using var reader = new BinaryReader(ms);
+            for (var i = 0; i < numVars; i++)
             {
-                for (var i = 0; i < numVars; i++)
+                Vector3 vec = new()
                 {
-                    Vector3 vec = new Vector3
-                    {
-                        X = reader.ReadSingle(),
-                        Y = reader.ReadSingle(),
-                        Z = reader.ReadSingle()
-                    };
-                    Values.Add(vec);
-                }
+                    X = reader.ReadSingle(),
+                    Y = reader.ReadSingle(),
+                    Z = reader.ReadSingle()
+                };
+                Values.Add(vec);
             }
         }
     }
@@ -305,28 +291,22 @@ namespace LSLib.LS.Save
         }
     };
 
-    public class VariableManager
+    public class VariableManager(OsirisVariableHelper variableHelper)
     {
-        private readonly OsirisVariableHelper VariableHelper;
-        private readonly Dictionary<int, Key2TableEntry> Keys = new Dictionary<int, Key2TableEntry>();
-        private readonly IntVariableHolder IntList = new IntVariableHolder();
-        private readonly Int64VariableHolder Int64List = new Int64VariableHolder();
-        private readonly FloatVariableHolder FloatList = new FloatVariableHolder();
-        private readonly StringVariableHolder StringList = new StringVariableHolder();
-        private readonly StringVariableHolder FixedStringList = new StringVariableHolder();
-        private readonly Float3VariableHolder Float3List = new Float3VariableHolder();
-
-        public VariableManager(OsirisVariableHelper variableHelper)
-        {
-            VariableHelper = variableHelper;
-        }
+        private readonly Dictionary<int, Key2TableEntry> Keys = [];
+        private readonly IntVariableHolder IntList = new();
+        private readonly Int64VariableHolder Int64List = new();
+        private readonly FloatVariableHolder FloatList = new();
+        private readonly StringVariableHolder StringList = new();
+        private readonly StringVariableHolder FixedStringList = new();
+        private readonly Float3VariableHolder Float3List = new();
 
         public Dictionary<string, object> GetAll(bool includeDeleted = false)
         {
             var variables = new Dictionary<string, object>();
             foreach (var key in Keys.Values)
             {
-                var name = VariableHelper.GetName((int)key.NameIndex);
+                var name = variableHelper.GetName((int)key.NameIndex);
                 var value = includeDeleted ? GetRaw(key.ValueType, key.ValueIndex) : Get(key.ValueType, key.ValueIndex);
                 if (value != null)
                 {
@@ -339,59 +319,57 @@ namespace LSLib.LS.Save
 
         public object Get(string name)
         {
-            var index = VariableHelper.GetKey(name);
+            var index = variableHelper.GetKey(name);
             var key = Keys[index];
             return Get(key.ValueType, key.ValueIndex);
         }
 
         private object Get(VariableType type, int index)
         {
-            switch (type)
+            return type switch
             {
-                case VariableType.Int: return IntList.Get(index);
-                case VariableType.Int64: return Int64List.Get(index);
-                case VariableType.Float: return FloatList.Get(index);
-                case VariableType.String: return StringList.Get(index);
-                case VariableType.FixedString: return FixedStringList.Get(index);
-                case VariableType.Float3: return Float3List.Get(index);
-                default: throw new ArgumentException("Unsupported variable type");
-            }
+                VariableType.Int => IntList.Get(index),
+                VariableType.Int64 => Int64List.Get(index),
+                VariableType.Float => FloatList.Get(index),
+                VariableType.String => StringList.Get(index),
+                VariableType.FixedString => FixedStringList.Get(index),
+                VariableType.Float3 => Float3List.Get(index),
+                _ => throw new ArgumentException("Unsupported variable type"),
+            };
         }
 
         public object GetRaw(string name)
         {
-            var index = VariableHelper.GetKey(name);
+            var index = variableHelper.GetKey(name);
             var key = Keys[index];
             return GetRaw(key.ValueType, key.ValueIndex);
         }
 
         private object GetRaw(VariableType type, int index)
         {
-            switch (type)
+            return type switch
             {
-                case VariableType.Int: return IntList.GetRaw(index);
-                case VariableType.Int64: return Int64List.GetRaw(index);
-                case VariableType.Float: return FloatList.GetRaw(index);
-                case VariableType.String: return StringList.GetRaw(index);
-                case VariableType.FixedString: return FixedStringList.GetRaw(index);
-                case VariableType.Float3: return Float3List.GetRaw(index);
-                default: throw new ArgumentException("Unsupported variable type");
-            }
+                VariableType.Int => IntList.GetRaw(index),
+                VariableType.Int64 => Int64List.GetRaw(index),
+                VariableType.Float => FloatList.GetRaw(index),
+                VariableType.String => StringList.GetRaw(index),
+                VariableType.FixedString => FixedStringList.GetRaw(index),
+                VariableType.Float3 => Float3List.GetRaw(index),
+                _ => throw new ArgumentException("Unsupported variable type"),
+            };
         }
 
         private void LoadKeys(byte[] handleList)
         {
             Keys.Clear();
 
-            using (var ms = new MemoryStream(handleList))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(handleList);
+            using var reader = new BinaryReader(ms);
+            var numHandles = reader.ReadInt32();
+            for (var i = 0; i < numHandles; i++)
             {
-                var numHandles = reader.ReadInt32();
-                for (var i = 0; i < numHandles; i++)
-                {
-                    var entry = BinUtils.ReadStruct<Key2TableEntry>(reader);
-                    Keys.Add((int)entry.NameIndex, entry);
-                }
+                var entry = BinUtils.ReadStruct<Key2TableEntry>(reader);
+                Keys.Add((int)entry.NameIndex, entry);
             }
         }
 

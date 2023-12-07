@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.Model.CurveData;
 using LSLib.Granny.GR2;
 
@@ -47,11 +47,14 @@ namespace LSLib.Granny.Model
             if (this.Degree == 0)
             {
                 // Degree 0 curves are identities in all cases
-                var curve = new DaIdentity();
-                curve.CurveDataHeader_DaIdentity = new CurveDataHeader();
-                curve.CurveDataHeader_DaIdentity.Format = (byte)CurveFormat.DaIdentity;
-                curve.CurveDataHeader_DaIdentity.Degree = 0;
-                this.CurveData = curve;
+                CurveData = new DaIdentity
+                {
+                    CurveDataHeader_DaIdentity = new CurveDataHeader
+                    {
+                        Format = (byte)CurveFormat.DaIdentity,
+                        Degree = 0
+                    }
+                };
             }
             else if (this.Degree == 2)
             {
@@ -61,13 +64,16 @@ namespace LSLib.Granny.Model
                 }
 
                 // Degree 2 curves are stored in K32fC32f (v6 didn't support multiple curve formats)
-                var curve = new DaK32fC32f();
-                curve.CurveDataHeader_DaK32fC32f = new CurveDataHeader();
-                curve.CurveDataHeader_DaK32fC32f.Format = (byte)CurveFormat.DaK32fC32f;
-                curve.CurveDataHeader_DaK32fC32f.Degree = 2;
-                curve.Controls = Controls;
-                curve.Knots = Knots;
-                this.CurveData = curve;
+                CurveData = new DaK32fC32f
+                {
+                    CurveDataHeader_DaK32fC32f = new CurveDataHeader
+                    {
+                        Format = (byte)CurveFormat.DaK32fC32f,
+                        Degree = 2
+                    },
+                    Controls = Controls,
+                    Knots = Knots
+                };
             }
             else
             {
@@ -105,14 +111,13 @@ namespace LSLib.Granny.Model
 
     public class KeyframeTrack
     {
-        public SortedList<Single, Keyframe> Keyframes = new SortedList<float, Keyframe>();
+        public SortedList<Single, Keyframe> Keyframes = [];
 
         private static Int32 FindFrame<T>(IList<T> list, T value, IComparer<T> comparer = null)
         {
-            if (list == null)
-                throw new ArgumentNullException("list");
+            ArgumentNullException.ThrowIfNull(list);
 
-            comparer = comparer ?? Comparer<T>.Default;
+            comparer ??= Comparer<T>.Default;
 
             Int32 lower = 0;
             Int32 upper = list.Count - 1;
@@ -372,7 +377,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            if (keyframesToRemove == transforms.Count - 2 && (transforms[0] - transforms[transforms.Count - 1]).Length < 0.0001f)
+            if (keyframesToRemove == transforms.Count - 2 && (transforms[0] - transforms[^1]).Length < 0.0001f)
             {
                 for (int i = 1; i < times.Count; i++)
                 {
@@ -534,16 +539,20 @@ namespace LSLib.Granny.Model
 
         public static TransformTrack FromKeyframes(KeyframeTrack keyframes)
         {
-            var track = new TransformTrack();
-            track.Flags = 0;
-            
+            var track = new TransformTrack
+            {
+                Flags = 0
+            };
+
             var translateTimes = keyframes.Keyframes.Where(f => f.Value.HasTranslation).Select(f => f.Key).ToList();
             var translations = keyframes.Keyframes.Where(f => f.Value.HasTranslation).Select(f => f.Value.Translation).ToList();
             if (translateTimes.Count == 1)
             {
-                var posCurve = new D3Constant32f();
-                posCurve.CurveDataHeader_D3Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D3Constant32f, Degree = 2 };
-                posCurve.Controls = new float[3] { translations[0].X, translations[0].Y, translations[0].Z };
+                var posCurve = new D3Constant32f
+                {
+                    CurveDataHeader_D3Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D3Constant32f, Degree = 2 },
+                    Controls = new float[3] { translations[0].X, translations[0].Y, translations[0].Z }
+                };
                 track.PositionCurve = new AnimationCurve { CurveData = posCurve };
             }
             else
@@ -559,9 +568,11 @@ namespace LSLib.Granny.Model
             var rotations = keyframes.Keyframes.Where(f => f.Value.HasRotation).Select(f => f.Value.Rotation).ToList();
             if (rotationTimes.Count == 1)
             {
-                var rotCurve = new D4Constant32f();
-                rotCurve.CurveDataHeader_D4Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D4Constant32f, Degree = 2 };
-                rotCurve.Controls = new float[4] { rotations[0].X, rotations[0].Y, rotations[0].Z, rotations[0].W };
+                var rotCurve = new D4Constant32f
+                {
+                    CurveDataHeader_D4Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D4Constant32f, Degree = 2 },
+                    Controls = new float[4] { rotations[0].X, rotations[0].Y, rotations[0].Z, rotations[0].W }
+                };
                 track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
             }
             else
@@ -580,12 +591,12 @@ namespace LSLib.Granny.Model
                 var scaleCurve = new DaConstant32f();
                 scaleCurve.CurveDataHeader_DaConstant32f = new CurveDataHeader { Format = (int)CurveFormat.DaConstant32f, Degree = 2 };
                 var m = scales[0];
-                scaleCurve.Controls = new List<float>
-                {
+                scaleCurve.Controls =
+                [
                     m[0, 0], m[0, 1], m[0, 2],
                     m[1, 0], m[1, 1], m[1, 2],
                     m[2, 0], m[2, 1], m[2, 2]
-                };
+                ];
                 track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
             }
             else

@@ -1,20 +1,20 @@
-﻿using Alphaleonis.Win32.Filesystem;
-using LSLib.LS.Story.Compiler;
+﻿using LSLib.LS.Story.Compiler;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS
 {
-    public class ModInfo
+    public class ModInfo(string name)
     {
-        public string Name;
+        public string Name = name;
         public AbstractFileInfo Meta;
-        public Dictionary<string, AbstractFileInfo> Scripts = new Dictionary<string, AbstractFileInfo>();
-        public Dictionary<string, AbstractFileInfo> Stats = new Dictionary<string, AbstractFileInfo>();
-        public Dictionary<string, AbstractFileInfo> Globals = new Dictionary<string, AbstractFileInfo>();
-        public Dictionary<string, AbstractFileInfo> LevelObjects = new Dictionary<string, AbstractFileInfo>();
+        public Dictionary<string, AbstractFileInfo> Scripts = [];
+        public Dictionary<string, AbstractFileInfo> Stats = [];
+        public Dictionary<string, AbstractFileInfo> Globals = [];
+        public Dictionary<string, AbstractFileInfo> LevelObjects = [];
         public AbstractFileInfo OrphanQueryIgnoreList;
         public AbstractFileInfo StoryHeaderFile;
         public AbstractFileInfo TypeCoercionWhitelistFile;
@@ -22,18 +22,13 @@ namespace LSLib.LS
         public AbstractFileInfo ValueListsFile;
         public AbstractFileInfo ActionResourcesFile;
         public AbstractFileInfo ActionResourceGroupsFile;
-        public List<AbstractFileInfo> TagFiles = new List<AbstractFileInfo>();
-
-        public ModInfo(string name)
-        {
-            Name = name;
-        }
+        public List<AbstractFileInfo> TagFiles = [];
     }
 
     public class ModResources : IDisposable
     {
-        public Dictionary<string, ModInfo> Mods = new Dictionary<string, ModInfo>();
-        public List<PackageReader> LoadedPackages = new List<PackageReader>();
+        public Dictionary<string, ModInfo> Mods = [];
+        public List<PackageReader> LoadedPackages = [];
 
         public void Dispose()
         {
@@ -42,20 +37,20 @@ namespace LSLib.LS
         }
     }
 
-    public class ModPathVisitor
+    public partial class ModPathVisitor
     {
-        private static readonly Regex metaRe = new Regex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex scriptRe = new Regex("^Mods/([^/]+)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex statRe = new Regex("^Public/([^/]+)/Stats/Generated/Data/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex staticLsxRe = new Regex("^Public/([^/]+)/(.*\\.lsx)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex statStructureRe = new Regex("^Public/([^/]+)/Stats/Generated/Structure/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex orphanQueryIgnoresRe = new Regex("^Mods/([^/]+)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex storyDefinitionsRe = new Regex("^Mods/([^/]+)/Story/RawFiles/story_header\\.div$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex typeCoercionWhitelistRe = new Regex("^Mods/([^/]+)/Story/RawFiles/TypeCoercionWhitelist\\.txt$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex globalsRe = new Regex("^Mods/([^/]+)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-        private static readonly Regex levelObjectsRe = new Regex("^Mods/([^/]+)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex metaRe = MetaRegex();
+        private static readonly Regex scriptRe = ScriptRegex();
+        private static readonly Regex statRe = StatRegex();
+        private static readonly Regex staticLsxRe = StaticLsxRegex();
+        private static readonly Regex statStructureRe = StatStructureRegex();
+        private static readonly Regex orphanQueryIgnoresRe = OrphanQueryIgnoresRegex();
+        private static readonly Regex storyDefinitionsRe = StoryDefinitionsRegex();
+        private static readonly Regex typeCoercionWhitelistRe = TypeCoercionWhitelistRegex();
+        private static readonly Regex globalsRe = GlobalsRegex();
+        private static readonly Regex levelObjectsRe = LevelObjectsRegex();
         // Pattern for excluding subsequent parts of a multi-part archive
-        public static readonly Regex archivePartRe = new Regex("^(.*)_[0-9]+\\.pak$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        public static readonly Regex archivePartRe = ArchivePartRegex();
 
         public readonly ModResources Resources;
 
@@ -76,10 +71,10 @@ namespace LSLib.LS
         {
             foreach (string filePath in Directory.GetFiles(currentPath, pattern))
             {
-                var relativePath = filePath.Substring(rootPath.Length);
+                var relativePath = filePath[rootPath.Length..];
                 if (relativePath[0] == '/' || relativePath[0] == '\\')
                 {
-                    relativePath = relativePath.Substring(1);
+                    relativePath = relativePath[1..];
                 }
 
                 paths.Add(relativePath);
@@ -274,8 +269,8 @@ namespace LSLib.LS
             // List of packages we won't ever load
             // These packages don't contain any mod resources, but have a large
             // file table that makes loading unneccessarily slow.
-            HashSet<string> packageBlacklist = new HashSet<string>
-            {
+            HashSet<string> packageBlacklist =
+            [
                 "Assets.pak",
                 "Effects.pak",
                 "Engine.pak",
@@ -295,7 +290,7 @@ namespace LSLib.LS
                 "SharedSounds.pak",
                 "Textures.pak",
                 "VirtualTextures.pak"
-            };
+            ];
 
             // Collect priority value from headers
             var packagePriorities = new List<Tuple<string, int>>();
@@ -344,7 +339,7 @@ namespace LSLib.LS
             var goalPath = modPath + @"\Story\RawFiles\Goals";
             if (!Directory.Exists(goalPath)) return;
 
-            List<string> goalFiles = new List<string>();
+            List<string> goalFiles = [];
             EnumerateFiles(goalFiles, goalPath, goalPath, "*.txt");
 
             foreach (var goalFile in goalFiles)
@@ -363,7 +358,7 @@ namespace LSLib.LS
             var statsPath = modPublicPath + @"\Stats\Generated\Data";
             if (!Directory.Exists(statsPath)) return;
 
-            List<string> statFiles = new List<string>();
+            List<string> statFiles = [];
             EnumerateFiles(statFiles, statsPath, statsPath, "*.txt");
 
             foreach (var statFile in statFiles)
@@ -382,7 +377,7 @@ namespace LSLib.LS
             var globalsPath = modPath + @"\Globals";
             if (!Directory.Exists(globalsPath)) return;
 
-            List<string> globalFiles = new List<string>();
+            List<string> globalFiles = [];
             EnumerateFiles(globalFiles, globalsPath, globalsPath, "*.lsf");
 
             foreach (var globalFile in globalFiles)
@@ -401,10 +396,10 @@ namespace LSLib.LS
             var levelsPath = modPath + @"\Levels";
             if (!Directory.Exists(levelsPath)) return;
 
-            List<string> levelFiles = new List<string>();
+            List<string> levelFiles = [];
             EnumerateFiles(levelFiles, levelsPath, levelsPath, "*.lsf");
 
-            var levelObjectsRe = new Regex("^(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            var levelObjectsRe = LevelObjectsLocalRegex();
             foreach (var levelFile in levelFiles)
             {
                 var fileInfo = new FilesystemFileInfo
@@ -505,5 +500,41 @@ namespace LSLib.LS
 
             DiscoverMods(gameDataPath);
         }
+
+        [GeneratedRegex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex MetaRegex();
+
+        [GeneratedRegex("^Mods/([^/]+)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex ScriptRegex();
+
+        [GeneratedRegex("^Public/([^/]+)/Stats/Generated/Data/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex StatRegex();
+
+        [GeneratedRegex("^Public/([^/]+)/(.*\\.lsx)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex StaticLsxRegex();
+
+        [GeneratedRegex("^Public/([^/]+)/Stats/Generated/Structure/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex StatStructureRegex();
+
+        [GeneratedRegex("^Mods/([^/]+)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex OrphanQueryIgnoresRegex();
+
+        [GeneratedRegex("^Mods/([^/]+)/Story/RawFiles/story_header\\.div$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex StoryDefinitionsRegex();
+
+        [GeneratedRegex("^Mods/([^/]+)/Story/RawFiles/TypeCoercionWhitelist\\.txt$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex TypeCoercionWhitelistRegex();
+
+        [GeneratedRegex("^Mods/([^/]+)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex GlobalsRegex();
+
+        [GeneratedRegex("^Mods/([^/]+)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex LevelObjectsRegex();
+
+        [GeneratedRegex("^(.*)_[0-9]+\\.pak$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+        private static partial Regex ArchivePartRegex();
+
+        [GeneratedRegex("^(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+        private static partial Regex LevelObjectsLocalRegex();
     }
 }

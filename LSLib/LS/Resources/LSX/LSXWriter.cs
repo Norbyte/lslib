@@ -5,19 +5,14 @@ using System.Xml;
 
 namespace LSLib.LS
 {
-    public class LSXWriter
+    public class LSXWriter(Stream stream)
     {
-        private Stream stream;
+        private readonly Stream stream = stream;
         private XmlWriter writer;
 
         public bool PrettyPrint = false;
         public LSXVersion Version = LSXVersion.V3;
-        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
-
-        public LSXWriter(Stream stream)
-        {
-            this.stream = stream;
-        }
+        public NodeSerializationSettings SerializationSettings = new();
 
         public void Write(Resource rsrc)
         {
@@ -26,9 +21,11 @@ namespace LSLib.LS
                 throw new InvalidDataException("Cannot resave a BG3 (v4.x) resource in D:OS2 (v3.x) file format, maybe you have the wrong game selected?");
             }
 
-            var settings = new XmlWriterSettings();
-            settings.Indent = PrettyPrint;
-            settings.IndentChars = "\t";
+            var settings = new XmlWriterSettings
+            {
+                Indent = PrettyPrint,
+                IndentChars = "\t"
+            };
 
             using (this.writer = XmlWriter.Create(stream, settings))
             {

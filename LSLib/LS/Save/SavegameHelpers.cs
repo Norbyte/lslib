@@ -10,8 +10,8 @@ namespace LSLib.LS.Save
 {
     public class SavegameHelpers : IDisposable
     {
-        private PackageReader Reader;
-        private Package Package;
+        private readonly PackageReader Reader;
+        private readonly Package Package;
 
         public SavegameHelpers(string path)
         {
@@ -36,10 +36,8 @@ namespace LSLib.LS.Save
             Stream rsrcStream = globalsInfo.MakeStream();
             try
             {
-                using (var rsrcReader = new LSFReader(rsrcStream))
-                {
-                    resource = rsrcReader.Read();
-                }
+                using var rsrcReader = new LSFReader(rsrcStream);
+                resource = rsrcReader.Read();
             }
             finally
             {
@@ -96,9 +94,11 @@ namespace LSLib.LS.Save
 
             // Save globals.lsf
             var rewrittenStream = new MemoryStream();
-            var rsrcWriter = new LSFWriter(rewrittenStream);
-            rsrcWriter.Version = conversionParams.LSF;
-            rsrcWriter.EncodeSiblingData = false;
+            var rsrcWriter = new LSFWriter(rewrittenStream)
+            {
+                Version = conversionParams.LSF,
+                EncodeSiblingData = false
+            };
             rsrcWriter.Write(globals);
             rewrittenStream.Seek(0, SeekOrigin.Begin);
             return rewrittenStream;
@@ -141,7 +141,7 @@ namespace LSLib.LS.Save
             {
                 packageWriter.Version = conversionParams.PAKVersion;
                 packageWriter.Compression = CompressionMethod.Zlib;
-                packageWriter.CompressionLevel = CompressionLevel.DefaultCompression;
+                packageWriter.LSCompressionLevel = LSCompressionLevel.DefaultCompression;
                 packageWriter.Write();
             }
         }

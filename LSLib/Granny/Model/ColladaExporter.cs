@@ -3,29 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.LS;
-using Alphaleonis.Win32.Filesystem;
 using System.Xml;
 using System.Xml.Linq;
 using LSLib.LS.Enums;
+using System.IO;
 
 namespace LSLib.Granny.Model
 {
-    public class ColladaMeshExporter
+    public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
     {
-        private Mesh ExportedMesh;
-        private ExporterOptions Options;
+        private Mesh ExportedMesh = mesh;
+        private ExporterOptions Options = options;
         private List<source> Sources;
         private List<InputLocal> Inputs;
         private List<InputLocalOffset> InputOffsets;
         private ulong LastInputOffset = 0;
-        private XmlDocument Xml = new XmlDocument();
-
-
-        public ColladaMeshExporter(Mesh mesh, ExporterOptions options)
-        {
-            ExportedMesh = mesh;
-            Options = options;
-        }
+        private XmlDocument Xml = new();
 
         private void AddInput(source collSource, string inputSemantic, string localInputSemantic = null, ulong setIndex = 0)
         {
@@ -36,18 +29,22 @@ namespace LSLib.Granny.Model
 
             if (inputSemantic != null)
             {
-                var input = new InputLocal();
-                input.semantic = inputSemantic;
-                input.source = "#" + collSource.id;
+                var input = new InputLocal
+                {
+                    semantic = inputSemantic,
+                    source = "#" + collSource.id
+                };
                 Inputs.Add(input);
             }
 
             if (localInputSemantic != null)
             {
-                var vertexInputOff = new InputLocalOffset();
-                vertexInputOff.semantic = localInputSemantic;
-                vertexInputOff.source = "#" + collSource.id;
-                vertexInputOff.offset = LastInputOffset++;
+                var vertexInputOff = new InputLocalOffset
+                {
+                    semantic = localInputSemantic,
+                    source = "#" + collSource.id,
+                    offset = LastInputOffset++
+                };
                 if (localInputSemantic == "TEXCOORD" || localInputSemantic == "COLOR")
                 {
                     vertexInputOff.set = setIndex;
@@ -109,7 +106,7 @@ namespace LSLib.Granny.Model
                         {
                             if (Options.ExportUVs)
                             {
-                                int uvIndex = Int32.Parse(component.Substring(component.Length - 1));
+                                int uvIndex = Int32.Parse(component[^1..]);
                                 var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
                                 AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
                             }
@@ -125,7 +122,7 @@ namespace LSLib.Granny.Model
                         {
                             if (Options.ExportUVs)
                             {
-                                int uvIndex = Int32.Parse(component.Substring(component.Length - 1)) - 1;
+                                int uvIndex = Int32.Parse(component[^1..]) - 1;
                                 var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
                                 AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
                             }
@@ -309,9 +306,9 @@ namespace LSLib.Granny.Model
         public mesh Export()
         {
             // Jank we need to create XMLElements on the fly
-            Sources = new List<source>();
-            Inputs = new List<InputLocal>();
-            InputOffsets = new List<InputLocalOffset>();
+            Sources = [];
+            Inputs = [];
+            InputOffsets = [];
             LastInputOffset = 0;
 
             var vertexData = ExportedMesh.PrimaryVertexData;
@@ -336,21 +333,25 @@ namespace LSLib.Granny.Model
                 vertexData.Deduplicator.Colors.Select(color => color.DeduplicationMap).ToList()
             );
 
-            var colladaMesh = new mesh();
-            colladaMesh.vertices = new vertices();
-            colladaMesh.vertices.id = ExportedMesh.Name + "-vertices";
-            colladaMesh.vertices.input = Inputs.ToArray();
-            colladaMesh.source = Sources.ToArray();
-            colladaMesh.Items = new object[] { triangles };
-            colladaMesh.extra = new extra[]
+            var colladaMesh = new mesh
             {
-                new extra
+                vertices = new vertices
                 {
-                    technique = new technique[]
+                    id = ExportedMesh.Name + "-vertices",
+                    input = Inputs.ToArray()
+                },
+                source = Sources.ToArray(),
+                Items = [triangles],
+                extra =
+                [
+                    new extra
                     {
-                        ExportLSLibProfile()
+                        technique =
+                        [
+                            ExportLSLibProfile()
+                        ]
                     }
-                }
+                ]
             };
 
             return colladaMesh;
@@ -361,18 +362,20 @@ namespace LSLib.Granny.Model
     public class ColladaExporter
     {
         [Serialization(Kind = SerializationKind.None)]
-        public ExporterOptions Options = new ExporterOptions();
+        public ExporterOptions Options = new();
 
-        private XmlDocument Xml = new XmlDocument();
+        private XmlDocument Xml = new();
 
         private void ExportMeshBinding(Model model, string skelRef, MeshBinding meshBinding, List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
         {
             var exporter = new ColladaMeshExporter(meshBinding.Mesh, Options);
             var mesh = exporter.Export();
-            var geom = new geometry();
-            geom.id = meshBinding.Mesh.Name + "-geom";
-            geom.name = meshBinding.Mesh.Name;
-            geom.Item = mesh;
+            var geom = new geometry
+            {
+                id = meshBinding.Mesh.Name + "-geom",
+                name = meshBinding.Mesh.Name,
+                Item = mesh
+            };
             geometries.Add(geom);
 
             bool hasSkin = skelRef != null && meshBinding.Mesh.IsSkinned();
@@ -387,30 +390,38 @@ namespace LSLib.Granny.Model
                 }
 
                 skin = ExportSkin(meshBinding.Mesh, model.Skeleton.Bones, boneNames, geom.id);
-                ctrl = new controller();
-                ctrl.id = meshBinding.Mesh.Name + "-skin";
-                ctrl.name = meshBinding.Mesh.Name + "_Skin";
-                ctrl.Item = skin;
+                ctrl = new controller
+                {
+                    id = meshBinding.Mesh.Name + "-skin",
+                    name = meshBinding.Mesh.Name + "_Skin",
+                    Item = skin
+                };
                 controllers.Add(ctrl);
             }
 
-            var geomNode = new node();
-            geomNode.id = geom.name + "-node";
-            geomNode.name = geom.name;
-            geomNode.type = NodeType.NODE;
+            var geomNode = new node
+            {
+                id = geom.name + "-node",
+                name = geom.name,
+                type = NodeType.NODE
+            };
 
             if (hasSkin)
             {
-                var controllerInstance = new instance_controller();
-                controllerInstance.url = "#" + ctrl.id;
-                controllerInstance.skeleton = new string[] { "#" + skelRef };
-                geomNode.instance_controller = new instance_controller[] { controllerInstance };
+                var controllerInstance = new instance_controller
+                {
+                    url = "#" + ctrl.id,
+                    skeleton = ["#" + skelRef]
+                };
+                geomNode.instance_controller = [controllerInstance];
             }
             else
             {
-                var geomInstance = new instance_geometry();
-                geomInstance.url = "#" + geom.id;
-                geomNode.instance_geometry = new instance_geometry[] { geomInstance };
+                var geomInstance = new instance_geometry
+                {
+                    url = "#" + geom.id
+                };
+                geomNode.instance_geometry = [geomInstance];
             }
 
             geomNodes.Add(geomNode);
@@ -459,8 +470,8 @@ namespace LSLib.Granny.Model
                 });
             }
 
-            var jointSource = ColladaUtils.MakeNameSource(mesh.Name, "joints", new string[] { "JOINT" }, joints.ToArray());
-            var poseSource = ColladaUtils.MakeFloatSource(mesh.Name, "poses", new string[] { "TRANSFORM" }, poses.ToArray(), 16, "float4x4");
+            var jointSource = ColladaUtils.MakeNameSource(mesh.Name, "joints", ["JOINT"], joints.ToArray());
+            var poseSource = ColladaUtils.MakeFloatSource(mesh.Name, "poses", ["TRANSFORM"], poses.ToArray(), 16, "float4x4");
             var weightsSource = mesh.PrimaryVertexData.MakeBoneWeights(mesh.Name);
 
             var vertices = mesh.PrimaryVertexData.Deduplicator.Vertices.Uniques;
@@ -485,38 +496,52 @@ namespace LSLib.Granny.Model
                 vertexInfluenceCounts.Add(influences);
             }
 
-            var jointOffsets = new InputLocalOffset();
-            jointOffsets.semantic = "JOINT";
-            jointOffsets.source = "#" + jointSource.id;
-            jointOffsets.offset = 0;
+            var jointOffsets = new InputLocalOffset
+            {
+                semantic = "JOINT",
+                source = "#" + jointSource.id,
+                offset = 0
+            };
 
-            var weightOffsets = new InputLocalOffset();
-            weightOffsets.semantic = "WEIGHT";
-            weightOffsets.source = "#" + weightsSource.id;
-            weightOffsets.offset = 1;
+            var weightOffsets = new InputLocalOffset
+            {
+                semantic = "WEIGHT",
+                source = "#" + weightsSource.id,
+                offset = 1
+            };
 
-            var vertWeights = new skinVertex_weights();
-            vertWeights.count = (ulong)vertices.Count;
-            vertWeights.input = new InputLocalOffset[] { jointOffsets, weightOffsets };
-            vertWeights.v = string.Join(" ", vertexInfluences.Select(x => x.ToString()).ToArray());
-            vertWeights.vcount = string.Join(" ", vertexInfluenceCounts.Select(x => x.ToString()).ToArray());
+            var vertWeights = new skinVertex_weights
+            {
+                count = (ulong)vertices.Count,
+                input = [jointOffsets, weightOffsets],
+                v = string.Join(" ", vertexInfluences.Select(x => x.ToString()).ToArray()),
+                vcount = string.Join(" ", vertexInfluenceCounts.Select(x => x.ToString()).ToArray())
+            };
 
-            var skin = new skin();
-            skin.source1 = "#" + geometryId;
-            skin.bind_shape_matrix = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1";
+            var skin = new skin
+            {
+                source1 = "#" + geometryId,
+                bind_shape_matrix = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1",
 
-            var skinJoints = new skinJoints();
-            var skinJointInput = new InputLocal();
-            skinJointInput.semantic = "JOINT";
-            skinJointInput.source = "#" + jointSource.id;
-            var skinInvBindInput = new InputLocal();
-            skinInvBindInput.semantic = "INV_BIND_MATRIX";
-            skinInvBindInput.source = "#" + poseSource.id;
-            skinJoints.input = new InputLocal[] { skinJointInput, skinInvBindInput };
+                joints = new skinJoints
+                {
+                    input = [
+                        new InputLocal
+                        {
+                            semantic = "JOINT",
+                            source = "#" + jointSource.id
+                        },
+                        new InputLocal
+                        {
+                            semantic = "INV_BIND_MATRIX",
+                            source = "#" + poseSource.id
+                        }
+                    ]
+                },
 
-            skin.joints = skinJoints;
-            skin.source = new source[] { jointSource, poseSource, weightsSource };
-            skin.vertex_weights = vertWeights;
+                source = [jointSource, poseSource, weightsSource],
+                vertex_weights = vertWeights
+            };
 
             return skin;
         }
@@ -619,7 +644,6 @@ namespace LSLib.Granny.Model
             track.InterpolateFrames();
 
             var anims = new List<animation>();
-            var inputs = new List<InputLocal>();
 
             var outputs = new List<float>(track.Keyframes.Count * 16);
             foreach (var keyframe in track.Keyframes.Values)
@@ -658,53 +682,60 @@ namespace LSLib.Granny.Model
                 interpolations.Add(interpolations[0]);
             }
 
-            var knotsSource = ColladaUtils.MakeFloatSource(name, "inputs", new string[] { "TIME" }, knots.ToArray());
-            var knotsInput = new InputLocal();
-            knotsInput.semantic = "INPUT";
-            knotsInput.source = "#" + knotsSource.id;
-            inputs.Add(knotsInput);
+            var knotsSource = ColladaUtils.MakeFloatSource(name, "inputs", ["TIME"], knots.ToArray());
+            var outSource = ColladaUtils.MakeFloatSource(name, "outputs", ["TRANSFORM"], outputs.ToArray(), 16, "float4x4");
+            var interpSource = ColladaUtils.MakeNameSource(name, "interpolations", ["INTERPOLATION"], interpolations.ToArray());
 
-            var outSource = ColladaUtils.MakeFloatSource(name, "outputs", new string[] { "TRANSFORM" }, outputs.ToArray(), 16, "float4x4");
-            var outInput = new InputLocal();
-            outInput.semantic = "OUTPUT";
-            outInput.source = "#" + outSource.id;
-            inputs.Add(outInput);
-
-            var interpSource = ColladaUtils.MakeNameSource(name, "interpolations", new string[] { "INTERPOLATION" }, interpolations.ToArray());
-
-            var interpInput = new InputLocal();
-            interpInput.semantic = "INTERPOLATION";
-            interpInput.source = "#" + interpSource.id;
-            inputs.Add(interpInput);
-
-            var sampler = new sampler();
-            sampler.id = name + "_sampler";
-            sampler.input = inputs.ToArray();
-
-            var channel = new channel();
-            channel.source = "#" + sampler.id;
-            channel.target = target;
-
-            var animation = new animation();
-            animation.id = name;
-            animation.name = name;
-            var animItems = new List<object>();
-            animItems.Add(knotsSource);
-            animItems.Add(outSource);
-            animItems.Add(interpSource);
-            animItems.Add(sampler);
-            animItems.Add(channel);
-            animation.Items = animItems.ToArray();
-
-            animation.extra = new extra[]
+            var sampler = new sampler
             {
-                new extra
-                {
-                    technique = new technique[]
+                id = name + "_sampler",
+                input = 
+                [
+                    new InputLocal
                     {
-                        ExportAnimationLSLibProfile(extData)
+                        semantic = "INTERPOLATION",
+                        source = "#" + interpSource.id
+                    },
+                    new InputLocal
+                    {
+                        semantic = "OUTPUT",
+                        source = "#" + outSource.id
+                    },
+                    new InputLocal
+                    {
+                        semantic = "INPUT",
+                        source = "#" + knotsSource.id
                     }
-                }
+                ]
+            };
+
+            var channel = new channel
+            {
+                source = "#" + sampler.id,
+                target = target
+            };
+
+            var animation = new animation
+            {
+                id = name,
+                name = name,
+                Items = [
+                    knotsSource,
+                    outSource,
+                    interpSource,
+                    sampler,
+                    channel
+                ],
+                extra =
+                [
+                    new extra
+                    {
+                        technique =
+                        [
+                            ExportAnimationLSLibProfile(extData)
+                        ]
+                    }
+                ]
             };
 
             anims.Add(animation);
@@ -832,25 +863,29 @@ namespace LSLib.Granny.Model
 
         public void Export(Root root, string outputPath)
         {
-            var collada = new COLLADA();
-            var asset = new asset();
             var contributor = new assetContributor();
             if (root.ArtToolInfo != null)
                 contributor.authoring_tool = root.ArtToolInfo.FromArtToolName;
             else
                 contributor.authoring_tool = "LSLib COLLADA Exporter v" + Common.LibraryVersion();
-            asset.contributor = new assetContributor[] { contributor };
-            asset.created = DateTime.Now;
-            asset.modified = DateTime.Now;
-            asset.unit = new assetUnit();
-            asset.unit.name = "meter";
+
+            var asset = new asset
+            {
+                contributor = [contributor],
+                created = DateTime.Now,
+                modified = DateTime.Now,
+                unit = new assetUnit
+                {
+                    name = "meter"
+                },
+                up_axis = UpAxisType.Y_UP
+            };
+
             // TODO: Handle up vector, etc. properly?
             if (root.ArtToolInfo != null)
                 asset.unit.meter = root.ArtToolInfo.UnitsPerMeter;
             else
                 asset.unit.meter = 1;
-            asset.up_axis = UpAxisType.Y_UP;
-            collada.asset = asset;
 
             var geometries = new List<geometry>();
             var controllers = new List<controller>();
@@ -864,18 +899,22 @@ namespace LSLib.Granny.Model
             {
                 var anims = ExportAnimations(anim);
                 animations.AddRange(anims);
-                var clip = new animation_clip();
-                clip.id = anim.Name + "_Animation";
-                clip.name = anim.Name;
-                clip.start = 0.0;
-                clip.end = anim.Duration;
-                clip.endSpecified = true;
+                var clip = new animation_clip
+                {
+                    id = anim.Name + "_Animation",
+                    name = anim.Name,
+                    start = 0.0,
+                    end = anim.Duration,
+                    endSpecified = true
+                };
 
                 var animInstances = new List<InstanceWithExtra>();
                 foreach (var animChannel in anims)
                 {
-                    var instance = new InstanceWithExtra();
-                    instance.url = "#" + animChannel.id;
+                    var instance = new InstanceWithExtra
+                    {
+                        url = "#" + animChannel.id
+                    };
                     animInstances.Add(instance);
                 }
 
@@ -887,65 +926,79 @@ namespace LSLib.Granny.Model
 
             if (animations.Count > 0)
             {
-                var animationLib = new library_animations();
-                animationLib.animation = animations.ToArray();
+                var animationLib = new library_animations
+                {
+                    animation = animations.ToArray()
+                };
                 rootElements.Add(animationLib);
             }
 
             if (animationClips.Count > 0)
             {
-                var animationClipLib = new library_animation_clips();
-                animationClipLib.animation_clip = animationClips.ToArray();
+                var animationClipLib = new library_animation_clips
+                {
+                    animation_clip = animationClips.ToArray()
+                };
                 rootElements.Add(animationClipLib);
             }
 
             if (geometries.Count > 0)
             {
-                var geometryLib = new library_geometries();
-                geometryLib.geometry = geometries.ToArray();
+                var geometryLib = new library_geometries
+                {
+                    geometry = geometries.ToArray()
+                };
                 rootElements.Add(geometryLib);
             }
 
             if (controllers.Count > 0)
             {
-                var controllerLib = new library_controllers();
-                controllerLib.controller = controllers.ToArray();
+                var controllerLib = new library_controllers
+                {
+                    controller = controllers.ToArray()
+                };
                 rootElements.Add(controllerLib);
             }
 
             var visualScenes = new library_visual_scenes();
-            var visualScene = new visual_scene();
-            visualScene.id = "DefaultVisualScene";
-            visualScene.name = "unnamed";
+            var visualScene = new visual_scene
+            {
+                id = "DefaultVisualScene",
+                name = "unnamed",
+                node = geomNodes.ToArray()
+            };
+            visualScenes.visual_scene = [visualScene];
 
-            visualScene.node = geomNodes.ToArray();
-            visualScenes.visual_scene = new visual_scene[] { visualScene };
-
-            var visualSceneInstance = new InstanceWithExtra();
-            visualSceneInstance.url = "#DefaultVisualScene";
+            var visualSceneInstance = new InstanceWithExtra
+            {
+                url = "#DefaultVisualScene"
+            };
             rootElements.Add(visualScenes);
 
-            var scene = new COLLADAScene();
-            scene.instance_visual_scene = visualSceneInstance;
-            collada.scene = scene;
-
-            collada.Items = rootElements.ToArray();
-
-            collada.extra = new extra[]
+            var scene = new COLLADAScene
             {
-                new extra
-                {
-                    technique = new technique[]
-                    {
-                        ExportRootLSLibProfile(root)
-                    }
-                }
+                instance_visual_scene = visualSceneInstance
             };
 
-            using (var stream = File.Open(outputPath, System.IO.FileMode.Create))
+            var collada = new COLLADA
             {
-                collada.Save(stream);
-            }
+                asset = asset,
+                scene = scene,
+                Items = rootElements.ToArray(),
+                extra =
+                [
+                    new extra
+                    {
+                        technique =
+                        [
+                            ExportRootLSLibProfile(root)
+                        ]
+                    }
+                ]
+            };
+
+            using var stream = File.Open(outputPath, FileMode.Create);
+            collada.Save(stream);
         }
     }
 }

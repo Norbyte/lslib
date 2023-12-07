@@ -88,14 +88,9 @@ namespace LSLib.LS.Stats
         }
     }
 
-    public class EnumParser : IStatValueParser
+    public class EnumParser(StatEnumeration enumeration) : IStatValueParser
     {
-        private readonly StatEnumeration Enumeration;
-
-        public EnumParser(StatEnumeration enumeration)
-        {
-            Enumeration = enumeration ?? throw new ArgumentNullException();
-        }
+        private readonly StatEnumeration Enumeration = enumeration ?? throw new ArgumentNullException();
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
         {
@@ -125,14 +120,9 @@ namespace LSLib.LS.Stats
         }
     }
 
-    public class MultiValueEnumParser : IStatValueParser
+    public class MultiValueEnumParser(StatEnumeration enumeration) : IStatValueParser
     {
-        private readonly EnumParser Parser;
-
-        public MultiValueEnumParser(StatEnumeration enumeration)
-        {
-            Parser = new EnumParser(enumeration);
-        }
+        private readonly EnumParser Parser = new(enumeration);
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
         {
@@ -143,9 +133,9 @@ namespace LSLib.LS.Stats
                 return true;
             }
 
-            foreach (var item in value.Split(new char[] { ';' }))
+            foreach (var item in value.Split([';']))
             {
-                Parser.Parse(item.Trim(new char[] { ' ' }), ref succeeded, ref errorText);
+                Parser.Parse(item.Trim([' ']), ref succeeded, ref errorText);
                 if (!succeeded)
                 {
                     errorText = $"Value '{item}' not supported; {errorText}";
@@ -199,17 +189,8 @@ namespace LSLib.LS.Stats
         }
     }
 
-    public class StatReferenceParser : IStatValueParser
+    public class StatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : IStatValueParser
     {
-        private IStatReferenceValidator Validator;
-        private List<StatReferenceConstraint> Constraints;
-
-        public StatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints)
-        {
-            Validator = validator;
-            Constraints = constraints;
-        }
-        
         public object Parse(string value, ref bool succeeded, ref string errorText)
         {
             if (value == "")
@@ -218,38 +199,33 @@ namespace LSLib.LS.Stats
                 return value;
             }
 
-            foreach (var constraint in Constraints)
+            foreach (var constraint in constraints)
             {
-                if (Validator.IsValidReference(value, constraint.StatType))
+                if (validator.IsValidReference(value, constraint.StatType))
                 {
                     succeeded = true;
                     return value;
                 }
             }
 
-            var refTypes = String.Join("/", Constraints.Select(c => c.StatType));
+            var refTypes = String.Join("/", constraints.Select(c => c.StatType));
             errorText = $"'{value}' is not a valid {refTypes} reference";
             succeeded = false;
             return null;
         }
     }
 
-    public class MultiValueStatReferenceParser : IStatValueParser
+    public class MultiValueStatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : IStatValueParser
     {
-        private readonly StatReferenceParser Parser;
-
-        public MultiValueStatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints)
-        {
-            Parser = new StatReferenceParser(validator, constraints);
-        }
+        private readonly StatReferenceParser Parser = new(validator, constraints);
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
         {
             succeeded = true;
 
-            foreach (var item in value.Split(new char[] { ';' }))
+            foreach (var item in value.Split([';']))
             {
-                var trimmed = item.Trim(new char[] { ' ' });
+                var trimmed = item.Trim([' ']);
                 if (trimmed.Length > 0)
                 {
                     Parser.Parse(trimmed, ref succeeded, ref errorText);
@@ -271,52 +247,37 @@ namespace LSLib.LS.Stats
         DescriptionParams
     };
 
-    public class ExpressionParser : IStatValueParser
+    public class ExpressionParser(String validatorType, StatDefinitionRepository definitions,
+        StatValueParserFactory parserFactory, ExpressionType type) : IStatValueParser
     {
-        private readonly String ValidatorType;
-        private readonly StatDefinitionRepository Definitions;
-        private readonly StatValueParserFactory ParserFactory;
-        private readonly ExpressionType ExprType;
-
-        public ExpressionParser(String validatorType, StatDefinitionRepository definitions,
-            StatValueParserFactory parserFactory, ExpressionType type)
-        {
-            ValidatorType = validatorType;
-            Definitions = definitions;
-            ParserFactory = parserFactory;
-            ExprType = type;
-        }
-        
         public virtual object Parse(string value, ref bool succeeded, ref string errorText)
         {
-            var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + ValidatorType + "__ " + value.TrimEnd());
-            using (var buf = new MemoryStream(valueBytes))
-            {
-                List<string> errorTexts = new List<string>();
+            var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + validatorType + "__ " + value.TrimEnd());
+            using var buf = new MemoryStream(valueBytes);
+            List<string> errorTexts = [];
 
-                var scanner = new StatPropertyScanner();
-                scanner.SetSource(buf);
-                var parser = new StatPropertyParser(scanner, Definitions, ParserFactory, valueBytes, ExprType);
-                parser.OnError += (string message) => errorTexts.Add(message);
-                succeeded = parser.Parse();
-                if (!succeeded)
-                {
-                    var location = scanner.LastLocation();
-                    var column = location.StartColumn - 10 - ValidatorType.Length + 1;
-                    errorText = $"Syntax error at or near character {column}";
-                    return null;
-                }
-                else if (errorTexts.Count > 0)
-                {
-                    succeeded = false;
-                    errorText = String.Join("; ", errorTexts);
-                    return null;
-                }
-                else
-                {
-                    succeeded = true;
-                    return parser.GetParsedObject();
-                }
+            var scanner = new StatPropertyScanner();
+            scanner.SetSource(buf);
+            var parser = new StatPropertyParser(scanner, definitions, parserFactory, valueBytes, type);
+            parser.OnError += (string message) => errorTexts.Add(message);
+            succeeded = parser.Parse();
+            if (!succeeded)
+            {
+                var location = scanner.LastLocation();
+                var column = location.StartColumn - 10 - validatorType.Length + 1;
+                errorText = $"Syntax error at or near character {column}";
+                return null;
+            }
+            else if (errorTexts.Count > 0)
+            {
+                succeeded = false;
+                errorText = String.Join("; ", errorTexts);
+                return null;
+            }
+            else
+            {
+                succeeded = true;
+                return parser.GetParsedObject();
             }
         }
     }
@@ -327,36 +288,27 @@ namespace LSLib.LS.Stats
         {
             value = "BHAALS_BOON_SLAYER.Duration-1";
             var valueBytes = Encoding.UTF8.GetBytes(value);
-            using (var buf = new MemoryStream(valueBytes))
+            using var buf = new MemoryStream(valueBytes);
+            var scanner = new Lua.StatLuaScanner();
+            scanner.SetSource(buf);
+            var parser = new Lua.StatLuaParser(scanner);
+            succeeded = parser.Parse();
+            if (!succeeded)
             {
-                var scanner = new Lua.StatLuaScanner();
-                scanner.SetSource(buf);
-                var parser = new Lua.StatLuaParser(scanner);
-                succeeded = parser.Parse();
-                if (!succeeded)
-                {
-                    var location = scanner.LastLocation();
-                    errorText = $"Syntax error at or near character {location.StartColumn}";
-                    return null;
-                }
-                else
-                {
-                    succeeded = true;
-                    return null;
-                }
+                var location = scanner.LastLocation();
+                errorText = $"Syntax error at or near character {location.StartColumn}";
+                return null;
+            }
+            else
+            {
+                succeeded = true;
+                return null;
             }
         }
     }
 
-    public class UseCostsParser : IStatValueParser
+    public class UseCostsParser(IStatReferenceValidator validator) : IStatValueParser
     {
-        private readonly IStatReferenceValidator Validator;
-
-        public UseCostsParser(IStatReferenceValidator validator)
-        {
-            Validator = validator;
-        }
-
         public virtual object Parse(string value, ref bool succeeded, ref string errorText)
         {
             if (value.Length == 0) return value;
@@ -373,7 +325,7 @@ namespace LSLib.LS.Stats
                     return null;
                 }
 
-                if (!Validator.IsValidGuidResource(parts[0], "ActionResource") && !Validator.IsValidGuidResource(parts[0], "ActionResourceGroup"))
+                if (!validator.IsValidGuidResource(parts[0], "ActionResource") && !validator.IsValidGuidResource(parts[0], "ActionResourceGroup"))
                 {
                     errorText = $"Nonexistent action resource or action resource group: {parts[0]}";
                     return null;
@@ -439,20 +391,13 @@ namespace LSLib.LS.Stats
         }
     }
 
-    public class AnyParser : IStatValueParser
+    public class AnyParser(IEnumerable<IStatValueParser> parsers, string message = null) : IStatValueParser
     {
-        private readonly List<IStatValueParser> Parsers;
-        private readonly String Message;
-
-        public AnyParser(IEnumerable<IStatValueParser> parsers, string message = null)
-        {
-            Parsers = parsers.ToList();
-            Message = message;
-        }
+        private readonly List<IStatValueParser> Parsers = parsers.ToList();
 
         public object Parse(string value, ref bool succeeded, ref string errorText)
         {
-            List<string> errors = new List<string>();
+            List<string> errors = [];
             foreach (var parser in Parsers)
             {
                 succeeded = false;
@@ -468,9 +413,9 @@ namespace LSLib.LS.Stats
                 }
             }
 
-            if (Message != null && Message.Length > 0)
+            if (message != null && message.Length > 0)
             {
-                errorText = $"'{value}': {Message}";
+                errorText = $"'{value}': {message}";
             }
             else
             {
@@ -487,18 +432,11 @@ namespace LSLib.LS.Stats
         public string Message;
     }
 
-    public class StatValueParserFactory
+    public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
     {
-        private readonly IStatReferenceValidator ReferenceValidator;
-
-        public StatValueParserFactory(IStatReferenceValidator referenceValidator)
-        {
-            ReferenceValidator = referenceValidator;
-        }
-
         public IStatValueParser CreateReferenceParser(List<StatReferenceConstraint> constraints)
         {
-            return new StatReferenceParser(ReferenceValidator, constraints);
+            return new StatReferenceParser(referenceValidator, constraints);
         }
 
         public IStatValueParser CreateParser(StatField field, StatDefinitionRepository definitions)
@@ -528,38 +466,38 @@ namespace LSLib.LS.Stats
                 case "SpellContainerID":
                 case "FollowUpOriginalSpell":
                 case "RootSpellID":
-                    return new StatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    {
+                    return new StatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "SpellData" }
-                    });
+                    ]);
 
                 case "ContainerSpells":
-                    return new MultiValueStatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    {
+                    return new MultiValueStatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "SpellData" }
-                    });
+                    ]);
 
                 case "InterruptPrototype":
-                    return new StatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    {
+                    return new StatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "InterruptData" }
-                    });
+                    ]);
 
                 case "Passives":
                 case "PassivesOnEquip":
                 case "PassivesMainHand":
                 case "PassivesOffHand":
-                    return new MultiValueStatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    {
+                    return new MultiValueStatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "PassiveData" }
-                    });
+                    ]);
 
                 case "StatusOnEquip":
                 case "StatusInInventory":
-                    return new MultiValueStatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    {
+                    return new MultiValueStatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "StatusData" }
-                    });
+                    ]);
 
                 case "Cost":
                 case "UseCosts":
@@ -568,7 +506,7 @@ namespace LSLib.LS.Stats
                 case "TooltipUseCosts":
                 case "RitualCosts":
                 case "HitCosts":
-                    return new UseCostsParser(ReferenceValidator);
+                    return new UseCostsParser(referenceValidator);
 
                 case "Damage":
                 case "VersatileDamage":
@@ -636,117 +574,66 @@ namespace LSLib.LS.Stats
                 }
             }
 
-            switch (type)
+            return type switch
             {
-                case "Boolean":
-                    return new BooleanParser();
-
-                case "ConstantInt":
-                case "Int":
-                    return new Int32Parser();
-
-                case "ConstantFloat":
-                case "Float":
-                    return new FloatParser();
-
-                case "String":
-                case "FixedString":
-                // FIXME - add TranslatedStringParser "guid;ver"
-                case "TranslatedString":
-                    return new StringParser();
-
-                case "Guid":
-                    return new UUIDParser();
-
-                case "Requirements":
-                    return new ExpressionParser("Requirements", definitions, this, ExpressionType.Functor);
-
-                case "StatsFunctors":
-                    return new ExpressionParser("Properties", definitions, this, ExpressionType.Functor);
-
-                case "Lua":
-                case "RollConditions":
-                case "TargetConditions":
-                case "Conditions":
-                    return new LuaExpressionParser();
-
-                case "UseCosts":
-                    return new UseCostsParser(ReferenceValidator);
-
-                case "StatReference":
-                    return new StatReferenceParser(ReferenceValidator, constraints);
-
-                case "StatusId":
-                    return new AnyParser(new List<IStatValueParser> {
+                "Boolean" => new BooleanParser(),
+                "ConstantInt" or "Int" => new Int32Parser(),
+                "ConstantFloat" or "Float" => new FloatParser(),
+                "String" or "FixedString" or "TranslatedString" => new StringParser(),
+                "Guid" => new UUIDParser(),
+                "Requirements" => new ExpressionParser("Requirements", definitions, this, ExpressionType.Functor),
+                "StatsFunctors" => new ExpressionParser("Properties", definitions, this, ExpressionType.Functor),
+                "Lua" or "RollConditions" or "TargetConditions" or "Conditions" => new LuaExpressionParser(),
+                "UseCosts" => new UseCostsParser(referenceValidator),
+                "StatReference" => new StatReferenceParser(referenceValidator, constraints),
+                "StatusId" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["EngineStatusType"]),
-                        new StatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                        {
+                        new StatReferenceParser(referenceValidator,
+                        [
                             new StatReferenceConstraint{ StatType = "StatusData" }
-                        })
-                    }, "Expected a status name");
-
-                case "ResurrectTypes":
-                    return new MultiValueEnumParser(definitions.Enumerations["ResurrectType"]);
-
-                case "StatusIdOrGroup":
-                    return new AnyParser(new List<IStatValueParser> {
+                        ])
+                    }, "Expected a status name"),
+                "ResurrectTypes" => new MultiValueEnumParser(definitions.Enumerations["ResurrectType"]),
+                "StatusIdOrGroup" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["StatusGroupFlags"]),
                         new EnumParser(definitions.Enumerations["EngineStatusType"]),
-                        new StatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                        {
+                        new StatReferenceParser(referenceValidator,
+                        [
                             new StatReferenceConstraint{ StatType = "StatusData" }
-                        })
-                    }, "Expected a status or StatusGroup name");
-
-                case "SummonDurationOrInt":
-                    return new AnyParser(new List<IStatValueParser> {
+                        ])
+                    }, "Expected a status or StatusGroup name"),
+                "SummonDurationOrInt" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["SummonDuration"]),
                         new Int32Parser()
-                    });
-
-                case "AllOrDamageType":
-                    return new AnyParser(new List<IStatValueParser> {
+                    }),
+                "AllOrDamageType" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["AllEnum"]),
                         new EnumParser(definitions.Enumerations["Damage Type"]),
-                    });
-
-                case "RollAdjustmentTypeOrDamageType":
-                    return new AnyParser(new List<IStatValueParser> {
+                    }),
+                "RollAdjustmentTypeOrDamageType" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["RollAdjustmentType"]),
                         new EnumParser(definitions.Enumerations["Damage Type"]),
-                    });
-
-                case "AbilityOrAttackRollAbility":
-                    return new AnyParser(new List<IStatValueParser> {
+                    }),
+                "AbilityOrAttackRollAbility" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["Ability"]),
                         new EnumParser(definitions.Enumerations["AttackRollAbility"]),
-                    });
-
-                case "DamageTypeOrDealDamageWeaponDamageType":
-                    return new AnyParser(new List<IStatValueParser> {
+                    }),
+                "DamageTypeOrDealDamageWeaponDamageType" => new AnyParser(new List<IStatValueParser> {
                         new EnumParser(definitions.Enumerations["Damage Type"]),
                         new EnumParser(definitions.Enumerations["DealDamageWeaponDamageType"]),
-                    });
-
-                case "SpellId":
-                    return new StatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    { 
+                    }),
+                "SpellId" => new StatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "SpellData" }
-                    });
-
-                case "Interrupt":
-                    return new StatReferenceParser(ReferenceValidator, new List<StatReferenceConstraint>
-                    { 
+                    ]),
+                "Interrupt" => new StatReferenceParser(referenceValidator,
+                    [
                         new StatReferenceConstraint{ StatType = "InterruptData" }
-                    });
-
+                    ]),
                 // THESE NEED TO BE FIXED!
-                case "StatusIDs":
-                    return new StringParser();
-
-                default:
-                    throw new ArgumentException($"Could not create parser for type '{type}'");
-            }
+                "StatusIDs" => new StringParser(),
+                _ => throw new ArgumentException($"Could not create parser for type '{type}'"),
+            };
         }
     }
 }

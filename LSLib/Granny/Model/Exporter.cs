@@ -4,19 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LSLib.LS;
-using OpenTK;
-using Alphaleonis.Win32.Filesystem;
-using File = Alphaleonis.Win32.Filesystem.File;
 using LSLib.LS.Enums;
-using System.Numerics;
 
 namespace LSLib.Granny.Model
 {
-    public class ExportException : Exception
+    public class ExportException(string message) : Exception(message)
     {
-        public ExportException(string message)
-            : base(message)
-        { }
     }
 
     public enum ExportFormat
@@ -93,7 +86,7 @@ namespace LSLib.Granny.Model
         public bool ConformAnimations = true;
         public bool ConformMeshBoneBindings = true;
         public bool ConformModels = true;
-        public Dictionary<string, VertexDescriptor> VertexFormats = new Dictionary<string, VertexDescriptor>();
+        public Dictionary<string, VertexDescriptor> VertexFormats = [];
         // Extended model info format to use when exporting to D:OS
         public DivinityModelInfoFormat ModelInfoFormat = DivinityModelInfoFormat.None;
         // Model flags to use when exporting
@@ -117,9 +110,9 @@ namespace LSLib.Granny.Model
         // See: Spherical Skinning with Dual-Quaternions and QTangents, Crytek R&D
         public bool EnableQTangents = true;
 
-        public List<string> DisabledAnimations = new List<string>();
-        public List<string> DisabledModels = new List<string>();
-        public List<string> DisabledSkeletons = new List<string>();
+        public List<string> DisabledAnimations = [];
+        public List<string> DisabledModels = [];
+        public List<string> DisabledSkeletons = [];
 
         public void LoadGameSettings(Game game)
         {
@@ -168,9 +161,9 @@ namespace LSLib.Granny.Model
 
         private Root LoadGR2(string inPath)
         {
-            var root = new LSLib.Granny.Model.Root();
-            FileStream fs = File.Open(inPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
-            var gr2 = new LSLib.Granny.GR2.GR2Reader(fs);
+            var root = new Root();
+            FileStream fs = File.Open(inPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var gr2 = new GR2Reader(fs);
             gr2.Read(root);
             root.PostLoad(gr2.Tag);
             fs.Close();
@@ -180,8 +173,10 @@ namespace LSLib.Granny.Model
 
         private Root LoadDAE(string inPath)
         {
-            var importer = new ColladaImporter();
-            importer.Options = Options;
+            var importer = new ColladaImporter
+            {
+                Options = Options
+            };
             return importer.Import(inPath);
         }
 
@@ -203,12 +198,12 @@ namespace LSLib.Granny.Model
         private void SaveGR2(string outPath, Root root)
         {
             root.PreSave();
-            var writer = new LSLib.Granny.GR2.GR2Writer();
-
-            writer.Format = Options.Is64Bit ? Magic.Format.LittleEndian64 : Magic.Format.LittleEndian32;
-            writer.AlternateMagic = Options.AlternateSignature;
-            writer.VersionTag = Options.VersionTag;
-
+            var writer = new GR2Writer
+            {
+                Format = Options.Is64Bit ? Magic.Format.LittleEndian64 : Magic.Format.LittleEndian32,
+                AlternateMagic = Options.AlternateSignature,
+                VersionTag = Options.VersionTag
+            };
 
             if (Options.UseObsoleteVersionTag)
             {
@@ -227,8 +222,10 @@ namespace LSLib.Granny.Model
 
         private void SaveDAE(Root root, ExporterOptions options)
         {
-            var exporter = new ColladaExporter();
-            exporter.Options = options;
+            var exporter = new ColladaExporter
+            {
+                Options = options
+            };
             exporter.Export(root, options.OutputPath);
         }
 
@@ -257,17 +254,21 @@ namespace LSLib.Granny.Model
                 if (model.Skeleton == null)
                 {
                     Utils.Info($"Generating dummy skeleton for model '{model.Name}'");
-                    var skeleton = new Skeleton();
-                    skeleton.Name = model.Name;
-                    skeleton.LODType = 1;
-                    skeleton.IsDummy = true;
-                    root.Skeletons.Add(skeleton);
+                    var bone = new Bone
+                    {
+                        Name = model.Name,
+                        ParentIndex = -1,
+                        Transform = new Transform()
+                    };
 
-                    var bone = new Bone();
-                    bone.Name = model.Name;
-                    bone.ParentIndex = -1;
-                    skeleton.Bones = new List<Bone> { bone };
-                    bone.Transform = new Transform();
+                    var skeleton = new Skeleton
+                    {
+                        Name = model.Name,
+                        LODType = 1,
+                        IsDummy = true,
+                        Bones = [bone]
+                    };
+                    root.Skeletons.Add(skeleton);
 
                     // TODO: Transform / IWT is not always identity on dummy bones!
                     skeleton.UpdateWorldTransforms();
@@ -280,14 +281,16 @@ namespace LSLib.Granny.Model
                             throw new ParsingException("Failed to generate dummy skeleton: Mesh already has bone bindings.");
                         }
 
-                        var binding = new BoneBinding();
-                        binding.BoneName = bone.Name;
-                        // TODO: Calculate bounding box!
-                        // Use small bounding box values, as it interferes with object placement
-                        // in D:OS 2 (after the Gift Bag 2 update)
-                        binding.OBBMin = new float[] { -0.1f, -0.1f, -0.1f };
-                        binding.OBBMax = new float[] { 0.1f, 0.1f, 0.1f };
-                        mesh.Mesh.BoneBindings = new List<BoneBinding> { binding };
+                        var binding = new BoneBinding
+                        {
+                            BoneName = bone.Name,
+                            // TODO: Calculate bounding box!
+                            // Use small bounding box values, as it interferes with object placement
+                            // in D:OS 2 (after the Gift Bag 2 update)
+                            OBBMin = [-0.1f, -0.1f, -0.1f],
+                            OBBMax = [0.1f, 0.1f, 0.1f]
+                        };
+                        mesh.Mesh.BoneBindings = [binding];
                     }
                 }
             }
@@ -303,11 +306,8 @@ namespace LSLib.Granny.Model
                 {
                     var track = trackGroup.TransformTracks[i];
                     var bone = skeleton.GetBoneByName(track.Name);
-                    if(bone == null)
-                    {
-                        //Dummy_Foot -> Dummy_Foot_01
-                        bone = skeleton.GetBoneByName(track.Name + "_01");
-                    }
+                    //Dummy_Foot -> Dummy_Foot_01
+                    bone ??= skeleton.GetBoneByName(track.Name + "_01");
 
                     if (bone == null)
                     {
@@ -393,9 +393,9 @@ namespace LSLib.Granny.Model
             {
                 foreach (var track in trackGroup.TransformTracks)
                 {
-                    var bone = skeleton.GetBoneByName(track.Name);
                     //Dummy_Foot -> Dummy_Foot_01
-                    if (bone == null) bone = skeleton.GetBoneByName(track.Name + "_01");
+                    var bone = skeleton.GetBoneByName(track.Name) ?? skeleton.GetBoneByName(track.Name + "_01");
+
                     if (bone == null)
                     {
                         throw new ExportException($"Animation track references bone '{track.Name}' that cannot be found in the skeleton '{skeleton.Name}'.");
@@ -423,15 +423,14 @@ namespace LSLib.Granny.Model
 
                     // Generate a dummy model if there isn't one, otherwise we won't
                     // be able to bind the animations to anything
-                    if (Root.Models == null)
-                    {
-                        Root.Models = new List<Model>();
-                        var model = new Model();
-                        model.InitialPlacement = new Transform();
-                        model.Name = skeleton.Name;
-                        model.Skeleton = skeleton;
-                        Root.Models.Add(model);
-                    }
+                    Root.Models ??= [
+                        new Model
+                        {
+                            InitialPlacement = new Transform(),
+                            Name = skeleton.Name,
+                            Skeleton = skeleton
+                        }
+                    ];
 
                     ConformSkeletonAnimations(skeleton);
                 }
@@ -453,7 +452,7 @@ namespace LSLib.Granny.Model
                 }
 
                 // Allow name mismatches if there is only 1 skeleton in each file
-                if (conformingSkel == null && skeletons.Count() == 1 && Root.Skeletons.Count() == 1)
+                if (conformingSkel == null && skeletons.Count() == 1 && Root.Skeletons.Count == 1)
                 {
                     conformingSkel = skeletons.First();
                 }
@@ -469,10 +468,7 @@ namespace LSLib.Granny.Model
 
         private void ConformMeshBoneBindings(Mesh mesh, Mesh conformToMesh)
         {
-            if (mesh.BoneBindings == null)
-            {
-                mesh.BoneBindings = new List<BoneBinding>();
-            }
+            mesh.BoneBindings ??= [];
 
             foreach (var conformBone in conformToMesh.BoneBindings)
             {
@@ -489,8 +485,10 @@ namespace LSLib.Granny.Model
                 if (inputBone == null)
                 {
                     // Create a new "dummy" binding if it does not exist in the new mesh
-                    inputBone = new BoneBinding();
-                    inputBone.BoneName = conformBone.BoneName;
+                    inputBone = new BoneBinding
+                    {
+                        BoneName = conformBone.BoneName
+                    };
                     mesh.BoneBindings.Add(inputBone);
                 }
 
@@ -533,30 +531,35 @@ namespace LSLib.Granny.Model
             var vertexData = new VertexData();
             vertexData.VertexComponentNames = meshBinding.Mesh.PrimaryVertexData.VertexComponentNames
                 .Select(name => new GrannyString(name.String)).ToList();
-            vertexData.Vertices = new List<Vertex>();
+            vertexData.Vertices = [];
             var dummyVertex = meshBinding.Mesh.VertexFormat.CreateInstance();
             vertexData.Vertices.Add(dummyVertex);
             Root.VertexDatas.Add(vertexData);
 
-            var topology = new TriTopology();
-            topology.Groups = new List<TriTopologyGroup>();
-            var group = new TriTopologyGroup();
-            group.MaterialIndex = 0;
-            group.TriCount = 0;
-            group.TriFirst = 0;
-            topology.Groups.Add(group);
-
-            topology.Indices = new List<int>();
+            var topology = new TriTopology
+            {
+                Groups = [
+                    new TriTopologyGroup
+                    {
+                        MaterialIndex = 0,
+                        TriCount = 0,
+                        TriFirst = 0
+                    }
+                ],
+                Indices = []
+            };
             Root.TriTopologies.Add(topology);
 
-            var mesh = new Mesh();
-            mesh.Name = meshBinding.Mesh.Name;
-            mesh.VertexFormat = meshBinding.Mesh.VertexFormat;
-            mesh.PrimaryTopology = topology;
-            mesh.PrimaryVertexData = vertexData;
+            var mesh = new Mesh
+            {
+                Name = meshBinding.Mesh.Name,
+                VertexFormat = meshBinding.Mesh.VertexFormat,
+                PrimaryTopology = topology,
+                PrimaryVertexData = vertexData
+            };
             if (meshBinding.Mesh.BoneBindings != null)
             {
-                mesh.BoneBindings = new List<BoneBinding>();
+                mesh.BoneBindings = [];
                 ConformMeshBoneBindings(mesh, meshBinding.Mesh);
             }
 
@@ -565,9 +568,11 @@ namespace LSLib.Granny.Model
 
         private Model MakeDummyModel(Model original)
         {
-            var newModel = new Model();
-            newModel.InitialPlacement = original.InitialPlacement;
-            newModel.Name = original.Name;
+            var newModel = new Model
+            {
+                InitialPlacement = original.InitialPlacement,
+                Name = original.Name
+            };
 
             if (original.Skeleton != null)
             {
@@ -582,7 +587,7 @@ namespace LSLib.Granny.Model
 
             if (original.MeshBindings != null)
             {
-                newModel.MeshBindings = new List<MeshBinding>();
+                newModel.MeshBindings = [];
                 foreach (var meshBinding in original.MeshBindings)
                 {
                     // Try to bind the original mesh, if it exists in the source file.
@@ -594,8 +599,10 @@ namespace LSLib.Granny.Model
                         Root.Meshes.Add(mesh);
                     }
 
-                    var binding = new MeshBinding();
-                    binding.Mesh = mesh;
+                    var binding = new MeshBinding
+                    {
+                        Mesh = mesh
+                    };
                     newModel.MeshBindings.Add(binding);
                 }
             }
@@ -614,7 +621,7 @@ namespace LSLib.Granny.Model
             // Rebuild the model list to match the order used in the original GR2
             // If a model is missing, generate a dummy model & mesh.
             var originalModels = Root.Models;
-            Root.Models = new List<Model>();
+            Root.Models = [];
 
             foreach (var model in models)
             {

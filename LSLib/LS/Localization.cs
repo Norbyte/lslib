@@ -1,15 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using LZ4;
-using File = Alphaleonis.Win32.Filesystem.File;
-using LSLib.LS.Enums;
 using System.Collections.Generic;
-using LSLib.Granny;
 using System.Xml;
-using System.Diagnostics;
 
 namespace LSLib.LS
 {
@@ -67,14 +61,9 @@ namespace LSLib.LS
     }
 
 
-    public class LocaReader : IDisposable
+    public class LocaReader(Stream stream) : IDisposable
     {
-        private Stream Stream;
-
-        public LocaReader(Stream stream)
-        {
-            this.Stream = stream;
-        }
+        private readonly Stream Stream = stream;
 
         public void Dispose()
         {
@@ -83,94 +72,81 @@ namespace LSLib.LS
 
         public LocaResource Read()
         {
-            using (var reader = new BinaryReader(Stream))
+            using var reader = new BinaryReader(Stream);
+            var loca = new LocaResource
             {
-                var loca = new LocaResource
-                {
-                    Entries = new List<LocalizedText>()
-                };
-                var header = BinUtils.ReadStruct<LocaHeader>(reader);
+                Entries = []
+            };
+            var header = BinUtils.ReadStruct<LocaHeader>(reader);
 
-                if (header.Signature != (ulong)LocaHeader.DefaultSignature)
-                {
-                    throw new InvalidDataException("Incorrect signature in localization file");
-                }
-
-                var entries = new LocaEntry[header.NumEntries];
-                BinUtils.ReadStructs<LocaEntry>(reader, entries);
-
-                Stream.Position = header.TextsOffset;
-                foreach (var entry in entries)
-                {
-                    var text = Encoding.UTF8.GetString(reader.ReadBytes((int)entry.Length - 1));
-                    loca.Entries.Add(new LocalizedText
-                    {
-                        Key = entry.KeyString,
-                        Version = entry.Version,
-                        Text = text
-                    });
-                    reader.ReadByte();
-                }
-
-                return loca;
+            if (header.Signature != (ulong)LocaHeader.DefaultSignature)
+            {
+                throw new InvalidDataException("Incorrect signature in localization file");
             }
+
+            var entries = new LocaEntry[header.NumEntries];
+            BinUtils.ReadStructs<LocaEntry>(reader, entries);
+
+            Stream.Position = header.TextsOffset;
+            foreach (var entry in entries)
+            {
+                var text = Encoding.UTF8.GetString(reader.ReadBytes((int)entry.Length - 1));
+                loca.Entries.Add(new LocalizedText
+                {
+                    Key = entry.KeyString,
+                    Version = entry.Version,
+                    Text = text
+                });
+                reader.ReadByte();
+            }
+
+            return loca;
         }
     }
 
 
-    public class LocaWriter
+    public class LocaWriter(Stream stream)
     {
-        private Stream stream;
-
-        public LocaWriter(Stream stream)
-        {
-            this.stream = stream;
-        }
+        private readonly Stream stream = stream;
 
         public void Write(LocaResource res)
         {
-            using (var writer = new BinaryWriter(stream))
+            using var writer = new BinaryWriter(stream);
+            var header = new LocaHeader
             {
-                var header = new LocaHeader {
-                    Signature = LocaHeader.DefaultSignature,
-                    NumEntries = (uint)res.Entries.Count,
-                    TextsOffset = (uint)(Marshal.SizeOf(typeof(LocaHeader)) + Marshal.SizeOf(typeof(LocaEntry)) * res.Entries.Count)
+                Signature = LocaHeader.DefaultSignature,
+                NumEntries = (uint)res.Entries.Count,
+                TextsOffset = (uint)(Marshal.SizeOf(typeof(LocaHeader)) + Marshal.SizeOf(typeof(LocaEntry)) * res.Entries.Count)
+            };
+            BinUtils.WriteStruct<LocaHeader>(writer, ref header);
+
+            var entries = new LocaEntry[header.NumEntries];
+            for (var i = 0; i < entries.Length; i++)
+            {
+                var entry = res.Entries[i];
+                entries[i] = new LocaEntry
+                {
+                    KeyString = entry.Key,
+                    Version = entry.Version,
+                    Length = (uint)Encoding.UTF8.GetByteCount(entry.Text) + 1
                 };
-                BinUtils.WriteStruct<LocaHeader>(writer, ref header);
+            }
 
-                var entries = new LocaEntry[header.NumEntries];
-                for (var i = 0; i < entries.Length; i++)
-                {
-                    var entry = res.Entries[i];
-                    entries[i] = new LocaEntry
-                    {
-                        KeyString = entry.Key,
-                        Version = entry.Version,
-                        Length = (uint)Encoding.UTF8.GetByteCount(entry.Text) + 1
-                    };
-                }
+            BinUtils.WriteStructs<LocaEntry>(writer, entries);
 
-                BinUtils.WriteStructs<LocaEntry>(writer, entries);
-
-                foreach (var entry in res.Entries)
-                {
-                    var bin = Encoding.UTF8.GetBytes(entry.Text);
-                    writer.Write(bin);
-                    writer.Write((Byte)0);
-                }
+            foreach (var entry in res.Entries)
+            {
+                var bin = Encoding.UTF8.GetBytes(entry.Text);
+                writer.Write(bin);
+                writer.Write((Byte)0);
             }
         }
     }
-    public class LocaXmlReader : IDisposable
+    public class LocaXmlReader(Stream stream) : IDisposable
     {
-        private Stream stream;
+        private readonly Stream stream = stream;
         private XmlReader reader;
         private LocaResource resource;
-
-        public LocaXmlReader(Stream stream)
-        {
-            this.stream = stream;
-        }
 
         public void Dispose()
         {
@@ -207,7 +183,7 @@ namespace LSLib.LS
         {
             resource = new LocaResource
             {
-                Entries = new List<LocalizedText>()
+                Entries = []
             };
 
             using (this.reader = XmlReader.Create(stream))
@@ -226,38 +202,32 @@ namespace LSLib.LS
     }
 
 
-    public class LocaXmlWriter
+    public class LocaXmlWriter(Stream stream)
     {
-        private Stream stream;
-        private XmlWriter writer;
-
-        public LocaXmlWriter(Stream stream)
-        {
-            this.stream = stream;
-        }
+        private readonly Stream stream = stream;
 
         public void Write(LocaResource res)
         {
-            var settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.IndentChars = "\t";
-
-            using (this.writer = XmlWriter.Create(stream, settings))
+            var settings = new XmlWriterSettings
             {
-                writer.WriteStartElement("contentList");
+                Indent = true,
+                IndentChars = "\t"
+            };
 
-                foreach (var entry in res.Entries)
-                {
-                    writer.WriteStartElement("content");
-                    writer.WriteAttributeString("contentuid", entry.Key);
-                    writer.WriteAttributeString("version", entry.Version.ToString());
-                    writer.WriteString(entry.Text);
-                    writer.WriteEndElement();
-                }
+            using var writer = XmlWriter.Create(stream, settings);
+            writer.WriteStartElement("contentList");
 
+            foreach (var entry in res.Entries)
+            {
+                writer.WriteStartElement("content");
+                writer.WriteAttributeString("contentuid", entry.Key);
+                writer.WriteAttributeString("version", entry.Version.ToString());
+                writer.WriteString(entry.Text);
                 writer.WriteEndElement();
-                writer.Flush();
             }
+
+            writer.WriteEndElement();
+            writer.Flush();
         }
     }
 
@@ -273,17 +243,12 @@ namespace LSLib.LS
         {
             var extension = Path.GetExtension(path).ToLower();
 
-            switch (extension)
+            return extension switch
             {
-                case ".loca":
-                    return LocaFormat.Loca;
-
-                case ".xml":
-                    return LocaFormat.Xml;
-
-                default:
-                    throw new ArgumentException("Unrecognized file extension: " + extension);
-            }
+                ".loca" => LocaFormat.Loca,
+                ".xml" => LocaFormat.Xml,
+                _ => throw new ArgumentException("Unrecognized file extension: " + extension),
+            };
         }
 
         public static LocaResource Load(string inputPath)
@@ -293,10 +258,8 @@ namespace LSLib.LS
 
         public static LocaResource Load(string inputPath, LocaFormat format)
         {
-            using (var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return Load(stream, format);
-            }
+            using var stream = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return Load(stream, format);
         }
 
         public static LocaResource Load(Stream stream, LocaFormat format)
@@ -305,18 +268,14 @@ namespace LSLib.LS
             {
                 case LocaFormat.Loca:
                     {
-                        using (var reader = new LocaReader(stream))
-                        {
-                            return reader.Read();
-                        }
+                        using var reader = new LocaReader(stream);
+                        return reader.Read();
                     }
 
                 case LocaFormat.Xml:
                     {
-                        using (var reader = new LocaXmlReader(stream))
-                        {
-                            return reader.Read();
-                        }
+                        using var reader = new LocaXmlReader(stream);
+                        return reader.Read();
                     }
 
                 default:
@@ -333,27 +292,25 @@ namespace LSLib.LS
         {
             FileManager.TryToCreateDirectory(outputPath);
 
-            using (var file = File.Open(outputPath, FileMode.Create, FileAccess.Write))
+            using var file = File.Open(outputPath, FileMode.Create, FileAccess.Write);
+            switch (format)
             {
-                switch (format)
-                {
-                    case LocaFormat.Loca:
-                        {
-                            var writer = new LocaWriter(file);
-                            writer.Write(resource);
-                            break;
-                        }
+                case LocaFormat.Loca:
+                    {
+                        var writer = new LocaWriter(file);
+                        writer.Write(resource);
+                        break;
+                    }
 
-                    case LocaFormat.Xml:
-                        {
-                            var writer = new LocaXmlWriter(file);
-                            writer.Write(resource);
-                            break;
-                        }
+                case LocaFormat.Xml:
+                    {
+                        var writer = new LocaXmlWriter(file);
+                        writer.Write(resource);
+                        break;
+                    }
 
-                    default:
-                        throw new ArgumentException("Invalid loca format");
-                }
+                default:
+                    throw new ArgumentException("Invalid loca format");
             }
         }
     }

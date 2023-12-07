@@ -27,11 +27,11 @@ namespace LSLib.Granny.GR2
         public BinaryWriter Writer;
         public GR2Writer GR2;
 
-        public Dictionary<UInt32, object> Fixups = new Dictionary<UInt32, object>();
+        public Dictionary<UInt32, object> Fixups = [];
         // Fixups for the data area that we'll need to update after serialization is finished
-        public Dictionary<UInt32, object> DataFixups = new Dictionary<UInt32, object>();
+        public Dictionary<UInt32, object> DataFixups = [];
 
-        public List<MixedMarshallingData> MixedMarshalling = new List<MixedMarshallingData>();
+        public List<MixedMarshallingData> MixedMarshalling = [];
 
         public WritableSection(SectionType type, GR2Writer writer)
         {
@@ -61,20 +61,20 @@ namespace LSLib.Granny.GR2
 
         private SectionHeader InitHeader()
         {
-            var header = new SectionHeader();
-            header.compression = 0;
-            header.offsetInFile = 0; // Set after serialization is finished
-            header.compressedSize = 0; // Set after serialization is finished
-            header.uncompressedSize = 0; // Set after serialization is finished
-            header.alignment = 4;
-            header.first16bit = 0; // Set after serialization is finished
-            header.first8bit = 0; // Set after serialization is finished
-            header.relocationsOffset = 0; // Set after serialization is finished
-            header.numRelocations = 0; // Set after serialization is finished
-            header.mixedMarshallingDataOffset = 0; // Set after serialization is finished
-            header.numMixedMarshallingData = 0; // Set after serialization is finished
-
-            return header;
+            return new SectionHeader
+            {
+                compression = 0,
+                offsetInFile = 0, // Set after serialization is finished
+                compressedSize = 0, // Set after serialization is finished
+                uncompressedSize = 0, // Set after serialization is finished
+                alignment = 4,
+                first16bit = 0, // Set after serialization is finished
+                first8bit = 0, // Set after serialization is finished
+                relocationsOffset = 0, // Set after serialization is finished
+                numRelocations = 0, // Set after serialization is finished
+                mixedMarshallingDataOffset = 0, // Set after serialization is finished
+                numMixedMarshallingData = 0 // Set after serialization is finished
+            };
         }
 
         public void AddFixup(object o)
@@ -91,10 +91,12 @@ namespace LSLib.Granny.GR2
 
         internal void AddMixedMarshalling(object o, UInt32 count, StructDefinition type)
         {
-            var marshal = new MixedMarshallingData();
-            marshal.Obj = o;
-            marshal.Count = count;
-            marshal.Type = type;
+            var marshal = new MixedMarshallingData
+            {
+                Obj = o,
+                Count = count,
+                Type = type
+            };
             MixedMarshalling.Add(marshal);
         }
 
@@ -133,11 +135,7 @@ namespace LSLib.Granny.GR2
             if (defn != null)
             {
                 AddFixup(defn);
-
-                if (!GR2.Types.ContainsKey(defn.Type))
-                {
-                    GR2.Types.Add(defn.Type, defn);
-                }
+                GR2.Types.TryAdd(defn.Type, defn);
             }
 
             if (GR2.Magic.Is32Bit)
@@ -216,9 +214,11 @@ namespace LSLib.Granny.GR2
                 }
             }
 
-            var end = new MemberDefinition();
-            end.Type = MemberType.None;
-            end.Extra = new UInt32[] { 0, 0, 0 };
+            var end = new MemberDefinition
+            {
+                Type = MemberType.None,
+                Extra = [0, 0, 0]
+            };
             WriteMemberDefinition(end);
         }
 
@@ -369,35 +369,32 @@ namespace LSLib.Granny.GR2
         {
             if (definition.ArraySize == 0)
             {
-                WriteElement(definition, propertyType, node);
+                WriteElement(definition, node);
                 return;
             }
 
             if (propertyType.IsArray)
             {
                 // If the property is a native array (ie. SomeType[]), create an array instance and set its values
-                var elementType = propertyType.GetElementType();
-
                 Array arr = node as Array;
                 Debug.Assert(arr.Length == definition.ArraySize);
                 for (int i = 0; i < definition.ArraySize; i++)
                 {
-                    WriteElement(definition, elementType, arr.GetValue(i));
+                    WriteElement(definition, arr.GetValue(i));
                 }
             }
             else
             {
                 // For non-native arrays we always assume the property is an IList<T>
                 var items = node as System.Collections.IList;
-                var elementType = items.GetType().GetGenericArguments().Single();
                 foreach (var element in items)
                 {
-                    WriteElement(definition, elementType, element);
+                    WriteElement(definition, element);
                 }
             }
         }
 
-        private void WriteElement(MemberDefinition definition, Type propertyType, object node)
+        private void WriteElement(MemberDefinition definition, object node)
         {
             var type = definition.CachedField.FieldType;
             bool dataArea = definition.DataArea || (Writer == DataWriter);
@@ -679,17 +676,17 @@ namespace LSLib.Granny.GR2
         internal Magic Magic;
         internal Header Header;
         internal WritableSection CurrentSection;
-        internal List<WritableSection> Sections = new List<WritableSection>();
-        internal Dictionary<Type, StructDefinition> Types = new Dictionary<Type, StructDefinition>();
+        internal List<WritableSection> Sections = [];
+        internal Dictionary<Type, StructDefinition> Types = [];
         internal RelocationArea Relocations;
 
-        private List<QueuedSerialization> StructWrites = new List<QueuedSerialization>();
-        private List<QueuedArraySerialization> ArrayWrites = new List<QueuedArraySerialization>();
-        private List<QueuedStringSerialization> StringWrites = new List<QueuedStringSerialization>();
+        private List<QueuedSerialization> StructWrites = [];
+        private List<QueuedArraySerialization> ArrayWrites = [];
+        private List<QueuedStringSerialization> StringWrites = [];
 
-        internal Dictionary<object, SectionReference> ObjectOffsets = new Dictionary<object, SectionReference>();
-        internal Dictionary<object, SectionReference> DataObjectOffsets = new Dictionary<object, SectionReference>();
-        internal HashSet<string> Strings = new HashSet<string>();
+        internal Dictionary<object, SectionReference> ObjectOffsets = [];
+        internal Dictionary<object, SectionReference> DataObjectOffsets = [];
+        internal HashSet<string> Strings = [];
 
         // Version tag that will be written to the GR2 file
         public UInt32 VersionTag = Header.DefaultTag;
@@ -720,9 +717,9 @@ namespace LSLib.Granny.GR2
             var arrayWrites = ArrayWrites;
             var structWrites = StructWrites;
             var stringWrites = StringWrites;
-            ArrayWrites = new List<QueuedArraySerialization>();
-            StructWrites = new List<QueuedSerialization>();
-            StringWrites = new List<QueuedStringSerialization>();
+            ArrayWrites = [];
+            StructWrites = [];
+            StringWrites = [];
 
             foreach (var write in structWrites)
             {
@@ -896,22 +893,26 @@ namespace LSLib.Granny.GR2
 
         private Header InitHeader(uint numCustomSections)
         {
-            var header = new Header();
-            header.version = Header.Version;
-            header.fileSize = 0; // Set after serialization is finished
-            header.crc = 0; // Set after serialization is finished
+            var header = new Header
+            {
+                version = Header.Version,
+                fileSize = 0, // Set after serialization is finished
+                crc = 0, // Set after serialization is finished
+                rootType = new SectionReference(), // Updated after serialization is finished
+                rootNode = new SectionReference(), // Updated after serialization is finished
+                numSections = (UInt32)SectionType.FirstVertexData + numCustomSections,
+                tag = VersionTag,
+                extraTags = new UInt32[Header.ExtraTagCount],
+                stringTableCrc = 0,
+                reserved1 = 0,
+                reserved2 = 0,
+                reserved3 = 0
+            };
+
             header.sectionsOffset = header.Size();
-            header.rootType = new SectionReference(); // Updated after serialization is finished
-            header.rootNode = new SectionReference(); // Updated after serialization is finished
-            header.numSections = (UInt32)SectionType.FirstVertexData + numCustomSections;
-            header.tag = VersionTag;
-            header.extraTags = new UInt32[Header.ExtraTagCount];
+
             for (int i = 0; i < Header.ExtraTagCount; i++)
                 header.extraTags[i] = 0;
-            header.stringTableCrc = 0;
-            header.reserved1 = 0;
-            header.reserved2 = 0;
-            header.reserved3 = 0;
 
             return header;
         }
@@ -957,8 +958,7 @@ namespace LSLib.Granny.GR2
 
         internal StructDefinition LookupStructDefinition(Type type, object instance)
         {
-            StructDefinition defn = null;
-            if (Types.TryGetValue(type, out defn))
+            if (Types.TryGetValue(type, out StructDefinition defn))
             {
                 return defn;
             }

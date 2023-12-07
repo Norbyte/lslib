@@ -49,7 +49,7 @@ namespace LSLib.LS
 
         public string BuildMeta()
         {
-            List<string> tags = new List<string> { "v1" };
+            List<string> tags = [ "v1" ];
             if (ByteSwapGuids)
             {
                 tags.Add("bswap_guids");
@@ -59,7 +59,7 @@ namespace LSLib.LS
         }
     }
 
-    public class NodeAttribute
+    public class NodeAttribute(NodeAttribute.DataType type)
     {
         public enum DataType
         {
@@ -102,7 +102,7 @@ namespace LSLib.LS
             DT_Max = DT_TranslatedFSString
         };
 
-        private DataType type;
+        private readonly DataType type = type;
         private object value;
 
         public DataType Type
@@ -114,11 +114,6 @@ namespace LSLib.LS
         {
             get { return value; }
             set { this.value = value; }
-        }
-
-        public NodeAttribute(DataType type)
-        {
-            this.type = type;
         }
 
         public override string ToString()
@@ -139,34 +134,34 @@ namespace LSLib.LS
 
         public string AsString(NodeSerializationSettings settings)
         {
-            switch (this.type)
+            switch (type)
             {
                 case DataType.DT_ScratchBuffer:
                     // ScratchBuffer is a special case, as its stored as byte[] and ToString() doesn't really do what we want
-                    return Convert.ToBase64String((byte[])this.value);
+                    return Convert.ToBase64String((byte[])value);
 
                 case DataType.DT_IVec2:
                 case DataType.DT_IVec3:
                 case DataType.DT_IVec4:
-                    return String.Join(" ", new List<int>((int[])this.value).ConvertAll(i => i.ToString()).ToArray());
+                    return String.Join(" ", new List<int>((int[])value).ConvertAll(i => i.ToString()).ToArray());
 
                 case DataType.DT_Vec2:
                 case DataType.DT_Vec3:
                 case DataType.DT_Vec4:
-                    return String.Join(" ", new List<float>((float[])this.value).ConvertAll(i => i.ToString()).ToArray());
+                    return String.Join(" ", new List<float>((float[])value).ConvertAll(i => i.ToString()).ToArray());
 
                 case DataType.DT_UUID:
                     if (settings.ByteSwapGuids)
                     {
-                        return ByteSwapGuid((Guid)this.value).ToString();
+                        return ByteSwapGuid((Guid)value).ToString();
                     }
                     else
                     {
-                        return this.value.ToString();
+                        return value.ToString();
                     }
 
                 default:
-                    return this.value.ToString();
+                    return value.ToString();
             }
         }
 
@@ -248,9 +243,9 @@ namespace LSLib.LS
                     str = "0";
                 }
                 // Handle hexadecimal integers in XML files
-                else if (str.Length > 2 && str.Substring(0, 2) == "0x")
+                else if (str.Length > 2 && str[..2] == "0x")
                 {
-                    str = Convert.ToUInt64(str.Substring(2), 16).ToString();
+                    str = Convert.ToUInt64(str[2..], 16).ToString();
                 }
             }
 
@@ -351,8 +346,7 @@ namespace LSLib.LS
                 case DataType.DT_TranslatedString:
                     // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
                     // That can be changed separately via attribute.Value.Handle
-                    if (value == null)
-                        value = new TranslatedString();
+                    value ??= new TranslatedString();
 
                     ((TranslatedString)value).Value = str;
                     break;
@@ -360,8 +354,7 @@ namespace LSLib.LS
                 case DataType.DT_TranslatedFSString:
                     // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
                     // That can be changed separately via attribute.Value.Handle
-                    if (value == null)
-                        value = new TranslatedFSString();
+                    value ??= new TranslatedFSString();
 
                     ((TranslatedFSString)value).Value = str;
                     break;

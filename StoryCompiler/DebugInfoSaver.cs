@@ -192,7 +192,7 @@ namespace LSTools.StoryCompiler
                 codedStream.Flush();
 
                 byte[] proto = ms.ToArray();
-                byte flags = BinUtils.MakeCompressionFlags(LSLib.LS.Enums.CompressionMethod.LZ4, LSLib.LS.Enums.CompressionLevel.FastCompression);
+                byte flags = BinUtils.MakeCompressionFlags(LSLib.LS.Enums.CompressionMethod.LZ4, LSLib.LS.Enums.LSCompressionLevel.FastCompression);
                 byte[] compressed = BinUtils.Compress(proto, flags);
                 stream.Write(compressed, 0, compressed.Length);
 

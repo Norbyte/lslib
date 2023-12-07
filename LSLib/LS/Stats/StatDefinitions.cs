@@ -1,26 +1,15 @@
-﻿using LSLib.LS.Enums;
-using OpenTK;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
 
 namespace LSLib.LS.Stats
 {
-    public class StatEnumeration
+    public class StatEnumeration(string name)
     {
-        public readonly string Name;
-        public readonly List<string> Values;
-        public readonly Dictionary<string, int> ValueToIndexMap;
-
-        public StatEnumeration(string name)
-        {
-            Name = name;
-            Values = new List<string>();
-            ValueToIndexMap = new Dictionary<string, int>();
-        }
+        public readonly string Name = name;
+        public readonly List<string> Values = [];
+        public readonly Dictionary<string, int> ValueToIndexMap = [];
 
         public void AddItem(int index, string value)
         {
@@ -32,10 +21,7 @@ namespace LSLib.LS.Stats
             Values.Add(value);
 
             // Some vanilla enums are bogus and contain names multiple times
-            if (!ValueToIndexMap.ContainsKey(value))
-            {
-                ValueToIndexMap.Add(value, index);
-            }
+            ValueToIndexMap.TryAdd(value, index);
         }
 
         public void AddItem(string value)
@@ -55,29 +41,17 @@ namespace LSLib.LS.Stats
 
         public IStatValueParser GetParser(StatValueParserFactory factory, StatDefinitionRepository definitions)
         {
-            if (parser == null)
-            {
-                parser = factory.CreateParser(this, definitions);
-            }
-
+            parser ??= factory.CreateParser(this, definitions);
             return parser;
         }
     }
 
-    public class StatEntryType
+    public class StatEntryType(string name, string nameProperty, string basedOnProperty)
     {
-        public readonly string Name;
-        public readonly string NameProperty;
-        public readonly string BasedOnProperty;
-        public readonly Dictionary<string, StatField> Fields;
-
-        public StatEntryType(string name, string nameProperty, string basedOnProperty)
-        {
-            Name = name;
-            NameProperty = nameProperty;
-            BasedOnProperty = basedOnProperty;
-            Fields = new Dictionary<string, StatField>();
-        }
+        public readonly string Name = name;
+        public readonly string NameProperty = nameProperty;
+        public readonly string BasedOnProperty = basedOnProperty;
+        public readonly Dictionary<string, StatField> Fields = [];
     }
 
     public class StatFunctorArgumentType
@@ -98,11 +72,11 @@ namespace LSLib.LS.Stats
         // Version of modified Enumerations.xml and StatObjectDefinitions.sod we expect
         public const string CustomizationsVersion = "1";
 
-        public readonly Dictionary<string, StatEnumeration> Enumerations = new Dictionary<string, StatEnumeration>();
-        public readonly Dictionary<string, StatEntryType> Types = new Dictionary<string, StatEntryType>();
-        public readonly Dictionary<string, StatFunctorType> Functors = new Dictionary<string, StatFunctorType>();
-        public readonly Dictionary<string, StatFunctorType> Boosts = new Dictionary<string, StatFunctorType>();
-        public readonly Dictionary<string, StatFunctorType> DescriptionParams = new Dictionary<string, StatFunctorType>();
+        public readonly Dictionary<string, StatEnumeration> Enumerations = [];
+        public readonly Dictionary<string, StatEntryType> Types = [];
+        public readonly Dictionary<string, StatFunctorType> Functors = [];
+        public readonly Dictionary<string, StatFunctorType> Boosts = [];
+        public readonly Dictionary<string, StatFunctorType> DescriptionParams = [];
 
         private StatField AddField(StatEntryType defn, string name, string typeName)
         {
@@ -191,23 +165,23 @@ namespace LSLib.LS.Stats
                 {
                     if (trimmed.StartsWith("modifier type "))
                     {
-                        var name = trimmed.Substring(15, trimmed.Length - 16);
+                        var name = trimmed[15..^1];
                         defn = new StatEntryType(name, "Name", "Using");
                         Types.Add(defn.Name, defn);
                         AddField(defn, "Name", "FixedString");
                         var usingRef = AddField(defn, "Using", "StatReference");
-                        usingRef.ReferenceTypes = new List<StatReferenceConstraint>
-                        {
+                        usingRef.ReferenceTypes =
+                        [
                             new StatReferenceConstraint
                             {
                                 StatType = name
                             }
-                        };
+                        ];
                     }
                     else if (trimmed.StartsWith("modifier \""))
                     {
                         var nameEnd = trimmed.IndexOf('"', 10);
-                        var name = trimmed.Substring(10, nameEnd - 10);
+                        var name = trimmed[10..nameEnd];
                         var typeName = trimmed.Substring(nameEnd + 3, trimmed.Length - nameEnd - 4);
                         AddField(defn, name, typeName);
                     }
@@ -240,31 +214,31 @@ namespace LSLib.LS.Stats
             AddField(dataType, "Key", "FixedString");
             AddField(dataType, "Value", "FixedString");
 
-            AddEnumeration("ResurrectType", new List<string>
-            {
+            AddEnumeration("ResurrectType",
+            [
                 "Living",
                 "Guaranteed",
                 "Construct",
                 "Undead"
-            });
+            ]);
 
-            AddEnumeration("SetStatusDurationType", new List<string>
-            {
+            AddEnumeration("SetStatusDurationType",
+            [
                 "SetMinimum",
                 "ForceSet",
                 "Add",
                 "Multiply"
-            });
+            ]);
 
-            AddEnumeration("ExecuteWeaponFunctorsType", new List<string>
-            {
+            AddEnumeration("ExecuteWeaponFunctorsType",
+            [
                 "MainHand",
                 "OffHand",
                 "BothHands"
-            });
+            ]);
 
-            AddEnumeration("SpellCooldownType", new List<string>
-            {
+            AddEnumeration("SpellCooldownType",
+            [
                 "Default",
                 "OncePerTurn",
                 "OncePerCombat",
@@ -273,30 +247,30 @@ namespace LSLib.LS.Stats
                 "UntilShortRest",
                 "UntilPerRestPerItem",
                 "OncePerShortRestPerItem"
-            });
+            ]);
 
-            AddEnumeration("SummonDuration", new List<string>
-            {
+            AddEnumeration("SummonDuration",
+            [
                 "UntilLongRest",
                 "Permanent"
-            });
+            ]);
 
-            AddEnumeration("ForceFunctorOrigin", new List<string>
-            {
+            AddEnumeration("ForceFunctorOrigin",
+            [
                 "OriginToEntity",
                 "OriginToTarget",
                 "TargetToEntity"
-            });
+            ]);
 
-            AddEnumeration("ForceFunctorAggression", new List<string>
-            {
+            AddEnumeration("ForceFunctorAggression",
+            [
                 "Aggressive",
                 "Friendly",
                 "Neutral"
-            });
+            ]);
 
-            AddEnumeration("StatItemSlot", new List<string>
-            {
+            AddEnumeration("StatItemSlot",
+            [
                 "Helmet",
                 "Breast",
                 "Cloak",
@@ -318,45 +292,45 @@ namespace LSLib.LS.Stats
                 "VanityBoots",
                 "MainHand",
                 "OffHand"
-            });
+            ]);
 
-            AddEnumeration("Magical", new List<string>
-            {
+            AddEnumeration("Magical",
+            [
                 "Magical",
                 "Nonmagical"
-            });
+            ]);
 
-            AddEnumeration("Nonlethal", new List<string>
-            {
+            AddEnumeration("Nonlethal",
+            [
                 "Lethal",
                 "Nonlethal"
-            });
+            ]);
 
-            AddEnumeration("AllEnum", new List<string>
-            {
+            AddEnumeration("AllEnum",
+            [
                 "All"
-            });
+            ]);
 
-            AddEnumeration("ZoneShape", new List<string>
-            {
+            AddEnumeration("ZoneShape",
+            [
                 "Cone",
                 "Square",
-            });
+            ]);
 
-            AddEnumeration("SurfaceLayer", new List<string>
-            {
+            AddEnumeration("SurfaceLayer",
+            [
                 "Ground",
                 "Cloud",
-            });
+            ]);
 
-            AddEnumeration("RollAdjustmentType", new List<string>
-            {
+            AddEnumeration("RollAdjustmentType",
+            [
                 "All",
                 "Distribute",
-            });
+            ]);
 
-            AddEnumeration("StatsRollType", new List<string>
-            {
+            AddEnumeration("StatsRollType",
+            [
                 "Attack",
                 "MeleeWeaponAttack",
                 "RangedWeaponAttack",
@@ -377,10 +351,10 @@ namespace LSLib.LS.Stats
                 "RangedSpellDamage",
                 "MeleeUnarmedDamage",
                 "RangedUnarmedDamage",
-            });
+            ]);
 
-            AddEnumeration("AdvantageType", new List<string>
-            {
+            AddEnumeration("AdvantageType",
+            [
                 "AttackRoll",
                 "AttackTarget",
                 "SavingThrow",
@@ -392,10 +366,10 @@ namespace LSLib.LS.Stats
                 "SourceDialogue",
                 "DeathSavingThrow",
                 "Concentration",
-            });
+            ]);
 
-            AddEnumeration("SkillType", new List<string>
-            {
+            AddEnumeration("SkillType",
+            [
                 "Deception",
                 "Intimidation",
                 "Performance",
@@ -414,63 +388,63 @@ namespace LSLib.LS.Stats
                 "Medicine",
                 "Perception",
                 "Survival",
-            });
+            ]);
 
-            AddEnumeration("CriticalHitType", new List<string>
-            {
+            AddEnumeration("CriticalHitType",
+            [
                 "AttackTarget",
                 "AttackRoll"
-            });
+            ]);
 
-            AddEnumeration("Result", new List<string>
-            {
+            AddEnumeration("Result",
+            [
                 "Success",
                 "Failure"
-            });
+            ]);
 
-            AddEnumeration("CriticalHitResult", new List<string>
-            {
+            AddEnumeration("CriticalHitResult",
+            [
                 "Success",
                 "Failure"
-            });
+            ]);
 
-            AddEnumeration("CriticalHitWhen", new List<string>
-            {
+            AddEnumeration("CriticalHitWhen",
+            [
                 "Never",
                 "Always",
                 "ForcedAlways"
-            });
+            ]);
 
-            AddEnumeration("MovementSpeedType", new List<string>
-            {
+            AddEnumeration("MovementSpeedType",
+            [
                 "Stroll",
                 "Walk",
                 "Run",
                 "Sprint",
-            });
+            ]);
 
-            AddEnumeration("DamageReductionType", new List<string>
-            {
+            AddEnumeration("DamageReductionType",
+            [
                 "Half",
                 "Flat",
                 "Threshold"
-            });
+            ]);
 
-            AddEnumeration("AttackRollAbility", new List<string>
-            {
+            AddEnumeration("AttackRollAbility",
+            [
                 "SpellCastingAbility",
                 "UnarmedMeleeAbility",
                 "AttackAbility"
-            });
+            ]);
 
-            AddEnumeration("HealingDirection", new List<string>
-            {
+            AddEnumeration("HealingDirection",
+            [
                 "Incoming",
                 "Outgoing"
-            });
+            ]);
 
-            AddEnumeration("ResistanceBoostFlags", new List<string>
-            {
+            AddEnumeration("ResistanceBoostFlags",
+            [
                 "None",
                 "Resistant",
                 "Immune",
@@ -482,17 +456,17 @@ namespace LSLib.LS.Stats
                 "ResistantToNonMagical",
                 "ImmuneToNonMagical",
                 "VulnerableToNonMagical",
-            });
+            ]);
 
-            AddEnumeration("UnlockSpellType", new List<string>
-            {
+            AddEnumeration("UnlockSpellType",
+            [
                 "Singular", 
                 "AddChildren", 
                 "MostPowerful"
-            });
+            ]);
 
-            AddEnumeration("ProficiencyBonusBoostType", new List<string>
-            {
+            AddEnumeration("ProficiencyBonusBoostType",
+            [
                 "AttackRoll",
                 "AttackTarget",
                 "SavingThrow",
@@ -503,10 +477,10 @@ namespace LSLib.LS.Stats
                 "AllSkills",
                 "SourceDialogue",
                 "WeaponActionDC"
-            });
+            ]);
 
-            AddEnumeration("ResourceReplenishType", new List<string>
-            {
+            AddEnumeration("ResourceReplenishType",
+            [
                 "Never",
                 "Default",
                 "Combat",
@@ -514,10 +488,10 @@ namespace LSLib.LS.Stats
                 "ShortRest",
                 "FullRest",
                 "ExhaustedRest"
-            });
+            ]);
 
-            AddEnumeration("AttackType", new List<string>
-            {
+            AddEnumeration("AttackType",
+            [
                 "DirectHit",
                 "MeleeWeaponAttack",
                 "RangedWeaponAttack",
@@ -527,10 +501,10 @@ namespace LSLib.LS.Stats
                 "RangedSpellAttack",
                 "MeleeUnarmedAttack",
                 "RangedUnarmedAttack"
-            });
+            ]);
 
-            AddEnumeration("DealDamageWeaponDamageType", new List<string>
-            {
+            AddEnumeration("DealDamageWeaponDamageType",
+            [
                 "MainWeaponDamageType",
                 "OffhandWeaponDamageType",
                 "MainMeleeWeaponDamageType",
@@ -539,10 +513,10 @@ namespace LSLib.LS.Stats
                 "OffhandRangedWeaponDamageType",
                 "SourceWeaponDamageType",
                 "ThrownWeaponDamageType",
-            });
+            ]);
 
-            AddEnumeration("EngineStatusType", new List<string>
-            {
+            AddEnumeration("EngineStatusType",
+            [
                 "DYING",
                 "HEAL",
                 "KNOCKED_DOWN",
@@ -564,11 +538,11 @@ namespace LSLib.LS.Stats
                 "EFFECT",
                 "DEACTIVATED",
                 "DOWNED",
-            });
+            ]);
 
 
             // Add functors
-            AddFunctor("ApplyStatus", 1, new List<string> {
+            AddFunctor("ApplyStatus", 1, [
                 "StatusId", "StatusId",
                 "Chance", "Int",
                 "Duration", "Lua",
@@ -577,23 +551,23 @@ namespace LSLib.LS.Stats
                 "StatusSpecificParam3", "Int",
                 "StatsConditions", "Conditions",
                 "RequiresConcentration", "Boolean"
-            });
-            AddFunctor("SurfaceChange", 1, new List<string> {
+            ]);
+            AddFunctor("SurfaceChange", 1, [
                 "SurfaceChange", "Surface Change",
                 "Chance", "Float",
                 "Arg3", "Float",
                 "Arg4", "Float",
                 "Arg5", "Float"
-            });
-            AddFunctor("Resurrect", 0, new List<string> {
+            ]);
+            AddFunctor("Resurrect", 0, [
                 "Chance", "Float",
                 "HealthPercentage", "Float",
                 "Type", "ResurrectType"
-            });
-            AddFunctor("Sabotage", 0, new List<string> {
+            ]);
+            AddFunctor("Sabotage", 0, [
                 "Amount", "Int"
-            });
-            AddFunctor("Summon", 1, new List<string> {
+            ]);
+            AddFunctor("Summon", 1, [
                 "Template", "Guid", // Root template GUID
                 "Duration", "SummonDurationOrInt",
                 "AIHelper", "SpellId",
@@ -604,46 +578,46 @@ namespace LSLib.LS.Stats
                 "StatusToApply3", "StatusId",
                 "StatusToApply4", "StatusId",
                 "Arg10", "Boolean",
-            });
-            AddFunctor("Force", 1, new List<string> {
+            ]);
+            AddFunctor("Force", 1, [
                 "Distance", "Lua",
                 "Origin", "ForceFunctorOrigin",
                 "Aggression", "ForceFunctorAggression",
                 "Arg4", "Boolean",
                 "Arg5", "Boolean",
-            });
-            AddFunctor("Douse", 0, new List<string> {
+            ]);
+            AddFunctor("Douse", 0, [
                 "Arg1", "Float",
                 "Arg2", "Float"
-            });
-            AddFunctor("SwapPlaces", 0, new List<string> {
+            ]);
+            AddFunctor("SwapPlaces", 0, [
                 "Animation", "String",
                 "Arg2", "Boolean",
                 "Arg3", "Boolean"
-            });
-            AddFunctor("Pickup", 0, new List<string> {
+            ]);
+            AddFunctor("Pickup", 0, [
                 "Arg1", "String"
-            });
-            AddFunctor("CreateSurface", 3, new List<string> {
+            ]);
+            AddFunctor("CreateSurface", 3, [
                 "Radius", "Float",
                 "Duration", "Float",
                 "SurfaceType", "Surface Type",
                 "IsControlledByConcentration", "Boolean",
                 "Arg5", "Float",
                 "Arg6", "Boolean"
-            });
-            AddFunctor("CreateConeSurface", 3, new List<string> {
+            ]);
+            AddFunctor("CreateConeSurface", 3, [
                 "Radius", "Float",
                 "Duration", "Float",
                 "SurfaceType", "Surface Type",
                 "IsControlledByConcentration", "Boolean",
                 "Arg5", "Float",
                 "Arg6", "Boolean"
-            });
-            AddFunctor("RemoveStatus", 1, new List<string> {
+            ]);
+            AddFunctor("RemoveStatus", 1, [
                 "StatusId", "StatusIdOrGroup"
-            });
-            AddFunctor("DealDamage", 1, new List<string> {
+            ]);
+            AddFunctor("DealDamage", 1, [
                 "Damage", "Lua",
                 "DamageType", "DamageTypeOrDealDamageWeaponDamageType",
                 "Magical", "Magical",
@@ -654,44 +628,44 @@ namespace LSLib.LS.Stats
                 "Arg8", "Boolean",
                 "Arg9", "Boolean",
                 "Arg10", "Boolean",
-            });
-            AddFunctor("ExecuteWeaponFunctors", 0, new List<string> {
+            ]);
+            AddFunctor("ExecuteWeaponFunctors", 0, [
                 "WeaponType", "ExecuteWeaponFunctorsType"
-            });
-            AddFunctor("RegainHitPoints", 1, new List<string> {
+            ]);
+            AddFunctor("RegainHitPoints", 1, [
                 "HitPoints", "Lua",
                 "Type", "ResurrectType"
-            });
-            AddFunctor("TeleportSource", 0, new List<string> {
+            ]);
+            AddFunctor("TeleportSource", 0, [
                 "Arg1", "Boolean",
                 "Arg2", "Boolean",
-            });
-            AddFunctor("SetStatusDuration", 2, new List<string> {
+            ]);
+            AddFunctor("SetStatusDuration", 2, [
                 "StatusId", "StatusId",
                 "Duration", "Float",
                 "ChangeType", "SetStatusDurationType",
-            });
-            AddFunctor("UseSpell", 1, new List<string> {
+            ]);
+            AddFunctor("UseSpell", 1, [
                 "SpellId", "SpellId",
                 "IgnoreHasSpell", "Boolean",
                 "IgnoreChecks", "Boolean",
                 "Arg4", "Boolean",
                 "SpellCastGuid", "Guid",
-            });
-            AddFunctor("UseActionResource", 1, new List<string> {
+            ]);
+            AddFunctor("UseActionResource", 1, [
                 "ActionResource", "String", // Action resource name
                 "Amount", "String", // Float or percentage
                 "Level", "Int",
                 "Arg4", "Boolean"
-            });
-            AddFunctor("UseAttack", 0, new List<string> {
+            ]);
+            AddFunctor("UseAttack", 0, [
                 "IgnoreChecks", "Boolean"
-            });
-            AddFunctor("CreateExplosion", 0, new List<string> {
+            ]);
+            AddFunctor("CreateExplosion", 0, [
                 "SpellId", "SpellId"
-            });
-            AddFunctor("BreakConcentration", 0, new List<string> {});
-            AddFunctor("ApplyEquipmentStatus", 2, new List<string> {
+            ]);
+            AddFunctor("BreakConcentration", 0, []);
+            AddFunctor("ApplyEquipmentStatus", 2, [
                 "ItemSlot", "StatItemSlot",
                 "StatusId", "StatusId",
                 "Chance", "Int",
@@ -701,13 +675,13 @@ namespace LSLib.LS.Stats
                 "StatusSpecificParam3", "Int",
                 "StatsConditions", "Conditions",
                 "RequiresConcentration", "Boolean"
-            });
-            AddFunctor("RestoreResource", 2, new List<string> {
+            ]);
+            AddFunctor("RestoreResource", 2, [
                 "ActionResource", "String", // Action resource name
                 "Amount", "Lua", // or percentage?
                 "Level", "Int"
-            });
-            AddFunctor("Spawn", 1, new List<string> {
+            ]);
+            AddFunctor("Spawn", 1, [
                 "TemplateId", "Guid", // Root template Guid
                 "AiHelper", "String", // Should be SpellId, but seemingly defunct?
                 "StatusToApply1", "StatusId",
@@ -715,14 +689,14 @@ namespace LSLib.LS.Stats
                 "StatusToApply3", "StatusId",
                 "StatusToApply4", "StatusId",
                 "Arg7", "Boolean"
-            });
-            AddFunctor("Stabilize", 0, new List<string>{});
-            AddFunctor("Unlock", 0, new List<string>{});
-            AddFunctor("ResetCombatTurn", 0, new List<string>{});
-            AddFunctor("RemoveAuraByChildStatus", 1, new List<string> {
+            ]);
+            AddFunctor("Stabilize", 0, []);
+            AddFunctor("Unlock", 0, []);
+            AddFunctor("ResetCombatTurn", 0, []);
+            AddFunctor("RemoveAuraByChildStatus", 1, [
                 "StatusId", "StatusId"
-            });
-            AddFunctor("SummonInInventory", 1, new List<string> {
+            ]);
+            AddFunctor("SummonInInventory", 1, [
                 "TemplateId", "Guid", // Root template Guid
                 "Duration", "SummonDurationOrInt",
                 "Arg3", "Int",
@@ -734,8 +708,8 @@ namespace LSLib.LS.Stats
                 "Arg9", "String",
                 "Arg10", "String",
                 "Arg11", "String", // etc.
-            });
-            AddFunctor("SpawnInInventory", 1, new List<string> {
+            ]);
+            AddFunctor("SpawnInInventory", 1, [
                 "TemplateId", "Guid", // Root template Guid
                 "Arg2", "Int",
                 "Arg3", "Boolean",
@@ -744,117 +718,117 @@ namespace LSLib.LS.Stats
                 "Arg6", "String",
                 "Arg7", "String",
                 "Arg8", "String", // etc.
-            });
-            AddFunctor("RemoveUniqueStatus", 1, new List<string> {
+            ]);
+            AddFunctor("RemoveUniqueStatus", 1, [
                 "StatusId", "StatusId"
-            });
-            AddFunctor("DisarmWeapon", 0, new List<string> { });
-            AddFunctor("DisarmAndStealWeapon", 0, new List<string> { });
-            AddFunctor("SwitchDeathType", 1, new List<string> {
+            ]);
+            AddFunctor("DisarmWeapon", 0, []);
+            AddFunctor("DisarmAndStealWeapon", 0, []);
+            AddFunctor("SwitchDeathType", 1, [
                 "DeathType", "Death Type"
-            });
-            AddFunctor("TriggerRandomCast", 2, new List<string> {
+            ]);
+            AddFunctor("TriggerRandomCast", 2, [
                 "Arg1", "Int",
                 "Arg2", "Float",
                 "Arg3", "String", // RandomCastOutcomesID resource
                 "Arg4", "String", // RandomCastOutcomesID resource
                 "Arg5", "String", // RandomCastOutcomesID resource
                 "Arg6", "String", // RandomCastOutcomesID resource
-            });
-            AddFunctor("GainTemporaryHitPoints", 1, new List<string> {
+            ]);
+            AddFunctor("GainTemporaryHitPoints", 1, [
                 "Amount", "Lua"
-            });
-            AddFunctor("FireProjectile", 1, new List<string> {
+            ]);
+            AddFunctor("FireProjectile", 1, [
                 "Arg1", "String"
-            });
-            AddFunctor("ShortRest", 0, new List<string> {});
-            AddFunctor("CreateZone", 0, new List<string> {
+            ]);
+            AddFunctor("ShortRest", 0, []);
+            AddFunctor("CreateZone", 0, [
                 "Shape", "ZoneShape",
                 "Arg2", "Float",
                 "Duration", "Float",
                 "Arg4", "String",
                 "Arg5", "Boolean",
-            });
-            AddFunctor("DoTeleport", 0, new List<string> {
+            ]);
+            AddFunctor("DoTeleport", 0, [
                 "Arg1", "Float"
-            });
-            AddFunctor("RegainTemporaryHitPoints", 1, new List<string> {
+            ]);
+            AddFunctor("RegainTemporaryHitPoints", 1, [
                 "Amount", "Lua"
-            });
-            AddFunctor("RemoveStatusByLevel", 1, new List<string> {
+            ]);
+            AddFunctor("RemoveStatusByLevel", 1, [
                 "StatusId", "StatusIdOrGroup",
                 "Arg2", "Int",
                 "Arg3", "Ability"
-            });
-            AddFunctor("SurfaceClearLayer", 0, new List<string> {
+            ]);
+            AddFunctor("SurfaceClearLayer", 0, [
                 "Layer1", "SurfaceLayer",
                 "Layer2", "SurfaceLayer",
-            });
-            AddFunctor("Unsummon", 0, new List<string> { });
-            AddFunctor("CreateWall", 0, new List<string> { });
-            AddFunctor("Counterspell", 0, new List<string> { });
-            AddFunctor("AdjustRoll", 1, new List<string> {
+            ]);
+            AddFunctor("Unsummon", 0, []);
+            AddFunctor("CreateWall", 0, []);
+            AddFunctor("Counterspell", 0, []);
+            AddFunctor("AdjustRoll", 1, [
                 "Amount", "Lua",
                 "Type", "RollAdjustmentType",
                 "DamageType", "Damage Type",
-            });
-            AddFunctor("SpawnExtraProjectiles", 0, new List<string> {
+            ]);
+            AddFunctor("SpawnExtraProjectiles", 0, [
                 "Arg1", "String", // ProjectileTypeId
-            });
-            AddFunctor("Kill", 0, new List<string> { });
-            AddFunctor("TutorialEvent", 0, new List<string> {
+            ]);
+            AddFunctor("Kill", 0, []);
+            AddFunctor("TutorialEvent", 0, [
                 "Event", "Guid",
-            });
-            AddFunctor("Drop", 0, new List<string> {
+            ]);
+            AddFunctor("Drop", 0, [
                 "Arg1", "String",
-            });
-            AddFunctor("ResetCooldowns", 1, new List<string> {
+            ]);
+            AddFunctor("ResetCooldowns", 1, [
                 "Type", "SpellCooldownType",
-            });
-            AddFunctor("SetRoll", 1, new List<string> {
+            ]);
+            AddFunctor("SetRoll", 1, [
                 "Roll", "Int",
                 "DistributionOrDamageType", "RollAdjustmentTypeOrDamageType"
-            });
-            AddFunctor("SetDamageResistance", 1, new List<string> {
+            ]);
+            AddFunctor("SetDamageResistance", 1, [
                 "DamageType", "Damage Type",
-            });
-            AddFunctor("SetReroll", 0, new List<string> {
+            ]);
+            AddFunctor("SetReroll", 0, [
                 "Roll", "Int",
                 "Arg2", "Boolean"
-            });
-            AddFunctor("SetAdvantage", 0, new List<string> { });
-            AddFunctor("SetDisadvantage", 0, new List<string> { });
-            AddFunctor("MaximizeRoll", 1, new List<string> {
+            ]);
+            AddFunctor("SetAdvantage", 0, []);
+            AddFunctor("SetDisadvantage", 0, []);
+            AddFunctor("MaximizeRoll", 1, [
                 "DamageType", "Damage Type"
-            });
-            AddFunctor("CameraWait", 0, new List<string> {
+            ]);
+            AddFunctor("CameraWait", 0, [
                 "Arg1", "Float"
-            });
+            ]);
 
 
 
-            AddDescriptionParams("DealDamage", 1, new List<string> {
+            AddDescriptionParams("DealDamage", 1, [
                 "Damage", "Lua",
                 "DamageType", "DamageTypeOrDealDamageWeaponDamageType",
                 "Magical", "Magical",
                 "Nonlethal", "Nonlethal",
                 "Arg5", "Int",
                 "Tooltip", "Guid",
-            });
-            AddDescriptionParams("RegainHitPoints", 1, new List<string> {
+            ]);
+            AddDescriptionParams("RegainHitPoints", 1, [
                 "HitPoints", "Lua",
                 "Tooltip", "Guid",
-            });
-            AddDescriptionParams("Distance", 1, new List<string> {
+            ]);
+            AddDescriptionParams("Distance", 1, [
                 "Distance", "Float"
-            });
-            AddDescriptionParams("GainTemporaryHitPoints", 1, new List<string> {
+            ]);
+            AddDescriptionParams("GainTemporaryHitPoints", 1, [
                 "Amount", "Lua"
-            });
-            AddDescriptionParams("LevelMapValue", 1, new List<string> {
+            ]);
+            AddDescriptionParams("LevelMapValue", 1, [
                 "LevelMap", "String"
-            });
-            AddDescriptionParams("ApplyStatus", 1, new List<string> {
+            ]);
+            AddDescriptionParams("ApplyStatus", 1, [
                 "StatusId", "StatusId",
                 "Chance", "Int",
                 "Duration", "Lua",
@@ -863,284 +837,284 @@ namespace LSLib.LS.Stats
                 "StatusSpecificParam3", "Int",
                 "StatsConditions", "Conditions",
                 "RequiresConcentration", "Boolean"
-            });
+            ]);
 
 
 
-            AddBoost("AC", 1, new List<string> {
+            AddBoost("AC", 1, [
 	            "AC", "Int"
-            });
-            AddBoost("Ability", 2, new List<string> {
+            ]);
+            AddBoost("Ability", 2, [
 	            "Ability", "Ability",
 	            "Amount", "Int",
 	            "Arg3", "Int",
-            });
-            AddBoost("RollBonus", 2, new List<string> {
+            ]);
+            AddBoost("RollBonus", 2, [
 	            "RollType", "StatsRollType",
 	            "Bonus", "Lua",
 	            "Arg3", "String",
-            });
-            AddBoost("Advantage", 1, new List<string> {
+            ]);
+            AddBoost("Advantage", 1, [
 	            "Type", "AdvantageType",
 	            "Arg2", "String", // Depends on type
 	            "Tag1", "String", // TagManager resource
 	            "Tag2", "String", // TagManager resource
 	            "Tag3", "String", // TagManager resource
-            });
-            AddBoost("Disadvantage", 1, new List<string> {
+            ]);
+            AddBoost("Disadvantage", 1, [
 	            "Type", "AdvantageType",
 	            "Arg2", "String", // Depends on type
 	            "Tag1", "String", // TagManager resource
 	            "Tag2", "String", // TagManager resource
 	            "Tag3", "String", // TagManager resource
-            });
-            AddBoost("ActionResource", 2, new List<string> {
+            ]);
+            AddBoost("ActionResource", 2, [
 	            "Resource", "String", // Action resource name
 	            "Amount", "Float",
 	            "Level", "Int",
                 "DieType", "DieType",
-            });
-            AddBoost("CriticalHit", 3, new List<string> {
+            ]);
+            AddBoost("CriticalHit", 3, [
 	            "Type", "CriticalHitType",
 	            "Result", "CriticalHitResult",
 	            "When", "CriticalHitWhen",
 	            "Arg4", "Float",
-            });
-            AddBoost("AbilityFailedSavingThrow", 1, new List<string> {
+            ]);
+            AddBoost("AbilityFailedSavingThrow", 1, [
 	            "Ability", "Ability"
-            });
-            AddBoost("Resistance", 2, new List<string> {
+            ]);
+            AddBoost("Resistance", 2, [
                 "DamageType", "AllOrDamageType",
                 "ResistanceBoostFlags", "ResistanceBoostFlags"
-            });
-            AddBoost("WeaponDamageResistance", 1, new List<string> {
+            ]);
+            AddBoost("WeaponDamageResistance", 1, [
                 "DamageType1", "Damage Type",
                 "DamageType2", "Damage Type",
                 "DamageType3", "Damage Type",
-            });
-            AddBoost("ProficiencyBonusOverride", 1, new List<string> {
+            ]);
+            AddBoost("ProficiencyBonusOverride", 1, [
 	            "Bonus", "Lua"
-            });
-            AddBoost("ActionResourceOverride", 2, new List<string> {
+            ]);
+            AddBoost("ActionResourceOverride", 2, [
                 "Resource", "String", // Action resource name
 	            "Amount", "Float",
                 "Level", "Int",
                 "DieType", "DieType",
-            });
-            AddBoost("AddProficiencyToAC", 0, new List<string> {});
-            AddBoost("JumpMaxDistanceMultiplier", 1, new List<string> {
+            ]);
+            AddBoost("AddProficiencyToAC", 0, []);
+            AddBoost("JumpMaxDistanceMultiplier", 1, [
 	            "Multiplier", "Float"
-            });
-            AddBoost("AddProficiencyToDamage", 0, new List<string> {});
-            AddBoost("ActionResourceConsumeMultiplier", 3, new List<string> {
+            ]);
+            AddBoost("AddProficiencyToDamage", 0, []);
+            AddBoost("ActionResourceConsumeMultiplier", 3, [
                 "Resource", "String", // Action resource name
 	            "Multiplier", "Float",
                 "Level", "Int",
-            });
-            AddBoost("BlockVerbalComponent", 0, new List<string> {});
-            AddBoost("BlockSomaticComponent", 0, new List<string> {});
-            AddBoost("HalveWeaponDamage", 1, new List<string> {
+            ]);
+            AddBoost("BlockVerbalComponent", 0, []);
+            AddBoost("BlockSomaticComponent", 0, []);
+            AddBoost("HalveWeaponDamage", 1, [
 	            "Ability", "Ability"
-            });
-            AddBoost("UnlockSpell", 1, new List<string> {
+            ]);
+            AddBoost("UnlockSpell", 1, [
 	            "SpellId", "SpellId",
                 "Type", "UnlockSpellType",
                 "SpellGuid", "String", // "None" or GUID or ""
                 "Cooldown", "SpellCooldownType",
                 "Ability", "Ability"
-            });
-            AddBoost("SourceAdvantageOnAttack", 0, new List<string> {
+            ]);
+            AddBoost("SourceAdvantageOnAttack", 0, [
 	            "Arg1", "Float"
-            });
-            AddBoost("ProficiencyBonus", 1, new List<string> {
+            ]);
+            AddBoost("ProficiencyBonus", 1, [
 	            "Type", "ProficiencyBonusBoostType",
                 "Arg2", "String"
-            });
-            AddBoost("BlockSpellCast", 0, new List<string> {
+            ]);
+            AddBoost("BlockSpellCast", 0, [
 	            "Arg1", "Float"
-            });
-            AddBoost("Proficiency", 1, new List<string> {
+            ]);
+            AddBoost("Proficiency", 1, [
 	            "Arg1", "ProficiencyGroupFlags",
 	            "Arg2", "ProficiencyGroupFlags",
 	            "Arg3", "ProficiencyGroupFlags",
-            });
-            AddBoost("SourceAllyAdvantageOnAttack", 0, new List<string> {});
-            AddBoost("IncreaseMaxHP", 1, new List<string> {
+            ]);
+            AddBoost("SourceAllyAdvantageOnAttack", 0, []);
+            AddBoost("IncreaseMaxHP", 1, [
 	            "Amount", "String" // Lua or %
-            });
-            AddBoost("ActionResourceBlock", 1, new List<string> {
+            ]);
+            AddBoost("ActionResourceBlock", 1, [
                 "Resource", "String", // Action resource name
                 "Level", "Int",
-            });
-            AddBoost("StatusImmunity", 1, new List<string> {
+            ]);
+            AddBoost("StatusImmunity", 1, [
 	            "StatusId", "StatusIdOrGroup",
 	            "Tag1", "String", // Tag resource name
 	            "Tag2", "String", // Tag resource name
 	            "Tag3", "String", // Tag resource name
 	            "Tag4", "String", // Tag resource name
 	            "Tag5", "String", // Tag resource name
-            });
-            AddBoost("UseBoosts", 1, new List<string> {
+            ]);
+            AddBoost("UseBoosts", 1, [
 	            "Arg1", "StatsFunctors"
-            });
-            AddBoost("CannotHarmCauseEntity", 1, new List<string> {
+            ]);
+            AddBoost("CannotHarmCauseEntity", 1, [
 	            "Arg1", "String"
-            });
-            AddBoost("TemporaryHP", 1, new List<string> {
+            ]);
+            AddBoost("TemporaryHP", 1, [
 	            "Amount", "Lua"
-            });
-            AddBoost("Weight", 1, new List<string> {
+            ]);
+            AddBoost("Weight", 1, [
 	            "Weight", "Float"
-            });
-            AddBoost("WeightCategory", 1, new List<string> {
+            ]);
+            AddBoost("WeightCategory", 1, [
 	            "Category", "Int"
-            });
-            AddBoost("FactionOverride", 1, new List<string> {
+            ]);
+            AddBoost("FactionOverride", 1, [
 	            "Faction", "String" // Faction resource GUID or "Source"
-            });
-            AddBoost("ActionResourceMultiplier", 2, new List<string> {
+            ]);
+            AddBoost("ActionResourceMultiplier", 2, [
                 "Resource", "String", // Action resource name
 	            "Multiplier", "Int",
                 "Level", "Int",
-            });
-            AddBoost("BlockRegainHP", 0, new List<string> {
+            ]);
+            AddBoost("BlockRegainHP", 0, [
 	            "Type", "ResurrectTypes"
-            });
-            AddBoost("Initiative", 1, new List<string> {
+            ]);
+            AddBoost("Initiative", 1, [
 	            "Initiative", "Int"
-            });
-            AddBoost("DarkvisionRange", 1, new List<string> {
+            ]);
+            AddBoost("DarkvisionRange", 1, [
 	            "Range", "Float"
-            });
-            AddBoost("DarkvisionRangeMin", 1, new List<string> {
+            ]);
+            AddBoost("DarkvisionRangeMin", 1, [
                 "Range", "Float"
-            });
-            AddBoost("DarkvisionRangeOverride", 1, new List<string> {
+            ]);
+            AddBoost("DarkvisionRangeOverride", 1, [
                 "Range", "Float"
-            });
-            AddBoost("Tag", 1, new List<string> {
+            ]);
+            AddBoost("Tag", 1, [
 	            "Arg1", "String" // Tag resource name
-            });
-            AddBoost("IgnoreDamageThreshold", 2, new List<string> {
+            ]);
+            AddBoost("IgnoreDamageThreshold", 2, [
 	            "DamageType", "AllOrDamageType",
                 "Threshold", "Int"
-            });
-            AddBoost("Skill", 2, new List<string> {
+            ]);
+            AddBoost("Skill", 2, [
 	            "Skill", "SkillType",
                 "Amount", "Lua"
-            });
-            AddBoost("WeaponDamage", 2, new List<string> {
+            ]);
+            AddBoost("WeaponDamage", 2, [
 	            "Amount", "Lua",
                 "DamageType", "Damage Type",
                 "Arg3", "Boolean"
-            });
-            AddBoost("NullifyAbilityScore", 1, new List<string> {
+            ]);
+            AddBoost("NullifyAbilityScore", 1, [
                 "Ability", "Ability"
-            });
-            AddBoost("IgnoreFallDamage", 0, new List<string> {});
-            AddBoost("Reroll", 3, new List<string> {
+            ]);
+            AddBoost("IgnoreFallDamage", 0, []);
+            AddBoost("Reroll", 3, [
 	            "RollType", "StatsRollType",
                 "RollBelow", "Int",
                 "Arg3", "Boolean"
-            });
-            AddBoost("DownedStatus", 1, new List<string> {
+            ]);
+            AddBoost("DownedStatus", 1, [
 	            "StatusId", "StatusId",
                 "Arg2", "Int"
-            });
-            AddBoost("Invulnerable", 0, new List<string> {});
-            AddBoost("WeaponEnchantment", 1, new List<string> {
+            ]);
+            AddBoost("Invulnerable", 0, []);
+            AddBoost("WeaponEnchantment", 1, [
 	            "Enchantment", "Int"
-            });
-            AddBoost("GuaranteedChanceRollOutcome", 1, new List<string> {
+            ]);
+            AddBoost("GuaranteedChanceRollOutcome", 1, [
 	            "Arg1", "Boolean"
-            });
-            AddBoost("Attribute", 1, new List<string> {
+            ]);
+            AddBoost("Attribute", 1, [
 	            "Flags", "AttributeFlags"
-            });
-            AddBoost("IgnoreLeaveAttackRange", 0, new List<string> {});
-            AddBoost("GameplayLight", 2, new List<string> {
+            ]);
+            AddBoost("IgnoreLeaveAttackRange", 0, []);
+            AddBoost("GameplayLight", 2, [
 	            "Arg1", "Float",
 	            "Arg2", "Boolean",
 	            "Arg3", "Float",
 	            "Arg4", "Boolean"
-            });
-            AddBoost("DialogueBlock", 0, new List<string> {});
-            AddBoost("DualWielding", 1, new List<string> {
+            ]);
+            AddBoost("DialogueBlock", 0, []);
+            AddBoost("DualWielding", 1, [
 	            "DW", "Boolean"
-            });
-            AddBoost("Savant", 1, new List<string> {
+            ]);
+            AddBoost("Savant", 1, [
 	            "SpellSchool", "SpellSchool"
-            });
-            AddBoost("MinimumRollResult", 2, new List<string> {
+            ]);
+            AddBoost("MinimumRollResult", 2, [
 	            "RollType", "StatsRollType",
                 "MinResult", "Int"
-            });
-            AddBoost("Lootable", 0, new List<string> {});
-            AddBoost("CharacterWeaponDamage", 1, new List<string> {
+            ]);
+            AddBoost("Lootable", 0, []);
+            AddBoost("CharacterWeaponDamage", 1, [
 	            "Amount", "Lua",
                 "DamageType", "Damage Type"
-            });
-            AddBoost("ProjectileDeflect", 0, new List<string> {
+            ]);
+            AddBoost("ProjectileDeflect", 0, [
 	            "Type1", "String",
 	            "Type2", "String",
-            });
-            AddBoost("AbilityOverrideMinimum", 2, new List<string> {
+            ]);
+            AddBoost("AbilityOverrideMinimum", 2, [
 	            "Ability", "Ability",
                 "Minimum", "Int"
-            });
-            AddBoost("ACOverrideFormula", 2, new List<string> {
+            ]);
+            AddBoost("ACOverrideFormula", 2, [
 	            "AC", "Int",
                 "Arg2", "Boolean",
                 "Ability1", "Ability",
                 "Ability2", "Ability",
                 "Ability3", "Ability",
-            });
-            AddBoost("FallDamageMultiplier", 1, new List<string> {
+            ]);
+            AddBoost("FallDamageMultiplier", 1, [
 	            "Multiplier", "Float"
-            });
-            AddBoost("ActiveCharacterLight", 1, new List<string> {
+            ]);
+            AddBoost("ActiveCharacterLight", 1, [
 	            "Light", "String"
-            });
-            AddBoost("Invisibility", 0, new List<string> {});
-            AddBoost("TwoWeaponFighting", 0, new List<string> {});
-            AddBoost("WeaponAttackTypeOverride", 1, new List<string> {
+            ]);
+            AddBoost("Invisibility", 0, []);
+            AddBoost("TwoWeaponFighting", 0, []);
+            AddBoost("WeaponAttackTypeOverride", 1, [
 	            "Type", "AttackType"
-            });
-            AddBoost("WeaponDamageDieOverride", 1, new List<string> {
+            ]);
+            AddBoost("WeaponDamageDieOverride", 1, [
 	            "DamageDie", "String", // die, eg. 1d10
-            });
-            AddBoost("CarryCapacityMultiplier", 1, new List<string> {
+            ]);
+            AddBoost("CarryCapacityMultiplier", 1, [
 	            "Multiplier", "Float"
-            });
-            AddBoost("WeaponProperty", 1, new List<string> {
+            ]);
+            AddBoost("WeaponProperty", 1, [
 	            "Flags1", "WeaponFlags"
-            });
-            AddBoost("WeaponAttackRollAbilityOverride", 1, new List<string> {
+            ]);
+            AddBoost("WeaponAttackRollAbilityOverride", 1, [
 	            "Ability", "AbilityOrAttackRollAbility"
-            });
-            AddBoost("BlockTravel", 0, new List<string> {});
-            AddBoost("BlockGatherAtCamp", 0, new List<string> {});
-            AddBoost("BlockAbilityModifierDamageBonus", 0, new List<string> {});
-            AddBoost("VoicebarkBlock", 0, new List<string> {});
-            AddBoost("HiddenDuringCinematic", 0, new List<string> {});
-            AddBoost("SightRangeAdditive", 1, new List<string> {
+            ]);
+            AddBoost("BlockTravel", 0, []);
+            AddBoost("BlockGatherAtCamp", 0, []);
+            AddBoost("BlockAbilityModifierDamageBonus", 0, []);
+            AddBoost("VoicebarkBlock", 0, []);
+            AddBoost("HiddenDuringCinematic", 0, []);
+            AddBoost("SightRangeAdditive", 1, [
 	            "Range", "Float"
-            });
-            AddBoost("SightRangeMinimum", 1, new List<string> {
+            ]);
+            AddBoost("SightRangeMinimum", 1, [
                 "Range", "Float"
-            });
-            AddBoost("SightRangeMaximum", 1, new List<string> {
+            ]);
+            AddBoost("SightRangeMaximum", 1, [
                 "Range", "Float"
-            });
-            AddBoost("SightRangeOverride", 1, new List<string> {
+            ]);
+            AddBoost("SightRangeOverride", 1, [
                 "Range", "Float"
-            });
-            AddBoost("CannotBeDisarmed", 0, new List<string> {});
-            AddBoost("MovementSpeedLimit", 1, new List<string> {
+            ]);
+            AddBoost("CannotBeDisarmed", 0, []);
+            AddBoost("MovementSpeedLimit", 1, [
 	            "Type", "MovementSpeedType"
-            });
-            AddBoost("NonLethal", 0, new List<string> {});
-            AddBoost("UnlockSpellVariant", 1, new List<string> {
+            ]);
+            AddBoost("NonLethal", 0, []);
+            AddBoost("UnlockSpellVariant", 1, [
 	            "Modification1", "Lua", // TODO - add Modification parser?
 	            "Modification2", "Lua",
 	            "Modification3", "Lua",
@@ -1156,166 +1130,166 @@ namespace LSLib.LS.Stats
 	            "Modification13", "Lua",
 	            "Modification14", "Lua",
 	            "Modification15", "Lua"
-            });
-            AddBoost("DetectDisturbancesBlock", 1, new List<string> {
+            ]);
+            AddBoost("DetectDisturbancesBlock", 1, [
 	            "Arg1", "Boolean"
-            });
-            AddBoost("BlockAbilityModifierFromAC", 1, new List<string> {
+            ]);
+            AddBoost("BlockAbilityModifierFromAC", 1, [
 	            "Ability", "Ability"
-            });
-            AddBoost("ScaleMultiplier", 0, new List<string> {
+            ]);
+            AddBoost("ScaleMultiplier", 0, [
 	            "Multiplier", "Float"
-            });
-            AddBoost("CriticalDamageOnHit", 0, new List<string> {});
-            AddBoost("DamageReduction", 2, new List<string> {
+            ]);
+            AddBoost("CriticalDamageOnHit", 0, []);
+            AddBoost("DamageReduction", 2, [
 	            "DamageType", "AllOrDamageType",
                 "ReductionType", "DamageReductionType",
                 "Amount", "Lua"
-            });
-            AddBoost("ReduceCriticalAttackThreshold", 1, new List<string> {
+            ]);
+            AddBoost("ReduceCriticalAttackThreshold", 1, [
 	            "Threshold", "Int",
                 "StatusId", "StatusIdOrGroup"
-            });
-            AddBoost("PhysicalForceRangeBonus", 1, new List<string> {
+            ]);
+            AddBoost("PhysicalForceRangeBonus", 1, [
 	            "Arg1", "String"
-            });
-            AddBoost("ObjectSize", 1, new List<string> {
+            ]);
+            AddBoost("ObjectSize", 1, [
 	            "Size", "Int"
-            });
-            AddBoost("ObjectSizeOverride", 1, new List<string> {
+            ]);
+            AddBoost("ObjectSizeOverride", 1, [
                 "Size", "String"
-            });
-            AddBoost("ItemReturnToOwner", 0, new List<string> {});
-            AddBoost("AiArchetypeOverride", 1, new List<string> {
+            ]);
+            AddBoost("ItemReturnToOwner", 0, []);
+            AddBoost("AiArchetypeOverride", 1, [
 	            "Archetype", "String",
                 "Arg2", "Int"
-            });
-            AddBoost("ExpertiseBonus", 1, new List<string> {
+            ]);
+            AddBoost("ExpertiseBonus", 1, [
 	            "Skill", "SkillType"
-            });
-            AddBoost("EntityThrowDamage", 1, new List<string> {
+            ]);
+            AddBoost("EntityThrowDamage", 1, [
 	            "Die", "String",
                 "DamageType", "Damage Type"
-            });
-            AddBoost("WeaponDamageTypeOverride", 1, new List<string> {
+            ]);
+            AddBoost("WeaponDamageTypeOverride", 1, [
 	            "DamageType", "Damage Type"
-            });
-            AddBoost("MaximizeHealing", 1, new List<string> {
+            ]);
+            AddBoost("MaximizeHealing", 1, [
 	            "Direction", "HealingDirection",
                 "Type", "ResurrectType"
-            });
-            AddBoost("IgnoreEnterAttackRange", 0, new List<string> {});
-            AddBoost("DamageBonus", 1, new List<string> {
+            ]);
+            AddBoost("IgnoreEnterAttackRange", 0, []);
+            AddBoost("DamageBonus", 1, [
 	            "Amount", "Lua",
                 "DamageType", "Damage Type",
                 "Arg3", "Boolean"
-            });
-            AddBoost("Detach", 0, new List<string> {});
-            AddBoost("ConsumeItemBlock", 0, new List<string> {});
-            AddBoost("AdvanceSpells", 1, new List<string> {
+            ]);
+            AddBoost("Detach", 0, []);
+            AddBoost("ConsumeItemBlock", 0, []);
+            AddBoost("AdvanceSpells", 1, [
 	            "SpellId", "SpellId",
                 "Arg2", "Int"
-            });
-            AddBoost("SpellResistance", 1, new List<string> {
+            ]);
+            AddBoost("SpellResistance", 1, [
 	            "Resistance", "ResistanceBoostFlags"
-            });
-            AddBoost("WeaponAttackRollBonus", 1, new List<string> {
+            ]);
+            AddBoost("WeaponAttackRollBonus", 1, [
 	            "Amount", "Lua"
-            });
-            AddBoost("SpellSaveDC", 1, new List<string> {
+            ]);
+            AddBoost("SpellSaveDC", 1, [
 	            "DC", "Int"
-            });
-            AddBoost("RedirectDamage", 1, new List<string> {
+            ]);
+            AddBoost("RedirectDamage", 1, [
 	            "Arg1", "Float",
 	            "DamageType", "Damage Type",
 	            "DamageType2", "Damage Type",
                 "Arg4", "Boolean"
-            });
-            AddBoost("CanSeeThrough", 1, new List<string> {
+            ]);
+            AddBoost("CanSeeThrough", 1, [
 	            "CanSeeThrough", "Boolean"
-            });
-            AddBoost("CanShootThrough", 1, new List<string> {
+            ]);
+            AddBoost("CanShootThrough", 1, [
                 "CanShootThrough", "Boolean"
-            });
-            AddBoost("CanWalkThrough", 1, new List<string> {
+            ]);
+            AddBoost("CanWalkThrough", 1, [
                 "CanWalkThrough", "Boolean"
-            });
-            AddBoost("MonkWeaponAttackOverride", 0, new List<string> {});
-            AddBoost("MonkWeaponDamageDiceOverride", 1, new List<string> {
+            ]);
+            AddBoost("MonkWeaponAttackOverride", 0, []);
+            AddBoost("MonkWeaponDamageDiceOverride", 1, [
 	            "Arg1", "Lua"
-            });
-            AddBoost("IntrinsicSummonerProficiency", 0, new List<string> {});
-            AddBoost("HorizontalFOVOverride", 1, new List<string> {
+            ]);
+            AddBoost("IntrinsicSummonerProficiency", 0, []);
+            AddBoost("HorizontalFOVOverride", 1, [
 	            "FOV", "Float"
-            });
-            AddBoost("CharacterUnarmedDamage", 1, new List<string> {
+            ]);
+            AddBoost("CharacterUnarmedDamage", 1, [
 	            "Damage", "Lua",
                 "DamageType", "Damage Type"
-            });
-            AddBoost("UnarmedMagicalProperty", 0, new List<string> {});
-            AddBoost("ActionResourceReplenishTypeOverride", 2, new List<string> {
+            ]);
+            AddBoost("UnarmedMagicalProperty", 0, []);
+            AddBoost("ActionResourceReplenishTypeOverride", 2, [
                 "ActionResource", "String", // Action resource name
                 "ReplenishType", "ResourceReplenishType"
-            });
-            AddBoost("AreaDamageEvade", 0, new List<string> {});
-            AddBoost("ActionResourcePreventReduction", 1, new List<string> {
+            ]);
+            AddBoost("AreaDamageEvade", 0, []);
+            AddBoost("ActionResourcePreventReduction", 1, [
 	            "ActionResource", "String", // Action resource name
                 "Level", "Int"
-            });
-            AddBoost("AttackSpellOverride", 1, new List<string> {
+            ]);
+            AddBoost("AttackSpellOverride", 1, [
 	            "AttackSpell", "SpellId",
 	            "OriginalSpell", "SpellId"
-            });
-            AddBoost("Lock", 0, new List<string> {
+            ]);
+            AddBoost("Lock", 0, [
 	            "DC", "Guid"
-            });
-            AddBoost("NoAOEDamageOnLand", 0, new List<string> {});
-            AddBoost("IgnorePointBlankDisadvantage", 1, new List<string> {
+            ]);
+            AddBoost("NoAOEDamageOnLand", 0, []);
+            AddBoost("IgnorePointBlankDisadvantage", 1, [
 	            "Flags", "WeaponFlags"
-            });
-            AddBoost("CriticalHitExtraDice", 1, new List<string> {
+            ]);
+            AddBoost("CriticalHitExtraDice", 1, [
 	            "ExtraDice", "Int",
                 "AttackType", "AttackType"
-            });
-            AddBoost("DodgeAttackRoll", 2, new List<string> {
+            ]);
+            AddBoost("DodgeAttackRoll", 2, [
 	            "Arg1", "Int",
 	            "Arg2", "Int",
 	            "Status", "StatusIdOrGroup"
-            });
-            AddBoost("GameplayObscurity", 1, new List<string> {
+            ]);
+            AddBoost("GameplayObscurity", 1, [
 	            "Obscurity", "Float"
-            });
-            AddBoost("MaximumRollResult", 2, new List<string> {
+            ]);
+            AddBoost("MaximumRollResult", 2, [
                 "RollType", "StatsRollType",
                 "MinResult", "Int"
-            });
-            AddBoost("UnlockInterrupt", 1, new List<string> {
+            ]);
+            AddBoost("UnlockInterrupt", 1, [
 	            "Interrupt", "Interrupt"
-            });
-            AddBoost("IntrinsicSourceProficiency", 0, new List<string> {});
-            AddBoost("JumpMaxDistanceBonus", 1, new List<string> {
+            ]);
+            AddBoost("IntrinsicSourceProficiency", 0, []);
+            AddBoost("JumpMaxDistanceBonus", 1, [
 	            "Bonus", "Float"
-            });
-            AddBoost("ArmorAbilityModifierCapOverride", 2, new List<string> {
+            ]);
+            AddBoost("ArmorAbilityModifierCapOverride", 2, [
 	            "ArmorType", "ArmorType",
                 "Cap", "Int"
-            });
-            AddBoost("IgnoreResistance", 2, new List<string> {
+            ]);
+            AddBoost("IgnoreResistance", 2, [
 	            "DamageType", "Damage Type",
                 "Flags", "ResistanceBoostFlags"
-            });
-            AddBoost("ConcentrationIgnoreDamage", 1, new List<string> {
+            ]);
+            AddBoost("ConcentrationIgnoreDamage", 1, [
 	            "SpellSchool", "SpellSchool"
-            });
-            AddBoost("LeaveTriggers", 0, new List<string> {});
-            AddBoost("IgnoreLowGroundPenalty", 1, new List<string> {
+            ]);
+            AddBoost("LeaveTriggers", 0, []);
+            AddBoost("IgnoreLowGroundPenalty", 1, [
 	            "RollType", "StatsRollType"
-            });
-            AddBoost("IgnoreSurfaceCover", 1, new List<string> {
+            ]);
+            AddBoost("IgnoreSurfaceCover", 1, [
 	            "SurfaceType", "String" // Surface type
-            });
-            AddBoost("EnableBasicItemInteractions", 0, new List<string> {});
-            AddBoost("SoundsBlocked", 0, new List<string> {});
+            ]);
+            AddBoost("EnableBasicItemInteractions", 0, []);
+            AddBoost("SoundsBlocked", 0, []);
         }
 
         public void LoadEnumerations(Stream stream)
@@ -1324,7 +1298,7 @@ namespace LSLib.LS.Stats
 
             string line;
 
-            using (var reader = new StreamReader(stream))
+            using var reader = new StreamReader(stream);
             while ((line = reader.ReadLine()) != null)
             {
                 var trimmed = line.Trim();
@@ -1332,13 +1306,13 @@ namespace LSLib.LS.Stats
                 {
                     if (trimmed.StartsWith("valuelist "))
                     {
-                        var name = trimmed.Substring(11, trimmed.Length - 12);
+                        var name = trimmed[11..^1];
                         curEnum = new StatEnumeration(name);
                         Enumerations.Add(curEnum.Name, curEnum);
                     }
                     else if (trimmed.StartsWith("value "))
                     {
-                        var label = trimmed.Substring(7, trimmed.Length - 8);
+                        var label = trimmed[7..^1];
                         curEnum.AddItem(label);
                     }
                 }

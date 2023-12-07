@@ -5,9 +5,6 @@ using System.Linq;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS;
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-using Path = Alphaleonis.Win32.Filesystem.Path;
-using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.Granny
 {
@@ -24,18 +21,12 @@ namespace LSLib.Granny
         {
             string extension = Path.GetExtension(path)?.ToLower();
 
-            switch (extension)
+            return extension switch
             {
-                case ".gr2":
-                case ".lsm":
-                    return ExportFormat.GR2;
-
-                case ".dae":
-                    return ExportFormat.DAE;
-
-                default:
-                    throw new ArgumentException($"Unrecognized model file extension: {extension}");
-            }
+                ".gr2" or ".lsm" => ExportFormat.GR2,
+                ".dae" => ExportFormat.DAE,
+                _ => throw new ArgumentException($"Unrecognized model file extension: {extension}"),
+            };
         }
 
         public static Root LoadModel(string inputPath)
@@ -53,14 +44,12 @@ namespace LSLib.Granny
             {
                 case ExportFormat.GR2:
                 {
-                    using (var fs = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    {
-                        var root = new Root();
-                        var gr2 = new GR2Reader(fs);
-                        gr2.Read(root);
-                        root.PostLoad(gr2.Tag);
-                        return root;
-                    }
+                    using var fs = File.Open(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    var root = new Root();
+                    var gr2 = new GR2Reader(fs);
+                    gr2.Read(root);
+                    root.PostLoad(gr2.Tag);
+                    return root;
                 }
 
                 case ExportFormat.DAE:

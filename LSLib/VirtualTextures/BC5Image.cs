@@ -71,28 +71,28 @@ namespace LSLib.VirtualTextures
 
         public void SaveDDS(string path)
         {
-            var header = new DDSHeader();
-            header.dwMagic = DDSHeader.DDSMagic;
-            header.dwSize = DDSHeader.HeaderSize;
-            header.dwFlags = 0x1007;
-            header.dwWidth = (uint)Width;
-            header.dwHeight = (uint)Height;
-            header.dwPitchOrLinearSize = (uint)(Width * Height);
-            header.dwDepth = 1;
-            header.dwMipMapCount = 1;
-
-            header.dwPFSize = 32;
-            header.dwPFFlags = 0x04;
-            header.dwFourCC = DDSHeader.FourCC_DXT5;
-
-            header.dwCaps = 0x1000;
-
-            using (var pagef = new FileStream(path, FileMode.Create, FileAccess.Write))
-            using (var bw = new BinaryWriter(pagef))
+            var header = new DDSHeader
             {
-                BinUtils.WriteStruct<DDSHeader>(bw, ref header);
-                bw.Write(Data, 0, Data.Length);
-            }
+                dwMagic = DDSHeader.DDSMagic,
+                dwSize = DDSHeader.HeaderSize,
+                dwFlags = 0x1007,
+                dwWidth = (uint)Width,
+                dwHeight = (uint)Height,
+                dwPitchOrLinearSize = (uint)(Width * Height),
+                dwDepth = 1,
+                dwMipMapCount = 1,
+
+                dwPFSize = 32,
+                dwPFFlags = 0x04,
+                dwFourCC = DDSHeader.FourCC_DXT5,
+
+                dwCaps = 0x1000
+            };
+
+            using var pagef = new FileStream(path, FileMode.Create, FileAccess.Write);
+            using var bw = new BinaryWriter(pagef);
+            BinUtils.WriteStruct<DDSHeader>(bw, ref header);
+            bw.Write(Data, 0, Data.Length);
         }
     }
 
@@ -102,57 +102,55 @@ namespace LSLib.VirtualTextures
 
         public void LoadDDS(string path)
         {
-            using (var f = new FileStream(path, FileMode.Open, FileAccess.Read))
-            using (var reader = new BinaryReader(f))
+            using var f = new FileStream(path, FileMode.Open, FileAccess.Read);
+            using var reader = new BinaryReader(f);
+            var header = BinUtils.ReadStruct<DDSHeader>(reader);
+            Mips = [];
+
+            if (header.dwMagic != DDSHeader.DDSMagic)
             {
-                var header = BinUtils.ReadStruct<DDSHeader>(reader);
-                Mips = new List<BC5Image>();
+                throw new InvalidDataException($"{path}: Incorrect DDS signature, or file is not a DDS file");
+            }
 
-                if (header.dwMagic != DDSHeader.DDSMagic)
-                {
-                    throw new InvalidDataException($"{path}: Incorrect DDS signature, or file is not a DDS file");
-                }
+            if (header.dwSize != DDSHeader.HeaderSize)
+            {
+                throw new InvalidDataException($"{path}: Incorrect DDS header size");
+            }
 
-                if (header.dwSize != DDSHeader.HeaderSize)
-                {
-                    throw new InvalidDataException($"{path}: Incorrect DDS header size");
-                }
+            if ((header.dwFlags & 0xffff) != 0x1007)
+            {
+                throw new InvalidDataException($"{path}: Incorrect DDS texture flags");
+            }
 
-                if ((header.dwFlags & 0xffff) != 0x1007)
-                {
-                    throw new InvalidDataException($"{path}: Incorrect DDS texture flags");
-                }
+            if (header.dwDepth != 0 && header.dwDepth != 1)
+            {
+                throw new InvalidDataException($"{path}: Only single-layer textures are supported");
+            }
 
-                if (header.dwDepth != 0 && header.dwDepth != 1)
-                {
-                    throw new InvalidDataException($"{path}: Only single-layer textures are supported");
-                }
+            if ((header.dwPFFlags & 4) != 4)
+            {
+                throw new InvalidDataException($"{path}: DDS does not have a valid FourCC code");
+            }
 
-                if ((header.dwPFFlags & 4) != 4)
-                {
-                    throw new InvalidDataException($"{path}: DDS does not have a valid FourCC code");
-                }
+            if (header.FourCCName != "DXT5")
+            {
+                throw new InvalidDataException($"{path}: Expected a DXT5 encoded texture, got: " + header.FourCCName);
+            }
 
-                if (header.FourCCName != "DXT5")
-                {
-                    throw new InvalidDataException($"{path}: Expected a DXT5 encoded texture, got: " + header.FourCCName);
-                }
+            Int32 mips = 1;
+            if ((header.dwFlags & 0x20000) == 0x20000)
+            {
+                mips = (Int32)header.dwMipMapCount;
+            }
 
-                Int32 mips = 1;
-                if ((header.dwFlags & 0x20000) == 0x20000)
-                {
-                    mips = (Int32)header.dwMipMapCount;
-                }
-
-                Mips = new List<BC5Image>(mips);
-                for (var i = 0; i < mips; i++)
-                {
-                    var width = Math.Max((int)header.dwWidth >> i, 1);
-                    var height = Math.Max((int)header.dwHeight >> i, 1);
-                    var bytes = Math.Max(width / 4, 1) * Math.Max(height / 4, 1) * 16;
-                    var blob = reader.ReadBytes(bytes);
-                    Mips.Add(new BC5Image(blob, width, height));
-                }
+            Mips = new List<BC5Image>(mips);
+            for (var i = 0; i < mips; i++)
+            {
+                var width = Math.Max((int)header.dwWidth >> i, 1);
+                var height = Math.Max((int)header.dwHeight >> i, 1);
+                var bytes = Math.Max(width / 4, 1) * Math.Max(height / 4, 1) * 16;
+                var blob = reader.ReadBytes(bytes);
+                Mips.Add(new BC5Image(blob, width, height));
             }
         }
     }

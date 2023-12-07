@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK;
+using OpenTK.Mathematics;
 using System.Diagnostics;
 using LSLib.Granny.GR2;
 

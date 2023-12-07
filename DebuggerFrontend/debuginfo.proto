@@ -1,0 +1,89 @@
+﻿syntax = "proto3";
+
+package LSTools.StoryCompiler;
+
+option optimize_for = LITE_RUNTIME;
+
+message DatabaseDebugInfoMsg {
+  uint32 id = 1;
+  string name = 2;
+  repeated uint32 param_types = 3;
+}
+
+message ActionDebugInfoMsg {
+  uint32 line = 1;
+}
+
+message GoalDebugInfoMsg {
+  uint32 id = 1;
+  string name = 2;
+  string path = 3;
+  repeated ActionDebugInfoMsg init_actions = 4;
+  repeated ActionDebugInfoMsg exit_actions = 5;
+}
+
+message RuleVariableDebugInfoMsg {
+  uint32 index = 1;
+  uint32 type = 2;
+  string name = 3;
+  bool unused = 4;
+}
+
+message RuleDebugInfoMsg {
+  uint32 id = 1;
+  uint32 goal_id = 2;
+  repeated RuleVariableDebugInfoMsg variables = 3;
+  string name = 4;
+  repeated ActionDebugInfoMsg actions = 5;
+  uint32 conditions_start_line = 6;
+  uint32 conditions_end_line = 7;
+  uint32 actions_start_line = 8;
+  uint32 actions_end_line = 9;
+}
+
+message NodeDebugInfoMsg {
+  enum NodeType {
+    UNUSED = 0;
+    DATABASE = 1;
+    PROC = 2;
+    DIV_QUERY = 3;
+    AND = 4;
+    NOT_AND = 5;
+    REL_OP = 6;
+    RULE = 7;
+    INTERNAL_QUERY = 8;
+    USER_QUERY = 9;
+  }
+
+  uint32 id = 1;
+  uint32 rule_id = 2;
+  uint32 line = 3;
+  map<uint32, uint32> column_maps = 4;
+  uint32 database_id = 5;
+  string name = 6;
+  NodeType type = 7;
+  uint32 parent_node_id = 8;
+  string function_name = 9;
+  uint32 function_arity = 10;
+}
+
+message FunctionParamDebugInfoMsg {
+  uint32 type_id = 1;
+  string name = 2;
+  bool out = 3;
+}
+
+message FunctionDebugInfoMsg {
+  string name = 1;
+  repeated FunctionParamDebugInfoMsg params = 2;
+  uint32 type_id = 3;
+}
+
+message StoryDebugInfoMsg {
+  repeated DatabaseDebugInfoMsg databases = 1;
+  repeated GoalDebugInfoMsg goals = 2;
+  repeated RuleDebugInfoMsg rules = 3;
+  repeated NodeDebugInfoMsg nodes = 4;
+  repeated FunctionDebugInfoMsg functions = 5;
+  uint32 version = 6;
+}

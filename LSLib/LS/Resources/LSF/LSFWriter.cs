@@ -6,11 +6,11 @@ using LSLib.LS.Enums;
 
 namespace LSLib.LS
 {
-    public class LSFWriter
+    public class LSFWriter(Stream stream)
     {
-        private static int StringHashMapSize = 0x200;
+        private readonly static int StringHashMapSize = 0x200;
 
-        private Stream Stream;
+        private readonly Stream Stream = stream;
         private BinaryWriter Writer;
         private LSMetadata Meta;
 
@@ -32,12 +32,7 @@ namespace LSLib.LS
         public LSFVersion Version = LSFVersion.MaxWriteVersion;
         public bool EncodeSiblingData = false;
         public CompressionMethod Compression = CompressionMethod.LZ4;
-        public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
-
-        public LSFWriter(Stream stream)
-        {
-            this.Stream = stream;
-        }
+        public LSCompressionLevel LSCompressionLevel = LSCompressionLevel.DefaultCompression;
 
         public void Write(Resource resource)
         {
@@ -59,12 +54,12 @@ namespace LSLib.LS
             {
                 NextNodeIndex = 0;
                 NextAttributeIndex = 0;
-                NodeIndices = new Dictionary<Node, int>();
+                NodeIndices = [];
                 NextSiblingIndices = null;
                 StringHashMap = new List<List<string>>(StringHashMapSize);
                 while (StringHashMap.Count < StringHashMapSize)
                 {
-                    StringHashMap.Add(new List<string>());
+                    StringHashMap.Add([]);
                 }
 
                 if (EncodeSiblingData)
@@ -86,12 +81,14 @@ namespace LSLib.LS
                 var attributeBuffer = AttributeStream.ToArray();
                 var valueBuffer = ValueStream.ToArray();
 
-                var magic = new LSFMagic();
-                magic.Magic = BitConverter.ToUInt32(LSFMagic.Signature, 0);
-                magic.Version = (uint)Version;
+                var magic = new LSFMagic
+                {
+                    Magic = BitConverter.ToUInt32(LSFMagic.Signature, 0),
+                    Version = (uint)Version
+                };
                 BinUtils.WriteStruct<LSFMagic>(Writer, ref magic);
 
-                PackedVersion gameVersion = new PackedVersion
+                PackedVersion gameVersion = new()
                 {
                     Major = resource.Metadata.MajorVersion,
                     Minor = resource.Metadata.MinorVersion,
@@ -101,30 +98,36 @@ namespace LSLib.LS
 
                 if (Version < LSFVersion.VerBG3ExtendedHeader)
                 {
-                    var header = new LSFHeader();
-                    header.EngineVersion = gameVersion.ToVersion32();
+                    var header = new LSFHeader
+                    {
+                        EngineVersion = gameVersion.ToVersion32()
+                    };
                     BinUtils.WriteStruct<LSFHeader>(Writer, ref header);
                 }
                 else
                 {
-                    var header = new LSFHeaderV5();
-                    header.EngineVersion = gameVersion.ToVersion64();
+                    var header = new LSFHeaderV5
+                    {
+                        EngineVersion = gameVersion.ToVersion64()
+                    };
                     BinUtils.WriteStruct<LSFHeaderV5>(Writer, ref header);
                 }
 
                 bool chunked = Version >= LSFVersion.VerChunkedCompress;
-                byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
-                byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
-                byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
-                byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
+                byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, LSCompressionLevel);
+                byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, LSCompressionLevel, chunked);
+                byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, LSCompressionLevel, chunked);
+                byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, LSCompressionLevel, chunked);
 
                 if (Version < LSFVersion.VerBG3AdditionalBlob)
                 {
-                    var meta = new LSFMetadataV5();
-                    meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
-                    meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
-                    meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
-                    meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
+                    var meta = new LSFMetadataV5
+                    {
+                        StringsUncompressedSize = (UInt32)stringBuffer.Length,
+                        NodesUncompressedSize = (UInt32)nodeBuffer.Length,
+                        AttributesUncompressedSize = (UInt32)attributeBuffer.Length,
+                        ValuesUncompressedSize = (UInt32)valueBuffer.Length
+                    };
 
                     if (Compression == CompressionMethod.None)
                     {
@@ -141,7 +144,7 @@ namespace LSLib.LS
                         meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
                     }
 
-                    meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                    meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, LSCompressionLevel);
                     meta.Unknown2 = 0;
                     meta.Unknown3 = 0;
                     meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
@@ -150,11 +153,13 @@ namespace LSLib.LS
                 }
                 else
                 {
-                    var meta = new LSFMetadataV6();
-                    meta.StringsUncompressedSize = (UInt32)stringBuffer.Length;
-                    meta.NodesUncompressedSize = (UInt32)nodeBuffer.Length;
-                    meta.AttributesUncompressedSize = (UInt32)attributeBuffer.Length;
-                    meta.ValuesUncompressedSize = (UInt32)valueBuffer.Length;
+                    var meta = new LSFMetadataV6
+                    {
+                        StringsUncompressedSize = (UInt32)stringBuffer.Length,
+                        NodesUncompressedSize = (UInt32)nodeBuffer.Length,
+                        AttributesUncompressedSize = (UInt32)attributeBuffer.Length,
+                        ValuesUncompressedSize = (UInt32)valueBuffer.Length
+                    };
 
                     if (Compression == CompressionMethod.None)
                     {
@@ -172,7 +177,7 @@ namespace LSLib.LS
                     }
 
                     meta.Unknown = 0;
-                    meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                    meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, LSCompressionLevel);
                     meta.Unknown2 = 0;
                     meta.Unknown3 = 0;
                     meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
@@ -214,7 +219,7 @@ namespace LSLib.LS
         private void ComputeSiblingIndices(Resource resource)
         {
             NextNodeIndex = 0;
-            NextSiblingIndices = new List<int>();
+            NextSiblingIndices = [];
 
             int lastRegionIndex = -1;
             foreach (var region in resource.Regions)
@@ -484,14 +489,14 @@ namespace LSLib.LS
 
         private void WriteStaticString(BinaryWriter writer, string s)
         {
-            byte[] utf = System.Text.Encoding.UTF8.GetBytes(s);
+            byte[] utf = Encoding.UTF8.GetBytes(s);
             writer.Write((UInt16)utf.Length);
             writer.Write(utf);
         }
 
         private void WriteStringWithLength(BinaryWriter writer, string s)
         {
-            byte[] utf = System.Text.Encoding.UTF8.GetBytes(s);
+            byte[] utf = Encoding.UTF8.GetBytes(s);
             writer.Write((Int32)(utf.Length + 1));
             writer.Write(utf);
             writer.Write((Byte)0);
@@ -499,7 +504,7 @@ namespace LSLib.LS
 
         private void WriteString(BinaryWriter writer, string s)
         {
-            byte[] utf = System.Text.Encoding.UTF8.GetBytes(s);
+            byte[] utf = Encoding.UTF8.GetBytes(s);
             writer.Write(utf);
             writer.Write((Byte)0);
         }

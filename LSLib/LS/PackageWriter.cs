@@ -8,31 +8,20 @@ using System.Text;
 using LSLib.LS.Enums;
 using LSLib.Native;
 using LZ4;
-using Alphaleonis.Win32.Filesystem;
-using File = Alphaleonis.Win32.Filesystem.File;
 
 namespace LSLib.LS
 {
-    public class PackageWriter : IDisposable
+    public class PackageWriter(Package package, string path) : IDisposable
     {
         public delegate void WriteProgressDelegate(AbstractFileInfo abstractFile, long numerator, long denominator);
 
         private const long MaxPackageSizeDOS = 0x40000000;
         private const long MaxPackageSizeBG3 = 0x100000000;
         public CompressionMethod Compression = CompressionMethod.None;
-        public CompressionLevel CompressionLevel = CompressionLevel.DefaultCompression;
-
-        private readonly Package _package;
-        private readonly String _path;
-        private readonly List<Stream> _streams = new List<Stream>();
+        public LSCompressionLevel LSCompressionLevel = LSCompressionLevel.DefaultCompression;
+        private readonly List<Stream> _streams = [];
         public PackageVersion Version = Package.CurrentVersion;
         public WriteProgressDelegate WriteProgress = delegate { };
-
-        public PackageWriter(Package package, string path)
-        {
-            this._package = package;
-            this._path = path;
-        }
 
         public void Dispose()
         {
@@ -52,9 +41,18 @@ namespace LSLib.LS
                 || (Version >= PackageVersion.V16 && _streams.Last().Position + size > MaxPackageSizeBG3))
             {
                 // Start a new package file if the current one is full.
-                string partPath = Package.MakePartFilename(_path, _streams.Count);
+                string partPath = Package.MakePartFilename(path, _streams.Count);
                 var nextPart = File.Open(partPath, FileMode.Create, FileAccess.Write);
                 _streams.Add(nextPart);
+            }
+
+            var compression = Compression;
+            var compressionLevel = LSCompressionLevel;
+
+            if (info.Name.EndsWith(".gts") || info.Name.EndsWith(".gtp"))
+            {
+                compression = CompressionMethod.None;
+                compressionLevel = LSCompressionLevel.FastCompression;
             }
 
             Stream stream = _streams.Last();
@@ -65,19 +63,17 @@ namespace LSLib.LS
                 UncompressedSize = (ulong)size,
                 ArchivePart = (UInt32) (_streams.Count - 1),
                 OffsetInFile = (UInt32) stream.Position,
-                Flags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel)
+                Flags = BinUtils.MakeCompressionFlags(compression, compressionLevel)
             };
 
             Stream packagedStream = info.MakeStream();
             byte[] compressed;
             try
             {
-                using (var reader = new BinaryReader(packagedStream, Encoding.UTF8, true))
-                {
-                    byte[] uncompressed = reader.ReadBytes((int) reader.BaseStream.Length);
-                    compressed = BinUtils.Compress(uncompressed, Compression, CompressionLevel);
-                    stream.Write(compressed, 0, compressed.Length);
-                }
+                using var reader = new BinaryReader(packagedStream, Encoding.UTF8, true);
+                byte[] uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+                compressed = BinUtils.Compress(uncompressed, compression, compressionLevel);
+                stream.Write(compressed, 0, compressed.Length);
             }
             finally
             {
@@ -87,7 +83,7 @@ namespace LSLib.LS
             packaged.SizeOnDisk = (UInt64) (stream.Position - (long)packaged.OffsetInFile);
             packaged.Crc = Crc32.Compute(compressed, 0);
 
-            if ((_package.Metadata.Flags & PackageFlags.Solid) == 0)
+            if ((package.Metadata.Flags & PackageFlags.Solid) == 0)
             {
                 int padLength = PaddingLength();
                 long alignTo;
@@ -121,164 +117,158 @@ namespace LSLib.LS
                 throw new ArgumentException("LZ4 compression is only supported by V10 and later package versions");
             }
 
-            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            using var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true);
+            var header = new LSPKHeader7
             {
-                var header = new LSPKHeader7
-                {
-                    Version = (uint) Version,
-                    NumFiles = (UInt32) _package.Files.Count,
-                    FileListSize = (UInt32) (Marshal.SizeOf(typeof(FileEntry7)) * _package.Files.Count)
-                };
-                header.DataOffset = (UInt32) Marshal.SizeOf(typeof(LSPKHeader7)) + header.FileListSize;
-                int paddingLength = PaddingLength();
-                if (header.DataOffset % paddingLength > 0)
-                {
-                    header.DataOffset += (UInt32) (paddingLength - header.DataOffset % paddingLength);
-                }
-
-                // Write a placeholder instead of the actual headers; we'll write them after we
-                // compressed and flushed all files to disk
-                var placeholder = new byte[header.DataOffset];
-                writer.Write(placeholder);
-
-                long totalSize = _package.Files.Sum(p => (long) p.Size());
-                long currentSize = 0;
-                var writtenFiles = new List<PackagedFileInfo>();
-                foreach (AbstractFileInfo file in _package.Files)
-                {
-                    WriteProgress(file, currentSize, totalSize);
-                    writtenFiles.Add(WriteFile(file));
-                    currentSize += (long)file.Size();
-                }
-
-                mainStream.Seek(0, SeekOrigin.Begin);
-                header.LittleEndian = 0;
-                header.NumParts = (UInt16) _streams.Count;
-                BinUtils.WriteStruct(writer, ref header);
-
-                foreach (PackagedFileInfo file in writtenFiles)
-                {
-                    FileEntry7 entry = file.MakeEntryV7();
-                    if (entry.ArchivePart == 0)
-                    {
-                        entry.OffsetInFile -= header.DataOffset;
-                    }
-
-                    BinUtils.WriteStruct(writer, ref entry);
-                }
-            }
-        }
-
-        public void WriteV10(FileStream mainStream)
-        {
-            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+                Version = (uint)Version,
+                NumFiles = (UInt32)package.Files.Count,
+                FileListSize = (UInt32)(Marshal.SizeOf(typeof(FileEntry7)) * package.Files.Count)
+            };
+            header.DataOffset = (UInt32)Marshal.SizeOf(typeof(LSPKHeader7)) + header.FileListSize;
+            int paddingLength = PaddingLength();
+            if (header.DataOffset % paddingLength > 0)
             {
-                var header = new LSPKHeader10
-                {
-                    Version = (uint) Version,
-                    NumFiles = (UInt32) _package.Files.Count,
-                    FileListSize = (UInt32) (Marshal.SizeOf(typeof(FileEntry13)) * _package.Files.Count)
-                };
-                header.DataOffset = (UInt32) Marshal.SizeOf(typeof(LSPKHeader10)) + 4 + header.FileListSize;
-                int paddingLength = PaddingLength();
-                if (header.DataOffset % paddingLength > 0)
-                {
-                    header.DataOffset += (UInt32) (paddingLength - header.DataOffset % paddingLength);
-                }
-
-                // Write a placeholder instead of the actual headers; we'll write them after we
-                // compressed and flushed all files to disk
-                var placeholder = new byte[header.DataOffset];
-                writer.Write(placeholder);
-
-                long totalSize = _package.Files.Sum(p => (long) p.Size());
-                long currentSize = 0;
-                var writtenFiles = new List<PackagedFileInfo>();
-                foreach (AbstractFileInfo file in _package.Files)
-                {
-                    WriteProgress(file, currentSize, totalSize);
-                    writtenFiles.Add(WriteFile(file));
-                    currentSize += (long)file.Size();
-                }
-
-                mainStream.Seek(0, SeekOrigin.Begin);
-                writer.Write(Package.Signature);
-                header.NumParts = (UInt16) _streams.Count;
-                header.Priority = _package.Metadata.Priority;
-                header.Flags = (byte)_package.Metadata.Flags;
-                BinUtils.WriteStruct(writer, ref header);
-
-                foreach (PackagedFileInfo file in writtenFiles)
-                {
-                    FileEntry13 entry = file.MakeEntryV13();
-                    if (entry.ArchivePart == 0)
-                    {
-                        entry.OffsetInFile -= header.DataOffset;
-                    }
-
-                    // v10 packages don't support compression level in the flags field
-                    entry.Flags &= 0x0f;
-                    BinUtils.WriteStruct(writer, ref entry);
-                }
+                header.DataOffset += (UInt32)(paddingLength - header.DataOffset % paddingLength);
             }
-        }
 
-        public void WriteV13(FileStream mainStream)
-        {
-            long totalSize = _package.Files.Sum(p => (long) p.Size());
+            // Write a placeholder instead of the actual headers; we'll write them after we
+            // compressed and flushed all files to disk
+            var placeholder = new byte[header.DataOffset];
+            writer.Write(placeholder);
+
+            long totalSize = package.Files.Sum(p => (long)p.Size());
             long currentSize = 0;
-
             var writtenFiles = new List<PackagedFileInfo>();
-            foreach (AbstractFileInfo file in _package.Files)
+            foreach (AbstractFileInfo file in package.Files)
             {
                 WriteProgress(file, currentSize, totalSize);
                 writtenFiles.Add(WriteFile(file));
                 currentSize += (long)file.Size();
             }
 
-            using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
+            mainStream.Seek(0, SeekOrigin.Begin);
+            header.LittleEndian = 0;
+            header.NumParts = (UInt16)_streams.Count;
+            BinUtils.WriteStruct(writer, ref header);
+
+            foreach (PackagedFileInfo file in writtenFiles)
             {
-                var header = new LSPKHeader13
+                FileEntry7 entry = file.MakeEntryV7();
+                if (entry.ArchivePart == 0)
                 {
-                    Version = (uint) Version,
-                    FileListOffset = (UInt32) mainStream.Position
-                };
-
-                writer.Write((UInt32) writtenFiles.Count);
-
-                var fileList = new MemoryStream();
-                var fileListWriter = new BinaryWriter(fileList);
-                foreach (PackagedFileInfo file in writtenFiles)
-                {
-                    FileEntry13 entry = file.MakeEntryV13();
-                    BinUtils.WriteStruct(fileListWriter, ref entry);
+                    entry.OffsetInFile -= header.DataOffset;
                 }
 
-                byte[] fileListBuf = fileList.ToArray();
-                fileListWriter.Dispose();
-                byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
-
-                writer.Write(compressedFileList);
-
-                header.FileListSize = (UInt32) mainStream.Position - header.FileListOffset;
-                header.NumParts = (UInt16) _streams.Count;
-                header.Priority = _package.Metadata.Priority;
-                header.Flags = (byte)_package.Metadata.Flags;
-                header.Md5 = ComputeArchiveHash();
-                BinUtils.WriteStruct(writer, ref header);
-
-                writer.Write((UInt32) (8 + Marshal.SizeOf(typeof(LSPKHeader13))));
-                writer.Write(Package.Signature);
+                BinUtils.WriteStruct(writer, ref entry);
             }
+        }
+
+        public void WriteV10(FileStream mainStream)
+        {
+            using var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true);
+            var header = new LSPKHeader10
+            {
+                Version = (uint)Version,
+                NumFiles = (UInt32)package.Files.Count,
+                FileListSize = (UInt32)(Marshal.SizeOf(typeof(FileEntry13)) * package.Files.Count)
+            };
+            header.DataOffset = (UInt32)Marshal.SizeOf(typeof(LSPKHeader10)) + 4 + header.FileListSize;
+            int paddingLength = PaddingLength();
+            if (header.DataOffset % paddingLength > 0)
+            {
+                header.DataOffset += (UInt32)(paddingLength - header.DataOffset % paddingLength);
+            }
+
+            // Write a placeholder instead of the actual headers; we'll write them after we
+            // compressed and flushed all files to disk
+            var placeholder = new byte[header.DataOffset];
+            writer.Write(placeholder);
+
+            long totalSize = package.Files.Sum(p => (long)p.Size());
+            long currentSize = 0;
+            var writtenFiles = new List<PackagedFileInfo>();
+            foreach (AbstractFileInfo file in package.Files)
+            {
+                WriteProgress(file, currentSize, totalSize);
+                writtenFiles.Add(WriteFile(file));
+                currentSize += (long)file.Size();
+            }
+
+            mainStream.Seek(0, SeekOrigin.Begin);
+            writer.Write(Package.Signature);
+            header.NumParts = (UInt16)_streams.Count;
+            header.Priority = package.Metadata.Priority;
+            header.Flags = (byte)package.Metadata.Flags;
+            BinUtils.WriteStruct(writer, ref header);
+
+            foreach (PackagedFileInfo file in writtenFiles)
+            {
+                FileEntry13 entry = file.MakeEntryV13();
+                if (entry.ArchivePart == 0)
+                {
+                    entry.OffsetInFile -= header.DataOffset;
+                }
+
+                // v10 packages don't support compression level in the flags field
+                entry.Flags &= 0x0f;
+                BinUtils.WriteStruct(writer, ref entry);
+            }
+        }
+
+        public void WriteV13(FileStream mainStream)
+        {
+            long totalSize = package.Files.Sum(p => (long) p.Size());
+            long currentSize = 0;
+
+            var writtenFiles = new List<PackagedFileInfo>();
+            foreach (AbstractFileInfo file in package.Files)
+            {
+                WriteProgress(file, currentSize, totalSize);
+                writtenFiles.Add(WriteFile(file));
+                currentSize += (long)file.Size();
+            }
+
+            using var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true);
+            var header = new LSPKHeader13
+            {
+                Version = (uint)Version,
+                FileListOffset = (UInt32)mainStream.Position
+            };
+
+            writer.Write((UInt32)writtenFiles.Count);
+
+            var fileList = new MemoryStream();
+            var fileListWriter = new BinaryWriter(fileList);
+            foreach (PackagedFileInfo file in writtenFiles)
+            {
+                FileEntry13 entry = file.MakeEntryV13();
+                BinUtils.WriteStruct(fileListWriter, ref entry);
+            }
+
+            byte[] fileListBuf = fileList.ToArray();
+            fileListWriter.Dispose();
+            byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
+
+            writer.Write(compressedFileList);
+
+            header.FileListSize = (UInt32)mainStream.Position - header.FileListOffset;
+            header.NumParts = (UInt16)_streams.Count;
+            header.Priority = package.Metadata.Priority;
+            header.Flags = (byte)package.Metadata.Flags;
+            header.Md5 = ComputeArchiveHash();
+            BinUtils.WriteStruct(writer, ref header);
+
+            writer.Write((UInt32)(8 + Marshal.SizeOf(typeof(LSPKHeader13))));
+            writer.Write(Package.Signature);
         }
 
         private List<PackagedFileInfo> PackFiles()
         {
-            long totalSize = _package.Files.Sum(p => (long)p.Size());
+            long totalSize = package.Files.Sum(p => (long)p.Size());
             long currentSize = 0;
 
             var writtenFiles = new List<PackagedFileInfo>();
-            foreach (AbstractFileInfo file in _package.Files)
+            foreach (AbstractFileInfo file in package.Files)
             {
                 WriteProgress(file, currentSize, totalSize);
                 writtenFiles.Add(WriteFile(file));
@@ -331,8 +321,8 @@ namespace LSLib.LS
                 WriteFileListV15(writer, writtenFiles);
 
                 header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
-                header.Priority = _package.Metadata.Priority;
-                header.Flags = (byte)_package.Metadata.Flags;
+                header.Priority = package.Metadata.Priority;
+                header.Flags = (byte)package.Metadata.Flags;
                 header.Md5 = ComputeArchiveHash();
                 mainStream.Seek(4, SeekOrigin.Begin);
                 BinUtils.WriteStruct(writer, ref header);
@@ -360,8 +350,8 @@ namespace LSLib.LS
                 WriteFileListV15(writer, writtenFiles);
 
                 header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
-                header.Priority = _package.Metadata.Priority;
-                header.Flags = (byte)_package.Metadata.Flags;
+                header.Priority = package.Metadata.Priority;
+                header.Flags = (byte)package.Metadata.Flags;
                 header.Md5 = ComputeArchiveHash();
                 header.NumParts = (UInt16)_streams.Count;
                 mainStream.Seek(4, SeekOrigin.Begin);
@@ -412,8 +402,8 @@ namespace LSLib.LS
                 WriteFileListV18(writer, writtenFiles);
 
                 header.FileListSize = (UInt32)(mainStream.Position - (long)header.FileListOffset);
-                header.Priority = _package.Metadata.Priority;
-                header.Flags = (byte)_package.Metadata.Flags;
+                header.Priority = package.Metadata.Priority;
+                header.Flags = (byte)package.Metadata.Flags;
                 header.Md5 = ComputeArchiveHash();
                 header.NumParts = (UInt16)_streams.Count;
                 mainStream.Seek(4, SeekOrigin.Begin);
@@ -424,47 +414,45 @@ namespace LSLib.LS
         public byte[] ComputeArchiveHash()
         {
             // MD5 is computed over the contents of all files in an alphabetically sorted order
-            List<AbstractFileInfo> orderedFileList = _package.Files.Select(item => item).ToList();
+            List<AbstractFileInfo> orderedFileList = package.Files.Select(item => item).ToList();
             if (Version < PackageVersion.V15)
             {
                 orderedFileList.Sort((a, b) => String.CompareOrdinal(a.Name, b.Name));
             }
 
-            using (MD5 md5 = MD5.Create())
+            using MD5 md5 = MD5.Create();
+            foreach (AbstractFileInfo file in orderedFileList)
             {
-                foreach (AbstractFileInfo file in orderedFileList)
+                Stream packagedStream = file.MakeStream();
+                try
                 {
-                    Stream packagedStream = file.MakeStream();
-                    try
+                    using (var reader = new BinaryReader(packagedStream))
                     {
-                        using (var reader = new BinaryReader(packagedStream))
-                        {
-                            byte[] uncompressed = reader.ReadBytes((int) reader.BaseStream.Length);
-                            md5.TransformBlock(uncompressed, 0, uncompressed.Length, uncompressed, 0);
-                        }
-                    }
-                    finally
-                    {
-                        file.ReleaseStream();
+                        byte[] uncompressed = reader.ReadBytes((int)reader.BaseStream.Length);
+                        md5.TransformBlock(uncompressed, 0, uncompressed.Length, uncompressed, 0);
                     }
                 }
-
-                md5.TransformFinalBlock(new byte[0], 0, 0);
-                byte[] hash = md5.Hash;
-
-                // All hash bytes are incremented by 1
-                for (var i = 0; i < hash.Length; i++)
+                finally
                 {
-                    hash[i] += 1;
+                    file.ReleaseStream();
                 }
-
-                return hash;
             }
+
+            md5.TransformFinalBlock(new byte[0], 0, 0);
+            byte[] hash = md5.Hash;
+
+            // All hash bytes are incremented by 1
+            for (var i = 0; i < hash.Length; i++)
+            {
+                hash[i] += 1;
+            }
+
+            return hash;
         }
 
         public void Write()
         {
-            var mainStream = File.Open(_path, FileMode.Create, FileAccess.Write);
+            var mainStream = File.Open(path, FileMode.Create, FileAccess.Write);
             _streams.Add(mainStream);
 
             switch (Version)

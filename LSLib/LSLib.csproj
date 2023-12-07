@@ -1,38 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{46372C50-4288-4B8E-AF21-C934560600E0}</ProjectGuid>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LSLib</RootNamespace>
-    <AssemblyName>LSLib</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;EXPORT_GPPG</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>EXPORT_GPPG</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -41,219 +19,40 @@
     <DefineConstants>TRACE;EXPORT_GPPG</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AlphaFS, Version=2.2.0.0, Culture=neutral, PublicKeyToken=4d31a58f7d7ad5c9, processorArchitecture=MSIL">
-      <HintPath>..\packages\AlphaFS.2.2.6\lib\net452\AlphaFS.dll</HintPath>
-    </Reference>
-    <Reference Include="LZ4, Version=1.0.15.93, Culture=neutral, PublicKeyToken=62e1b5ec1eec9bdd, processorArchitecture=MSIL">
-      <HintPath>..\packages\lz4net.1.0.15.93\lib\net4-client\LZ4.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="QUT.ShiftReduceParser">
-      <HintPath>..\external\gppg\binaries\QUT.ShiftReduceParser.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="zlib.net, Version=1.0.3.0, Culture=neutral, PublicKeyToken=47d7877cb3620160">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\zlib.net.1.0.4.0\lib\zlib.net.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LS\Localization.cs" />
-    <Compile Include="LS\Save\SavegameHelpers.cs" />
-    <Compile Include="LS\Stats\Parser\StatLua.lex.cs" />
-    <Compile Include="LS\Stats\Parser\StatLua.yy.cs" />
-    <Compile Include="LS\Stats\Parser\StatLuaParser.cs" />
-    <Compile Include="VirtualTextures\BC5Image.cs" />
-    <Compile Include="VirtualTextures\Compression.cs" />
-    <Compile Include="VirtualTextures\PageFile.cs" />
-    <Compile Include="VirtualTextures\VirtualTexture.cs" />
-    <Compile Include="VirtualTextures\VirtualTextureFormats.cs" />
-    <None Include="LS\Stats\Parser\Stat.lex" />
-    <None Include="LS\Stats\Parser\Stat.yy" />
-    <None Include="LS\Stats\Parser\StatLua.lex" />
-    <None Include="LS\Stats\Parser\StatLua.yy" />
-    <None Include="LS\Stats\Parser\StatProperty.lex" />
-    <None Include="LS\Stats\Parser\StatProperty.yy" />
-    <None Include="LS\Story\GoalParser\Goal.lex" />
-    <None Include="LS\Story\GoalParser\Goal.yy" />
-    <Compile Include="Granny\Collada.cs" />
-    <Compile Include="Granny\ColladaAnimation.cs" />
-    <Compile Include="Granny\ColladaSchema.cs" />
-    <Compile Include="Granny\GR2Utils.cs" />
-    <Compile Include="Granny\GR2\Format.cs" />
-    <Compile Include="Granny\GR2\Helpers.cs" />
-    <Compile Include="Granny\GR2\Reader.cs" />
-    <Compile Include="Granny\GR2\Writer.cs" />
-    <Compile Include="Granny\Model\Animation.cs" />
-    <Compile Include="Granny\Model\ColladaExporter.cs" />
-    <Compile Include="Granny\Model\ColladaHelpers.cs" />
-    <Compile Include="Granny\Model\ColladaImporter.cs" />
-    <Compile Include="Granny\Model\ColladaMesh.cs" />
-    <Compile Include="Granny\Model\CurveData\AnimationCurveData.cs" />
-    <Compile Include="Granny\Model\CurveData\D3Constant32f.cs" />
-    <Compile Include="Granny\Model\CurveData\D3I1K16uC16u.cs" />
-    <Compile Include="Granny\Model\CurveData\D3I1K32fC32f.cs" />
-    <Compile Include="Granny\Model\CurveData\D3I1K8uC8u.cs" />
-    <Compile Include="Granny\Model\CurveData\D3K16uC16u.cs" />
-    <Compile Include="Granny\Model\CurveData\D3K8uC8u.cs" />
-    <Compile Include="Granny\Model\CurveData\D4Constant32f.cs" />
-    <Compile Include="Granny\Model\CurveData\D4nK16uC15u.cs" />
-    <Compile Include="Granny\Model\CurveData\D4nK8uC7u.cs" />
-    <Compile Include="Granny\Model\CurveData\D9I1K16uC16u.cs" />
-    <Compile Include="Granny\Model\CurveData\D9I1K8uC8u.cs" />
-    <Compile Include="Granny\Model\CurveData\D9I3K16uC16u.cs" />
-    <Compile Include="Granny\Model\CurveData\D9I3K8uC8u.cs" />
-    <Compile Include="Granny\Model\CurveData\DaConstant32f.cs" />
-    <Compile Include="Granny\Model\CurveData\DaIdentity.cs" />
-    <Compile Include="Granny\Model\CurveData\DaK16uC16u.cs" />
-    <Compile Include="Granny\Model\CurveData\DaK32fC32f.cs" />
-    <Compile Include="Granny\Model\CurveData\DaK8uC8u.cs" />
-    <Compile Include="Granny\Model\CurveData\DaKeyframes32f.cs" />
-    <Compile Include="Granny\Model\DivinityMesh.cs" />
-    <Compile Include="Granny\Model\Exporter.cs" />
-    <Compile Include="Granny\Model\HalfHelpers.cs" />
-    <Compile Include="Granny\Model\Metadata.cs" />
-    <Compile Include="Granny\Model\Mesh.cs" />
-    <Compile Include="Granny\Model\Model.cs" />
-    <Compile Include="Granny\Model\Root.cs" />
-    <Compile Include="Granny\Model\Skeleton.cs" />
-    <Compile Include="Granny\Model\Vertex.cs" />
-    <Compile Include="Granny\Model\VertexSerialization.cs" />
-    <Compile Include="Granny\Utils.cs" />
-    <Compile Include="LS\BinUtils.cs" />
-    <Compile Include="LS\Common.cs" />
-    <Compile Include="LS\Enums\CompressionLevel.cs" />
-    <Compile Include="LS\Enums\CompressionFlags.cs" />
-    <Compile Include="LS\Enums\CompressionMethod.cs" />
-    <Compile Include="LS\Enums\LSFVersion.cs" />
-    <Compile Include="LS\Enums\Game.cs" />
-    <Compile Include="LS\Enums\LogLevel.cs" />
-    <Compile Include="LS\Enums\PackageVersion.cs" />
-    <Compile Include="LS\Enums\ResourceFormat.cs" />
-    <Compile Include="LS\FileManager.cs" />
-    <Compile Include="LS\Resources\LSB\LSBReader.cs" />
-    <Compile Include="LS\Resources\LSB\LSBWriter.cs" />
-    <Compile Include="LS\Resources\LSF\LSFCommon.cs" />
-    <Compile Include="LS\Resources\LSF\LSFReader.cs" />
-    <Compile Include="LS\Resources\LSF\LSFWriter.cs" />
-    <Compile Include="LS\Resources\LSJ\LSJReader.cs" />
-    <Compile Include="LS\Resources\LSJ\LSJResourceConverter.cs" />
-    <Compile Include="LS\Resources\LSJ\LSJWriter.cs" />
-    <Compile Include="LS\Resources\LSX\LSXReader.cs" />
-    <Compile Include="LS\Resources\LSX\LSXWriter.cs" />
-    <Compile Include="LS\Matrix.cs" />
-    <Compile Include="LS\Mods\ModResources.cs" />
-    <Compile Include="LS\NodeAttribute.cs" />
-    <Compile Include="LS\PackageReader.cs" />
-    <Compile Include="LS\PackageWriter.cs" />
-    <Compile Include="LS\PackageCommon.cs" />
-    <Compile Include="LS\Resource.cs" />
-    <Compile Include="LS\ResourceUtils.cs" />
-    <Compile Include="LS\Save\VariableManager.cs" />
-    <Compile Include="LS\Stats\Parser\PropertyDefinitions.cs" />
-    <Compile Include="LS\Stats\Parser\Stat.lex.cs" />
-    <Compile Include="LS\Stats\Parser\Stat.yy.cs" />
-    <Compile Include="LS\Stats\Parser\StatNodes.cs" />
-    <Compile Include="LS\Stats\Parser\StatParser.cs" />
-    <Compile Include="LS\Stats\Parser\StatProperty.lex.cs" />
-    <Compile Include="LS\Stats\Parser\StatProperty.yy.cs" />
-    <Compile Include="LS\Stats\Parser\StatPropertyParser.cs" />
-    <Compile Include="LS\Stats\StatDefinitions.cs" />
-    <Compile Include="LS\Stats\StatFileParser.cs" />
-    <Compile Include="LS\Stats\StatValueParsers.cs" />
-    <Compile Include="LS\Story\Adapter.cs" />
-    <Compile Include="LS\Story\Call.cs" />
-    <Compile Include="LS\Story\Common.cs" />
-    <Compile Include="LS\Story\Compiler\CompilationContext.cs" />
-    <Compile Include="LS\Story\Compiler\DebugInfo.cs" />
-    <Compile Include="LS\Story\Compiler\HeaderLoader.cs" />
-    <Compile Include="LS\Story\Compiler\Preprocessor.cs" />
-    <Compile Include="LS\Story\Database.cs" />
-    <Compile Include="LS\Story\DatabaseNode.cs" />
-    <Compile Include="LS\Story\DataNode.cs" />
-    <Compile Include="LS\Story\DebugExport.cs" />
-    <Compile Include="LS\Story\Function.cs" />
-    <Compile Include="LS\Story\Goal.cs" />
-    <Compile Include="LS\Story\Compiler\Compiler.cs" />
-    <Compile Include="LS\Story\GoalParser\Goal.lex.cs" />
-    <Compile Include="LS\Story\GoalParser\Goal.yy.cs" />
-    <Compile Include="LS\Story\Compiler\IR.cs" />
-    <Compile Include="LS\Story\Compiler\IRGenerator.cs" />
-    <Compile Include="LS\Story\Compiler\StoryEmitter.cs" />
-    <Compile Include="LS\Story\HeaderParser\ASTNodes.cs" />
-    <Compile Include="LS\Story\HeaderParser\HeaderParser.cs" />
-    <Compile Include="LS\Story\Join.cs" />
-    <Compile Include="LS\Story\Node.cs" />
-    <Compile Include="LS\Story\GoalParser\GoalParser.cs" />
-    <Compile Include="LS\Story\GoalParser\ASTNodes.cs" />
-    <Compile Include="LS\Story\HeaderParser\StoryHeader.lex.cs" />
-    <Compile Include="LS\Story\HeaderParser\StoryHeader.yy.cs" />
-    <Compile Include="LS\Story\Proc.cs" />
-    <Compile Include="LS\Story\Query.cs" />
-    <Compile Include="LS\Story\Reference.cs" />
-    <Compile Include="LS\Story\Rel.cs" />
-    <Compile Include="LS\Story\RelOp.cs" />
-    <Compile Include="LS\Story\Rule.cs" />
-    <Compile Include="LS\Story\Story.cs" />
-    <Compile Include="LS\Story\Value.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="LS\Story\HeaderParser\StoryHeader.lex" />
-    <None Include="LS\Story\HeaderParser\StoryHeader.yy" />
-    <None Include="packages.config" />
+    <PackageReference Include="OpenTK.Mathematics" Version="4.8.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj">
-      <Project>{d8b26b12-e45c-47ea-88f7-56628eb2ccd1}</Project>
-      <Name>LSLibNative</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OpenTK\OpenTK.csproj">
-      <Project>{abb9db44-14f2-46e0-a4b8-b46c300ca982}</Project>
-      <Name>OpenTK</Name>
-    </ProjectReference>
+    <PackageReference Include="lz4net" Version="1.0.15.93" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.yy.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.yy"
+    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(SolutionDir)\LSLib\LS\Story\GoalParser\Goal.lex.cs" "$(SolutionDir)\LSLib\LS\Story\GoalParser\Goal.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(SolutionDir)\LSLib\LS\Story\GoalParser\Goal.yy.cs" "$(SolutionDir)\LSLib\LS\Story\GoalParser\Goal.yy"
 
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(ProjectDir)\LS\Story\HeaderParser\StoryHeader.yy"
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(SolutionDir)\LSLib\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(SolutionDir)\LSLib\LS\Story\HeaderParser\StoryHeader.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(SolutionDir)\LSLib\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(SolutionDir)\LSLib\LS\Story\HeaderParser\StoryHeader.yy"
 
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\Stat.lex.cs" "$(ProjectDir)\LS\Stats\Parser\Stat.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\Stat.yy.cs" "$(ProjectDir)\LS\Stats\Parser\Stat.yy"
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(SolutionDir)\LSLib\LS\Stats\Parser\Stat.lex.cs" "$(SolutionDir)\LSLib\LS\Stats\Parser\Stat.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(SolutionDir)\LSLib\LS\Stats\Parser\Stat.yy.cs" "$(SolutionDir)\LSLib\LS\Stats\Parser\Stat.yy"
 
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.lex.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\StatProperty.yy.cs" "$(ProjectDir)\LS\Stats\Parser\StatProperty.yy"
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(SolutionDir)\LSLib\LS\Stats\Parser\StatProperty.lex.cs" "$(SolutionDir)\LSLib\LS\Stats\Parser\StatProperty.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(SolutionDir)\LSLib\LS\Stats\Parser\StatProperty.yy.cs" "$(SolutionDir)\LSLib\LS\Stats\Parser\StatProperty.yy"
 
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Stats\Parser\StatLua.lex.cs" "$(ProjectDir)\LS\Stats\Parser\StatLua.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(ProjectDir)\LS\Stats\Parser\StatLua.yy.cs" "$(ProjectDir)\LS\Stats\Parser\StatLua.yy"
+"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(SolutionDir)\LSLib\LS\Stats\Parser\StatLua.lex.cs" "$(SolutionDir)\LSLib\LS\Stats\Parser\StatLua.lex"
+"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(SolutionDir)\LSLib\LS\Stats\Parser\StatLua.yy.cs" "$(SolutionDir)\LSLib\LS\Stats\Parser\StatLua.yy"
 </PreBuildEvent>
+    <AssemblyTitle>LSLib</AssemblyTitle>
+    <Product>LSLib</Product>
+    <Copyright>Copyright © Norbyte 2012-2023</Copyright>
+    <AssemblyVersion>1.18.5.0</AssemblyVersion>
+    <FileVersion>1.18.5.0</FileVersion>
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

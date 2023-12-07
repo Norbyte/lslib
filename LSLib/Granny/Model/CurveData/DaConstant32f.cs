@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.GR2;
 using System.Diagnostics;
 
@@ -21,20 +21,20 @@ namespace LSLib.Granny.Model.CurveData
 
         public override List<float> GetKnots()
         {
-            return new List<float>() { 0.0f };
+            return [0.0f];
         }
 
         public override List<Matrix3> GetMatrices()
         {
             Debug.Assert(Controls.Count == 9);
             var m = Controls;
-            Matrix3 mat = new Matrix3(
+            Matrix3 mat = new(
                 m[0], m[1], m[2],
                 m[3], m[4], m[5],
                 m[6], m[7], m[8]
             );
 
-            return new List<Matrix3> { mat };
+            return [mat];
         }
     }
 }

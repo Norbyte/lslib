@@ -1,5 +1,5 @@
 ﻿using LSLib.Granny.GR2;
-using OpenTK;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
@@ -312,16 +312,16 @@ namespace LSLib.Granny.Model
 
         public Vector2 GetUV(int index)
         {
-            switch (index)
+            return index switch
             {
-                case 0: return TextureCoordinates0;
-                case 1: return TextureCoordinates1;
-                case 2: return TextureCoordinates2;
-                case 3: return TextureCoordinates3;
-                case 4: return TextureCoordinates4;
-                case 5: return TextureCoordinates5;
-                default: throw new ArgumentException($"At most {MaxUVs} UVs are supported.");
-            }
+                0 => TextureCoordinates0,
+                1 => TextureCoordinates1,
+                2 => TextureCoordinates2,
+                3 => TextureCoordinates3,
+                4 => TextureCoordinates4,
+                5 => TextureCoordinates5,
+                _ => throw new ArgumentException($"At most {MaxUVs} UVs are supported."),
+            };
         }
 
         public void SetUV(int index, Vector2 uv)
@@ -340,12 +340,12 @@ namespace LSLib.Granny.Model
 
         public Vector4 GetColor(int index)
         {
-            switch (index)
+            return index switch
             {
-                case 0: return Color0;
-                case 1: return Color1;
-                default: throw new ArgumentException($"At most {MaxColors} color maps are supported.");
-            }
+                0 => Color0,
+                1 => Color1,
+                _ => throw new ArgumentException($"At most {MaxColors} color maps are supported."),
+            };
         }
 
         public void SetColor(int index, Vector4 color)
@@ -590,8 +590,7 @@ namespace LSLib.Granny.Model
 
         public object Read(GR2Reader gr2, StructDefinition definition, MemberDefinition member, uint arraySize, object parent)
         {
-            VertexDescriptor descriptor;
-            if (!VertexTypeCache.TryGetValue(parent, out descriptor))
+            if (!VertexTypeCache.TryGetValue(parent, out VertexDescriptor descriptor))
             {
                 descriptor = ConstructDescriptor(member, definition, parent);
                 VertexTypeCache.Add(parent, descriptor);

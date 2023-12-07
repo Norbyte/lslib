@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.Granny;
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -7,9 +8,9 @@ namespace LSLib.VirtualTextures
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct DDSHeader
     {
-        public static UInt32 DDSMagic = 0x20534444;
-        public static UInt32 HeaderSize = 0x7c;
-        public static UInt32 FourCC_DXT5 = 0x35545844;
+        public const UInt32 DDSMagic = 0x20534444;
+        public const UInt32 HeaderSize = 0x7c;
+        public const UInt32 FourCC_DXT5 = 0x35545844;
 
         public UInt32 dwMagic;
         public UInt32 dwSize;
@@ -107,6 +108,9 @@ namespace LSLib.VirtualTextures
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct GTSHeader
     {
+        public const UInt32 GRPGMagic = 0x47505247; // 'GRPG'
+        public const UInt32 CurrentVersion = 5;
+
         public UInt32 Magic;
         public UInt32 Version;
         public UInt32 Unused;
@@ -194,6 +198,13 @@ namespace LSLib.VirtualTextures
                 for (len = 0; len < Compression1.Length && Compression1[len] != 0; len ++) {}
                 return Encoding.UTF8.GetString(Compression1, 0, len);
             }
+            set
+            {
+                Compression1 = new byte[0x10];
+                Array.Clear(Compression1, 0, 0x10);
+                byte[] encoded = Encoding.UTF8.GetBytes(value);
+                Array.Copy(encoded, Compression1, encoded.Length);
+            }
         }
 
         public string CompressionName2
@@ -203,6 +214,13 @@ namespace LSLib.VirtualTextures
                 int len;
                 for (len = 0; len < Compression2.Length && Compression2[len] != 0; len ++) {}
                 return Encoding.UTF8.GetString(Compression2, 0, len);
+            }
+            set
+            {
+                Compression2 = new byte[0x10];
+                Array.Clear(Compression2, 0, 0x10);
+                byte[] encoded = Encoding.UTF8.GetBytes(value);
+                Array.Copy(encoded, Compression2, encoded.Length);
             }
         }
 
@@ -249,6 +267,13 @@ namespace LSLib.VirtualTextures
                 {
                 }
                 return Encoding.Unicode.GetString(FileNameBuf, 0, nameLen);
+            }
+            set
+            {
+                FileNameBuf = new byte[512];
+                Array.Clear(FileNameBuf, 0, 512);
+                byte[] encoded = Encoding.Unicode.GetBytes(value);
+                Array.Copy(encoded, FileNameBuf, encoded.Length);
             }
         }
     }
@@ -301,9 +326,12 @@ namespace LSLib.VirtualTextures
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct GTSPackedTileID
+    public struct GTSPackedTileID(UInt32 layer, UInt32 level, UInt32 x, UInt32 y)
     {
-        public UInt32 Val;
+        public UInt32 Val = (layer & 0xF)
+                | ((level & 0xF) << 4)
+                | ((y & 0xFFF) << 8)
+                | ((x & 0xFFF) << 20);
 
         public UInt32 Layer
         {
@@ -352,6 +380,9 @@ namespace LSLib.VirtualTextures
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct GTPHeader
     {
+        public const UInt32 HeaderMagic = 0x50415247;
+        public const UInt32 DefaultVersion = 4;
+
         public UInt32 Magic;
         public UInt32 Version;
         public Guid GUID;

@@ -1,5 +1,5 @@
 ﻿using LSLib.Granny.GR2;
-using OpenTK;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -55,12 +55,13 @@ namespace LSLib.Granny.Model
 
         public static Quaternion ReadBinormalShortVector4(GR2Reader reader)
         {
-            Quaternion v = new Quaternion();
-            v.X = reader.Reader.ReadInt16() / 32767.0f;
-            v.Y = reader.Reader.ReadInt16() / 32767.0f;
-            v.Z = reader.Reader.ReadInt16() / 32767.0f;
-            v.W = reader.Reader.ReadInt16() / 32767.0f;
-            return v;
+            return new Quaternion
+            {
+                X = reader.Reader.ReadInt16() / 32767.0f,
+                Y = reader.Reader.ReadInt16() / 32767.0f,
+                Z = reader.Reader.ReadInt16() / 32767.0f,
+                W = reader.Reader.ReadInt16() / 32767.0f
+            };
         }
 
         public static Vector4 ReadVector4(GR2Reader reader)
@@ -444,14 +445,12 @@ namespace LSLib.Granny.Model
             {
                 for (var i = 0; i < d.ColorMaps; i++)
                 {
-                    Vector4 color;
-                    switch (d.ColorMapType)
+                    var color = d.ColorMapType switch
                     {
-                        case ColorMapType.Float4: color = ReadVector4(reader); break;
-                        case ColorMapType.Byte4: color = ReadNormalByteVector4(reader); break;
-                        default: throw new Exception($"Cannot unserialize color map: Unsupported format {d.ColorMapType}");
-                    }
-
+                        ColorMapType.Float4 => ReadVector4(reader),
+                        ColorMapType.Byte4 => ReadNormalByteVector4(reader),
+                        _ => throw new Exception($"Cannot unserialize color map: Unsupported format {d.ColorMapType}"),
+                    };
                     v.SetColor(i, color);
                 }
             }
@@ -460,14 +459,12 @@ namespace LSLib.Granny.Model
             {
                 for (var i = 0; i < d.TextureCoordinates; i++)
                 {
-                    Vector2 uv;
-                    switch (d.TextureCoordinateType)
+                    var uv = d.TextureCoordinateType switch
                     {
-                        case TextureCoordinateType.Float2: uv = ReadVector2(reader); break;
-                        case TextureCoordinateType.Half2: uv = ReadHalfVector2(reader); break;
-                        default: throw new Exception($"Cannot unserialize UV map: Unsupported format {d.TextureCoordinateType}");
-                    }
-
+                        TextureCoordinateType.Float2 => ReadVector2(reader),
+                        TextureCoordinateType.Half2 => ReadHalfVector2(reader),
+                        _ => throw new Exception($"Cannot unserialize UV map: Unsupported format {d.TextureCoordinateType}"),
+                    };
                     v.SetUV(i, uv);
                 }
             }
@@ -486,8 +483,8 @@ namespace LSLib.Granny.Model
             }
 
             var an = new AssemblyName("VertexFactoryAssembly");
-            AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
-            ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("VertexFactoryClasses");
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.Run);
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule("VertexFactoryClasses");
             ModBuilder = moduleBuilder;
             return ModBuilder;
         }
@@ -530,7 +527,7 @@ namespace LSLib.Granny.Model
                 GrannyName = name,
                 Definition = null,
                 ArraySize = arraySize,
-                Extra = new UInt32[] { 0, 0, 0 },
+                Extra = [0, 0, 0],
                 Unknown = 0
             };
             defn.Members.Add(member);
@@ -541,7 +538,7 @@ namespace LSLib.Granny.Model
             var desc = (instance as Vertex).Format;
             var defn = new StructDefinition
             {
-                Members = new List<MemberDefinition>(),
+                Members = [],
                 MixedMarshal = true,
                 Type = typeof(Vertex)
             };

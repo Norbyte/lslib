@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LSLib.Granny.GR2;
-using OpenTK;
+using OpenTK.Mathematics;
 
 namespace LSLib.Granny.Model
 {
@@ -71,10 +71,7 @@ namespace LSLib.Granny.Model
                 TransformSkeletons(transform);
             }
 
-            if (ArtToolInfo != null)
-            {
-                ArtToolInfo.SetYUp();
-            }
+            ArtToolInfo?.SetYUp();
 
             ZUp = false;
         }
@@ -125,10 +122,7 @@ namespace LSLib.Granny.Model
                 triTopology.PostLoad();
             }
 
-            if (Meshes != null)
-            {
-                Meshes.ForEach(m => m.PostLoad());
-            }
+            Meshes?.ForEach(m => m.PostLoad());
 
             var modelIndex = 0;
             foreach (var model in Models ?? Enumerable.Empty<Model>())

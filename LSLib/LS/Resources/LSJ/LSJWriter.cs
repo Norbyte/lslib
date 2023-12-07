@@ -3,32 +3,26 @@ using Newtonsoft.Json;
 
 namespace LSLib.LS
 {
-    public class LSJWriter
+    public class LSJWriter(Stream stream)
     {
-        private Stream stream;
-        private JsonTextWriter writer;
+        private readonly Stream stream = stream;
         public bool PrettyPrint = false;
-        public NodeSerializationSettings SerializationSettings = new NodeSerializationSettings();
-
-        public LSJWriter(Stream stream)
-        {
-            this.stream = stream;
-        }
+        public NodeSerializationSettings SerializationSettings = new();
 
         public void Write(Resource rsrc)
         {
-            var settings = new JsonSerializerSettings();
-            settings.Formatting = Newtonsoft.Json.Formatting.Indented;
+            var settings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented
+            };
             settings.Converters.Add(new LSJResourceConverter(SerializationSettings));
             var serializer = JsonSerializer.Create(settings);
 
-            using (var streamWriter = new StreamWriter(stream))
-            using (this.writer = new JsonTextWriter(streamWriter))
-            {
-                writer.IndentChar = '\t';
-                writer.Indentation = 1;
-                serializer.Serialize(writer, rsrc);
-            }
+            using var streamWriter = new StreamWriter(stream);
+            using var writer = new JsonTextWriter(streamWriter);
+            writer.IndentChar = '\t';
+            writer.Indentation = 1;
+            serializer.Serialize(writer, rsrc);
         }
     }
 }

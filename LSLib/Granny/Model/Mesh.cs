@@ -2,22 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Reflection;
-using OpenTK;
+using OpenTK.Mathematics;
 using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model
 {
-    public class Deduplicator<T>
+    public class Deduplicator<T>(IEqualityComparer<T> comparer)
     {
-        private IEqualityComparer<T> Comparer;
-        public Dictionary<int, int> DeduplicationMap = new Dictionary<int, int>();
-        public List<T> Uniques = new List<T>();
-
-        public Deduplicator(IEqualityComparer<T> comparer)
-        {
-            Comparer = comparer;
-        }
+        private readonly IEqualityComparer<T> Comparer = comparer;
+        public Dictionary<int, int> DeduplicationMap = [];
+        public List<T> Uniques = [];
 
         public void MakeIdentityMapping(IEnumerable<T> items)
         {
@@ -36,8 +30,7 @@ namespace LSLib.Granny.Model
             var i = 0;
             foreach (var item in items)
             {
-                int mappedIndex;
-                if (!uniqueItems.TryGetValue(item, out mappedIndex))
+                if (!uniqueItems.TryGetValue(item, out int mappedIndex))
                 {
                     mappedIndex = uniqueItems.Count;
                     uniqueItems.Add(item, mappedIndex);
@@ -84,14 +77,14 @@ namespace LSLib.Granny.Model
     
     public class VertexDeduplicator
     {
-        public Deduplicator<SkinnedVertex> Vertices = new Deduplicator<SkinnedVertex>(new GenericEqualityComparer<SkinnedVertex>());
-        public Deduplicator<Matrix3> Normals = new Deduplicator<Matrix3>(new GenericEqualityComparer<Matrix3>());
-        public List<Deduplicator<Vector2>> UVs = new List<Deduplicator<Vector2>>();
-        public List<Deduplicator<Vector4>> Colors = new List<Deduplicator<Vector4>>();
+        public Deduplicator<SkinnedVertex> Vertices = new(new GenericEqualityComparer<SkinnedVertex>());
+        public Deduplicator<Matrix3> Normals = new(new GenericEqualityComparer<Matrix3>());
+        public List<Deduplicator<Vector2>> UVs = [];
+        public List<Deduplicator<Vector4>> Colors = [];
 
         public void MakeIdentityMapping(List<Vertex> vertices)
         {
-            if (vertices.Count() == 0) return;
+            if (vertices.Count == 0) return;
 
             var format = vertices[0].Format;
 
@@ -127,7 +120,7 @@ namespace LSLib.Granny.Model
 
         public void Deduplicate(List<Vertex> vertices)
         {
-            if (vertices.Count() == 0) return;
+            if (vertices.Count == 0) return;
 
             var format = vertices[0].Format;
 
@@ -176,9 +169,9 @@ namespace LSLib.Granny.Model
     {
         public SectionType SelectSection(MemberDefinition member, Type type, object obj)
         {
-            if (obj is VertexData)
+            if (obj is VertexData data)
             {
-                return ((VertexData)obj).SerializationSection;
+                return data.SerializationSection;
             }
             else
             {
@@ -206,7 +199,7 @@ namespace LSLib.Granny.Model
             // Fix missing vertex component names
             if (VertexComponentNames == null)
             {
-                VertexComponentNames = new List<GrannyString>();
+                VertexComponentNames = [];
                 if (Vertices.Count > 0)
                 {
                     var components = Vertices[0].Format.ComponentNames();
@@ -250,7 +243,7 @@ namespace LSLib.Granny.Model
                 positions[index++] = pos[2];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "positions", new string[] { "X", "Y", "Z" }, positions);
+            return ColladaUtils.MakeFloatSource(name, "positions", ["X", "Y", "Z"], positions);
         }
 
         public source MakeColladaNormals(string name)
@@ -267,7 +260,7 @@ namespace LSLib.Granny.Model
                 normals[index++] = normal[2];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "normals", new string[] { "X", "Y", "Z" }, normals);
+            return ColladaUtils.MakeFloatSource(name, "normals", ["X", "Y", "Z"], normals);
         }
 
         public source MakeColladaTangents(string name)
@@ -284,7 +277,7 @@ namespace LSLib.Granny.Model
                 tangents[index++] = tangent[2];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "tangents", new string[] { "X", "Y", "Z" }, tangents);
+            return ColladaUtils.MakeFloatSource(name, "tangents", ["X", "Y", "Z"], tangents);
         }
 
         public source MakeColladaBinormals(string name)
@@ -301,7 +294,7 @@ namespace LSLib.Granny.Model
                 binormals[index++] = binormal[2];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "binormals", new string[] { "X", "Y", "Z" }, binormals);
+            return ColladaUtils.MakeFloatSource(name, "binormals", ["X", "Y", "Z"], binormals);
         }
 
         public source MakeColladaUVs(string name, int uvIndex, bool flip)
@@ -319,7 +312,7 @@ namespace LSLib.Granny.Model
                     uvs[index++] = uv[1];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "uvs" + uvIndex.ToString(), new string[] { "S", "T" }, uvs);
+            return ColladaUtils.MakeFloatSource(name, "uvs" + uvIndex.ToString(), ["S", "T"], uvs);
         }
 
         public source MakeColladaColors(string name, int setIndex)
@@ -335,7 +328,7 @@ namespace LSLib.Granny.Model
                 colors[index++] = color[2];
             }
 
-            return ColladaUtils.MakeFloatSource(name, "colors" + setIndex.ToString(), new string[] { "R", "G", "B" }, colors);
+            return ColladaUtils.MakeFloatSource(name, "colors" + setIndex.ToString(), ["R", "G", "B"], colors);
         }
 
         public source MakeBoneWeights(string name)
@@ -353,7 +346,7 @@ namespace LSLib.Granny.Model
                 }
             }
 
-            return ColladaUtils.MakeFloatSource(name, "weights", new string[] { "WEIGHT" }, weights.ToArray());
+            return ColladaUtils.MakeFloatSource(name, "weights", ["WEIGHT"], weights.ToArray());
         }
 
         public void Transform(Matrix4 transformation)
@@ -514,11 +507,13 @@ namespace LSLib.Granny.Model
             int numTris = (from grp in Groups
                            select grp.TriCount).Sum();
 
-            var tris = new triangles();
-            tris.count = (ulong)numTris;
-            tris.input = inputs;
+            var tris = new triangles
+            {
+                count = (ulong)numTris,
+                input = inputs
+            };
 
-            List<Dictionary<int, int>> inputMaps = new List<Dictionary<int, int>>();
+            List<Dictionary<int, int>> inputMaps = [];
             int uvIndex = 0, colorIndex = 0;
             for (int i = 0; i < inputs.Length; i++)
             {

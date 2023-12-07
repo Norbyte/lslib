@@ -1,16 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FAD67294-6223-47E0-8838-E4E7FBC53ED2}</ProjectGuid>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ConverterApp</RootNamespace>
-    <AssemblyName>ConverterApp</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -26,181 +17,54 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>
     </DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Editor Debug|AnyCPU'">
     <OutputPath>bin\Editor Debug\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AlphaFS, Version=2.2.0.0, Culture=neutral, PublicKeyToken=4d31a58f7d7ad5c9, processorArchitecture=MSIL">
-      <HintPath>..\packages\AlphaFS.2.2.6\lib\net452\AlphaFS.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ConverterAppSettings.cs" />
-    <Compile Include="DatabaseDumper.cs" />
-    <Compile Include="DebugDumper.cs" />
-    <Compile Include="DebugPane.cs">
+    <Compile Update="DebugPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="DebugPane.Designer.cs">
-      <DependentUpon>DebugPane.cs</DependentUpon>
-    </Compile>
-    <Compile Include="ExportItemSelection.cs">
+    <Compile Update="ExportItemSelection.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ExportItemSelection.Designer.cs">
-      <DependentUpon>ExportItemSelection.cs</DependentUpon>
-    </Compile>
-    <Compile Include="GR2Pane.cs">
+    <Compile Update="GR2Pane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="GR2Pane.Designer.cs">
-      <DependentUpon>GR2Pane.cs</DependentUpon>
-    </Compile>
-    <Compile Include="LocalizationPane.cs">
+    <Compile Update="LocalizationPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="LocalizationPane.Designer.cs">
-      <DependentUpon>LocalizationPane.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MainForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="MainForm.Designer.cs">
-      <DependentUpon>MainForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="OsirisPane.cs">
+    <Compile Update="OsirisPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="OsirisPane.Designer.cs">
-      <DependentUpon>OsirisPane.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PackagePane.cs">
+    <Compile Update="PackagePane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="PackagePane.Designer.cs">
-      <DependentUpon>PackagePane.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResourcePane.cs">
+    <Compile Update="ResourcePane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="ResourcePane.Designer.cs">
-      <DependentUpon>ResourcePane.cs</DependentUpon>
-    </Compile>
-    <Compile Include="VariableDumper.cs" />
-    <Compile Include="VirtualTexturesPane.cs">
+    <Compile Update="VirtualTexturesPane.cs">
       <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="VirtualTexturesPane.Designer.cs">
-      <DependentUpon>VirtualTexturesPane.cs</DependentUpon>
-    </Compile>
-    <EmbeddedResource Include="DebugPane.resx">
-      <DependentUpon>DebugPane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ExportItemSelection.resx">
-      <DependentUpon>ExportItemSelection.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="GR2Pane.resx">
-      <DependentUpon>GR2Pane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="LocalizationPane.resx">
-      <DependentUpon>LocalizationPane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MainForm.resx">
-      <DependentUpon>MainForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="OsirisPane.resx">
-      <DependentUpon>OsirisPane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PackagePane.resx">
-      <DependentUpon>PackagePane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <EmbeddedResource Include="ResourcePane.resx">
-      <DependentUpon>ResourcePane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VirtualTexturesPane.resx">
-      <DependentUpon>VirtualTexturesPane.cs</DependentUpon>
-    </EmbeddedResource>
-    <None Include="packages.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\LSLib\LSLib.csproj">
-      <Project>{46372c50-4288-4b8e-af21-c934560600e0}</Project>
-      <Name>LSLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OpenTK\OpenTK.csproj">
-      <Project>{ABB9DB44-14F2-46E0-A4B8-B46C300CA982}</Project>
-      <Name>OpenTK</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\LSLib\LSLib.csproj" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
@@ -222,16 +86,9 @@
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <ItemGroup>
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <PropertyGroup />
 </Project>
