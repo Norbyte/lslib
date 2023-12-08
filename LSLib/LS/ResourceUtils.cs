@@ -257,8 +257,8 @@ namespace LSLib.LS
             for (var i = 0; i < paths.Count; i++)
             {
                 var path = paths[i];
-                var inPath = inputDir + "/" + path;
-                var outPath = outputDir + "/" + Path.ChangeExtension(path, outputFormat.ToString().ToLower());
+                var inPath = Path.Join(inputDir, path);
+                var outPath = Path.Join(outputDir, Path.ChangeExtension(path, outputFormat.ToString().ToLower()));
 
                 FileManager.TryToCreateDirectory(outPath);
 

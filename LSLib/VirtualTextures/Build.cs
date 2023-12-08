@@ -1120,12 +1120,12 @@ namespace LSLib.VirtualTextures
             Console.WriteLine($"Raw tile data: {tileBytes / 1024} KB tiles, {embeddedMipBytes / 1024} KB embedded mips, {tileCompressedBytes / 1024} KB transcoded, {pages*Config.PageSize/1024} KB pages total");
 
             OnStepStarted("Saving tile set");
-            TileSet.Save(dir + "\\" + BuildData.GTSName + ".gts");
+            TileSet.Save(Path.Join(dir, BuildData.GTSName + ".gts"));
 
             foreach (var file in PageFiles)
             {
                 OnStepStarted($"Saving page file: {file.FileName}");
-                file.Save(dir + "\\" + file.FileName);
+                file.Save(Path.Join(dir, file.FileName));
             }
         }
     }

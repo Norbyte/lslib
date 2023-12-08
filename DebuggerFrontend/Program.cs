@@ -13,7 +13,7 @@ namespace LSTools.DebuggerFrontend
         static void Main(string[] args)
         {
             var currentPath = AppDomain.CurrentDomain.BaseDirectory;
-            var logFile = new FileStream(currentPath + "\\DAP.log", FileMode.Create);
+            var logFile = new FileStream(Path.Join(currentPath, "DAP.log"), FileMode.Create);
             var dap = new DAPStream();
             dap.EnableLogging(logFile);
             var dapHandler = new DAPMessageHandler(dap);

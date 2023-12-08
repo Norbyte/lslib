@@ -653,7 +653,7 @@ namespace LSLib.LS
 
                 if (file.IsDeletion()) continue;
 
-                string outPath = outputPath + file.Name;
+                string outPath = Path.Join(outputPath, file.Name);
 
                 FileManager.TryToCreateDirectory(outPath);
 

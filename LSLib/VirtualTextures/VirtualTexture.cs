@@ -582,7 +582,7 @@ namespace LSLib.VirtualTextures
             if (!PageFiles.TryGetValue(pageFileIdx, out PageFile file))
             {
                 var meta = PageFileInfos[pageFileIdx];
-                file = new PageFile(this, PagePath + Path.DirectorySeparatorChar + meta.FileName);
+                file = new PageFile(this, Path.Join(PagePath, meta.FileName));
                 PageFiles.Add(pageFileIdx, file);
             }
 

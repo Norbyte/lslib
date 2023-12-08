@@ -60,7 +60,7 @@ namespace ConverterApp
 
                         if (tex != null)
                         {
-                            var outputPath = destinationPath.Text + Path.PathSeparator + texture.Name + $"_{layer}.dds";
+                            var outputPath = Path.Join(destinationPath.Text, texture.Name + $"_{layer}.dds");
                             tex.SaveDDS(outputPath);
                         }
                     }

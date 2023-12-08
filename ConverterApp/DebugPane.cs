@@ -19,13 +19,13 @@ namespace ConverterApp
 
         private DebugDumperTask CreateDumperFromSettings()
         {
-            string dumpPath = Path.GetDirectoryName(saveFilePath.Text) + "\\" + Path.GetFileNameWithoutExtension(saveFilePath.Text) + "\\";
+            string dumpPath = Path.Join(Path.GetDirectoryName(saveFilePath.Text), Path.GetFileNameWithoutExtension(saveFilePath.Text));
 
             var dumper = new DebugDumperTask
             {
                 GameVersion = Game,
-                ExtractionPath = dumpPath + "SaveArchive",
-                DataDumpPath = dumpPath + "Dumps",
+                ExtractionPath = Path.Join(dumpPath, "SaveArchive"),
+                DataDumpPath = Path.Join(dumpPath, "Dumps"),
 
                 SaveFilePath = saveFilePath.Text,
 
