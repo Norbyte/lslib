@@ -799,7 +799,7 @@ namespace LSLib.Granny.GR2
 
                 foreach (var defn in Types.Values)
                 {
-                    Sections[(int)SectionType.CurveAndDiscardable].WriteStructDefinition(defn);
+                    Sections[(int)SectionType.StructDefinitions].WriteStructDefinition(defn);
                 }
 
                 // We need to do this again to flush strings written by WriteMemberDefinition()
