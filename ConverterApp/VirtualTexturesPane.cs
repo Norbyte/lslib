@@ -4,147 +4,159 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace ConverterApp
+namespace ConverterApp;
+
+public partial class VirtualTexturesPane : UserControl
 {
-    public partial class VirtualTexturesPane : UserControl
+    public VirtualTexturesPane(ISettingsDataSource settingsDataSource)
     {
-        public VirtualTexturesPane(ISettingsDataSource settingsDataSource)
-        {
-            InitializeComponent();
+        InitializeComponent();
 
-            gtsPath.DataBindings.Add("Text", settingsDataSource, "Settings.VirtualTextures.GTSPath", true, DataSourceUpdateMode.OnPropertyChanged);
-            destinationPath.DataBindings.Add("Text", settingsDataSource, "Settings.VirtualTextures.DestinationPath", true, DataSourceUpdateMode.OnPropertyChanged);
+        gtsPath.DataBindings.Add("Text", settingsDataSource, "Settings.VirtualTextures.GTSPath", true, DataSourceUpdateMode.OnPropertyChanged);
+        destinationPath.DataBindings.Add("Text", settingsDataSource, "Settings.VirtualTextures.DestinationPath", true, DataSourceUpdateMode.OnPropertyChanged);
+    }
+
+    private void gtpBrowseBtn_Click(object sender, EventArgs e)
+    {
+        if (gtsFileDlg.ShowDialog(this) == DialogResult.OK)
+        {
+            gtsPath.Text = gtsFileDlg.FileName;
         }
+    }
 
-        private void gtpBrowseBtn_Click(object sender, EventArgs e)
+    private void destinationPathBrowseBtn_Click(object sender, EventArgs e)
+    {
+        DialogResult result = destinationPathDlg.ShowDialog(this);
+        if (result == DialogResult.OK)
         {
-            if (gtsFileDlg.ShowDialog(this) == DialogResult.OK)
-            {
-                gtsPath.Text = gtsFileDlg.FileName;
-            }
+            destinationPath.Text = destinationPathDlg.SelectedPath;
         }
+    }
 
-        private void destinationPathBrowseBtn_Click(object sender, EventArgs e)
+    private void extractTileSetBtn_Click(object sender, EventArgs e)
+    {
+        extractTileSetBtn.Enabled = false;
+        try
         {
-            DialogResult result = destinationPathDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
-            {
-                destinationPath.Text = destinationPathDlg.SelectedPath;
-            }
-        }
+            var tileSet = new VirtualTileSet(gtsPath.Text);
+            var textures = tileSet.FourCCMetadata.ExtractTextureMetadata();
 
-        private void extractTileSetBtn_Click(object sender, EventArgs e)
-        {
-            extractTileSetBtn.Enabled = false;
-            try
+            var texName = gTexNameInput.Text.Trim();
+            if (texName.Length > 0)
             {
-                var tileSet = new VirtualTileSet(gtsPath.Text);
-                var textures = tileSet.FourCCMetadata.ExtractTextureMetadata();
-
-                var i = 0;
-                foreach (var texture in textures)
+                textures = textures.Where(tex => tex.Name == texName).ToList();
+                if (textures.Count == 0)
                 {
-                    actionProgressLabel.Text = "GTex: " + texture.Name;
-                    actionProgress.Value = i++ * 100 / textures.Count;
-                    Application.DoEvents();
+                    MessageBox.Show($"GTex was not found in this tile set: {texName}", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
 
-                    for (var layer = 0; layer < tileSet.TileSetLayers.Length; layer++)
+            var i = 0;
+            foreach (var texture in textures)
+            {
+                actionProgressLabel.Text = "GTex: " + texture.Name;
+                actionProgress.Value = i++ * 100 / textures.Count;
+                Application.DoEvents();
+
+                for (var layer = 0; layer < tileSet.TileSetLayers.Length; layer++)
+                {
+                    BC5Image tex = null;
+                    var level = 0;
+                    do
                     {
-                        BC5Image tex = null;
-                        var level = 0;
-                        do
-                        {
-                            tex = tileSet.ExtractTexture(level, layer, texture);
-                            level++;
-                        } while (tex == null && level < tileSet.TileSetLevels.Length);
+                        tex = tileSet.ExtractTexture(level, layer, texture);
+                        level++;
+                    } while (tex == null && level < tileSet.TileSetLevels.Length);
 
-                        if (tex != null)
-                        {
-                            var outputPath = Path.Join(destinationPath.Text, texture.Name + $"_{layer}.dds");
-                            tex.SaveDDS(outputPath);
-                        }
+                    if (tex != null)
+                    {
+                        var outputPath = Path.Join(destinationPath.Text, texture.Name + $"_{layer}.dds");
+                        tex.SaveDDS(outputPath);
                     }
-
-                    tileSet.ReleasePageFiles();
-                    GC.Collect();
                 }
 
-                MessageBox.Show("Textures extracted successfully.");
+                tileSet.ReleasePageFiles();
+                GC.Collect();
             }
-            catch (Exception exc)
-            {
-                MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                actionProgressLabel.Text = "";
-                actionProgress.Value = 0;
-                extractTileSetBtn.Enabled = true;
-            }
+
+            MessageBox.Show("Textures extracted successfully.");
         }
-
-        private void tileSetConfigBrowseBtn_Click(object sender, EventArgs e)
+        catch (Exception exc)
         {
-            if (tileSetConfigDlg.ShowDialog(this) == DialogResult.OK)
-            {
-                tileSetConfigPath.Text = tileSetConfigDlg.FileName;
-            }
+            MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-
-        private void modRootPathBrowseBtn_Click(object sender, EventArgs e)
+        finally
         {
-            DialogResult result = modRootPathDlg.ShowDialog(this);
-            if (result == DialogResult.OK)
-            {
-                modRootPath.Text = modRootPathDlg.SelectedPath;
-            }
-        }
-
-        private void tileSetBuildBtn_Click(object sender, EventArgs ev)
-        {
-            try
-            {
-                var descriptor = new TileSetDescriptor();
-                descriptor.RootPath = modRootPath.Text;
-                descriptor.Load(tileSetConfigPath.Text);
-
-                var builder = new TileSetBuilder(descriptor.Config);
-                builder.OnStepStarted += (step) => { 
-                    actionProgressLabel.Text = step;
-                    Application.DoEvents();
-                };
-                builder.OnStepProgress += (numerator, denumerator) => {
-                    actionProgress.Maximum = denumerator;
-                    actionProgress.Value = numerator;
-                    Application.DoEvents();
-                };
-
-                builder.OnStepStarted("Adding textures");
-                foreach (var texture in descriptor.Textures)
-                {
-                    var layerPaths = texture.Layers.Select(name => name != null ? Path.Combine(descriptor.SourceTexturePath, name) : null).ToList();
-                    builder.AddTexture(texture.Name, layerPaths);
-                }
-
-                builder.Build(descriptor.VirtualTexturePath);
-
-                MessageBox.Show("Tile set build completed.");
-            }
-            catch (InvalidDataException e)
-            {
-                MessageBox.Show($"{e.Message}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (FileNotFoundException e)
-            {
-                MessageBox.Show($"{e.Message}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{e}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
             actionProgressLabel.Text = "";
             actionProgress.Value = 0;
+            extractTileSetBtn.Enabled = true;
         }
+    }
+
+    private void tileSetConfigBrowseBtn_Click(object sender, EventArgs e)
+    {
+        if (tileSetConfigDlg.ShowDialog(this) == DialogResult.OK)
+        {
+            tileSetConfigPath.Text = tileSetConfigDlg.FileName;
+        }
+    }
+
+    private void modRootPathBrowseBtn_Click(object sender, EventArgs e)
+    {
+        DialogResult result = modRootPathDlg.ShowDialog(this);
+        if (result == DialogResult.OK)
+        {
+            modRootPath.Text = modRootPathDlg.SelectedPath;
+        }
+    }
+
+    private void tileSetBuildBtn_Click(object sender, EventArgs ev)
+    {
+        try
+        {
+            var descriptor = new TileSetDescriptor();
+            descriptor.RootPath = modRootPath.Text;
+            descriptor.Load(tileSetConfigPath.Text);
+
+            var builder = new TileSetBuilder(descriptor.Config);
+            builder.OnStepStarted += (step) =>
+            {
+                actionProgressLabel.Text = step;
+                Application.DoEvents();
+            };
+            builder.OnStepProgress += (numerator, denumerator) =>
+            {
+                actionProgress.Maximum = denumerator;
+                actionProgress.Value = numerator;
+                Application.DoEvents();
+            };
+
+            builder.OnStepStarted("Adding textures");
+            foreach (var texture in descriptor.Textures)
+            {
+                var layerPaths = texture.Layers.Select(name => name != null ? Path.Combine(descriptor.SourceTexturePath, name) : null).ToList();
+                builder.AddTexture(texture.Name, layerPaths);
+            }
+
+            builder.Build(descriptor.VirtualTexturePath);
+
+            MessageBox.Show("Tile set build completed.");
+        }
+        catch (InvalidDataException e)
+        {
+            MessageBox.Show($"{e.Message}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        catch (FileNotFoundException e)
+        {
+            MessageBox.Show($"{e.Message}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{e}", "Tile Set Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        actionProgressLabel.Text = "";
+        actionProgress.Value = 0;
     }
 }

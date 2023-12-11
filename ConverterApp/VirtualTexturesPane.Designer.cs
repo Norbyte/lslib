@@ -54,6 +54,8 @@
             label2 = new System.Windows.Forms.Label();
             modRootPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             tileSetConfigDlg = new System.Windows.Forms.OpenFileDialog();
+            gTexNameInput = new System.Windows.Forms.TextBox();
+            label6 = new System.Windows.Forms.Label();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -61,6 +63,8 @@
             // groupBox1
             // 
             groupBox1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            groupBox1.Controls.Add(gTexNameInput);
+            groupBox1.Controls.Add(label6);
             groupBox1.Controls.Add(extractTileSetBtn);
             groupBox1.Controls.Add(destinationPathBrowseBtn);
             groupBox1.Controls.Add(gtsBrowseBtn);
@@ -72,7 +76,7 @@
             groupBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            groupBox1.Size = new System.Drawing.Size(1167, 212);
+            groupBox1.Size = new System.Drawing.Size(1167, 296);
             groupBox1.TabIndex = 66;
             groupBox1.TabStop = false;
             groupBox1.Text = "Extract Virtual Textures";
@@ -80,7 +84,7 @@
             // extractTileSetBtn
             // 
             extractTileSetBtn.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            extractTileSetBtn.Location = new System.Drawing.Point(945, 168);
+            extractTileSetBtn.Location = new System.Drawing.Point(945, 252);
             extractTileSetBtn.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             extractTileSetBtn.Name = "extractTileSetBtn";
             extractTileSetBtn.Size = new System.Drawing.Size(213, 35);
@@ -158,7 +162,7 @@
             // actionProgressLabel
             // 
             actionProgressLabel.AutoSize = true;
-            actionProgressLabel.Location = new System.Drawing.Point(88, 478);
+            actionProgressLabel.Location = new System.Drawing.Point(88, 545);
             actionProgressLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             actionProgressLabel.Name = "actionProgressLabel";
             actionProgressLabel.Size = new System.Drawing.Size(0, 20);
@@ -167,7 +171,7 @@
             // actionProgress
             // 
             actionProgress.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            actionProgress.Location = new System.Drawing.Point(9, 501);
+            actionProgress.Location = new System.Drawing.Point(9, 568);
             actionProgress.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             actionProgress.Name = "actionProgress";
             actionProgress.Size = new System.Drawing.Size(1168, 35);
@@ -176,7 +180,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new System.Drawing.Point(5, 477);
+            label5.Location = new System.Drawing.Point(5, 544);
             label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label5.Name = "label5";
             label5.Size = new System.Drawing.Size(68, 20);
@@ -196,7 +200,7 @@
             groupBox2.Controls.Add(label1);
             groupBox2.Controls.Add(modRootPath);
             groupBox2.Controls.Add(label2);
-            groupBox2.Location = new System.Drawing.Point(10, 252);
+            groupBox2.Location = new System.Drawing.Point(10, 319);
             groupBox2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             groupBox2.Name = "groupBox2";
             groupBox2.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -316,6 +320,25 @@
             // 
             tileSetConfigDlg.Filter = "Virtual Texture Set Configuration (.xml)|*.xml";
             // 
+            // gTexNameInput
+            // 
+            gTexNameInput.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            gTexNameInput.Location = new System.Drawing.Point(10, 194);
+            gTexNameInput.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            gTexNameInput.Name = "gTexNameInput";
+            gTexNameInput.Size = new System.Drawing.Size(1148, 27);
+            gTexNameInput.TabIndex = 63;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new System.Drawing.Point(6, 169);
+            label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label6.Name = "label6";
+            label6.Size = new System.Drawing.Size(326, 20);
+            label6.TabIndex = 64;
+            label6.Text = "GTex Name: (leave empty to extract all textures)";
+            // 
             // VirtualTexturesPane
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -327,7 +350,7 @@
             Controls.Add(label5);
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             Name = "VirtualTexturesPane";
-            Size = new System.Drawing.Size(1188, 570);
+            Size = new System.Drawing.Size(1188, 666);
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             groupBox2.ResumeLayout(false);
@@ -364,5 +387,7 @@
         private System.Windows.Forms.Button modRootPathBrowseBtn;
         private System.Windows.Forms.Button tileSetBrowseBtn;
         private System.Windows.Forms.Button tileSetBuildBtn;
+        private System.Windows.Forms.TextBox gTexNameInput;
+        private System.Windows.Forms.Label label6;
     }
 }
