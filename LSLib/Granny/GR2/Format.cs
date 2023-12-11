@@ -469,7 +469,7 @@ namespace LSLib.Granny.GR2
         TrackGroup = 1,
         Skeleton = 2,
         Mesh = 3,
-        CurveAndDiscardable = 4,
+        StructDefinitions = 4,
         FirstVertexData = 5,
         Invalid = 0xffffffff
     };
