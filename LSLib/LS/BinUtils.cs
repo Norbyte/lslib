@@ -385,10 +385,12 @@ public static class BinUtils
         };
 
         using var outputStream = new MemoryStream();
-        using var compressor = new ZLibStream(outputStream, level);
+        using (var compressor = new ZLibStream(outputStream, level, true))
+        {
+            compressor.Write(uncompressed, 0, uncompressed.Length);
+        }
 
-        compressor.Write(uncompressed, 0, uncompressed.Length);
-        compressor.Flush();
+
         return outputStream.ToArray();
     }
 

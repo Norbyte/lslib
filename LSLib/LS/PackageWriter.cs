@@ -49,7 +49,7 @@ public class PackageWriter(Package package, string path) : IDisposable
         var compression = Compression;
         var compressionLevel = LSCompressionLevel;
 
-        if (info.Name.EndsWith(".gts") || info.Name.EndsWith(".gtp"))
+        if (info.Name.EndsWith(".gts") || info.Name.EndsWith(".gtp") || size == 0)
         {
             compression = CompressionMethod.None;
             compressionLevel = LSCompressionLevel.FastCompression;
