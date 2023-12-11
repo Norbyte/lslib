@@ -1,123 +1,122 @@
 ﻿using System;
 using LSLib.LS.Enums;
 
-namespace Divine.CLI
+namespace Divine.CLI;
+
+internal class CommandLineLogger
 {
-    internal class CommandLineLogger
+    private static readonly LogLevel LogLevelOption = CommandLineActions.LogLevel;
+
+    public static void LogFatal(string message, int errorCode)
     {
-        private static readonly LogLevel LogLevelOption = CommandLineActions.LogLevel;
+        Log(LogLevel.FATAL, message, errorCode);
+    }
 
-        public static void LogFatal(string message, int errorCode)
+    public static void LogError(string message)
+    {
+        Log(LogLevel.ERROR, message);
+    }
+
+    public static void LogWarn(string message)
+    {
+        Log(LogLevel.WARN, message);
+    }
+
+    public static void LogInfo(string message)
+    {
+        Log(LogLevel.INFO, message);
+    }
+
+    public static void LogDebug(string message)
+    {
+        Log(LogLevel.DEBUG, message);
+    }
+
+    public static void LogTrace(string message)
+    {
+        Log(LogLevel.TRACE, message);
+    }
+
+    public static void LogAll(string message)
+    {
+        Log(LogLevel.ALL, message);
+    }
+
+    private static void Log(LogLevel logLevel, string message, int errorCode = -1)
+    {
+        if (LogLevelOption == LogLevel.OFF && logLevel != LogLevel.FATAL)
         {
-            Log(LogLevel.FATAL, message, errorCode);
+            return;
         }
 
-        public static void LogError(string message)
+        switch (logLevel)
         {
-            Log(LogLevel.ERROR, message);
-        }
-
-        public static void LogWarn(string message)
-        {
-            Log(LogLevel.WARN, message);
-        }
-
-        public static void LogInfo(string message)
-        {
-            Log(LogLevel.INFO, message);
-        }
-
-        public static void LogDebug(string message)
-        {
-            Log(LogLevel.DEBUG, message);
-        }
-
-        public static void LogTrace(string message)
-        {
-            Log(LogLevel.TRACE, message);
-        }
-
-        public static void LogAll(string message)
-        {
-            Log(LogLevel.ALL, message);
-        }
-
-        private static void Log(LogLevel logLevel, string message, int errorCode = -1)
-        {
-            if (LogLevelOption == LogLevel.OFF && logLevel != LogLevel.FATAL)
+            case LogLevel.FATAL:
             {
-                return;
+                if (LogLevelOption > LogLevel.OFF)
+                {
+                    Console.WriteLine($"[FATAL] {message}");
+                }
+
+                if (errorCode == -1)
+                {
+                    Environment.Exit((int) LogLevel.FATAL);
+                }
+                else
+                {
+                    Environment.Exit((int) LogLevel.FATAL + errorCode);
+                }
+                break;
             }
 
-            switch (logLevel)
+            case LogLevel.ERROR:
             {
-                case LogLevel.FATAL:
+                if (LogLevelOption < logLevel)
                 {
-                    if (LogLevelOption > LogLevel.OFF)
-                    {
-                        Console.WriteLine($"[FATAL] {message}");
-                    }
-
-                    if (errorCode == -1)
-                    {
-                        Environment.Exit((int) LogLevel.FATAL);
-                    }
-                    else
-                    {
-                        Environment.Exit((int) LogLevel.FATAL + errorCode);
-                    }
                     break;
                 }
+                Console.WriteLine($"[ERROR] {message}");
+                break;
+            }
 
-                case LogLevel.ERROR:
+            case LogLevel.WARN:
+            {
+                if (LogLevelOption < logLevel)
                 {
-                    if (LogLevelOption < logLevel)
-                    {
-                        break;
-                    }
-                    Console.WriteLine($"[ERROR] {message}");
                     break;
                 }
+                Console.WriteLine($"[WARN] {message}");
+                break;
+            }
 
-                case LogLevel.WARN:
+            case LogLevel.INFO:
+            {
+                if (LogLevelOption < logLevel)
                 {
-                    if (LogLevelOption < logLevel)
-                    {
-                        break;
-                    }
-                    Console.WriteLine($"[WARN] {message}");
                     break;
                 }
+                Console.WriteLine($"[INFO] {message}");
+                break;
+            }
 
-                case LogLevel.INFO:
+            case LogLevel.DEBUG:
+            {
+                if (LogLevelOption < logLevel)
                 {
-                    if (LogLevelOption < logLevel)
-                    {
-                        break;
-                    }
-                    Console.WriteLine($"[INFO] {message}");
                     break;
                 }
+                Console.WriteLine($"[DEBUG] {message}");
+                break;
+            }
 
-                case LogLevel.DEBUG:
+            case LogLevel.TRACE:
+            {
+                if (LogLevelOption < logLevel)
                 {
-                    if (LogLevelOption < logLevel)
-                    {
-                        break;
-                    }
-                    Console.WriteLine($"[DEBUG] {message}");
                     break;
                 }
-
-                case LogLevel.TRACE:
-                {
-                    if (LogLevelOption < logLevel)
-                    {
-                        break;
-                    }
-                    Console.WriteLine($"[TRACE] {message}");
-                    break;
-                }
+                Console.WriteLine($"[TRACE] {message}");
+                break;
             }
         }
     }

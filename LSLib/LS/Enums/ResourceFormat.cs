@@ -1,10 +1,9 @@
-﻿namespace LSLib.LS.Enums
+﻿namespace LSLib.LS.Enums;
+
+public enum ResourceFormat
 {
-    public enum ResourceFormat
-    {
-        LSX,
-        LSB,
-        LSF,
-        LSJ
-    };
-}
+    LSX,
+    LSB,
+    LSF,
+    LSJ
+};

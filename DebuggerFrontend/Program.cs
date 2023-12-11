@@ -6,29 +6,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSTools.DebuggerFrontend
+namespace LSTools.DebuggerFrontend;
+
+class Program
 {
-    class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
+        var currentPath = AppDomain.CurrentDomain.BaseDirectory;
+        var logFile = new FileStream(Path.Join(currentPath, "DAP.log"), FileMode.Create);
+        var dap = new DAPStream();
+        dap.EnableLogging(logFile);
+        var dapHandler = new DAPMessageHandler(dap);
+        dapHandler.EnableLogging(logFile);
+        try
         {
-            var currentPath = AppDomain.CurrentDomain.BaseDirectory;
-            var logFile = new FileStream(Path.Join(currentPath, "DAP.log"), FileMode.Create);
-            var dap = new DAPStream();
-            dap.EnableLogging(logFile);
-            var dapHandler = new DAPMessageHandler(dap);
-            dapHandler.EnableLogging(logFile);
-            try
+            dap.RunLoop();
+        }
+        catch (Exception e)
+        {
+            using (var writer = new StreamWriter(logFile, Encoding.UTF8, 0x1000, true))
             {
-                dap.RunLoop();
-            }
-            catch (Exception e)
-            {
-                using (var writer = new StreamWriter(logFile, Encoding.UTF8, 0x1000, true))
-                {
-                    writer.Write(e.ToString());
-                    Console.WriteLine(e.ToString());
-                }
+                writer.Write(e.ToString());
+                Console.WriteLine(e.ToString());
             }
         }
     }

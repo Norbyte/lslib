@@ -1,24 +1,23 @@
 ﻿using System.IO;
 
-namespace LSLib.LS.Story
+namespace LSLib.LS.Story;
+
+public class DatabaseNode : DataNode
 {
-    public class DatabaseNode : DataNode
+    public override Type NodeType()
     {
-        public override Type NodeType()
-        {
-            return Type.Database;
-        }
+        return Type.Database;
+    }
 
-        public override string TypeName()
-        {
-            return "Database";
-        }
+    public override string TypeName()
+    {
+        return "Database";
+    }
 
-        public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
-        {
-            writer.Write("{0}(", Name);
-            tuple.MakeScript(writer, story, printTypes);
-            writer.WriteLine(")");
-        }
+    public override void MakeScript(TextWriter writer, Story story, Tuple tuple, bool printTypes)
+    {
+        writer.Write("{0}(", Name);
+        tuple.MakeScript(writer, story, printTypes);
+        writer.WriteLine(")");
     }
 }

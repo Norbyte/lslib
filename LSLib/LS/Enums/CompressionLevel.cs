@@ -1,9 +1,8 @@
-﻿namespace LSLib.LS.Enums
+﻿namespace LSLib.LS.Enums;
+
+public enum LSCompressionLevel
 {
-    public enum LSCompressionLevel
-    {
-        FastCompression,
-        DefaultCompression,
-        MaxCompression
-    };
-}
+    FastCompression,
+    DefaultCompression,
+    MaxCompression
+};

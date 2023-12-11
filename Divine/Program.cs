@@ -1,46 +1,45 @@
 ﻿using System;
 using Divine.CLI;
 
-namespace Divine
+namespace Divine;
+
+internal class Program
 {
-    internal class Program
+    // ReSharper disable once InconsistentNaming
+    public static CommandLineArguments argv;
+
+    private static void Main(string[] args)
     {
-        // ReSharper disable once InconsistentNaming
-        public static CommandLineArguments argv;
+        System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
+        customCulture.NumberFormat.NumberDecimalSeparator = ".";
+        System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
 
-        private static void Main(string[] args)
+        CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser
         {
-            System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
-            customCulture.NumberFormat.NumberDecimalSeparator = ".";
-            System.Threading.Thread.CurrentThread.CurrentCulture = customCulture;
+            IgnoreCase = true,
+            ShowUsageOnEmptyCommandline = true
+        };
 
-            CommandLineParser.CommandLineParser parser = new CommandLineParser.CommandLineParser
-            {
-                IgnoreCase = true,
-                ShowUsageOnEmptyCommandline = true
-            };
+        argv = new CommandLineArguments();
 
-            argv = new CommandLineArguments();
-
-            parser.ExtractArgumentAttributes(argv);
+        parser.ExtractArgumentAttributes(argv);
 
 #if !DEBUG
-            try
-            {
+        try
+        {
 #endif
-                parser.ParseCommandLine(args);
+            parser.ParseCommandLine(args);
 #if !DEBUG
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[FATAL] {e.Message}");
-            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[FATAL] {e.Message}");
+        }
 #endif
 
-            if (parser.ParsingSucceeded)
-            {
-                CommandLineActions.Run(argv);
-            }
+        if (parser.ParsingSucceeded)
+        {
+            CommandLineActions.Run(argv);
         }
     }
 }

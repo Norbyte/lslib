@@ -2,85 +2,84 @@
 using LSLib.LS;
 using LSLib.LS.Enums;
 
-namespace Divine.CLI
+namespace Divine.CLI;
+
+internal class CommandLineDataProcessor
 {
-    internal class CommandLineDataProcessor
+    public static void Convert()
     {
-        public static void Convert()
+        var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
+        var loadParams = ResourceLoadParameters.FromGameVersion(CommandLineActions.Game);
+        loadParams.ByteSwapGuids = !CommandLineActions.LegacyGuids;
+        ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, loadParams, conversionParams);
+    }
+
+    public static void BatchConvert()
+    {
+        var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
+        var loadParams = ResourceLoadParameters.FromGameVersion(CommandLineActions.Game);
+        loadParams.ByteSwapGuids = !CommandLineActions.LegacyGuids;
+        BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, loadParams, conversionParams);
+    }
+
+    private static void ConvertResource(string sourcePath, string destinationPath,
+        ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
+    {
+        try
         {
-            var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
-            var loadParams = ResourceLoadParameters.FromGameVersion(CommandLineActions.Game);
-            loadParams.ByteSwapGuids = !CommandLineActions.LegacyGuids;
-            ConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, loadParams, conversionParams);
+            ResourceFormat resourceFormat = ResourceUtils.ExtensionToResourceFormat(destinationPath);
+            CommandLineLogger.LogDebug($"Using destination extension: {resourceFormat}");
+
+            Resource resource = ResourceUtils.LoadResource(sourcePath, loadParams);
+
+            ResourceUtils.SaveResource(resource, destinationPath, resourceFormat, conversionParams);
+
+            CommandLineLogger.LogInfo($"Wrote resource to: {destinationPath}");
         }
-
-        public static void BatchConvert()
+        catch (Exception e)
         {
-            var conversionParams = ResourceConversionParameters.FromGameVersion(CommandLineActions.Game);
-            var loadParams = ResourceLoadParameters.FromGameVersion(CommandLineActions.Game);
-            loadParams.ByteSwapGuids = !CommandLineActions.LegacyGuids;
-            BatchConvertResource(CommandLineActions.SourcePath, CommandLineActions.DestinationPath, CommandLineActions.InputFormat, CommandLineActions.OutputFormat, loadParams, conversionParams);
+            CommandLineLogger.LogFatal($"Failed to convert resource: {e.Message}", 2);
+            CommandLineLogger.LogTrace($"{e.StackTrace}");
         }
+    }
 
-        private static void ConvertResource(string sourcePath, string destinationPath,
-            ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
+    public static void ConvertLoca()
+    {
+        ConvertLoca(CommandLineActions.SourcePath, CommandLineActions.DestinationPath);
+    }
+
+    private static void ConvertLoca(string sourcePath, string destinationPath)
+    {
+        try
         {
-            try
-            {
-                ResourceFormat resourceFormat = ResourceUtils.ExtensionToResourceFormat(destinationPath);
-                CommandLineLogger.LogDebug($"Using destination extension: {resourceFormat}");
-
-                Resource resource = ResourceUtils.LoadResource(sourcePath, loadParams);
-
-                ResourceUtils.SaveResource(resource, destinationPath, resourceFormat, conversionParams);
-
-                CommandLineLogger.LogInfo($"Wrote resource to: {destinationPath}");
-            }
-            catch (Exception e)
-            {
-                CommandLineLogger.LogFatal($"Failed to convert resource: {e.Message}", 2);
-                CommandLineLogger.LogTrace($"{e.StackTrace}");
-            }
+            var loca = LocaUtils.Load(sourcePath);
+            LocaUtils.Save(loca, destinationPath);
+            CommandLineLogger.LogInfo($"Wrote localization to: {destinationPath}");
         }
-
-        public static void ConvertLoca()
+        catch (Exception e)
         {
-            ConvertLoca(CommandLineActions.SourcePath, CommandLineActions.DestinationPath);
+            CommandLineLogger.LogFatal($"Failed to convert localization file: {e.Message}", 2);
+            CommandLineLogger.LogTrace($"{e.StackTrace}");
         }
+    }
 
-        private static void ConvertLoca(string sourcePath, string destinationPath)
+
+    private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, 
+        ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
+    {
+        try
         {
-            try
-            {
-                var loca = LocaUtils.Load(sourcePath);
-                LocaUtils.Save(loca, destinationPath);
-                CommandLineLogger.LogInfo($"Wrote localization to: {destinationPath}");
-            }
-            catch (Exception e)
-            {
-                CommandLineLogger.LogFatal($"Failed to convert localization file: {e.Message}", 2);
-                CommandLineLogger.LogTrace($"{e.StackTrace}");
-            }
+            CommandLineLogger.LogDebug($"Using destination extension: {outputFormat}");
+
+            var resourceUtils = new ResourceUtils();
+            resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, loadParams, conversionParams);
+
+            CommandLineLogger.LogInfo($"Wrote resources to: {destinationPath}");
         }
-
-
-        private static void BatchConvertResource(string sourcePath, string destinationPath, ResourceFormat inputFormat, ResourceFormat outputFormat, 
-            ResourceLoadParameters loadParams, ResourceConversionParameters conversionParams)
+        catch (Exception e)
         {
-            try
-            {
-                CommandLineLogger.LogDebug($"Using destination extension: {outputFormat}");
-
-                var resourceUtils = new ResourceUtils();
-                resourceUtils.ConvertResources(sourcePath, destinationPath, inputFormat, outputFormat, loadParams, conversionParams);
-
-                CommandLineLogger.LogInfo($"Wrote resources to: {destinationPath}");
-            }
-            catch (Exception e)
-            {
-                CommandLineLogger.LogFatal($"Failed to batch convert resources: {e.Message}", 2);
-                CommandLineLogger.LogTrace($"{e.StackTrace}");
-            }
+            CommandLineLogger.LogFatal($"Failed to batch convert resources: {e.Message}", 2);
+            CommandLineLogger.LogTrace($"{e.StackTrace}");
         }
     }
 }

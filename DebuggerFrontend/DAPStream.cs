@@ -6,198 +6,197 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace LSTools.DebuggerFrontend
+namespace LSTools.DebuggerFrontend;
+
+public class DAPStream
 {
-    public class DAPStream
+    private Stream Input;
+    //private Stream Output;
+    private StreamReader InputReader;
+    //private StreamWriter OutputWriter;
+    private Stream LogStream;
+    private Int32 OutgoingSeq = 1;
+    private Int32 IncomingSeq = 1;
+
+    public delegate void MessageReceivedDelegate(DAPMessage message);
+    public MessageReceivedDelegate MessageReceived = delegate { };
+
+    public DAPStream()
     {
-        private Stream Input;
-        //private Stream Output;
-        private StreamReader InputReader;
-        //private StreamWriter OutputWriter;
-        private Stream LogStream;
-        private Int32 OutgoingSeq = 1;
-        private Int32 IncomingSeq = 1;
+        Input = Console.OpenStandardInput();
+        //Output = Console.OpenStandardOutput();
 
-        public delegate void MessageReceivedDelegate(DAPMessage message);
-        public MessageReceivedDelegate MessageReceived = delegate { };
+        InputReader = new StreamReader(Input, Encoding.UTF8);
+        //OutputWriter = new StreamWriter(Output, Encoding.UTF8);
+    }
 
-        public DAPStream()
+    public void EnableLogging(Stream logStream)
+    {
+        LogStream = logStream;
+    }
+
+    private void ProcessPayload(char[] payload)
+    {
+        if (LogStream != null)
         {
-            Input = Console.OpenStandardInput();
-            //Output = Console.OpenStandardOutput();
-
-            InputReader = new StreamReader(Input, Encoding.UTF8);
-            //OutputWriter = new StreamWriter(Output, Encoding.UTF8);
+            using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
+            {
+                writer.Write(" DAP >>> ");
+                writer.Write(payload);
+                writer.Write("\r\n");
+            }
         }
 
-        public void EnableLogging(Stream logStream)
+        DAPMessage message = null;
+        try
         {
-            LogStream = logStream;
+            message = DAPMessageSerializer.Unserialize(payload);
         }
-
-        private void ProcessPayload(char[] payload)
+        catch (DAPUnknownMessageException e)
         {
             if (LogStream != null)
             {
                 using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
                 {
-                    writer.Write(" DAP >>> ");
-                    writer.Write(payload);
-                    writer.Write("\r\n");
+                    writer.WriteLine(" DAP !!! Could not decode DAP message: " + e.Message);
                 }
             }
 
-            DAPMessage message = null;
-            try
+            if (e.Type == "request")
             {
-                message = DAPMessageSerializer.Unserialize(payload);
-            }
-            catch (DAPUnknownMessageException e)
-            {
-                if (LogStream != null)
-                {
-                    using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
-                    {
-                        writer.WriteLine(" DAP !!! Could not decode DAP message: " + e.Message);
-                    }
-                }
-
-                if (e.Type == "request")
-                {
-                    SendErrorReply(e.Seq, e.MessageType, e.Message);
-                }
-
-                IncomingSeq++;
-                return;
-            }
-
-            if (message.seq != IncomingSeq)
-            {
-                throw new InvalidDataException($"DAP sequence number mismatch; got {message.seq} expected {IncomingSeq}");
+                SendErrorReply(e.Seq, e.MessageType, e.Message);
             }
 
             IncomingSeq++;
-            MessageReceived(message);
+            return;
         }
 
-        public void RunLoop()
+        if (message.seq != IncomingSeq)
         {
-            var lineRe = new Regex("^([^:]*):\\s*(.*)$", RegexOptions.Compiled);
+            throw new InvalidDataException($"DAP sequence number mismatch; got {message.seq} expected {IncomingSeq}");
+        }
 
+        IncomingSeq++;
+        MessageReceived(message);
+    }
+
+    public void RunLoop()
+    {
+        var lineRe = new Regex("^([^:]*):\\s*(.*)$", RegexOptions.Compiled);
+
+        while (true)
+        {
+            Dictionary<string, string> headers = new Dictionary<string, string>();
             while (true)
             {
-                Dictionary<string, string> headers = new Dictionary<string, string>();
-                while (true)
+                var line = InputReader.ReadLine();
+                if (line == null && InputReader.EndOfStream)
                 {
-                    var line = InputReader.ReadLine();
-                    if (line == null && InputReader.EndOfStream)
-                    {
-                        return;
-                    }
-
-                    if (line.Length == 0)
-                    {
-                        break;
-                    }
-
-                    var matches = lineRe.Match(line);
-                    if (!matches.Success)
-                    {
-                        throw new InvalidDataException($"Malformed header line: {line}");
-                    }
-
-                    headers.Add(matches.Groups[1].Value, matches.Groups[2].Value);
-                    if (matches.Groups[1].Value != "Content-Length")
-                    {
-                        throw new InvalidDataException($"{matches.Groups[1].Value}={matches.Groups[2].Value}");
-                    }
+                    return;
                 }
 
-                if (headers.Count == 0) throw new InvalidDataException("Empty headers.");
-                
-                var length = Int32.Parse(headers["Content-Length"]);
-                var payload = new char[length];
-                var read = InputReader.Read(payload, 0, length);
-                if (read != length)
+                if (line.Length == 0)
                 {
-                    throw new InvalidDataException($"Could not read {length} bytes of payload (got {read})");
+                    break;
                 }
 
-                ProcessPayload(payload);
-            }
-        }
-
-        public void Send(DAPMessage message)
-        {
-            message.seq = OutgoingSeq++;
-            var encoded = DAPMessageSerializer.Serialize(message);
-
-            if (LogStream != null)
-            {
-                using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
+                var matches = lineRe.Match(line);
+                if (!matches.Success)
                 {
-                    writer.Write(" DAP <<< ");
-                    writer.Write(encoded);
-                    writer.Write("\r\n");
+                    throw new InvalidDataException($"Malformed header line: {line}");
+                }
+
+                headers.Add(matches.Groups[1].Value, matches.Groups[2].Value);
+                if (matches.Groups[1].Value != "Content-Length")
+                {
+                    throw new InvalidDataException($"{matches.Groups[1].Value}={matches.Groups[2].Value}");
                 }
             }
 
-            Console.Write($"Content-Length: {encoded.Length}\r\n\r\n");
-            Console.Write(encoded);
-        }
-
-        private void SendErrorReply(int requestSeq, string command, string errorText)
-        {
-            var reply = new DAPResponse
+            if (headers.Count == 0) throw new InvalidDataException("Empty headers.");
+            
+            var length = Int32.Parse(headers["Content-Length"]);
+            var payload = new char[length];
+            var read = InputReader.Read(payload, 0, length);
+            if (read != length)
             {
-                type = "response",
-                request_seq = requestSeq,
-                success = false,
-                command = command,
-                message = errorText
-            };
+                throw new InvalidDataException($"Could not read {length} bytes of payload (got {read})");
+            }
 
-            Send(reply);
+            ProcessPayload(payload);
         }
+    }
 
-        public void SendEvent(string command, IDAPMessagePayload body)
+    public void Send(DAPMessage message)
+    {
+        message.seq = OutgoingSeq++;
+        var encoded = DAPMessageSerializer.Serialize(message);
+
+        if (LogStream != null)
         {
-            var reply = new DAPEvent
+            using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
             {
-                type = "event",
-                @event = command,
-                body = body
-            };
-
-            Send(reply);
+                writer.Write(" DAP <<< ");
+                writer.Write(encoded);
+                writer.Write("\r\n");
+            }
         }
 
-        public void SendReply(DAPRequest request, IDAPMessagePayload response)
+        Console.Write($"Content-Length: {encoded.Length}\r\n\r\n");
+        Console.Write(encoded);
+    }
+
+    private void SendErrorReply(int requestSeq, string command, string errorText)
+    {
+        var reply = new DAPResponse
         {
-            var reply = new DAPResponse
-            {
-                type = "response",
-                request_seq = request.seq,
-                success = true,
-                command = request.command,
-                body = response
-            };
+            type = "response",
+            request_seq = requestSeq,
+            success = false,
+            command = command,
+            message = errorText
+        };
 
-            Send(reply);
-        }
+        Send(reply);
+    }
 
-        public void SendReply(DAPRequest request, string errorText)
+    public void SendEvent(string command, IDAPMessagePayload body)
+    {
+        var reply = new DAPEvent
         {
-            var reply = new DAPResponse
-            {
-                type = "response",
-                request_seq = request.seq,
-                success = false,
-                command = request.command,
-                message = errorText
-            };
+            type = "event",
+            @event = command,
+            body = body
+        };
 
-            Send(reply);
-        }
+        Send(reply);
+    }
+
+    public void SendReply(DAPRequest request, IDAPMessagePayload response)
+    {
+        var reply = new DAPResponse
+        {
+            type = "response",
+            request_seq = request.seq,
+            success = true,
+            command = request.command,
+            body = response
+        };
+
+        Send(reply);
+    }
+
+    public void SendReply(DAPRequest request, string errorText)
+    {
+        var reply = new DAPResponse
+        {
+            type = "response",
+            request_seq = request.seq,
+            success = false,
+            command = request.command,
+            message = errorText
+        };
+
+        Send(reply);
     }
 }
