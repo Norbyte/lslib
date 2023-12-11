@@ -31,6 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="lz4net" Version="1.0.15.93" />
+    <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
   </ItemGroup>
   <PropertyGroup />
   <PropertyGroup>

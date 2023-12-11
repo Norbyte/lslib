@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Hashing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -282,7 +283,7 @@ public class PackagedFileInfo : AbstractFileInfo, IDisposable
 
         if (Crc != 0)
         {
-            UInt32 computedCrc = Crc32.Compute(compressed, 0);
+            UInt32 computedCrc = Crc32.HashToUInt32(compressed);
             if (computedCrc != Crc)
             {
                 string msg = $"CRC check failed on file '{Name}', archive is possibly corrupted. Expected {Crc,8:X}, got {computedCrc,8:X}";
