@@ -842,46 +842,46 @@ public class StatDefinitionRepository
 
 
         AddBoost("AC", 1, [
-	            "AC", "Int"
+	        "AC", "Int"
         ]);
         AddBoost("Ability", 2, [
-	            "Ability", "Ability",
-	            "Amount", "Int",
-	            "Arg3", "Int",
+	        "Ability", "Ability",
+	        "Amount", "Int",
+	        "Arg3", "Int",
         ]);
         AddBoost("RollBonus", 2, [
-	            "RollType", "StatsRollType",
-	            "Bonus", "Lua",
-	            "Arg3", "String",
+	        "RollType", "StatsRollType",
+	        "Bonus", "Lua",
+	        "Arg3", "String",
         ]);
         AddBoost("Advantage", 1, [
-	            "Type", "AdvantageType",
-	            "Arg2", "String", // Depends on type
-	            "Tag1", "String", // TagManager resource
-	            "Tag2", "String", // TagManager resource
-	            "Tag3", "String", // TagManager resource
+	        "Type", "AdvantageType",
+	        "Arg2", "String", // Depends on type
+	        "Tag1", "String", // TagManager resource
+	        "Tag2", "String", // TagManager resource
+	        "Tag3", "String", // TagManager resource
         ]);
         AddBoost("Disadvantage", 1, [
-	            "Type", "AdvantageType",
-	            "Arg2", "String", // Depends on type
-	            "Tag1", "String", // TagManager resource
-	            "Tag2", "String", // TagManager resource
-	            "Tag3", "String", // TagManager resource
+	        "Type", "AdvantageType",
+	        "Arg2", "String", // Depends on type
+	        "Tag1", "String", // TagManager resource
+	        "Tag2", "String", // TagManager resource
+	        "Tag3", "String", // TagManager resource
         ]);
         AddBoost("ActionResource", 2, [
-	            "Resource", "String", // Action resource name
-	            "Amount", "Float",
-	            "Level", "Int",
+	        "Resource", "String", // Action resource name
+	        "Amount", "Float",
+	        "Level", "Int",
             "DieType", "DieType",
         ]);
         AddBoost("CriticalHit", 3, [
-	            "Type", "CriticalHitType",
-	            "Result", "CriticalHitResult",
-	            "When", "CriticalHitWhen",
-	            "Arg4", "Float",
+	        "Type", "CriticalHitType",
+	        "Result", "CriticalHitResult",
+	        "When", "CriticalHitWhen",
+	        "Arg4", "Float",
         ]);
         AddBoost("AbilityFailedSavingThrow", 1, [
-	            "Ability", "Ability"
+	        "Ability", "Ability"
         ]);
         AddBoost("Resistance", 2, [
             "DamageType", "AllOrDamageType",
@@ -893,11 +893,11 @@ public class StatDefinitionRepository
             "DamageType3", "Damage Type",
         ]);
         AddBoost("ProficiencyBonusOverride", 1, [
-	            "Bonus", "Lua"
+	        "Bonus", "Lua"
         ]);
         AddBoost("ActionResourceOverride", 2, [
             "Resource", "String", // Action resource name
-	            "Amount", "Float",
+	        "Amount", "Float",
             "Level", "Int",
             "DieType", "DieType",
         ]);
@@ -908,83 +908,83 @@ public class StatDefinitionRepository
         AddBoost("AddProficiencyToDamage", 0, []);
         AddBoost("ActionResourceConsumeMultiplier", 3, [
             "Resource", "String", // Action resource name
-	            "Multiplier", "Float",
+	        "Multiplier", "Float",
             "Level", "Int",
         ]);
         AddBoost("BlockVerbalComponent", 0, []);
         AddBoost("BlockSomaticComponent", 0, []);
         AddBoost("HalveWeaponDamage", 1, [
-	            "Ability", "Ability"
+	        "Ability", "Ability"
         ]);
         AddBoost("UnlockSpell", 1, [
-	            "SpellId", "SpellId",
+	        "SpellId", "SpellId",
             "Type", "UnlockSpellType",
             "SpellGuid", "String", // "None" or GUID or ""
             "Cooldown", "SpellCooldownType",
             "Ability", "Ability"
         ]);
         AddBoost("SourceAdvantageOnAttack", 0, [
-	            "Arg1", "Float"
+	        "Arg1", "Float"
         ]);
         AddBoost("ProficiencyBonus", 1, [
-	            "Type", "ProficiencyBonusBoostType",
+	        "Type", "ProficiencyBonusBoostType",
             "Arg2", "String"
         ]);
         AddBoost("BlockSpellCast", 0, [
-	            "Arg1", "Float"
+	        "Arg1", "Float"
         ]);
         AddBoost("Proficiency", 1, [
-	            "Arg1", "ProficiencyGroupFlags",
-	            "Arg2", "ProficiencyGroupFlags",
-	            "Arg3", "ProficiencyGroupFlags",
+	        "Arg1", "ProficiencyGroupFlags",
+	        "Arg2", "ProficiencyGroupFlags",
+	        "Arg3", "ProficiencyGroupFlags",
         ]);
         AddBoost("SourceAllyAdvantageOnAttack", 0, []);
         AddBoost("IncreaseMaxHP", 1, [
-	            "Amount", "String" // Lua or %
+	         "Amount", "String" // Lua or %
         ]);
         AddBoost("ActionResourceBlock", 1, [
             "Resource", "String", // Action resource name
             "Level", "Int",
         ]);
         AddBoost("StatusImmunity", 1, [
-	            "StatusId", "StatusIdOrGroup",
-	            "Tag1", "String", // Tag resource name
-	            "Tag2", "String", // Tag resource name
-	            "Tag3", "String", // Tag resource name
-	            "Tag4", "String", // Tag resource name
-	            "Tag5", "String", // Tag resource name
+	        "StatusId", "StatusIdOrGroup",
+	        "Tag1", "String", // Tag resource name
+	        "Tag2", "String", // Tag resource name
+	        "Tag3", "String", // Tag resource name
+	        "Tag4", "String", // Tag resource name
+	        "Tag5", "String", // Tag resource name
         ]);
         AddBoost("UseBoosts", 1, [
-	            "Arg1", "StatsFunctors"
+	        "Arg1", "StatsFunctors"
         ]);
         AddBoost("CannotHarmCauseEntity", 1, [
-	            "Arg1", "String"
+	        "Arg1", "String"
         ]);
         AddBoost("TemporaryHP", 1, [
-	            "Amount", "Lua"
+	        "Amount", "Lua"
         ]);
         AddBoost("Weight", 1, [
-	            "Weight", "Float"
+	        "Weight", "Float"
         ]);
         AddBoost("WeightCategory", 1, [
-	            "Category", "Int"
+	        "Category", "Int"
         ]);
         AddBoost("FactionOverride", 1, [
-	            "Faction", "String" // Faction resource GUID or "Source"
+	        "Faction", "String" // Faction resource GUID or "Source"
         ]);
         AddBoost("ActionResourceMultiplier", 2, [
             "Resource", "String", // Action resource name
-	            "Multiplier", "Int",
+	        "Multiplier", "Int",
             "Level", "Int",
         ]);
         AddBoost("BlockRegainHP", 0, [
-	            "Type", "ResurrectTypes"
+	        "Type", "ResurrectTypes"
         ]);
         AddBoost("Initiative", 1, [
-	            "Initiative", "Int"
+	        "Initiative", "Int"
         ]);
         AddBoost("DarkvisionRange", 1, [
-	            "Range", "Float"
+	        "Range", "Float"
         ]);
         AddBoost("DarkvisionRangeMin", 1, [
             "Range", "Float"
@@ -993,18 +993,18 @@ public class StatDefinitionRepository
             "Range", "Float"
         ]);
         AddBoost("Tag", 1, [
-	            "Arg1", "String" // Tag resource name
+	        "Arg1", "String" // Tag resource name
         ]);
         AddBoost("IgnoreDamageThreshold", 2, [
-	            "DamageType", "AllOrDamageType",
+	        "DamageType", "AllOrDamageType",
             "Threshold", "Int"
         ]);
         AddBoost("Skill", 2, [
-	            "Skill", "SkillType",
+	        "Skill", "SkillType",
             "Amount", "Lua"
         ]);
         AddBoost("WeaponDamage", 2, [
-	            "Amount", "Lua",
+	        "Amount", "Lua",
             "DamageType", "Damage Type",
             "Arg3", "Boolean"
         ]);
@@ -1013,84 +1013,84 @@ public class StatDefinitionRepository
         ]);
         AddBoost("IgnoreFallDamage", 0, []);
         AddBoost("Reroll", 3, [
-	            "RollType", "StatsRollType",
+	        "RollType", "StatsRollType",
             "RollBelow", "Int",
             "Arg3", "Boolean"
         ]);
         AddBoost("DownedStatus", 1, [
-	            "StatusId", "StatusId",
+	        "StatusId", "StatusId",
             "Arg2", "Int"
         ]);
         AddBoost("Invulnerable", 0, []);
         AddBoost("WeaponEnchantment", 1, [
-	            "Enchantment", "Int"
+	        "Enchantment", "Int"
         ]);
         AddBoost("GuaranteedChanceRollOutcome", 1, [
-	            "Arg1", "Boolean"
+	        "Arg1", "Boolean"
         ]);
         AddBoost("Attribute", 1, [
-	            "Flags", "AttributeFlags"
+	        "Flags", "AttributeFlags"
         ]);
         AddBoost("IgnoreLeaveAttackRange", 0, []);
         AddBoost("GameplayLight", 2, [
-	            "Arg1", "Float",
-	            "Arg2", "Boolean",
-	            "Arg3", "Float",
-	            "Arg4", "Boolean"
+	        "Arg1", "Float",
+	        "Arg2", "Boolean",
+	        "Arg3", "Float",
+	        "Arg4", "Boolean"
         ]);
         AddBoost("DialogueBlock", 0, []);
         AddBoost("DualWielding", 1, [
-	            "DW", "Boolean"
+	        "DW", "Boolean"
         ]);
         AddBoost("Savant", 1, [
-	            "SpellSchool", "SpellSchool"
+	        "SpellSchool", "SpellSchool"
         ]);
         AddBoost("MinimumRollResult", 2, [
-	            "RollType", "StatsRollType",
+	        "RollType", "StatsRollType",
             "MinResult", "Int"
         ]);
         AddBoost("Lootable", 0, []);
         AddBoost("CharacterWeaponDamage", 1, [
-	            "Amount", "Lua",
+	        "Amount", "Lua",
             "DamageType", "Damage Type"
         ]);
         AddBoost("ProjectileDeflect", 0, [
-	            "Type1", "String",
-	            "Type2", "String",
+	        "Type1", "String",
+	        "Type2", "String",
         ]);
         AddBoost("AbilityOverrideMinimum", 2, [
-	            "Ability", "Ability",
+	        "Ability", "Ability",
             "Minimum", "Int"
         ]);
         AddBoost("ACOverrideFormula", 2, [
-	            "AC", "Int",
+	        "AC", "Int",
             "Arg2", "Boolean",
             "Ability1", "Ability",
             "Ability2", "Ability",
             "Ability3", "Ability",
         ]);
         AddBoost("FallDamageMultiplier", 1, [
-	            "Multiplier", "Float"
+	        "Multiplier", "Float"
         ]);
         AddBoost("ActiveCharacterLight", 1, [
-	            "Light", "String"
+	        "Light", "String"
         ]);
         AddBoost("Invisibility", 0, []);
         AddBoost("TwoWeaponFighting", 0, []);
         AddBoost("WeaponAttackTypeOverride", 1, [
-	            "Type", "AttackType"
+	        "Type", "AttackType"
         ]);
         AddBoost("WeaponDamageDieOverride", 1, [
-	            "DamageDie", "String", // die, eg. 1d10
+	        "DamageDie", "String", // die, eg. 1d10
         ]);
         AddBoost("CarryCapacityMultiplier", 1, [
-	            "Multiplier", "Float"
+	        "Multiplier", "Float"
         ]);
         AddBoost("WeaponProperty", 1, [
-	            "Flags1", "WeaponFlags"
+	        "Flags1", "WeaponFlags"
         ]);
         AddBoost("WeaponAttackRollAbilityOverride", 1, [
-	            "Ability", "AbilityOrAttackRollAbility"
+	        "Ability", "AbilityOrAttackRollAbility"
         ]);
         AddBoost("BlockTravel", 0, []);
         AddBoost("BlockGatherAtCamp", 0, []);
@@ -1098,7 +1098,7 @@ public class StatDefinitionRepository
         AddBoost("VoicebarkBlock", 0, []);
         AddBoost("HiddenDuringCinematic", 0, []);
         AddBoost("SightRangeAdditive", 1, [
-	            "Range", "Float"
+	        "Range", "Float"
         ]);
         AddBoost("SightRangeMinimum", 1, [
             "Range", "Float"
@@ -1115,98 +1115,98 @@ public class StatDefinitionRepository
         ]);
         AddBoost("NonLethal", 0, []);
         AddBoost("UnlockSpellVariant", 1, [
-	            "Modification1", "Lua", // TODO - add Modification parser?
-	            "Modification2", "Lua",
-	            "Modification3", "Lua",
-	            "Modification4", "Lua",
-	            "Modification5", "Lua",
-	            "Modification6", "Lua",
-	            "Modification7", "Lua",
-	            "Modification8", "Lua",
-	            "Modification9", "Lua",
-	            "Modification10", "Lua",
-	            "Modification11", "Lua",
-	            "Modification12", "Lua",
-	            "Modification13", "Lua",
-	            "Modification14", "Lua",
-	            "Modification15", "Lua"
+	        "Modification1", "Lua", // TODO - add Modification parser?
+	        "Modification2", "Lua",
+	        "Modification3", "Lua",
+	        "Modification4", "Lua",
+	        "Modification5", "Lua",
+	        "Modification6", "Lua",
+	        "Modification7", "Lua",
+	        "Modification8", "Lua",
+	        "Modification9", "Lua",
+	        "Modification10", "Lua",
+	        "Modification11", "Lua",
+	        "Modification12", "Lua",
+	        "Modification13", "Lua",
+	        "Modification14", "Lua",
+	        "Modification15", "Lua"
         ]);
         AddBoost("DetectDisturbancesBlock", 1, [
-	            "Arg1", "Boolean"
+	        "Arg1", "Boolean"
         ]);
         AddBoost("BlockAbilityModifierFromAC", 1, [
-	            "Ability", "Ability"
+	        "Ability", "Ability"
         ]);
         AddBoost("ScaleMultiplier", 0, [
-	            "Multiplier", "Float"
+	        "Multiplier", "Float"
         ]);
         AddBoost("CriticalDamageOnHit", 0, []);
         AddBoost("DamageReduction", 2, [
-	            "DamageType", "AllOrDamageType",
+	        "DamageType", "AllOrDamageType",
             "ReductionType", "DamageReductionType",
             "Amount", "Lua"
         ]);
         AddBoost("ReduceCriticalAttackThreshold", 1, [
-	            "Threshold", "Int",
+	        "Threshold", "Int",
             "StatusId", "StatusIdOrGroup"
         ]);
         AddBoost("PhysicalForceRangeBonus", 1, [
-	            "Arg1", "String"
+	        "Arg1", "String"
         ]);
         AddBoost("ObjectSize", 1, [
-	            "Size", "Int"
+	        "Size", "Int"
         ]);
         AddBoost("ObjectSizeOverride", 1, [
             "Size", "String"
         ]);
         AddBoost("ItemReturnToOwner", 0, []);
         AddBoost("AiArchetypeOverride", 1, [
-	            "Archetype", "String",
+	        "Archetype", "String",
             "Arg2", "Int"
         ]);
         AddBoost("ExpertiseBonus", 1, [
-	            "Skill", "SkillType"
+	        "Skill", "SkillType"
         ]);
         AddBoost("EntityThrowDamage", 1, [
-	            "Die", "String",
+	        "Die", "String",
             "DamageType", "Damage Type"
         ]);
         AddBoost("WeaponDamageTypeOverride", 1, [
-	            "DamageType", "Damage Type"
+	        "DamageType", "Damage Type"
         ]);
         AddBoost("MaximizeHealing", 1, [
-	            "Direction", "HealingDirection",
+	        "Direction", "HealingDirection",
             "Type", "ResurrectType"
         ]);
         AddBoost("IgnoreEnterAttackRange", 0, []);
         AddBoost("DamageBonus", 1, [
-	            "Amount", "Lua",
+	        "Amount", "Lua",
             "DamageType", "Damage Type",
             "Arg3", "Boolean"
         ]);
         AddBoost("Detach", 0, []);
         AddBoost("ConsumeItemBlock", 0, []);
         AddBoost("AdvanceSpells", 1, [
-	            "SpellId", "SpellId",
+	        "SpellId", "SpellId",
             "Arg2", "Int"
         ]);
         AddBoost("SpellResistance", 1, [
-	            "Resistance", "ResistanceBoostFlags"
+	        "Resistance", "ResistanceBoostFlags"
         ]);
         AddBoost("WeaponAttackRollBonus", 1, [
-	            "Amount", "Lua"
+	        "Amount", "Lua"
         ]);
         AddBoost("SpellSaveDC", 1, [
-	            "DC", "Int"
+	        "DC", "Int"
         ]);
         AddBoost("RedirectDamage", 1, [
-	            "Arg1", "Float",
-	            "DamageType", "Damage Type",
-	            "DamageType2", "Damage Type",
+	        "Arg1", "Float",
+	        "DamageType", "Damage Type",
+	        "DamageType2", "Damage Type",
             "Arg4", "Boolean"
         ]);
         AddBoost("CanSeeThrough", 1, [
-	            "CanSeeThrough", "Boolean"
+	        "CanSeeThrough", "Boolean"
         ]);
         AddBoost("CanShootThrough", 1, [
             "CanShootThrough", "Boolean"
@@ -1216,14 +1216,14 @@ public class StatDefinitionRepository
         ]);
         AddBoost("MonkWeaponAttackOverride", 0, []);
         AddBoost("MonkWeaponDamageDiceOverride", 1, [
-	            "Arg1", "Lua"
+	        "Arg1", "Lua"
         ]);
         AddBoost("IntrinsicSummonerProficiency", 0, []);
         AddBoost("HorizontalFOVOverride", 1, [
-	            "FOV", "Float"
+	        "FOV", "Float"
         ]);
         AddBoost("CharacterUnarmedDamage", 1, [
-	            "Damage", "Lua",
+	        "Damage", "Lua",
             "DamageType", "Damage Type"
         ]);
         AddBoost("UnarmedMagicalProperty", 0, []);
@@ -1233,60 +1233,60 @@ public class StatDefinitionRepository
         ]);
         AddBoost("AreaDamageEvade", 0, []);
         AddBoost("ActionResourcePreventReduction", 1, [
-	            "ActionResource", "String", // Action resource name
+	        "ActionResource", "String", // Action resource name
             "Level", "Int"
         ]);
         AddBoost("AttackSpellOverride", 1, [
-	            "AttackSpell", "SpellId",
-	            "OriginalSpell", "SpellId"
+	        "AttackSpell", "SpellId",
+	        "OriginalSpell", "SpellId"
         ]);
         AddBoost("Lock", 0, [
-	            "DC", "Guid"
+	        "DC", "Guid"
         ]);
         AddBoost("NoAOEDamageOnLand", 0, []);
         AddBoost("IgnorePointBlankDisadvantage", 1, [
-	            "Flags", "WeaponFlags"
+	        "Flags", "WeaponFlags"
         ]);
         AddBoost("CriticalHitExtraDice", 1, [
-	            "ExtraDice", "Int",
+	        "ExtraDice", "Int",
             "AttackType", "AttackType"
         ]);
         AddBoost("DodgeAttackRoll", 2, [
-	            "Arg1", "Int",
-	            "Arg2", "Int",
-	            "Status", "StatusIdOrGroup"
+	        "Arg1", "Int",
+	        "Arg2", "Int",
+	        "Status", "StatusIdOrGroup"
         ]);
         AddBoost("GameplayObscurity", 1, [
-	            "Obscurity", "Float"
+	        "Obscurity", "Float"
         ]);
         AddBoost("MaximumRollResult", 2, [
             "RollType", "StatsRollType",
             "MinResult", "Int"
         ]);
         AddBoost("UnlockInterrupt", 1, [
-	            "Interrupt", "Interrupt"
+	        "Interrupt", "Interrupt"
         ]);
         AddBoost("IntrinsicSourceProficiency", 0, []);
         AddBoost("JumpMaxDistanceBonus", 1, [
-	            "Bonus", "Float"
+	        "Bonus", "Float"
         ]);
         AddBoost("ArmorAbilityModifierCapOverride", 2, [
-	            "ArmorType", "ArmorType",
+	        "ArmorType", "ArmorType",
             "Cap", "Int"
         ]);
         AddBoost("IgnoreResistance", 2, [
-	            "DamageType", "Damage Type",
+	        "DamageType", "Damage Type",
             "Flags", "ResistanceBoostFlags"
         ]);
         AddBoost("ConcentrationIgnoreDamage", 1, [
-	            "SpellSchool", "SpellSchool"
+	        "SpellSchool", "SpellSchool"
         ]);
         AddBoost("LeaveTriggers", 0, []);
         AddBoost("IgnoreLowGroundPenalty", 1, [
-	            "RollType", "StatsRollType"
+	        "RollType", "StatsRollType"
         ]);
         AddBoost("IgnoreSurfaceCover", 1, [
-	            "SurfaceType", "String" // Surface type
+	        "SurfaceType", "String" // Surface type
         ]);
         AddBoost("EnableBasicItemInteractions", 0, []);
         AddBoost("SoundsBlocked", 0, []);
