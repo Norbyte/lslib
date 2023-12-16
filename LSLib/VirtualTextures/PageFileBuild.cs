@@ -200,7 +200,7 @@ public class PageFileBuilder(TileSetConfiguration config)
                 throw new Exception($"Overrun while writing page {i} of page file {Name}");
             }
 
-            var padSize = (Config.PageSize - (s.Position % Config.PageSize) % Config.PageSize);
+            var padSize = (Config.PageSize - (s.Position % Config.PageSize)) % Config.PageSize;
             if (padSize > 0)
             {
                 var pad = new byte[padSize];
