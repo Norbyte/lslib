@@ -136,7 +136,8 @@ public class PageFileBuilder(TileSetConfiguration config)
             {
                 PageFile = this,
                 PageFileIndex = PageFileIndex,
-                PageIndex = Pages.Count
+                PageIndex = Pages.Count,
+                Budget = 4
             };
 
             if (newPage.PageIndex == 0)
@@ -192,6 +193,11 @@ public class PageFileBuilder(TileSetConfiguration config)
             {
                 chunk.OffsetInPage = (uint)(s.Position % Config.PageSize);
                 SaveChunk(writer, chunk);
+            }
+
+            if (s.Position > Config.PageSize * (i+1))
+            {
+                throw new Exception($"Overrun while writing page {i} of page file {Name}");
             }
 
             var padSize = (Config.PageSize - (s.Position % Config.PageSize) % Config.PageSize);
