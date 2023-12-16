@@ -22,6 +22,7 @@ public class BC5Image
     public BC5Image(int width, int height)
     {
         Data = new byte[width * height];
+        Array.Clear(Data);
         Width = width;
         Height = height;
     }

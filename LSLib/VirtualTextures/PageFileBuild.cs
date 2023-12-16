@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace LSLib.VirtualTextures;
 
@@ -70,7 +71,53 @@ public class PageFileBuilder(TileSetConfiguration config)
     public Guid Checksum;
     public int PageFileIndex;
 
+    public List<BuildTile> PendingTiles = [];
+    public List<Tuple<BuildTile, BuildTile>> Duplicates = [];
+
     public void AddTile(BuildTile tile)
+    {
+        PendingTiles.Add(tile);
+    }
+
+    public void DeduplicateTiles()
+    {
+        var digests = new Dictionary<Guid, BuildTile>();
+
+        foreach (var tile in PendingTiles)
+        {
+            var digest = new Guid(MD5.HashData(tile.Image.Data));
+            if (!digests.TryAdd(digest, tile))
+            {
+                tile.DuplicateOf = digests[digest];
+                Duplicates.Add(Tuple.Create(tile, digests[digest]));
+            }
+        }
+
+        PendingTiles = [.. digests.Values];
+    }
+
+    public void CommitTiles()
+    {
+        foreach (var tile in PendingTiles)
+        {
+            CommitTile(tile);
+        }
+
+        PendingTiles.Clear();
+
+        foreach (var dup in Duplicates)
+        {
+            dup.Item1.AddedToPageFile = true;
+            dup.Item1.PageFileIndex = dup.Item2.PageFileIndex;
+            dup.Item1.PageIndex = dup.Item2.PageIndex;
+            dup.Item1.ChunkIndex = dup.Item2.ChunkIndex;
+            dup.Item1.DuplicateOf = dup.Item2;
+        }
+
+        Duplicates.Clear();
+    }
+
+    private void CommitTile(BuildTile tile)
     {
         if (Config.BackfillPages)
         {
@@ -178,6 +225,7 @@ public class PageFileSetBuilder(TileSetBuildData buildData, TileSetConfiguration
 {
     private readonly TileSetBuildData BuildData = buildData;
     private readonly TileSetConfiguration Config = config;
+    private List<PageFileBuilder> PageFiles = [];
 
     private void BuildPageFile(PageFileBuilder file, int level, int minTileX, int minTileY, int maxTileX, int maxTileY)
     {
@@ -235,8 +283,6 @@ public class PageFileSetBuilder(TileSetBuildData buildData, TileSetConfiguration
 
     public List<PageFileBuilder> BuildFilePerGTex(List<BuildTexture> textures)
     {
-        var pageFiles = new List<PageFileBuilder>();
-
         uint firstPageIndex = 0;
         foreach (var texture in textures)
         {
@@ -245,9 +291,9 @@ public class PageFileSetBuilder(TileSetBuildData buildData, TileSetConfiguration
                 Name = texture.Name,
                 FileName = BuildData.GTSName + "_" + texture.Name + ".gtp",
                 Checksum = Guid.NewGuid(),
-                PageFileIndex = pageFiles.Count
+                PageFileIndex = PageFiles.Count
             };
-            pageFiles.Add(file);
+            PageFiles.Add(file);
             BuildPageFile(file, texture);
 
             firstPageIndex += (uint)file.Pages.Count;
@@ -260,29 +306,48 @@ public class PageFileSetBuilder(TileSetBuildData buildData, TileSetConfiguration
                 Name = "Mips",
                 FileName = BuildData.GTSName + "_Mips.gtp",
                 Checksum = Guid.NewGuid(),
-                PageFileIndex = pageFiles.Count
+                PageFileIndex = PageFiles.Count
             };
-            pageFiles.Add(file);
+            PageFiles.Add(file);
             BuildMipPageFile(file);
         }
 
-        return pageFiles;
+        return PageFiles;
     }
 
     public List<PageFileBuilder> BuildSingleFile()
     {
-        var pageFiles = new List<PageFileBuilder>();
-
         var file = new PageFileBuilder(Config)
         {
             Name = "Global",
             FileName = BuildData.GTSName + ".gtp",
             Checksum = Guid.NewGuid(),
-            PageFileIndex = pageFiles.Count
+            PageFileIndex = PageFiles.Count
         };
-        pageFiles.Add(file);
+        PageFiles.Add(file);
         BuildFullPageFile(file);
 
-        return pageFiles;
+        return PageFiles;
+    }
+
+    public void DeduplicateTiles()
+    {
+        if (Config.DeduplicateTiles)
+        {
+            foreach (var file in PageFiles)
+            {
+                file.DeduplicateTiles();
+            }
+        }
+    }
+
+    public List<PageFileBuilder> CommitPageFiles()
+    {
+        foreach (var file in PageFiles)
+        {
+            file.CommitTiles();
+        }
+
+        return PageFiles;
     }
 }

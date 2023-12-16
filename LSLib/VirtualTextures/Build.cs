@@ -59,8 +59,10 @@ public class TileSetDescriptor
                     case "PageSize": Config.PageSize = Int32.Parse(value); break;
                     case "OneFilePerGTex": Config.OneFilePerGTex = Boolean.Parse(value); break;
                     case "BackfillPages": Config.BackfillPages = Boolean.Parse(value); break;
+                    case "DeduplicateTiles": Config.DeduplicateTiles = Boolean.Parse(value); break;
                     case "EmbedMips": Config.EmbedMips = Boolean.Parse(value); break;
                     case "EmbedTopLevelMips": Config.EmbedTopLevelMips = Boolean.Parse(value); break;
+                    case "ZeroBorders": Config.ZeroBorders = Boolean.Parse(value); break;
                     default: throw new InvalidDataException($"Unsupported configuration key: {key}");
                 }
             }
@@ -150,6 +152,7 @@ public class BuildTile
     public int PageFileIndex;
     public int PageIndex;
     public int ChunkIndex;
+    public BuildTile DuplicateOf;
 }
 
 public class BuildLayer
@@ -169,10 +172,12 @@ public class TileSetConfiguration
     public List<BuildLayer> Layers;
     public TileCompressionPreference Compression = TileCompressionPreference.Best;
     public Int32 PageSize = 0x100000;
-    public bool OneFilePerGTex = true;
-    public bool BackfillPages = false;
+    public bool OneFilePerGTex = false;
+    public bool BackfillPages = true;
+    public bool DeduplicateTiles = true;
     public bool EmbedMips = true;
-    public bool EmbedTopLevelMips = false;
+    public bool EmbedTopLevelMips = true;
+    public bool ZeroBorders = false;
 }
 
 public class BuildLayerTexture
@@ -303,6 +308,7 @@ public class TileSetBuilder
     private readonly TileSetConfiguration Config;
     private readonly TileCompressor Compressor;
     private readonly ParameterBlockContainer ParameterBlocks;
+    private PageFileSetBuilder SetBuilder;
 
     public VirtualTileSet TileSet;
     public List<BuildTexture> Textures;
@@ -840,16 +846,16 @@ public class TileSetBuilder
         header.TileBorder = BuildData.TileBorder;
     }
 
-    private void BuildPageFiles()
+    private void PreparePageFiles()
     {
-        var builder = new PageFileSetBuilder(BuildData, Config);
+        SetBuilder = new PageFileSetBuilder(BuildData, Config);
         if (Config.OneFilePerGTex)
         {
-            PageFiles = builder.BuildFilePerGTex(Textures);
+            PageFiles = SetBuilder.BuildFilePerGTex(Textures);
         }
         else
         {
-            PageFiles = builder.BuildSingleFile();
+            PageFiles = SetBuilder.BuildSingleFile();
         }
 
         TileSet.PageFileInfos = [];
@@ -898,13 +904,20 @@ public class TileSetBuilder
             gtsLevel.Height = (uint)level.TilesY;
         }
 
-        OnStepStarted("Generating tile lists");
-        BuildFlatTileList();
+        OnStepStarted("Preparing page files");
+        PreparePageFiles();
+
+        OnStepStarted("Deduplicating tiles");
+        SetBuilder.DeduplicateTiles();
+
         OnStepStarted("Encoding tiles");
         CompressTiles();
 
         OnStepStarted("Building page files");
-        BuildPageFiles();
+        SetBuilder.CommitPageFiles();
+
+        OnStepStarted("Generating tile lists");
+        BuildFlatTileList();
 
         OnStepStarted("Building metadata");
         BuildTileInfos();
@@ -954,15 +967,15 @@ public class TileSetBuilder
 
     public void CompressTiles()
     {
-        var numTiles = PerLevelFlatTiles.Sum(tiles => tiles.Length);
+        var numTiles = PageFiles.Sum(pf => pf.PendingTiles.Count);
         var nextTile = 0;
 
-        foreach (var level in PerLevelFlatTiles)
+        foreach (var file in PageFiles)
         {
-            foreach (var tile in level)
+            foreach (var tile in file.PendingTiles)
             {
                 OnStepProgress(nextTile++, numTiles);
-                if (tile != null)
+                if (tile.DuplicateOf == null)
                 {
                     Compressor.Compress(tile);
                 }
@@ -975,6 +988,7 @@ public class TileSetBuilder
         TileSet.PerLevelFlatTileIndices = new List<UInt32[]>(BuildData.PageFileLevels);
         PerLevelFlatTiles = new List<BuildTile[]>(BuildData.PageFileLevels);
 
+        var flatTileMap = new Dictionary<long, uint>();
         var flatTileInfos = new List<GTSFlatTileInfo>();
         var packedTileIds = new List<GTSPackedTileID>();
 
@@ -997,21 +1011,33 @@ public class TileSetBuilder
                         var tile = BuildData.Layers[layer].Levels[level].Get(x, y);
                         if (tile != null)
                         {
-                            var flatTileIdx = (uint)flatTileInfos.Count;
+                            uint flatTileIdx;
                             var packedTileIdx = (uint)packedTileIds.Count;
 
                             var packedTile = new GTSPackedTileID((uint)layer, (uint)level, (uint)x, (uint)y);
                             packedTileIds.Add(packedTile);
 
-                            var tileInfo = new GTSFlatTileInfo
+                            var tileKey = (long)tile.ChunkIndex
+                                | ((long)tile.PageIndex << 16)
+                                | ((long)tile.ChunkIndex << 32);
+                            if (flatTileMap.TryGetValue(tileKey, out uint dupTileIdx))
                             {
-                                PageFileIndex = (UInt16)tile.PageFileIndex,
-                                PageIndex = (UInt16)tile.PageIndex,
-                                ChunkIndex = (UInt16)tile.ChunkIndex,
-                                D = 1,
-                                PackedTileIndex = packedTileIdx
-                            };
-                            flatTileInfos.Add(tileInfo);
+                                flatTileIdx = dupTileIdx;
+                            }
+                            else
+                            {
+                                flatTileIdx = (uint)flatTileInfos.Count;
+                                flatTileMap[tileKey] = flatTileIdx;
+                                var tileInfo = new GTSFlatTileInfo
+                                {
+                                    PageFileIndex = (UInt16)tile.PageFileIndex,
+                                    PageIndex = (UInt16)tile.PageIndex,
+                                    ChunkIndex = (UInt16)tile.ChunkIndex,
+                                    D = 1,
+                                    PackedTileIndex = packedTileIdx
+                                };
+                                flatTileInfos.Add(tileInfo);
+                            }
 
                             flatTileIndices[tileIdx] = flatTileIdx;
                             flatTiles[tileIdx] = tile;
@@ -1074,10 +1100,16 @@ public class TileSetBuilder
     {
         OnStepStarted("Calculating geometry");
         CalculateGeometry();
+
         OnStepStarted("Building tiles");
         BuildTiles();
-        OnStepStarted("Building tile borders");
-        BuildTileBorders();
+
+        if (BuildData.TileBorder > 0 && !Config.ZeroBorders)
+        {
+            OnStepStarted("Building tile borders");
+            BuildTileBorders();
+        }
+
         OnStepStarted("Embedding tile mipmaps");
         if (Config.EmbedMips)
         {
@@ -1086,7 +1118,7 @@ public class TileSetBuilder
 
         BuildGTS();
 
-        long tileBytes = 0, embeddedMipBytes = 0, tileCompressedBytes = 0, pages = 0, chunks = 0, levelTiles = 0;
+        long tileBytes = 0, embeddedMipBytes = 0, tileCompressedBytes = 0, pages = 0, chunks = 0, levelTiles = 0, duplicates = 0;
 
         foreach (var pageFile in PageFiles)
         {
@@ -1104,18 +1136,25 @@ public class TileSetBuilder
             {
                 if (tile != null)
                 {
-                    tileBytes += tile.Image.Data.Length;
-                    if (tile.EmbeddedMip != null)
+                    if (tile.DuplicateOf == null)
                     {
-                        embeddedMipBytes += tile.EmbeddedMip.Data.Length;
-                    }
+                        tileBytes += tile.Image.Data.Length;
+                        if (tile.EmbeddedMip != null)
+                        {
+                            embeddedMipBytes += tile.EmbeddedMip.Data.Length;
+                        }
 
-                    tileCompressedBytes += tile.Compressed.Data.Length;
+                        tileCompressedBytes += tile.Compressed.Data.Length;
+                    }
+                    else
+                    {
+                        duplicates++;
+                    }
                 }
             }
         }
 
-        Console.WriteLine($"Flat tiles: {levelTiles} total, {TileSet.FlatTileInfos.Length} in use");
+        Console.WriteLine($"Tile map: {levelTiles} total, {TileSet.FlatTileInfos.Length} in use, {duplicates} duplicates");
         Console.WriteLine($"Generated {PageFiles.Count} page files, {pages} pages, {chunks} chunks");
         Console.WriteLine($"Raw tile data: {tileBytes / 1024} KB tiles, {embeddedMipBytes / 1024} KB embedded mips, {tileCompressedBytes / 1024} KB transcoded, {pages*Config.PageSize/1024} KB pages total");
 
