@@ -26,7 +26,7 @@ public class SavegameHelpers : IDisposable
 
     public Resource LoadGlobals()
     {
-        AbstractFileInfo globalsInfo = Package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
+        var globalsInfo = Package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
         if (globalsInfo == null)
         {
             throw new InvalidDataException("The specified package is not a valid savegame (globals.lsf not found)");
@@ -55,7 +55,7 @@ public class SavegameHelpers : IDisposable
 
     public Story.Story LoadStory()
     {
-        AbstractFileInfo storyInfo = Package.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
+        var storyInfo = Package.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
         if (storyInfo != null)
         {
             Stream rsrcStream = storyInfo.MakeStream();
@@ -110,16 +110,16 @@ public class SavegameHelpers : IDisposable
         var rewrittenPackage = new Package();
         var conversionParams = ResourceConversionParameters.FromGameVersion(game);
 
-        AbstractFileInfo storyBin = Package.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
+        var storyBin = Package.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
         if (storyBin == null)
         {
             var globalsStream = ResaveStoryToGlobals(story, conversionParams);
 
-            AbstractFileInfo globalsLsf = Package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
+            var globalsLsf = Package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             StreamFileInfo globalsRepacked = StreamFileInfo.CreateFromStream(globalsStream, globalsLsf.Name);
             rewrittenPackage.Files.Add(globalsRepacked);
 
-            List<AbstractFileInfo> files = Package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf").ToList();
+            var files = Package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf").ToList();
             rewrittenPackage.Files.AddRange(files);
         }
         else
@@ -133,7 +133,7 @@ public class SavegameHelpers : IDisposable
             StreamFileInfo storyRepacked = StreamFileInfo.CreateFromStream(storyStream, "StorySave.bin");
             rewrittenPackage.Files.Add(storyRepacked);
 
-            List<AbstractFileInfo> files = Package.Files.Where(x => x.Name != "StorySave.bin").ToList();
+            var files = Package.Files.Where(x => x.Name != "StorySave.bin").ToList();
             rewrittenPackage.Files.AddRange(files);
         }
 

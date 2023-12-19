@@ -25,11 +25,11 @@ public class NotAPackageException : Exception
 
 public class PackageReader(string path, bool metadataOnly = false) : IDisposable
 {
-    private Stream[] _streams;
+    private Stream[] Streams;
 
     public void Dispose()
     {
-        foreach (Stream stream in _streams ?? [])
+        foreach (Stream stream in Streams ?? [])
         {
             stream?.Dispose();
         }
@@ -38,179 +38,32 @@ public class PackageReader(string path, bool metadataOnly = false) : IDisposable
     private void OpenStreams(FileStream mainStream, int numParts)
     {
         // Open a stream for each file chunk
-        _streams = new Stream[numParts];
-        _streams[0] = mainStream;
+        Streams = new Stream[numParts];
+        Streams[0] = mainStream;
 
         for (var part = 1; part < numParts; part++)
         {
             string partPath = Package.MakePartFilename(path, part);
-            _streams[part] = File.Open(partPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            Streams[part] = File.Open(partPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
     }
 
-    private Package ReadPackageV7(FileStream mainStream, BinaryReader reader)
+    private void ReadCompressedFileList<TFile>(BinaryReader reader, Package package) where TFile : ILSPKFile
     {
-        var package = new Package();
-        mainStream.Seek(0, SeekOrigin.Begin);
-        var header = BinUtils.ReadStruct<LSPKHeader7>(reader);
-
-        package.Metadata.Flags = 0;
-        package.Metadata.Priority = 0;
-        package.Version = PackageVersion.V7;
-
-        if (metadataOnly) return package;
-
-        OpenStreams(mainStream, (int) header.NumParts);
-        for (uint i = 0; i < header.NumFiles; i++)
-        {
-            var entry = BinUtils.ReadStruct<FileEntry7>(reader);
-            if (entry.ArchivePart == 0)
-            {
-                entry.OffsetInFile += header.DataOffset;
-            }
-            package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
-        }
-
-        return package;
-    }
-
-    private Package ReadPackageV10(FileStream mainStream, BinaryReader reader)
-    {
-        var package = new Package();
-        mainStream.Seek(4, SeekOrigin.Begin);
-        var header = BinUtils.ReadStruct<LSPKHeader10>(reader);
-
-        package.Metadata.Flags = (PackageFlags)header.Flags;
-        package.Metadata.Priority = header.Priority;
-        package.Version = PackageVersion.V10;
-
-        if (metadataOnly) return package;
-
-        OpenStreams(mainStream, header.NumParts);
-        for (uint i = 0; i < header.NumFiles; i++)
-        {
-            var entry = BinUtils.ReadStruct<FileEntry13>(reader);
-            if (entry.ArchivePart == 0)
-            {
-                entry.OffsetInFile += header.DataOffset;
-            }
-
-            // Add missing compression level flags
-            entry.Flags = (entry.Flags & 0x0f) | 0x20;
-            package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
-        }
-
-        return package;
-    }
-
-    private Package ReadPackageV13(FileStream mainStream, BinaryReader reader)
-    {
-        var package = new Package();
-        var header = BinUtils.ReadStruct<LSPKHeader13>(reader);
-
-        if (header.Version != (ulong) PackageVersion.V13)
-        {
-            string msg = $"Unsupported package version {header.Version}; this package layout is only supported for {PackageVersion.V13}";
-            throw new InvalidDataException(msg);
-        }
-
-        package.Metadata.Flags = (PackageFlags)header.Flags;
-        package.Metadata.Priority = header.Priority;
-        package.Version = PackageVersion.V13;
-
-        if (metadataOnly) return package;
-
-        OpenStreams(mainStream, header.NumParts);
-        mainStream.Seek(header.FileListOffset, SeekOrigin.Begin);
         int numFiles = reader.ReadInt32();
-        int fileBufferSize = Marshal.SizeOf(typeof(FileEntry13)) * numFiles;
-        byte[] compressedFileList = reader.ReadBytes((int) header.FileListSize - 4);
-
-        var uncompressedList = new byte[fileBufferSize];
-        int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, true);
-        if (uncompressedSize != fileBufferSize)
+        int compressedSize;
+        if (package.Metadata.Version > 13)
         {
-            string msg = $"LZ4 compressor disagrees about the size of file headers; expected {fileBufferSize}, got {uncompressedSize}";
-            throw new InvalidDataException(msg);
-        }
-
-        var ms = new MemoryStream(uncompressedList);
-        var msr = new BinaryReader(ms);
-
-        var entries = new FileEntry13[numFiles];
-        BinUtils.ReadStructs(msr, entries);
-
-        if ((package.Metadata.Flags & PackageFlags.Solid) == PackageFlags.Solid && numFiles > 0)
-        {
-            // Calculate compressed frame offset and bounds
-            uint totalUncompressedSize = 0;
-            uint totalSizeOnDisk = 0;
-            uint firstOffset = 0xffffffff;
-            uint lastOffset = 0;
-
-            foreach (var entry in entries)
-            {
-                totalUncompressedSize += entry.UncompressedSize;
-                totalSizeOnDisk += entry.SizeOnDisk;
-                if (entry.OffsetInFile < firstOffset)
-                {
-                    firstOffset = entry.OffsetInFile;
-                }
-                if (entry.OffsetInFile + entry.SizeOnDisk > lastOffset)
-                {
-                    lastOffset = entry.OffsetInFile + entry.SizeOnDisk;
-                }
-            }
-
-            if (firstOffset != 7 || lastOffset - firstOffset != totalSizeOnDisk)
-            {
-                string msg = $"Incorrectly compressed solid archive; offsets {firstOffset}/{lastOffset}, bytes {totalSizeOnDisk}";
-                throw new InvalidDataException(msg);
-            }
-
-            // Decompress all files as a single frame (solid)
-            byte[] frame = new byte[lastOffset];
-            mainStream.Seek(0, SeekOrigin.Begin);
-            mainStream.Read(frame, 0, (int)lastOffset);
-
-            byte[] decompressed = Native.LZ4FrameCompressor.Decompress(frame);
-            var decompressedStream = new MemoryStream(decompressed);
-
-            // Update offsets to point to the decompressed chunk
-            uint offset = 7;
-            uint compressedOffset = 0;
-            foreach (var entry in entries)
-            {
-                if (entry.OffsetInFile != offset)
-                {
-                    throw new InvalidDataException("File list in solid archive not contiguous");
-                }
-
-                var file = PackagedFileInfo.CreateSolidFromEntry(entry, _streams[entry.ArchivePart], compressedOffset, decompressedStream);
-                package.Files.Add(file);
-
-                offset += entry.SizeOnDisk;
-                compressedOffset += entry.UncompressedSize;
-            }
+            compressedSize = reader.ReadInt32();
         }
         else
         {
-            foreach (var entry in entries)
-            {
-                package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
-            }
+            compressedSize = (int)package.Metadata.FileListSize - 4;
         }
 
-        return package;
-    }
-
-    private void ReadFileListV15(BinaryReader reader, Package package)
-    {
-        int numFiles = reader.ReadInt32();
-        int compressedSize = reader.ReadInt32();
         byte[] compressedFileList = reader.ReadBytes(compressedSize);
 
-        int fileBufferSize = Marshal.SizeOf(typeof(FileEntry15)) * numFiles;
+        int fileBufferSize = Marshal.SizeOf(typeof(TFile)) * numFiles;
         var uncompressedList = new byte[fileBufferSize];
         int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, true);
         if (uncompressedSize != fileBufferSize)
@@ -222,112 +75,119 @@ public class PackageReader(string path, bool metadataOnly = false) : IDisposable
         var ms = new MemoryStream(uncompressedList);
         var msr = new BinaryReader(ms);
 
-        var entries = new FileEntry15[numFiles];
+        var entries = new TFile[numFiles];
         BinUtils.ReadStructs(msr, entries);
 
         foreach (var entry in entries)
         {
-            package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
+            package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, Streams[entry.ArchivePartNumber()]));
         }
     }
 
-    private void ReadFileListV18(BinaryReader reader, Package package)
+    private void ReadFileList<TFile>(BinaryReader reader, Package package) where TFile : ILSPKFile
     {
-        int numFiles = reader.ReadInt32();
-        int compressedSize = reader.ReadInt32();
-        byte[] compressedFileList = reader.ReadBytes(compressedSize);
-
-        int fileBufferSize = Marshal.SizeOf(typeof(FileEntry18)) * numFiles;
-        var uncompressedList = new byte[fileBufferSize];
-        int uncompressedSize = LZ4Codec.Decode(compressedFileList, 0, compressedFileList.Length, uncompressedList, 0, fileBufferSize, false);
-        if (uncompressedSize != fileBufferSize)
-        {
-            string msg = $"LZ4 compressor disagrees about the size of file headers; expected {fileBufferSize}, got {uncompressedSize}";
-            throw new InvalidDataException(msg);
-        }
-
-        var ms = new MemoryStream(uncompressedList);
-        var msr = new BinaryReader(ms);
-
-        var entries = new FileEntry18[numFiles];
-        BinUtils.ReadStructs(msr, entries);
+        var entries = new TFile[package.Metadata.NumFiles];
+        BinUtils.ReadStructs(reader, entries);
 
         foreach (var entry in entries)
         {
-            package.Files.Add(PackagedFileInfo.CreateFromEntry(entry, _streams[entry.ArchivePart]));
+            var file = PackagedFileInfo.CreateFromEntry(entry, Streams[entry.ArchivePartNumber()]);
+            if (file.ArchivePart == 0)
+            {
+                file.OffsetInFile += package.Metadata.DataOffset;
+            }
+
+            package.Files.Add(file);
         }
     }
 
-    private Package ReadPackageV15(FileStream mainStream, BinaryReader reader)
+    private Package ReadHeaderAndFileList<THeader, TFile>(FileStream mainStream, BinaryReader reader)
+        where THeader : ILSPKHeader 
+        where TFile : ILSPKFile
     {
         var package = new Package();
-        var header = BinUtils.ReadStruct<LSPKHeader15>(reader);
+        var header = BinUtils.ReadStruct<THeader>(reader);
 
-        if (header.Version != (ulong)PackageVersion.V15)
-        {
-            string msg = $"Unsupported package version {header.Version}; this layout is only supported for V15";
-            throw new InvalidDataException(msg);
-        }
-
-        package.Metadata.Flags = (PackageFlags)header.Flags;
-        package.Metadata.Priority = header.Priority;
-        package.Version = PackageVersion.V15;
+        package.Metadata = header.ToCommonHeader();
+        package.Version = (PackageVersion)package.Metadata.Version;
 
         if (metadataOnly) return package;
 
-        OpenStreams(mainStream, 1);
-        mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
-        ReadFileListV15(reader, package);
+        OpenStreams(mainStream, (int)package.Metadata.NumParts);
+
+        if (package.Metadata.Version > 10)
+        {
+            mainStream.Seek((long)package.Metadata.FileListOffset, SeekOrigin.Begin);
+            ReadCompressedFileList<TFile>(reader, package);
+        }
+        else
+        {
+            ReadFileList<TFile>(reader, package);
+        }
+
+        if (((PackageFlags)package.Metadata.Flags).HasFlag(PackageFlags.Solid) && package.Files.Count > 0)
+        {
+            UnpackSolidSegment(mainStream, package);
+        }
 
         return package;
     }
 
-    private Package ReadPackageV16(FileStream mainStream, BinaryReader reader)
+    private void UnpackSolidSegment(FileStream mainStream, Package package)
     {
-        var package = new Package();
-        var header = BinUtils.ReadStruct<LSPKHeader16>(reader);
+        // Calculate compressed frame offset and bounds
+        ulong totalUncompressedSize = 0;
+        ulong totalSizeOnDisk = 0;
+        ulong firstOffset = 0xffffffff;
+        ulong lastOffset = 0;
 
-        if (header.Version != (ulong)PackageVersion.V16)
+        foreach (var entry in package.Files)
         {
-            string msg = $"Unsupported package version {header.Version}; this layout is only supported for V16";
+            var file = entry as PackagedFileInfo;
+
+            totalUncompressedSize += file.UncompressedSize;
+            totalSizeOnDisk += file.SizeOnDisk;
+            if (file.OffsetInFile < firstOffset)
+            {
+                firstOffset = file.OffsetInFile;
+            }
+            if (file.OffsetInFile + file.SizeOnDisk > lastOffset)
+            {
+                lastOffset = file.OffsetInFile + file.SizeOnDisk;
+            }
+        }
+
+        if (firstOffset != 7 || lastOffset - firstOffset != totalSizeOnDisk)
+        {
+            string msg = $"Incorrectly compressed solid archive; offsets {firstOffset}/{lastOffset}, bytes {totalSizeOnDisk}";
             throw new InvalidDataException(msg);
         }
 
-        package.Metadata.Flags = (PackageFlags)header.Flags;
-        package.Metadata.Priority = header.Priority;
-        package.Version = PackageVersion.V16;
+        // Decompress all files as a single frame (solid)
+        byte[] frame = new byte[lastOffset];
+        mainStream.Seek(0, SeekOrigin.Begin);
+        mainStream.Read(frame, 0, (int)lastOffset);
 
-        if (metadataOnly) return package;
+        byte[] decompressed = Native.LZ4FrameCompressor.Decompress(frame);
+        var decompressedStream = new MemoryStream(decompressed);
 
-        OpenStreams(mainStream, header.NumParts);
-        mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
-        ReadFileListV15(reader, package);
-
-        return package;
-    }
-
-    private Package ReadPackageV18(FileStream mainStream, BinaryReader reader)
-    {
-        var package = new Package();
-        var header = BinUtils.ReadStruct<LSPKHeader16>(reader);
-
-        if (header.Version != (ulong)PackageVersion.V18)
+        // Update offsets to point to the decompressed chunk
+        ulong offset = 7;
+        ulong compressedOffset = 0;
+        foreach (var entry in package.Files)
         {
-            string msg = $"Unsupported package version {header.Version}; this layout is only supported for V18";
-            throw new InvalidDataException(msg);
+            var file = entry as PackagedFileInfo;
+
+            if (file.OffsetInFile != offset)
+            {
+                throw new InvalidDataException("File list in solid archive not contiguous");
+            }
+
+            file.MakeSolid(compressedOffset, decompressedStream);
+
+            offset += file.SizeOnDisk;
+            compressedOffset += file.UncompressedSize;
         }
-
-        package.Metadata.Flags = (PackageFlags)header.Flags;
-        package.Metadata.Priority = header.Priority;
-        package.Version = PackageVersion.V18;
-
-        if (metadataOnly) return package;
-
-        OpenStreams(mainStream, header.NumParts);
-        mainStream.Seek((long)header.FileListOffset, SeekOrigin.Begin);
-        ReadFileListV18(reader, package);
-
-        return package;
     }
 
     public Package Read()
@@ -342,7 +202,7 @@ public class PackageReader(string path, bool metadataOnly = false) : IDisposable
         if (Package.Signature.SequenceEqual(signature))
         {
             mainStream.Seek(-headerSize, SeekOrigin.End);
-            return ReadPackageV13(mainStream, reader);
+            return ReadHeaderAndFileList<LSPKHeader13, FileEntry10>(mainStream, reader);
         }
 
         // Check for v10 package headers
@@ -352,29 +212,15 @@ public class PackageReader(string path, bool metadataOnly = false) : IDisposable
         if (Package.Signature.SequenceEqual(signature))
         {
             version = reader.ReadInt32();
-            if (version == 10)
+            mainStream.Seek(4, SeekOrigin.Begin);
+            return version switch
             {
-                return ReadPackageV10(mainStream, reader);
-            }
-            else if (version == 15)
-            {
-                mainStream.Seek(4, SeekOrigin.Begin);
-                return ReadPackageV15(mainStream, reader);
-            }
-            else if (version == 16)
-            {
-                mainStream.Seek(4, SeekOrigin.Begin);
-                return ReadPackageV16(mainStream, reader);
-            }
-            else if (version == 18)
-            {
-                mainStream.Seek(4, SeekOrigin.Begin);
-                return ReadPackageV18(mainStream, reader);
-            }
-            else
-            {
-                throw new InvalidDataException($"Package version v{version} not supported");
-            }
+                10 => ReadHeaderAndFileList<LSPKHeader10, FileEntry10>(mainStream, reader),
+                15 => ReadHeaderAndFileList<LSPKHeader15, FileEntry15>(mainStream, reader),
+                16 => ReadHeaderAndFileList<LSPKHeader16, FileEntry15>(mainStream, reader),
+                18 => ReadHeaderAndFileList<LSPKHeader16, FileEntry18>(mainStream, reader),
+                _ => throw new InvalidDataException($"Package version v{version} not supported")
+            };
         }
 
         // Check for v9 and v7 package headers
@@ -382,7 +228,8 @@ public class PackageReader(string path, bool metadataOnly = false) : IDisposable
         version = reader.ReadInt32();
         if (version == 7 || version == 9)
         {
-            return ReadPackageV7(mainStream, reader);
+            mainStream.Seek(0, SeekOrigin.Begin);
+            return ReadHeaderAndFileList<LSPKHeader7, FileEntry7>(mainStream, reader);
         }
 
         throw new NotAPackageException("No valid signature found in package file");

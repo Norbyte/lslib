@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using LSLib.LS.Enums;
 using System.IO.Compression;
+using System.Text;
 
 namespace LSLib.LS;
 
@@ -59,6 +60,21 @@ public static class BinUtils
         }
         handle.Free();
         writer.Write(writeBuffer);
+    }
+
+    public static String NullTerminatedBytesToString(byte[] b)
+    {
+        int len;
+        for (len = 0; len < b.Length && b[len] != 0; len++) {}
+        return Encoding.UTF8.GetString(b, 0, len);
+    }
+
+    public static byte[] StringToNullTerminatedBytes(string s, int length)
+    {
+        var b = new byte[length];
+        int len = Encoding.UTF8.GetBytes(s, b);
+        Array.Clear(b, len, b.Length - len);
+        return b;
     }
 
     public static NodeAttribute ReadAttribute(NodeAttribute.DataType type, BinaryReader reader)

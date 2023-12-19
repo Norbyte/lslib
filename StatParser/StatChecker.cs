@@ -45,7 +45,7 @@ class StatChecker : IDisposable
         }
     }
 
-    private XmlDocument LoadXml(AbstractFileInfo file)
+    private XmlDocument LoadXml(IAbstractFileInfo file)
     {
         if (file == null) return null;
 

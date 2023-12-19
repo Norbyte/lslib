@@ -84,7 +84,7 @@ namespace ConverterApp
             var packageReader = new PackageReader(path);
             Package package = packageReader.Read();
             
-            AbstractFileInfo abstractFileInfo = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
+            var abstractFileInfo = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (abstractFileInfo == null)
             {
                 MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);

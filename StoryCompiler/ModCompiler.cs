@@ -237,7 +237,7 @@ class ModCompiler : IDisposable
                     if (file.Value is PackagedFileInfo)
                     {
                         var pkgd = file.Value as PackagedFileInfo;
-                        path = (pkgd.PackageStream as FileStream).Name + ":/" + pkgd.Name;
+                        path = (pkgd.PackageStream as FileStream).Name + ":/" + pkgd.FileName;
                     }
                     else
                     {
@@ -381,8 +381,8 @@ class ModCompiler : IDisposable
                 LoadMod(modName);
             }
 
-            AbstractFileInfo storyHeaderFile = null;
-            AbstractFileInfo typeCoercionWhitelistFile = null;
+            IAbstractFileInfo storyHeaderFile = null;
+            IAbstractFileInfo typeCoercionWhitelistFile = null;
             var modsSearchPath = mods.ToList();
             modsSearchPath.Reverse();
             foreach (var modName in modsSearchPath)

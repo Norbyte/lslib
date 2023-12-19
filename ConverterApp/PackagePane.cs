@@ -32,7 +32,7 @@ namespace ConverterApp
 #endif
         }
 
-        private void PackageProgressUpdate(string status, long numerator, long denominator, AbstractFileInfo file)
+        private void PackageProgressUpdate(string status, long numerator, long denominator, IAbstractFileInfo file)
         {
             if (file != null)
             {

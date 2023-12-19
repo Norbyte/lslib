@@ -16,7 +16,7 @@ internal class CommandLinePackageProcessor
         CreatePackageResource();
     }
 
-    public static void ListFiles(Func<AbstractFileInfo, bool> filter = null)
+    public static void ListFiles(Func<IAbstractFileInfo, bool> filter = null)
     {
         if (CommandLineActions.SourcePath == null)
         {
@@ -41,7 +41,7 @@ internal class CommandLinePackageProcessor
             {
                 Package package = reader.Read();
                 // Try to match by full path
-                AbstractFileInfo file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0 && !fileInfo.IsDeletion());
+                var file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0 && !fileInfo.IsDeletion());
                 if (file == null)
                 {
                     // Try to match by filename only
@@ -79,22 +79,21 @@ internal class CommandLinePackageProcessor
         }
     }
 
-    private static void ListPackageFiles(string packagePath, Func<AbstractFileInfo, bool> filter = null)
+    private static void ListPackageFiles(string packagePath, Func<IAbstractFileInfo, bool> filter = null)
     {
         try
         {
             using (var reader = new PackageReader(packagePath))
             {
                 Package package = reader.Read();
+	            var files = package.Files;
 
-	                List<AbstractFileInfo> files = package.Files;
+	            if (filter != null)
+	            {
+		            files = files.FindAll(obj => filter(obj));
+	            }
 
-	                if (filter != null)
-	                {
-		                files = files.FindAll(obj => filter(obj));
-	                }
-
-                foreach (AbstractFileInfo fileInfo in files.OrderBy(obj => obj.Name))
+                foreach (var fileInfo in files.OrderBy(obj => obj.Name))
                 {
                     Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.CRC()}");
                 }
@@ -111,7 +110,7 @@ internal class CommandLinePackageProcessor
         }
     }
 
-    public static void Extract(Func<AbstractFileInfo, bool> filter = null)
+    public static void Extract(Func<IAbstractFileInfo, bool> filter = null)
     {
         if (CommandLineActions.SourcePath == null)
         {
@@ -127,7 +126,7 @@ internal class CommandLinePackageProcessor
         }
     }
 
-    public static void BatchExtract(Func<AbstractFileInfo, bool> filter = null)
+    public static void BatchExtract(Func<IAbstractFileInfo, bool> filter = null)
     {
         string[] files = Directory.GetFiles(CommandLineActions.SourcePath, $"*.{Args.InputFormat}");
 
@@ -173,7 +172,7 @@ internal class CommandLinePackageProcessor
         CommandLineLogger.LogInfo("Package created successfully.");
     }
 
-    private static void ExtractPackageResource(string file = "", string folder = "", Func<AbstractFileInfo, bool> filter = null)
+    private static void ExtractPackageResource(string file = "", string folder = "", Func<IAbstractFileInfo, bool> filter = null)
     {
         if (string.IsNullOrEmpty(file))
         {

@@ -344,7 +344,8 @@ public class Magic
                 Format.LittleEndian32 => LittleEndian32Magic2,
                 Format.LittleEndian64 => LittleEndian64Magic2,
                 Format.BigEndian32 => BigEndian32Magic2,
-                Format.BigEndian64 => BigEndian64Magic2
+                Format.BigEndian64 => BigEndian64Magic2,
+                _ => throw new InvalidDataException("Invalid GR2 signature")
             };
         }
         else
@@ -354,7 +355,8 @@ public class Magic
                 Format.LittleEndian32 => LittleEndian32Magic,
                 Format.LittleEndian64 => LittleEndian64Magic,
                 Format.BigEndian32 => BigEndian32Magic,
-                Format.BigEndian64 => BigEndian64Magic
+                Format.BigEndian64 => BigEndian64Magic,
+                _ => throw new InvalidDataException("Invalid GR2 signature")
             };
         }
     }

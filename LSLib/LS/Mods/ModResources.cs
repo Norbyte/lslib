@@ -10,19 +10,19 @@ namespace LSLib.LS;
 public class ModInfo(string name)
 {
     public string Name = name;
-    public AbstractFileInfo Meta;
-    public Dictionary<string, AbstractFileInfo> Scripts = [];
-    public Dictionary<string, AbstractFileInfo> Stats = [];
-    public Dictionary<string, AbstractFileInfo> Globals = [];
-    public Dictionary<string, AbstractFileInfo> LevelObjects = [];
-    public AbstractFileInfo OrphanQueryIgnoreList;
-    public AbstractFileInfo StoryHeaderFile;
-    public AbstractFileInfo TypeCoercionWhitelistFile;
-    public AbstractFileInfo ModifiersFile;
-    public AbstractFileInfo ValueListsFile;
-    public AbstractFileInfo ActionResourcesFile;
-    public AbstractFileInfo ActionResourceGroupsFile;
-    public List<AbstractFileInfo> TagFiles = [];
+    public IAbstractFileInfo Meta;
+    public Dictionary<string, IAbstractFileInfo> Scripts = [];
+    public Dictionary<string, IAbstractFileInfo> Stats = [];
+    public Dictionary<string, IAbstractFileInfo> Globals = [];
+    public Dictionary<string, IAbstractFileInfo> LevelObjects = [];
+    public IAbstractFileInfo OrphanQueryIgnoreList;
+    public IAbstractFileInfo StoryHeaderFile;
+    public IAbstractFileInfo TypeCoercionWhitelistFile;
+    public IAbstractFileInfo ModifiersFile;
+    public IAbstractFileInfo ValueListsFile;
+    public IAbstractFileInfo ActionResourcesFile;
+    public IAbstractFileInfo ActionResourceGroupsFile;
+    public List<IAbstractFileInfo> TagFiles = [];
 }
 
 public class ModResources : IDisposable
@@ -97,32 +97,32 @@ public partial class ModPathVisitor
         return mod;
     }
 
-    private void AddMetadataToMod(string modName, AbstractFileInfo file)
+    private void AddMetadataToMod(string modName, IAbstractFileInfo file)
     {
         GetMod(modName).Meta = file;
     }
 
-    private void AddStatToMod(string modName, string path, AbstractFileInfo file)
+    private void AddStatToMod(string modName, string path, IAbstractFileInfo file)
     {
         GetMod(modName).Stats[path] = file;
     }
 
-    private void AddScriptToMod(string modName, string scriptName, AbstractFileInfo file)
+    private void AddScriptToMod(string modName, string scriptName, IAbstractFileInfo file)
     {
         GetMod(modName).Scripts[scriptName] = file;
     }
 
-    private void AddGlobalsToMod(string modName, string path, AbstractFileInfo file)
+    private void AddGlobalsToMod(string modName, string path, IAbstractFileInfo file)
     {
         GetMod(modName).Globals[path] = file;
     }
 
-    private void AddLevelObjectsToMod(string modName, string path, AbstractFileInfo file)
+    private void AddLevelObjectsToMod(string modName, string path, IAbstractFileInfo file)
     {
         GetMod(modName).LevelObjects[path] = file;
     }
 
-    private void DiscoverPackagedFile(AbstractFileInfo file)
+    private void DiscoverPackagedFile(IAbstractFileInfo file)
     {
         if (file.IsDeletion()) return;
 
@@ -347,7 +347,7 @@ public partial class ModPathVisitor
             var fileInfo = new FilesystemFileInfo
             {
                 FilesystemPath = Path.Join(goalPath, goalFile),
-                Name = goalFile
+                FileName = goalFile
             };
             AddScriptToMod(modName, goalFile, fileInfo);
         }
@@ -366,7 +366,7 @@ public partial class ModPathVisitor
             var fileInfo = new FilesystemFileInfo
             {
                 FilesystemPath = Path.Join(statsPath, statFile),
-                Name = statFile
+                FileName = statFile
             };
             AddStatToMod(modName, statFile, fileInfo);
         }
@@ -385,7 +385,7 @@ public partial class ModPathVisitor
             var fileInfo = new FilesystemFileInfo
             {
                 FilesystemPath = Path.Join(globalsPath, globalFile),
-                Name = globalFile
+                FileName = globalFile
             };
             AddGlobalsToMod(modName, globalFile, fileInfo);
         }
@@ -405,7 +405,7 @@ public partial class ModPathVisitor
             var fileInfo = new FilesystemFileInfo
             {
                 FilesystemPath = Path.Join(levelsPath, levelFile),
-                Name = levelFile
+                FileName = levelFile
             };
             AddLevelObjectsToMod(modName, levelFile, fileInfo);
         }
@@ -426,7 +426,7 @@ public partial class ModPathVisitor
                 var fileInfo = new FilesystemFileInfo
                 {
                     FilesystemPath = headerPath,
-                    Name = headerPath
+                    FileName = headerPath
                 };
                 GetMod(modName).StoryHeaderFile = fileInfo;
             }
@@ -437,7 +437,7 @@ public partial class ModPathVisitor
                 var fileInfo = new FilesystemFileInfo
                 {
                     FilesystemPath = orphanQueryIgnoresPath,
-                    Name = orphanQueryIgnoresPath
+                    FileName = orphanQueryIgnoresPath
                 };
                 GetMod(modName).OrphanQueryIgnoreList = fileInfo;
             }
@@ -448,7 +448,7 @@ public partial class ModPathVisitor
                 var fileInfo = new FilesystemFileInfo
                 {
                     FilesystemPath = typeCoercionWhitelistPath,
-                    Name = typeCoercionWhitelistPath
+                    FileName = typeCoercionWhitelistPath
                 };
                 GetMod(modName).TypeCoercionWhitelistFile = fileInfo;
             }

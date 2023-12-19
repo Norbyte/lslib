@@ -90,7 +90,7 @@ public class DebugDumperTask
 
     private Resource LoadPackagedResource(string path)
     {
-        AbstractFileInfo fileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == path);
+        var fileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == path);
         if (fileInfo == null)
         {
             throw new ArgumentException($"Could not locate file in package: '{path}");
@@ -256,7 +256,7 @@ public class DebugDumperTask
         }
 
         ReportProgress(70, "Loading story ...");
-        AbstractFileInfo storySave = SavePackage.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
+        var storySave = SavePackage.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
         Stream storyStream;
         if (storySave != null)
         {
@@ -299,7 +299,7 @@ public class DebugDumperTask
         {
             SavePackage = packageReader.Read();
 
-            AbstractFileInfo abstractFileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
+            var abstractFileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (abstractFileInfo == null)
             {
                 MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
