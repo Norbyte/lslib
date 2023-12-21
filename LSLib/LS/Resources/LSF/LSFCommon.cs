@@ -79,7 +79,7 @@ internal struct LSFMetadataV5
     /// Compression method and level used for the string, node, attribute and value buffers.
     /// Uses the same format as packages (see BinUtils.MakeCompressionFlags)
     /// </summary>
-    public Byte CompressionFlags;
+    public CompressionFlags CompressionFlags;
     /// <summary>
     /// Possibly unused, always 0
     /// </summary>
@@ -131,7 +131,7 @@ internal struct LSFMetadataV6
     /// Compression method and level used for the string, node, attribute and value buffers.
     /// Uses the same format as packages (see BinUtils.MakeCompressionFlags)
     /// </summary>
-    public Byte CompressionFlags;
+    public CompressionFlags CompressionFlags;
     /// <summary>
     /// Possibly unused, always 0
     /// </summary>

@@ -192,7 +192,7 @@ class DebugInfoSaver
             codedStream.Flush();
 
             byte[] proto = ms.ToArray();
-            byte flags = BinUtils.MakeCompressionFlags(LSLib.LS.Enums.CompressionMethod.LZ4, LSLib.LS.Enums.LSCompressionLevel.FastCompression);
+            var flags = BinUtils.MakeCompressionFlags(CompressionMethod.LZ4, LSCompressionLevel.Fast);
             byte[] compressed = BinUtils.Compress(proto, flags);
             stream.Write(compressed, 0, compressed.Length);
 

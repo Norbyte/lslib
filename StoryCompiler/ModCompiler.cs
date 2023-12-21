@@ -228,36 +228,28 @@ class ModCompiler : IDisposable
     {
         foreach (var file in mod.Scripts)
         {
-            var scriptStream = file.Value.MakeStream();
-            try
-            {
-                using (var reader = new BinaryReader(scriptStream))
-                {
-                    string path;
-                    if (file.Value is PackagedFileInfo)
-                    {
-                        var pkgd = file.Value as PackagedFileInfo;
-                        path = (pkgd.PackageStream as FileStream).Name + ":/" + pkgd.FileName;
-                    }
-                    else
-                    {
-                        var fs = file.Value as FilesystemFileInfo;
-                        path = fs.FilesystemPath;
-                    }
+            using var scriptStream = file.Value.CreateContentReader();
+            using var reader = new BinaryReader(scriptStream);
 
-                    var script = new GoalScript
-                    {
-                        Name = Path.GetFileNameWithoutExtension(file.Value.Name),
-                        Path = path,
-                        ScriptBody = reader.ReadBytes((int)scriptStream.Length)
-                    };
-                    GoalScripts.Add(script);
-                }
-            }
-            finally
+            string path;
+            if (file.Value is PackagedFileInfo)
             {
-                file.Value.ReleaseStream();
+                var pkgd = file.Value as PackagedFileInfo;
+                path = "packaged:/" + pkgd.FileName;
             }
+            else
+            {
+                var fs = file.Value as FilesystemFileInfo;
+                path = fs.FilesystemPath;
+            }
+
+            var script = new GoalScript
+            {
+                Name = Path.GetFileNameWithoutExtension(file.Value.Name),
+                Path = path,
+                ScriptBody = reader.ReadBytes((int)scriptStream.Length)
+            };
+            GoalScripts.Add(script);
         }
     }
 
@@ -265,29 +257,20 @@ class ModCompiler : IDisposable
     {
         if (mod.OrphanQueryIgnoreList == null) return;
         
-        var ignoreStream = mod.OrphanQueryIgnoreList.MakeStream();
-        try
-        {
-            using (var reader = new StreamReader(ignoreStream))
-            {
-                var ignoreRe = new Regex("^([a-zA-Z0-9_]+)\\s+([0-9]+)$");
+        using var ignoreStream = mod.OrphanQueryIgnoreList.CreateContentReader();
+        using var reader = new StreamReader(ignoreStream);
 
-                while (!reader.EndOfStream)
-                {
-                    string ignoreLine = reader.ReadLine();
-                    var match = ignoreRe.Match(ignoreLine);
-                    if (match.Success)
-                    {
-                        var signature = new FunctionNameAndArity(
-                            match.Groups[1].Value, Int32.Parse(match.Groups[2].Value));
-                        Compiler.IgnoreUnusedDatabases.Add(signature);
-                    }
-                }
-            }
-        }
-        finally
+        var ignoreRe = new Regex("^([a-zA-Z0-9_]+)\\s+([0-9]+)$");
+        while (!reader.EndOfStream)
         {
-            mod.OrphanQueryIgnoreList.ReleaseStream();
+            string ignoreLine = reader.ReadLine();
+            var match = ignoreRe.Match(ignoreLine);
+            if (match.Success)
+            {
+                var signature = new FunctionNameAndArity(
+                    match.Groups[1].Value, Int32.Parse(match.Groups[2].Value));
+                Compiler.IgnoreUnusedDatabases.Add(signature);
+            }
         }
     }
 
@@ -295,36 +278,20 @@ class ModCompiler : IDisposable
     {
         foreach (var file in mod.Globals)
         {
-            var globalStream = file.Value.MakeStream();
-            try
-            {
-                using (var reader = new BinaryReader(globalStream))
-                {
-                    var globalLsf = reader.ReadBytes((int)globalStream.Length);
-                    GameObjectLSFs.Add(globalLsf);
-                }
-            }
-            finally
-            {
-                file.Value.ReleaseStream();
-            }
+            using var globalStream = file.Value.CreateContentReader();
+            using var reader = new BinaryReader(globalStream);
+
+            var globalLsf = reader.ReadBytes((int)globalStream.Length);
+            GameObjectLSFs.Add(globalLsf);
         }
 
         foreach (var file in mod.LevelObjects)
         {
-            var objectStream = file.Value.MakeStream();
-            try
-            {
-                using (var reader = new BinaryReader(objectStream))
-                {
-                    var levelLsf = reader.ReadBytes((int)objectStream.Length);
-                    GameObjectLSFs.Add(levelLsf);
-                }
-            }
-            finally
-            {
-                file.Value.ReleaseStream();
-            }
+            using var objectStream = file.Value.CreateContentReader();
+            using var reader = new BinaryReader(objectStream);
+
+            var levelLsf = reader.ReadBytes((int)objectStream.Length);
+            GameObjectLSFs.Add(levelLsf);
         }
     }
 
@@ -400,9 +367,8 @@ class ModCompiler : IDisposable
 
             if (storyHeaderFile != null)
             {
-                var storyStream = storyHeaderFile.MakeStream();
+                using var storyStream = storyHeaderFile.CreateContentReader();
                 LoadStoryHeaders(storyStream);
-                storyHeaderFile.ReleaseStream();
             }
             else
             {
@@ -412,9 +378,8 @@ class ModCompiler : IDisposable
 
             if (typeCoercionWhitelistFile != null)
             {
-                var typeCoercionStream = typeCoercionWhitelistFile.MakeStream();
+                using var typeCoercionStream = typeCoercionWhitelistFile.CreateContentReader();
                 LoadTypeCoercionWhitelist(typeCoercionStream);
-                typeCoercionWhitelistFile.ReleaseStream();
                 Compiler.TypeCoercionWhitelist = TypeCoercionWhitelist;
             }
 

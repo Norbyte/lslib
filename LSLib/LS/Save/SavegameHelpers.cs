@@ -1,5 +1,4 @@
-﻿using LSLib.Granny;
-using LSLib.LS.Enums;
+﻿using LSLib.LS.Enums;
 using LSLib.LS.Story;
 using System;
 using System.Collections.Generic;
@@ -10,18 +9,17 @@ namespace LSLib.LS.Save;
 
 public class SavegameHelpers : IDisposable
 {
-    private readonly PackageReader Reader;
     private readonly Package Package;
 
     public SavegameHelpers(string path)
     {
-        Reader = new PackageReader(path);
-        Package = Reader.Read();
+        var reader = new PackageReader();
+        Package = reader.Read(path);
     }
 
     public void Dispose()
     {
-        Reader.Dispose();
+        Package.Dispose();
     }
 
     public Resource LoadGlobals()
@@ -32,19 +30,9 @@ public class SavegameHelpers : IDisposable
             throw new InvalidDataException("The specified package is not a valid savegame (globals.lsf not found)");
         }
 
-        Resource resource;
-        Stream rsrcStream = globalsInfo.MakeStream();
-        try
-        {
-            using var rsrcReader = new LSFReader(rsrcStream);
-            resource = rsrcReader.Read();
-        }
-        finally
-        {
-            globalsInfo.ReleaseStream();
-        }
-
-        return resource;
+        using var rsrcStream = globalsInfo.CreateContentReader();
+        using var rsrcReader = new LSFReader(rsrcStream);
+        return rsrcReader.Read();
     }
 
     public Story.Story LoadStory(Stream s)
@@ -58,15 +46,8 @@ public class SavegameHelpers : IDisposable
         var storyInfo = Package.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
         if (storyInfo != null)
         {
-            Stream rsrcStream = storyInfo.MakeStream();
-            try
-            {
-                return LoadStory(rsrcStream);
-            }
-            finally
-            {
-                storyInfo.ReleaseStream();
-            }
+            using var rsrcStream = storyInfo.CreateContentReader();
+            return LoadStory(rsrcStream);
         }
         else
         {
@@ -78,7 +59,7 @@ public class SavegameHelpers : IDisposable
         }
     }
 
-    public MemoryStream ResaveStoryToGlobals(Story.Story story, ResourceConversionParameters conversionParams)
+    public byte[] ResaveStoryToGlobals(Story.Story story, ResourceConversionParameters conversionParams)
     {
         var globals = LoadGlobals();
 
@@ -101,26 +82,38 @@ public class SavegameHelpers : IDisposable
         };
         rsrcWriter.Write(globals);
         rewrittenStream.Seek(0, SeekOrigin.Begin);
-        return rewrittenStream;
+        return rewrittenStream.ToArray();
     }
 
     public void ResaveStory(Story.Story story, Game game, string path)
     {
         // Re-package global.lsf/StorySave.bin
-        var rewrittenPackage = new Package();
         var conversionParams = ResourceConversionParameters.FromGameVersion(game);
+
+        var build = new PackageBuildData
+        {
+            Version = conversionParams.PAKVersion,
+            Compression = CompressionMethod.Zlib,
+            CompressionLevel = LSCompressionLevel.Default
+        };
 
         var storyBin = Package.Files.FirstOrDefault(p => p.Name == "StorySave.bin");
         if (storyBin == null)
         {
-            var globalsStream = ResaveStoryToGlobals(story, conversionParams);
+            var globals = ResaveStoryToGlobals(story, conversionParams);
 
             var globalsLsf = Package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
-            StreamFileInfo globalsRepacked = StreamFileInfo.CreateFromStream(globalsStream, globalsLsf.Name);
-            rewrittenPackage.Files.Add(globalsRepacked);
+            var globalsRepacked = PackageBuildInputFile.CreateFromBlob(globals, globalsLsf.Name);
+            build.Files.Add(globalsRepacked);
 
-            var files = Package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf").ToList();
-            rewrittenPackage.Files.AddRange(files);
+            foreach (var file in Package.Files.Where(x => x.Name.ToLowerInvariant() != "globals.lsf"))
+            {
+                using var stream = file.CreateContentReader();
+                var contents = new byte[stream.Length];
+                stream.ReadExactly(contents, 0, contents.Length);
+
+                build.Files.Add(PackageBuildInputFile.CreateFromBlob(contents, file.Name));
+            }
         }
         else
         {
@@ -128,20 +121,22 @@ public class SavegameHelpers : IDisposable
             var storyStream = new MemoryStream();
             var storyWriter = new StoryWriter();
             storyWriter.Write(storyStream, story, true);
-            storyStream.Seek(0, SeekOrigin.Begin);
 
-            StreamFileInfo storyRepacked = StreamFileInfo.CreateFromStream(storyStream, "StorySave.bin");
-            rewrittenPackage.Files.Add(storyRepacked);
+            var storyRepacked = PackageBuildInputFile.CreateFromBlob(storyStream.ToArray(), "StorySave.bin");
+            build.Files.Add(storyRepacked);
 
-            var files = Package.Files.Where(x => x.Name != "StorySave.bin").ToList();
-            rewrittenPackage.Files.AddRange(files);
+            foreach (var file in Package.Files.Where(x => x.Name.ToLowerInvariant() != "StorySave.bin"))
+            {
+                using var stream = file.CreateContentReader();
+                var contents = new byte[stream.Length];
+                stream.ReadExactly(contents, 0, contents.Length);
+
+                build.Files.Add(PackageBuildInputFile.CreateFromBlob(contents, file.Name));
+            }
         }
 
-        using (var packageWriter = new PackageWriter(rewrittenPackage, path))
+        using (var packageWriter = new PackageWriter(build, path))
         {
-            packageWriter.Version = conversionParams.PAKVersion;
-            packageWriter.Compression = CompressionMethod.Zlib;
-            packageWriter.LSCompressionLevel = LSCompressionLevel.DefaultCompression;
             packageWriter.Write();
         }
     }

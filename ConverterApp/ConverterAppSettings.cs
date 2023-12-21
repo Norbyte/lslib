@@ -1,4 +1,5 @@
 ﻿using LSLib.Granny.Model;
+using LSLib.LS;
 using LSLib.LS.Enums;
 using System;
 using System.Collections.Generic;

@@ -5,8 +5,128 @@ using System.Runtime.InteropServices;
 using LSLib.LS.Enums;
 using System.IO.Compression;
 using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
+using System.IO.MemoryMappedFiles;
 
 namespace LSLib.LS;
+
+
+public class ReadOnlySubstream : Stream
+{
+    private readonly Stream SourceStream;
+    private readonly long FileOffset;
+    private readonly long Size;
+    private long CurPosition = 0;
+
+    public ReadOnlySubstream(Stream sourceStream, long offset, long size)
+    {
+        SourceStream = sourceStream;
+        FileOffset = offset;
+        Size = size;
+    }
+
+    public override bool CanRead { get { return true; } }
+    public override bool CanSeek { get { return false; } }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        SourceStream.Seek(FileOffset + CurPosition, SeekOrigin.Begin);
+        long readable = Size - CurPosition;
+        int bytesToRead = (readable < count) ? (int)readable : count;
+        var read = SourceStream.Read(buffer, offset, bytesToRead);
+        CurPosition += read;
+        return read;
+    }
+
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        SourceStream.Seek(FileOffset + CurPosition, SeekOrigin.Begin);
+        long readable = Size - CurPosition;
+        int bytesToRead = (readable < count) ? (int)readable : count;
+        CurPosition += bytesToRead;
+        return SourceStream.ReadAsync(buffer, offset, bytesToRead, cancellationToken);
+    }
+
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        throw new NotSupportedException();
+    }
+
+
+    public override long Position
+    {
+        get { return CurPosition; }
+        set { throw new NotSupportedException(); }
+    }
+
+    public override bool CanTimeout { get { return SourceStream.CanTimeout; } }
+    public override bool CanWrite { get { return false; } }
+    public override long Length { get { return Size; } }
+    public override void SetLength(long value) { throw new NotSupportedException(); }
+    public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
+    public override void Flush() { }
+}
+
+
+public class LZ4DecompressionStream : Stream
+{
+    private readonly MemoryMappedViewAccessor View;
+    private readonly long Offset;
+    private readonly int Size;
+    private readonly int DecompressedSize;
+    private MemoryStream Decompressed;
+
+    public LZ4DecompressionStream(MemoryMappedViewAccessor view, long offset, int size, int decompressedSize)
+    {
+        View = view;
+        Offset = offset;
+        Size = size;
+        DecompressedSize = decompressedSize;
+    }
+
+    private void DoDecompression()
+    {
+        var compressed = new byte[Size];
+        View.ReadArray(Offset, compressed, 0, Size);
+
+        var decompressed = new byte[DecompressedSize];
+        LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, DecompressedSize, true);
+        Decompressed = new MemoryStream(decompressed);
+    }
+
+    public override bool CanRead { get { return true; } }
+    public override bool CanSeek { get { return false; } }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        if (Decompressed == null)
+        {
+            DoDecompression();
+        }
+
+        return Decompressed.Read(buffer, offset, count);
+    }
+
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        throw new NotSupportedException();
+    }
+
+
+    public override long Position
+    {
+        get { return Decompressed?.Position ?? 0; }
+        set { throw new NotSupportedException(); }
+    }
+
+    public override bool CanTimeout { get { return false; } }
+    public override bool CanWrite { get { return false; } }
+    public override long Length { get { return DecompressedSize; } }
+    public override void SetLength(long value) { throw new NotSupportedException(); }
+    public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
+    public override void Flush() { }
+}
 
 public static class BinUtils
 {
@@ -284,54 +404,14 @@ public static class BinUtils
         }
     }
 
-    public static CompressionMethod CompressionFlagsToMethod(byte flags)
+    public static CompressionFlags MakeCompressionFlags(CompressionMethod method, LSCompressionLevel level)
     {
-        return (flags & 0x0f) switch
-        {
-            (int)CompressionMethod.None => CompressionMethod.None,
-            (int)CompressionMethod.Zlib => CompressionMethod.Zlib,
-            (int)CompressionMethod.LZ4 => CompressionMethod.LZ4,
-            _ => throw new ArgumentException("Invalid compression method")
-        };
+        return method.ToFlags() | level.ToFlags();
     }
 
-    public static LSCompressionLevel CompressionFlagsToLevel(byte flags)
+    public static byte[] Decompress(byte[] compressed, int decompressedSize, CompressionFlags compression, bool chunked = false)
     {
-        return (flags & 0xf0) switch
-        {
-            (int)CompressionFlags.FastCompress => LSCompressionLevel.FastCompression,
-            (int)CompressionFlags.DefaultCompress => LSCompressionLevel.DefaultCompression,
-            (int)CompressionFlags.MaxCompressionLevel => LSCompressionLevel.MaxCompression,
-            _ => throw new ArgumentException("Invalid compression flags")
-        };
-    }
-
-    public static byte MakeCompressionFlags(CompressionMethod method, LSCompressionLevel level)
-    {
-        if (method == CompressionMethod.None)
-        {
-            return 0;
-        }
-
-        byte flags = 0;
-        if (method == CompressionMethod.Zlib)
-            flags = 0x1;
-        else if (method == CompressionMethod.LZ4)
-            flags = 0x2;
-
-        if (level == LSCompressionLevel.FastCompression)
-            flags |= 0x10;
-        else if (level == LSCompressionLevel.DefaultCompression)
-            flags |= 0x20;
-        else if (level == LSCompressionLevel.MaxCompression)
-            flags |= 0x40;
-
-        return flags;
-    }
-
-    public static byte[] Decompress(byte[] compressed, int decompressedSize, byte compressionFlags, bool chunked = false)
-    {
-        switch (CompressionFlagsToMethod(compressionFlags))
+        switch (compression.Method())
         {
             case CompressionMethod.None:
                 return compressed;
@@ -362,46 +442,68 @@ public static class BinUtils
                 else
                 {
                     var decompressed = new byte[decompressedSize];
-                    LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
+                    var resultSize = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
+                    if (resultSize != decompressedSize)
+                    {
+                        string msg = $"LZ4 compressor disagrees about the size of compressed buffer; expected {decompressedSize}, got {resultSize}";
+                        throw new InvalidDataException(msg);
+                    }
                     return decompressed;
                 }
 
             default:
-                {
-                    var msg = String.Format("No decompressor found for this format: {0}", compressionFlags);
-                    throw new InvalidDataException(msg);
-                }
+                throw new InvalidDataException($"No decompressor found for this format: {compression}");
         }
     }
 
-    public static byte[] Compress(byte[] uncompressed, byte compressionFlags)
+    public static Stream Decompress(MemoryMappedFile file, MemoryMappedViewAccessor view, long sourceOffset, 
+        int sourceSize, int decompressedSize, CompressionFlags compression)
     {
-        return Compress(uncompressed, (CompressionMethod)(compressionFlags & 0x0F), CompressionFlagsToLevel(compressionFlags));
+        switch (compression.Method())
+        {
+            case CompressionMethod.None:
+                return file.CreateViewStream(sourceOffset, sourceSize, MemoryMappedFileAccess.Read);
+
+            case CompressionMethod.Zlib:
+                var sourceStream = file.CreateViewStream(sourceOffset, sourceSize, MemoryMappedFileAccess.Read);
+                return new ZLibStream(sourceStream, CompressionMode.Decompress);
+
+            case CompressionMethod.LZ4:
+                return new LZ4DecompressionStream(view, sourceOffset, sourceSize, decompressedSize);
+
+            default:
+                 throw new InvalidDataException($"No decompressor found for this format: {compression}");
+        }
     }
 
-    public static byte[] Compress(byte[] uncompressed, CompressionMethod method, LSCompressionLevel compressionLevel, bool chunked = false)
+    public static byte[] Compress(byte[] uncompressed, CompressionFlags compression)
+    {
+        return Compress(uncompressed, compression.Method(), compression.Level());
+    }
+
+    public static byte[] Compress(byte[] uncompressed, CompressionMethod method, LSCompressionLevel level, bool chunked = false)
     {
         return method switch
         {
             CompressionMethod.None => uncompressed,
-            CompressionMethod.Zlib => CompressZlib(uncompressed, compressionLevel),
-            CompressionMethod.LZ4 => CompressLZ4(uncompressed, compressionLevel, chunked),
+            CompressionMethod.Zlib => CompressZlib(uncompressed, level),
+            CompressionMethod.LZ4 => CompressLZ4(uncompressed, level, chunked),
             _ => throw new ArgumentException("Invalid compression method specified")
         };
     }
 
-    public static byte[] CompressZlib(byte[] uncompressed, LSCompressionLevel compressionLevel)
+    public static byte[] CompressZlib(byte[] uncompressed, LSCompressionLevel level)
     {
-        var level = compressionLevel switch
+        var zLevel = level switch
         {
-            LSCompressionLevel.FastCompression => CompressionLevel.Fastest,
-            LSCompressionLevel.DefaultCompression => CompressionLevel.Optimal,
-            LSCompressionLevel.MaxCompression => CompressionLevel.SmallestSize,
+            LSCompressionLevel.Fast => CompressionLevel.Fastest,
+            LSCompressionLevel.Default => CompressionLevel.Optimal,
+            LSCompressionLevel.Max => CompressionLevel.SmallestSize,
             _ => throw new ArgumentException()
         };
 
         using var outputStream = new MemoryStream();
-        using (var compressor = new ZLibStream(outputStream, level, true))
+        using (var compressor = new ZLibStream(outputStream, zLevel, true))
         {
             compressor.Write(uncompressed, 0, uncompressed.Length);
         }
@@ -416,7 +518,7 @@ public static class BinUtils
         {
             return Native.LZ4FrameCompressor.Compress(uncompressed);
         }
-        else if (compressionLevel == LSCompressionLevel.FastCompression)
+        else if (compressionLevel == LSCompressionLevel.Fast)
         {
             return LZ4Codec.Encode(uncompressed, 0, uncompressed.Length);
         }

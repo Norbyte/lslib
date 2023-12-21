@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using LSLib.LS;
 using LSLib.LS.Enums;
@@ -81,8 +80,8 @@ namespace ConverterApp
 
         public Resource LoadResourceFromSave(string path)
         {
-            var packageReader = new PackageReader(path);
-            Package package = packageReader.Read();
+            var packageReader = new PackageReader();
+            using var package = packageReader.Read(path);
             
             var abstractFileInfo = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (abstractFileInfo == null)
@@ -92,18 +91,9 @@ namespace ConverterApp
             }
 
             Resource resource;
-            Stream rsrcStream = abstractFileInfo.MakeStream();
-            try
-            {
-                using (var rsrcReader = new LSFReader(rsrcStream))
-                {
-                    resource = rsrcReader.Read();
-                }
-            }
-            finally
-            {
-                abstractFileInfo.ReleaseStream();
-            }
+            using var rsrcStream = abstractFileInfo.CreateContentReader();
+            using var rsrcReader = new LSFReader(rsrcStream);
+            resource = rsrcReader.Read();
 
             return resource;
         }

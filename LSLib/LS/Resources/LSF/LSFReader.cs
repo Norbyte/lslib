@@ -9,7 +9,7 @@ using LSLib.LS.Enums;
 
 namespace LSLib.LS;
 
-public class LSFReader(Stream stream) : IDisposable
+public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
 {
     /// <summary>
     /// Input stream
@@ -48,7 +48,10 @@ public class LSFReader(Stream stream) : IDisposable
 
     public void Dispose()
     {
-        Stream.Dispose();
+        if (!keepOpen)
+        {
+            Stream.Dispose();
+        }
     }
 
     /// <summary>
@@ -281,7 +284,7 @@ public class LSFReader(Stream stream) : IDisposable
         }
         
         bool chunked = (Version >= LSFVersion.VerChunkedCompress && allowChunked);
-        bool isCompressed = BinUtils.CompressionFlagsToMethod(Metadata.CompressionFlags) != CompressionMethod.None;
+        bool isCompressed = Metadata.CompressionFlags.Method() != CompressionMethod.None;
         uint compressedSize = isCompressed ? sizeOnDisk : uncompressedSize;
         byte[] compressed = reader.ReadBytes((int)compressedSize);
         var uncompressed = BinUtils.Decompress(compressed, (int)uncompressedSize, Metadata.CompressionFlags, chunked);

@@ -63,7 +63,7 @@ public class DebugDumperTask
     private void DoExtractPackage()
     {
         var packager = new Packager();
-        packager.ProgressUpdate = (file, numerator, denominator, fileInfo) => {
+        packager.ProgressUpdate = (file, numerator, denominator) => {
             ReportProgress(5 + (int)(numerator * 15 / denominator), "Extracting: " + file);
         };
         packager.UncompressPackage(SavePackage, ExtractionPath);
@@ -97,17 +97,10 @@ public class DebugDumperTask
         }
 
         Resource resource;
-        Stream rsrcStream = fileInfo.MakeStream();
-        try
+        using var rsrcStream = fileInfo.CreateContentReader();
+        using (var rsrcReader = new LSFReader(rsrcStream))
         {
-            using (var rsrcReader = new LSFReader(rsrcStream))
-            {
-                resource = rsrcReader.Read();
-            }
-        }
-        finally
-        {
-            fileInfo.ReleaseStream();
+            resource = rsrcReader.Read();
         }
 
         return resource;
@@ -260,7 +253,7 @@ public class DebugDumperTask
         Stream storyStream;
         if (storySave != null)
         {
-            storyStream = storySave.MakeStream();
+            storyStream = storySave.CreateContentReader();
         }
         else
         {
@@ -295,20 +288,20 @@ public class DebugDumperTask
     {
         ReportProgress(0, "Reading package ...");
 
-        using (var packageReader = new PackageReader(SaveFilePath))
+        var packageReader = new PackageReader();
+        using var savePackage = packageReader.Read(SaveFilePath);
+
+        SavePackage = savePackage;
+        var abstractFileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
+        if (abstractFileInfo == null)
         {
-            SavePackage = packageReader.Read();
-
-            var abstractFileInfo = SavePackage.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
-            if (abstractFileInfo == null)
-            {
-                MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            RunTasks();
-
-            MessageBox.Show($"Savegame dumped to {DataDumpPath}.");
+            MessageBox.Show("The specified package is not a valid savegame (globals.lsf not found)", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
         }
+
+        RunTasks();
+        SavePackage = null;
+
+        MessageBox.Show($"Savegame dumped to {DataDumpPath}.");
     }
 }

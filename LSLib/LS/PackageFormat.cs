@@ -1,13 +1,16 @@
-﻿using LSLib.Granny;
+﻿using LSLib.Granny.GR2;
 using LSLib.LS.Enums;
 using System;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace LSLib.LS;
 
 public class PackageHeaderCommon
 {
+    public const PackageVersion CurrentVersion = PackageVersion.V18;
+    public const UInt32 Signature = 0x4B50534C;
+
     public UInt32 Version;
     public UInt64 FileListOffset;
     // Size of file list; used for legacy (<= v10) packages only
@@ -155,20 +158,18 @@ internal struct LSPKHeader13 : ILSPKHeader
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal struct LSPKHeader15 : ILSPKHeader
+internal unsafe struct LSPKHeader15 : ILSPKHeader
 {
     public UInt32 Version;
     public UInt64 FileListOffset;
     public UInt32 FileListSize;
     public Byte Flags;
     public Byte Priority;
-
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-    public byte[] Md5;
+    public fixed byte Md5[16];
 
     public readonly PackageHeaderCommon ToCommonHeader()
     {
-        return new PackageHeaderCommon
+        var header = new PackageHeaderCommon
         {
             Version = Version,
             DataOffset = 0,
@@ -177,41 +178,48 @@ internal struct LSPKHeader15 : ILSPKHeader
             NumParts = 1,
             Flags = (PackageFlags)Flags,
             Priority = Priority,
-            Md5 = Md5
+            Md5 = new byte[16]
         };
+
+        fixed (byte* md = Md5)
+        {
+            Marshal.Copy(new IntPtr(md), header.Md5, 0, 0x10);
+        }
+
+        return header;
     }
 
     public static ILSPKHeader FromCommonHeader(PackageHeaderCommon h)
     {
-        return new LSPKHeader15
+        var header = new LSPKHeader15
         {
             Version = h.Version,
             FileListOffset = (UInt32)h.FileListOffset,
             FileListSize = h.FileListSize,
             Flags = (byte)h.Flags,
-            Priority = h.Priority,
-            Md5 = h.Md5
+            Priority = h.Priority
         };
+
+        Marshal.Copy(h.Md5, 0, new IntPtr(header.Md5), 0x10);
+        return header;
     }
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal struct LSPKHeader16 : ILSPKHeader
+internal unsafe struct LSPKHeader16 : ILSPKHeader
 {
     public UInt32 Version;
     public UInt64 FileListOffset;
     public UInt32 FileListSize;
     public Byte Flags;
     public Byte Priority;
-
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-    public byte[] Md5;
+    public fixed byte Md5[16];
 
     public UInt16 NumParts;
 
     public readonly PackageHeaderCommon ToCommonHeader()
     {
-        return new PackageHeaderCommon
+        var header = new PackageHeaderCommon
         {
             Version = Version,
             FileListOffset = FileListOffset,
@@ -219,22 +227,31 @@ internal struct LSPKHeader16 : ILSPKHeader
             NumParts = NumParts,
             Flags = (PackageFlags)Flags,
             Priority = Priority,
-            Md5 = Md5
+            Md5 = new byte[16]
         };
+
+        fixed (byte* md = Md5)
+        {
+            Marshal.Copy(new IntPtr(md), header.Md5, 0, 0x10);
+        }
+
+        return header;
     }
 
     public static ILSPKHeader FromCommonHeader(PackageHeaderCommon h)
     {
-        return new LSPKHeader16
+        var header = new LSPKHeader16
         {
             Version = h.Version,
             FileListOffset = (UInt32)h.FileListOffset,
             FileListSize = h.FileListSize,
             Flags = (byte)h.Flags,
             Priority = h.Priority,
-            Md5 = h.Md5,
             NumParts = (UInt16)h.NumParts
         };
+
+        Marshal.Copy(h.Md5, 0, new IntPtr(header.Md5), 0x10);
+        return header;
     }
 }
 
@@ -262,7 +279,7 @@ abstract public class PackagedFileInfoCommon
     public string FileName;
     public UInt32 ArchivePart;
     public UInt32 Crc;
-    public Byte Flags;
+    public CompressionFlags Flags;
     public UInt64 OffsetInFile;
     public UInt64 SizeOnDisk;
     public UInt64 UncompressedSize;
@@ -291,7 +308,7 @@ internal struct FileEntry7 : ILSPKFile
         info.FileName = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = 0;
-        info.Flags = UncompressedSize > 0 ? BinUtils.MakeCompressionFlags(CompressionMethod.Zlib, LSCompressionLevel.DefaultCompression) : (byte)0;
+        info.Flags = UncompressedSize > 0 ? BinUtils.MakeCompressionFlags(CompressionMethod.Zlib, LSCompressionLevel.Default) : 0;
         info.OffsetInFile = OffsetInFile;
         info.SizeOnDisk = SizeOnDisk;
         info.UncompressedSize = UncompressedSize;
@@ -304,7 +321,7 @@ internal struct FileEntry7 : ILSPKFile
             Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
-            UncompressedSize = (info.Flags & 0x0F) == 0 ? 0 : (uint)info.UncompressedSize,
+            UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
             ArchivePart = info.ArchivePart
         };
     }
@@ -330,7 +347,7 @@ internal struct FileEntry10 : ILSPKFile
         info.FileName = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = Crc;
-        info.Flags = (Byte)Flags;
+        info.Flags = (CompressionFlags)Flags;
         info.OffsetInFile = OffsetInFile;
         info.SizeOnDisk = SizeOnDisk;
         info.UncompressedSize = UncompressedSize;
@@ -343,9 +360,9 @@ internal struct FileEntry10 : ILSPKFile
             Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
-            UncompressedSize = (info.Flags & 0x0F) == 0 ? 0 : (uint)info.UncompressedSize,
+            UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
             ArchivePart = info.ArchivePart,
-            Flags = info.Flags,
+            Flags = (byte)info.Flags,
             Crc = info.Crc
         };
     }
@@ -372,7 +389,7 @@ internal struct FileEntry15 : ILSPKFile
         info.FileName = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = Crc;
-        info.Flags = (Byte)Flags;
+        info.Flags = (CompressionFlags)Flags;
         info.OffsetInFile = OffsetInFile;
         info.SizeOnDisk = SizeOnDisk;
         info.UncompressedSize = UncompressedSize;
@@ -385,9 +402,9 @@ internal struct FileEntry15 : ILSPKFile
             Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
-            UncompressedSize = (info.Flags & 0x0F) == 0 ? 0 : (uint)info.UncompressedSize,
+            UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
             ArchivePart = info.ArchivePart,
-            Flags = info.Flags,
+            Flags = (Byte)info.Flags,
             Crc = info.Crc,
             Unknown2 = 0
         };
@@ -414,7 +431,7 @@ internal struct FileEntry18 : ILSPKFile
         info.FileName = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = 0;
-        info.Flags = Flags;
+        info.Flags = (CompressionFlags)Flags;
         info.OffsetInFile = OffsetInFile1 | ((ulong)OffsetInFile2 << 32);
         info.SizeOnDisk = SizeOnDisk;
         info.UncompressedSize = UncompressedSize;
@@ -428,9 +445,9 @@ internal struct FileEntry18 : ILSPKFile
             OffsetInFile1 = (uint)(info.OffsetInFile & 0xffffffff),
             OffsetInFile2 = (ushort)((info.OffsetInFile >> 32) & 0xffff),
             ArchivePart = (byte)info.ArchivePart,
-            Flags = info.Flags,
+            Flags = (byte)info.Flags,
             SizeOnDisk = (uint)info.SizeOnDisk,
-            UncompressedSize = (info.Flags & 0x0F) == 0 ? 0 : (uint)info.UncompressedSize
+            UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize
         };
     }
 

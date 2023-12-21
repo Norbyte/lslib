@@ -60,7 +60,7 @@ public class ResourceConversionParameters
     /// <summary>
     /// LSF/LSB compression level (i.e. size/compression time tradeoff)
     /// </summary>
-    public LSCompressionLevel LSCompressionLevel = LSCompressionLevel.DefaultCompression;
+    public LSCompressionLevel CompressionLevel = LSCompressionLevel.Default;
 
     /// <summary>
     /// Byte-swap the last 8 bytes of GUIDs when serializing to/from string
@@ -189,7 +189,7 @@ public class ResourceUtils
                         Version = conversionParams.LSF,
                         EncodeSiblingData = conversionParams.LSFEncodeSiblingData,
                         Compression = conversionParams.Compression,
-                        LSCompressionLevel = conversionParams.LSCompressionLevel
+                        CompressionLevel = conversionParams.CompressionLevel
                     };
                     writer.Write(resource);
                     break;

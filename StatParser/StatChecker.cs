@@ -33,15 +33,8 @@ class StatChecker : IDisposable
     {
         foreach (var file in mod.Stats)
         {
-            var statStream = file.Value.MakeStream();
-            try
-            {
-                Loader.LoadStatsFromStream(file.Key, statStream);
-            }
-            finally
-            {
-                file.Value.ReleaseStream();
-            }
+            using var statStream = file.Value.CreateContentReader();
+            Loader.LoadStatsFromStream(file.Key, statStream);
         }
     }
 
@@ -49,17 +42,11 @@ class StatChecker : IDisposable
     {
         if (file == null) return null;
 
-        var stream = file.MakeStream();
-        try
-        {
-            var doc = new XmlDocument();
-            doc.Load(stream);
-            return doc;
-        }
-        finally
-        {
-            file.ReleaseStream();
-        }
+        using var stream = file.CreateContentReader();
+
+        var doc = new XmlDocument();
+        doc.Load(stream);
+        return doc;
     }
 
     private void LoadGuidResources(ModInfo mod)
@@ -91,8 +78,8 @@ class StatChecker : IDisposable
     private void LoadStatDefinitions(ModResources resources)
     {
         Definitions = new StatDefinitionRepository();
-        Definitions.LoadEnumerations(resources.Mods["Shared"].ValueListsFile.MakeStream());
-        Definitions.LoadDefinitions(resources.Mods["Shared"].ModifiersFile.MakeStream());
+        Definitions.LoadEnumerations(resources.Mods["Shared"].ValueListsFile.CreateContentReader());
+        Definitions.LoadDefinitions(resources.Mods["Shared"].ModifiersFile.CreateContentReader());
     }
 
     private void CompilationDiagnostic(StatLoadingError message)

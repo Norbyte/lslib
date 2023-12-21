@@ -28,7 +28,7 @@ public class ModInfo(string name)
 public class ModResources : IDisposable
 {
     public Dictionary<string, ModInfo> Mods = [];
-    public List<PackageReader> LoadedPackages = [];
+    public List<Package> LoadedPackages = [];
 
     public void Dispose()
     {
@@ -254,9 +254,9 @@ public partial class ModPathVisitor
 
     public void DiscoverPackage(string packagePath)
     {
-        var reader = new PackageReader(packagePath);
-        Resources.LoadedPackages.Add(reader);
-        var package = reader.Read();
+        var reader = new PackageReader();
+        var package = reader.Read(packagePath);
+        Resources.LoadedPackages.Add(package);
 
         foreach (var file in package.Files)
         {
@@ -302,8 +302,8 @@ public partial class ModPathVisitor
                 // Don't load 2nd, 3rd, ... parts of a multi-part archive
                 && !archivePartRe.IsMatch(baseName))
             {
-                var reader = new PackageReader(path, true);
-                var package = reader.Read();
+                var reader = new PackageReader();
+                var package = reader.Read(path, true);
                 packagePriorities.Add(new Tuple<string, int>(path, package.Metadata.Priority));
             }
         }

@@ -32,7 +32,7 @@ public class LSFWriter(Stream stream)
     public LSFVersion Version = LSFVersion.MaxWriteVersion;
     public bool EncodeSiblingData = false;
     public CompressionMethod Compression = CompressionMethod.LZ4;
-    public LSCompressionLevel LSCompressionLevel = LSCompressionLevel.DefaultCompression;
+    public LSCompressionLevel CompressionLevel = LSCompressionLevel.Default;
 
     public void Write(Resource resource)
     {
@@ -114,10 +114,10 @@ public class LSFWriter(Stream stream)
             }
 
             bool chunked = Version >= LSFVersion.VerChunkedCompress;
-            byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, LSCompressionLevel);
-            byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, LSCompressionLevel, chunked);
-            byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, LSCompressionLevel, chunked);
-            byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, LSCompressionLevel, chunked);
+            byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
+            byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
+            byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
+            byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
             if (Version < LSFVersion.VerBG3AdditionalBlob)
             {
@@ -144,7 +144,7 @@ public class LSFWriter(Stream stream)
                     meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
                 }
 
-                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, LSCompressionLevel);
+                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
                 meta.Unknown2 = 0;
                 meta.Unknown3 = 0;
                 meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
@@ -177,7 +177,7 @@ public class LSFWriter(Stream stream)
                 }
 
                 meta.Unknown = 0;
-                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, LSCompressionLevel);
+                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
                 meta.Unknown2 = 0;
                 meta.Unknown3 = 0;
                 meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;

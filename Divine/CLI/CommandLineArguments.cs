@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using CommandLineParser.Arguments;
 using LSLib.Granny.Model;
+using LSLib.LS;
 using LSLib.LS.Enums;
 
 namespace Divine.CLI;
@@ -95,7 +96,7 @@ public class CommandLineArguments
         ValueOptional = false,
         Optional = true
     )]
-    public string CompressionMethod;
+    public string PakCompressionMethod;
 
     // @formatter:off
     [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
@@ -296,33 +297,35 @@ public class CommandLineArguments
     public static Dictionary<string, object> GetCompressionOptions(string compressionOption, PackageVersion packageVersion)
     {
         CompressionMethod compression;
-        var fastCompression = true;
+        LSCompressionLevel level;
 
         switch (compressionOption)
         {
             case "zlibfast":
             {
-                compression = LSLib.LS.Enums.CompressionMethod.Zlib;
+                compression = CompressionMethod.Zlib;
+                level = LSCompressionLevel.Fast;
                 break;
             }
 
             case "zlib":
             {
-                compression = LSLib.LS.Enums.CompressionMethod.Zlib;
-                fastCompression = false;
+                compression = CompressionMethod.Zlib;
+                level = LSCompressionLevel.Default;
                 break;
             }
 
             case "lz4":
             {
-                compression = LSLib.LS.Enums.CompressionMethod.LZ4;
+                compression = CompressionMethod.LZ4;
+                level = LSCompressionLevel.Fast;
                 break;
             }
 
             case "lz4hc":
             {
-                compression = LSLib.LS.Enums.CompressionMethod.LZ4;
-                fastCompression = false;
+                compression = CompressionMethod.LZ4;
+                level = LSCompressionLevel.Default;
                 break;
             }
 
@@ -330,22 +333,23 @@ public class CommandLineArguments
             case "none":
             default:
             {
-                compression = LSLib.LS.Enums.CompressionMethod.None;
+                compression = CompressionMethod.None;
+                level = LSCompressionLevel.Default;
                 break;
             }
         }
 
         // fallback to zlib, if the package version doesn't support lz4
-        if (compression == LSLib.LS.Enums.CompressionMethod.LZ4 && packageVersion <= LSLib.LS.Enums.PackageVersion.V9)
+        if (compression == CompressionMethod.LZ4 && packageVersion <= PackageVersion.V9)
         {
-            compression = LSLib.LS.Enums.CompressionMethod.Zlib;
-            fastCompression = false;
+            compression = CompressionMethod.Zlib;
+            level = LSCompressionLevel.Default;
         }
 
         var compressionOptions = new Dictionary<string, object>
         {
             { "Compression", compression },
-            { "FastCompression", fastCompression }
+            { "CompressionLevel", level }
         };
 
         return compressionOptions;

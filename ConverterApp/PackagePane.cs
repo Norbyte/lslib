@@ -32,25 +32,22 @@ namespace ConverterApp
 #endif
         }
 
-        private void PackageProgressUpdate(string status, long numerator, long denominator, IAbstractFileInfo file)
+        private void PackageProgressUpdate(string status, long numerator, long denominator)
         {
-            if (file != null)
+            // Throttle the progress displays to 10 updates per second to prevent UI
+            // updates from slowing down the compression/decompression process
+            if (_displayTimer == null)
             {
-                // Throttle the progress displays to 10 updates per second to prevent UI
-                // updates from slowing down the compression/decompression process
-                if (_displayTimer == null)
-                {
-                    _displayTimer = new Stopwatch();
-                    _displayTimer.Start();
-                }
-                else if (_displayTimer.ElapsedMilliseconds < 100)
-                {
-                    return;
-                }
-                else
-                {
-                    _displayTimer.Restart();
-                }
+                _displayTimer = new Stopwatch();
+                _displayTimer.Start();
+            }
+            else if (_displayTimer.ElapsedMilliseconds < 100)
+            {
+                return;
+            }
+            else
+            {
+                _displayTimer.Restart();
             }
 
             packageProgressLabel.Text = status;
@@ -88,10 +85,12 @@ namespace ConverterApp
                     MessageBox.Show($"The specified file ({extractPackagePath.Text}) is not an PAK package or savegame archive.", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
+#if !DEBUG
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Extraction Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+#endif
             finally
             {
                 packageProgressLabel.Text = "";
@@ -120,68 +119,70 @@ namespace ConverterApp
 
             try
             {
-                var options = new PackageCreationOptions();
-                options.Version = SelectedPackageVersion();
+                var build = new PackageBuildData();
+                build.Version = SelectedPackageVersion();
                 
                 switch (compressionMethod.SelectedIndex)
                 {
                     case 1:
                     {
-                        options.Compression = CompressionMethod.Zlib;
+                        build.Compression = CompressionMethod.Zlib;
+                        build.CompressionLevel = LSCompressionLevel.Fast;
                         break;
                     }
                     case 2:
                     {
-                        options.Compression = CompressionMethod.Zlib;
-                        options.FastCompression = false;
+                        build.Compression = CompressionMethod.Zlib;
                         break;
                     }
                     case 3:
                     {
-                        options.Compression = CompressionMethod.LZ4;
+                        build.Compression = CompressionMethod.LZ4;
+                        build.CompressionLevel = LSCompressionLevel.Fast;
                         break;
                     }
                     case 4:
                     {
-                        options.Compression = CompressionMethod.LZ4;
-                        options.FastCompression = false;
+                        build.Compression = CompressionMethod.LZ4;
                         break;
                     }
                 }
 
                 // Fallback to Zlib, if the package version doesn't support LZ4
-                if (options.Compression == CompressionMethod.LZ4 && options.Version <= PackageVersion.V9)
+                if (build.Compression == CompressionMethod.LZ4 && build.Version <= PackageVersion.V9)
                 {
-                    options.Compression = CompressionMethod.Zlib;
+                    build.Compression = CompressionMethod.Zlib;
                 }
 
                 if (solid.Checked)
                 {
-                    options.Flags |= PackageFlags.Solid;
+                    build.Flags |= PackageFlags.Solid;
                 }
 
                 if (allowMemoryMapping.Checked)
                 {
-                    options.Flags |= PackageFlags.AllowMemoryMapping;
+                    build.Flags |= PackageFlags.AllowMemoryMapping;
                 }
 
                 if (preloadIntoCache.Checked)
                 {
-                    options.Flags |= PackageFlags.Preload;
+                    build.Flags |= PackageFlags.Preload;
                 }
 
-                options.Priority = (byte)packagePriority.Value;
+                build.Priority = (byte)packagePriority.Value;
 
                 var packager = new Packager();
                 packager.ProgressUpdate += PackageProgressUpdate;
-                packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, options);
+                packager.CreatePackage(createPackagePath.Text, createSrcPath.Text, build).Wait();
 
                 MessageBox.Show("Package created successfully.");
             }
+#if !DEBUG
             catch (Exception exc)
             {
                 MessageBox.Show($"Internal error!{Environment.NewLine}{Environment.NewLine}{exc}", "Package Build Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+#endif
             finally
             {
                 packageProgressLabel.Text = "";

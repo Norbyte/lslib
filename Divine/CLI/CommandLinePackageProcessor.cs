@@ -37,36 +37,25 @@ internal class CommandLinePackageProcessor
     {
         try
         {
-            using (var reader = new PackageReader(packagePath))
+            var reader = new PackageReader();
+            using var package = reader.Read(packagePath);
+
+            // Try to match by full path
+            var file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0 && !fileInfo.IsDeletion());
+            if (file == null)
             {
-                Package package = reader.Read();
-                // Try to match by full path
-                var file = package.Files.Find(fileInfo => string.Compare(fileInfo.Name, packagedPath, StringComparison.OrdinalIgnoreCase) == 0 && !fileInfo.IsDeletion());
+                // Try to match by filename only
+                file = package.Files.Find(fileInfo => string.Compare(Path.GetFileName(fileInfo.Name), packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
                 if (file == null)
                 {
-                    // Try to match by filename only
-                    file = package.Files.Find(fileInfo => string.Compare(Path.GetFileName(fileInfo.Name), packagedPath, StringComparison.OrdinalIgnoreCase) == 0);
-                    if (file == null)
-                    {
-                        CommandLineLogger.LogError($"Package doesn't contain file named '{packagedPath}'");
-                        return;
-                    }
-                }
-
-                using (var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
-                {
-                    try
-                    {
-                        Stream stream = file.MakeStream();
-                        stream.CopyTo(fs);
-                    }
-                    finally
-                    {
-                        file.ReleaseStream();
-                    }
-
+                    CommandLineLogger.LogError($"Package doesn't contain file named '{packagedPath}'");
+                    return;
                 }
             }
+
+            using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write);
+            using var source = file.CreateContentReader();
+            source.CopyTo(fs);
         }
         catch (NotAPackageException)
         {
@@ -83,20 +72,18 @@ internal class CommandLinePackageProcessor
     {
         try
         {
-            using (var reader = new PackageReader(packagePath))
+            var reader = new PackageReader();
+            using var package = reader.Read(packagePath);
+            var files = package.Files;
+
+	        if (filter != null)
+	        {
+		        files = files.FindAll(obj => filter(obj));
+	        }
+
+            foreach (var fileInfo in files.OrderBy(obj => obj.Name))
             {
-                Package package = reader.Read();
-	            var files = package.Files;
-
-	            if (filter != null)
-	            {
-		            files = files.FindAll(obj => filter(obj));
-	            }
-
-                foreach (var fileInfo in files.OrderBy(obj => obj.Name))
-                {
-                    Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.CRC()}");
-                }
+                Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.CRC()}");
             }
         }
         catch (NotAPackageException)
@@ -153,21 +140,18 @@ internal class CommandLinePackageProcessor
             CommandLineLogger.LogDebug($"Using destination path: {file}");
         }
 
-        var options = new PackageCreationOptions();
-        options.Version = CommandLineActions.PackageVersion;
+        var build = new PackageBuildData();
+        build.Version = CommandLineActions.PackageVersion;
+        build.Priority = (byte)CommandLineActions.PackagePriority;
 
-        options.Priority = (byte)CommandLineActions.PackagePriority;
+        Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.PakCompressionMethod, build.Version);
+        build.Compression = (CompressionMethod)compressionOptions["Compression"];
+        build.CompressionLevel = (LSCompressionLevel)compressionOptions["CompressionLevel"];
 
-        Dictionary<string, object> compressionOptions = CommandLineArguments.GetCompressionOptions(Path.GetExtension(file)?.ToLower() == ".lsv" ? "zlib" : Args.CompressionMethod, options.Version);
-
-        options.Compression = (CompressionMethod)compressionOptions["Compression"];
-        options.FastCompression = (bool)compressionOptions["FastCompression"];
-
-        var fast = options.FastCompression ? "Fast" : "Normal";
-        CommandLineLogger.LogDebug($"Using compression method: {options.Compression.ToString()} ({fast})");
+        CommandLineLogger.LogDebug($"Using compression method: {build.Compression} (build.CompressionLevel)");
 
         var packager = new Packager();
-        packager.CreatePackage(file, CommandLineActions.SourcePath, options);
+        packager.CreatePackage(file, CommandLineActions.SourcePath, build).Wait();
 
         CommandLineLogger.LogInfo("Package created successfully.");
     }

@@ -12,10 +12,9 @@ class Program
 {
     private static MemoryStream LoadStoryStreamFromSave(String path)
     {
-        using (var packageReader = new PackageReader(path))
+        var reader = new PackageReader();
+        using (var package = reader.Read(path))
         {
-            Package package = packageReader.Read();
-
             var globalsFile = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (globalsFile == null)
             {
@@ -23,17 +22,10 @@ class Program
             }
 
             Resource resource;
-            Stream rsrcStream = globalsFile.MakeStream();
-            try
+            using (var rsrcStream = globalsFile.CreateContentReader())
+            using (var rsrcReader = new LSFReader(rsrcStream))
             {
-                using (var rsrcReader = new LSFReader(rsrcStream))
-                {
-                    resource = rsrcReader.Read();
-                }
-            }
-            finally
-            {
-                globalsFile.ReleaseStream();
+                resource = rsrcReader.Read();
             }
 
             LSLib.LS.Node storyNode = resource.Regions["Story"].Children["Story"][0];
