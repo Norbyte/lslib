@@ -9,16 +9,18 @@ namespace LSLib.LS;
 
 public class VFSDirectory
 {
+    public string Path;
     public Dictionary<string, VFSDirectory> Dirs;
     public Dictionary<string, PackagedFileInfo> Files;
 
-    public VFSDirectory GetOrAddDirectory(string name)
+    public VFSDirectory GetOrAddDirectory(string absolutePath, string name)
     {
         Dirs ??= [];
 
         if (!Dirs.TryGetValue(name, out var dir))
         {
             dir = new VFSDirectory();
+            dir.Path = absolutePath;
             Dirs[name] = dir;
         }
 
@@ -74,35 +76,39 @@ public class VFS : IDisposable
         RootDir = path;
     }
 
-    public void AttachGameDirectory(string gameDataPath)
+    public void AttachGameDirectory(string gameDataPath, bool excludeAssets = true)
     {
         AttachRoot(gameDataPath);
 
         // List of packages we won't ever load
         // These packages don't contain any mod resources, but have a large
         // file table that makes loading unneccessarily slow.
-        HashSet<string> packageBlacklist =
-        [
-            "Assets.pak",
-            "Effects.pak",
-            "Engine.pak",
-            "EngineShaders.pak",
-            "Game.pak",
-            "GamePlatform.pak",
-            "Gustav_NavCloud.pak",
-            "Gustav_Textures.pak",
-            "Gustav_Video.pak",
-            "Icons.pak",
-            "LowTex.pak",
-            "Materials.pak",
-            "Minimaps.pak",
-            "Models.pak",
-            "PsoCache.pak",
-            "SharedSoundBanks.pak",
-            "SharedSounds.pak",
-            "Textures.pak",
-            "VirtualTextures.pak"
-        ];
+        HashSet<string> packageBlacklist = [];
+
+        if (excludeAssets)
+        {
+            packageBlacklist = [
+                "Assets.pak",
+                "Effects.pak",
+                "Engine.pak",
+                "EngineShaders.pak",
+                "Game.pak",
+                "GamePlatform.pak",
+                "Gustav_NavCloud.pak",
+                "Gustav_Textures.pak",
+                "Gustav_Video.pak",
+                "Icons.pak",
+                "LowTex.pak",
+                "Materials.pak",
+                "Minimaps.pak",
+                "Models.pak",
+                "PsoCache.pak",
+                "SharedSoundBanks.pak",
+                "SharedSounds.pak",
+                "Textures.pak",
+                "VirtualTextures.pak"
+            ];
+        }
 
         // Collect priority value from headers
         var packagePriorities = new List<Tuple<string, int>>();
@@ -147,7 +153,7 @@ public class VFS : IDisposable
             var endPos = path.IndexOf('/', namePos);
             if (endPos >= 0)
             {
-                node = node.GetOrAddDirectory(path.Substring(namePos, endPos - namePos));
+                node = node.GetOrAddDirectory(path.Substring(0, endPos), path.Substring(namePos, endPos - namePos));
                 namePos = endPos + 1;
             }
             else
@@ -190,7 +196,7 @@ public class VFS : IDisposable
 
     public bool DirectoryExists(string path)
     {
-        if (FindVFSDirectory(path) != null) return true;
+        if (FindVFSDirectory(Canonicalize(path)) != null) return true;
         return RootDir != null && Directory.Exists(Path.Combine(RootDir, path));
     }
 
@@ -224,9 +230,14 @@ public class VFS : IDisposable
         } while (true);
     }
 
+    public string Canonicalize(string path)
+    {
+        return path.Replace('\\', '/');
+    }
+
     public bool FileExists(string path)
     {
-        if (FindVFSFile(path) != null) return true;
+        if (FindVFSFile(Canonicalize(path)) != null) return true;
         return RootDir != null && File.Exists(Path.Combine(RootDir, path));
     }
 
@@ -244,7 +255,7 @@ public class VFS : IDisposable
 
     public void EnumerateFiles(List<string> results, string path, bool recursive, Func<string, bool> filter)
     {
-        var dir = FindVFSDirectory(path);
+        var dir = FindVFSDirectory(Canonicalize(path));
         if (dir != null)
         {
             EnumerateFiles(results, dir, recursive, filter);
@@ -252,12 +263,16 @@ public class VFS : IDisposable
 
         if (RootDir != null)
         {
-            var files = Directory.EnumerateFiles(path, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            foreach (var file in files)
+            var fsDir = Path.Join(RootDir, path);
+            if (Directory.Exists(fsDir))
             {
-                if (filter(file))
+                var files = Directory.EnumerateFiles(fsDir, "*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                foreach (var file in files)
                 {
-                    results.Add(Path.GetRelativePath(path, file));
+                    if (filter(file))
+                    {
+                        results.Add(Path.GetRelativePath(RootDir, file));
+                    }
                 }
             }
         }
@@ -272,20 +287,24 @@ public class VFS : IDisposable
 
     public void EnumerateDirectories(List<string> results, string path)
     {
-        var dir = FindVFSDirectory(path);
+        var dir = FindVFSDirectory(Canonicalize(path));
         if (dir?.Dirs != null)
         {
             foreach (var subdir in dir.Dirs)
             {
-                results.Add(subdir.Key);
+                results.Add(subdir.Value.Path);
             }
         }
 
         if (RootDir != null)
         {
-            foreach (var subdir in Directory.EnumerateDirectories(path))
+            var fsDir = Path.Join(RootDir, path);
+            if (Directory.Exists(fsDir))
             {
-                results.Add(Path.GetRelativePath(path, subdir));
+                foreach (var subdir in Directory.EnumerateDirectories(fsDir))
+                {
+                    results.Add(Path.GetRelativePath(RootDir, subdir));
+                }
             }
         }
     }
@@ -296,9 +315,9 @@ public class VFS : IDisposable
         {
             foreach (var file in dir.Files)
             {
-                if (filter(file.Key))
+                if (!file.Value.IsDeletion() && filter(file.Key))
                 {
-                    results.Add(file.Key);
+                    results.Add(file.Value.Name);
                 }
             }
         }
@@ -314,8 +333,8 @@ public class VFS : IDisposable
 
     public bool TryOpenFromVFS(string path, out Stream stream)
     {
-        var file = FindVFSFile(path);
-        if (file != null)
+        var file = FindVFSFile(Canonicalize(path));
+        if (file != null && !file.IsDeletion())
         {
             stream = file.CreateContentReader();
             return true;

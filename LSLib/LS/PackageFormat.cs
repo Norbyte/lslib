@@ -1,7 +1,6 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.LS.Enums;
 using System;
-using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 
 namespace LSLib.LS;

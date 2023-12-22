@@ -459,6 +459,12 @@ public static class BinUtils
     public static Stream Decompress(MemoryMappedFile file, MemoryMappedViewAccessor view, long sourceOffset, 
         int sourceSize, int decompressedSize, CompressionFlags compression)
     {
+        // MemoryMappedView considers a size of 0 to mean "entire stream"
+        if (sourceSize == 0)
+        {
+            return new MemoryStream();
+        }
+
         switch (compression.Method())
         {
             case CompressionMethod.None:

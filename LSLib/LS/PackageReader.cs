@@ -48,7 +48,7 @@ public class Package : IDisposable
     {
         var file = File.OpenRead(path);
         Parts[index] = MemoryMappedFile.CreateFromFile(file, null, file.Length, MemoryMappedFileAccess.Read, HandleInheritability.None, false);
-        Views[index] = MetadataFile.CreateViewAccessor(0, file.Length, MemoryMappedFileAccess.Read);
+        Views[index] = MetadataFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
     }
 
     public void OpenStreams(int numParts)
@@ -169,6 +169,7 @@ public class PackageReader
 
         if (Pak.Metadata.Version > 10)
         {
+            Pak.Metadata.DataOffset = (uint)(offset + Marshal.SizeOf<THeader>());
             ReadCompressedFileList<TFile>(view, (long)Pak.Metadata.FileListOffset);
         }
         else
@@ -208,21 +209,21 @@ public class PackageReader
             }
         }
 
-        if (firstOffset != 7 || lastOffset - firstOffset != totalSizeOnDisk)
+        if (firstOffset != Pak.Metadata.DataOffset + 7 || lastOffset - firstOffset != totalSizeOnDisk)
         {
             string msg = $"Incorrectly compressed solid archive; offsets {firstOffset}/{lastOffset}, bytes {totalSizeOnDisk}";
             throw new InvalidDataException(msg);
         }
 
         // Decompress all files as a single frame (solid)
-        byte[] frame = new byte[lastOffset];
-        view.ReadArray(0, frame, 0, (int)lastOffset);
+        byte[] frame = new byte[lastOffset - Pak.Metadata.DataOffset];
+        view.ReadArray(Pak.Metadata.DataOffset, frame, 0, (int)(lastOffset - Pak.Metadata.DataOffset));
 
         byte[] decompressed = Native.LZ4FrameCompressor.Decompress(frame);
         var decompressedStream = new MemoryStream(decompressed);
 
         // Update offsets to point to the decompressed chunk
-        ulong offset = 7;
+        ulong offset = Pak.Metadata.DataOffset + 7;
         ulong compressedOffset = 0;
         foreach (var entry in Pak.Files)
         {

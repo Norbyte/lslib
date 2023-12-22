@@ -11,8 +11,6 @@ using LZ4;
 
 namespace LSLib.LS;
 
-
-
 public class PackageBuildTransientFile : PackagedFileInfoCommon
 {
 }
