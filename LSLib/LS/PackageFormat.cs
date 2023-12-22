@@ -276,7 +276,7 @@ public enum PackageFlags
 
 abstract public class PackagedFileInfoCommon
 {
-    public string FileName;
+    public string Name;
     public UInt32 ArchivePart;
     public UInt32 Crc;
     public CompressionFlags Flags;
@@ -305,7 +305,7 @@ internal struct FileEntry7 : ILSPKFile
 
     public readonly void ToCommon(PackagedFileInfoCommon info)
     {
-        info.FileName = BinUtils.NullTerminatedBytesToString(Name);
+        info.Name = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = 0;
         info.Flags = UncompressedSize > 0 ? BinUtils.MakeCompressionFlags(CompressionMethod.Zlib, LSCompressionLevel.Default) : 0;
@@ -318,7 +318,7 @@ internal struct FileEntry7 : ILSPKFile
     {
         return new FileEntry7
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
+            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
             UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
@@ -344,7 +344,7 @@ internal struct FileEntry10 : ILSPKFile
 
     public readonly void ToCommon(PackagedFileInfoCommon info)
     {
-        info.FileName = BinUtils.NullTerminatedBytesToString(Name);
+        info.Name = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = Crc;
         info.Flags = (CompressionFlags)Flags;
@@ -357,7 +357,7 @@ internal struct FileEntry10 : ILSPKFile
     {
         return new FileEntry10
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
+            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
             UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
@@ -386,7 +386,7 @@ internal struct FileEntry15 : ILSPKFile
 
     public readonly void ToCommon(PackagedFileInfoCommon info)
     {
-        info.FileName = BinUtils.NullTerminatedBytesToString(Name);
+        info.Name = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = Crc;
         info.Flags = (CompressionFlags)Flags;
@@ -399,7 +399,7 @@ internal struct FileEntry15 : ILSPKFile
     {
         return new FileEntry15
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
+            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
             UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
@@ -428,7 +428,7 @@ internal struct FileEntry18 : ILSPKFile
 
     public readonly void ToCommon(PackagedFileInfoCommon info)
     {
-        info.FileName = BinUtils.NullTerminatedBytesToString(Name);
+        info.Name = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = 0;
         info.Flags = (CompressionFlags)Flags;
@@ -441,7 +441,7 @@ internal struct FileEntry18 : ILSPKFile
     {
         return new FileEntry18
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.FileName, 256),
+            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
             OffsetInFile1 = (uint)(info.OffsetInFile & 0xffffffff),
             OffsetInFile2 = (ushort)((info.OffsetInFile >> 32) & 0xffff),
             ArchivePart = (byte)info.ArchivePart,

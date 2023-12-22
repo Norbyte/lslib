@@ -61,7 +61,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         Stream stream = Streams.Last();
         var packaged = new PackageBuildTransientFile
         {
-            FileName = input.Path,
+            Name = input.Path,
             UncompressedSize = (ulong)uncompressed.Length,
             SizeOnDisk = (ulong)compressed.Length,
             ArchivePart = (UInt32)(Streams.Count - 1),

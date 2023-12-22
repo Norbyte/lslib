@@ -24,6 +24,7 @@ class ModCompiler : IDisposable
 
     private Logger Logger;
     private String GameDataPath;
+    private VFS FS;
     private Compiler Compiler = new Compiler();
     private ModResources Mods = new ModResources();
     private List<GoalScript> GoalScripts = new List<GoalScript>();
@@ -228,25 +229,13 @@ class ModCompiler : IDisposable
     {
         foreach (var file in mod.Scripts)
         {
-            using var scriptStream = file.Value.CreateContentReader();
+            using var scriptStream = FS.Open(file);
             using var reader = new BinaryReader(scriptStream);
-
-            string path;
-            if (file.Value is PackagedFileInfo)
-            {
-                var pkgd = file.Value as PackagedFileInfo;
-                path = "packaged:/" + pkgd.FileName;
-            }
-            else
-            {
-                var fs = file.Value as FilesystemFileInfo;
-                path = fs.FilesystemPath;
-            }
 
             var script = new GoalScript
             {
-                Name = Path.GetFileNameWithoutExtension(file.Value.Name),
-                Path = path,
+                Name = Path.GetFileNameWithoutExtension(file),
+                Path = file,
                 ScriptBody = reader.ReadBytes((int)scriptStream.Length)
             };
             GoalScripts.Add(script);
@@ -257,7 +246,7 @@ class ModCompiler : IDisposable
     {
         if (mod.OrphanQueryIgnoreList == null) return;
         
-        using var ignoreStream = mod.OrphanQueryIgnoreList.CreateContentReader();
+        using var ignoreStream = FS.Open(mod.OrphanQueryIgnoreList);
         using var reader = new StreamReader(ignoreStream);
 
         var ignoreRe = new Regex("^([a-zA-Z0-9_]+)\\s+([0-9]+)$");
@@ -278,7 +267,7 @@ class ModCompiler : IDisposable
     {
         foreach (var file in mod.Globals)
         {
-            using var globalStream = file.Value.CreateContentReader();
+            using var globalStream = FS.Open(file);
             using var reader = new BinaryReader(globalStream);
 
             var globalLsf = reader.ReadBytes((int)globalStream.Length);
@@ -287,7 +276,7 @@ class ModCompiler : IDisposable
 
         foreach (var file in mod.LevelObjects)
         {
-            using var objectStream = file.Value.CreateContentReader();
+            using var objectStream = FS.Open(file);
             using var reader = new BinaryReader(objectStream);
 
             var levelLsf = reader.ReadBytes((int)objectStream.Length);
@@ -320,16 +309,27 @@ class ModCompiler : IDisposable
 
         if (mods.Count > 0)
         {
+            Logger.TaskStarted("Building VFS");
+            FS = new VFS();
+            if (LoadPackages)
+            {
+                FS.AttachGameDirectory(GameDataPath);
+            }
+            else
+            {
+                FS.AttachRoot(GameDataPath);
+            }
+            FS.FinishBuild();
+
             Logger.TaskStarted("Discovering module files");
-            var visitor = new ModPathVisitor(Mods)
+            var visitor = new ModPathVisitor(Mods, FS)
             {
                 Game = Game,
                 CollectStoryGoals = true,
                 CollectGlobals = CheckGameObjects,
-                CollectLevels = CheckGameObjects,
-                LoadPackages = LoadPackages
+                CollectLevels = CheckGameObjects
             };
-            visitor.Discover(GameDataPath);
+            visitor.Discover();
             Logger.TaskFinished();
 
             Logger.TaskStarted("Loading module files");
@@ -348,8 +348,8 @@ class ModCompiler : IDisposable
                 LoadMod(modName);
             }
 
-            IAbstractFileInfo storyHeaderFile = null;
-            IAbstractFileInfo typeCoercionWhitelistFile = null;
+            string storyHeaderFile = null;
+            string typeCoercionWhitelistFile = null;
             var modsSearchPath = mods.ToList();
             modsSearchPath.Reverse();
             foreach (var modName in modsSearchPath)
@@ -367,7 +367,7 @@ class ModCompiler : IDisposable
 
             if (storyHeaderFile != null)
             {
-                using var storyStream = storyHeaderFile.CreateContentReader();
+                using var storyStream = FS.Open(storyHeaderFile);
                 LoadStoryHeaders(storyStream);
             }
             else
@@ -378,7 +378,7 @@ class ModCompiler : IDisposable
 
             if (typeCoercionWhitelistFile != null)
             {
-                using var typeCoercionStream = typeCoercionWhitelistFile.CreateContentReader();
+                using var typeCoercionStream = FS.Open(typeCoercionWhitelistFile);
                 LoadTypeCoercionWhitelist(typeCoercionStream);
                 Compiler.TypeCoercionWhitelist = TypeCoercionWhitelist;
             }

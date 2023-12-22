@@ -16,7 +16,7 @@ internal class CommandLinePackageProcessor
         CreatePackageResource();
     }
 
-    public static void ListFiles(Func<IAbstractFileInfo, bool> filter = null)
+    public static void ListFiles(Func<PackagedFileInfo, bool> filter = null)
     {
         if (CommandLineActions.SourcePath == null)
         {
@@ -68,7 +68,7 @@ internal class CommandLinePackageProcessor
         }
     }
 
-    private static void ListPackageFiles(string packagePath, Func<IAbstractFileInfo, bool> filter = null)
+    private static void ListPackageFiles(string packagePath, Func<PackagedFileInfo, bool> filter = null)
     {
         try
         {
@@ -83,7 +83,7 @@ internal class CommandLinePackageProcessor
 
             foreach (var fileInfo in files.OrderBy(obj => obj.Name))
             {
-                Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.CRC()}");
+                Console.WriteLine($"{fileInfo.Name}\t{fileInfo.Size()}\t{fileInfo.Crc}");
             }
         }
         catch (NotAPackageException)
@@ -97,7 +97,7 @@ internal class CommandLinePackageProcessor
         }
     }
 
-    public static void Extract(Func<IAbstractFileInfo, bool> filter = null)
+    public static void Extract(Func<PackagedFileInfo, bool> filter = null)
     {
         if (CommandLineActions.SourcePath == null)
         {
@@ -113,7 +113,7 @@ internal class CommandLinePackageProcessor
         }
     }
 
-    public static void BatchExtract(Func<IAbstractFileInfo, bool> filter = null)
+    public static void BatchExtract(Func<PackagedFileInfo, bool> filter = null)
     {
         string[] files = Directory.GetFiles(CommandLineActions.SourcePath, $"*.{Args.InputFormat}");
 
@@ -156,7 +156,7 @@ internal class CommandLinePackageProcessor
         CommandLineLogger.LogInfo("Package created successfully.");
     }
 
-    private static void ExtractPackageResource(string file = "", string folder = "", Func<IAbstractFileInfo, bool> filter = null)
+    private static void ExtractPackageResource(string file = "", string folder = "", Func<PackagedFileInfo, bool> filter = null)
     {
         if (string.IsNullOrEmpty(file))
         {

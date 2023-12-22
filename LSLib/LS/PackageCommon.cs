@@ -8,31 +8,16 @@ using LSLib.LS.Enums;
 
 namespace LSLib.LS;
 
-public interface IAbstractFileInfo
+public class PackagedFileInfo : PackagedFileInfoCommon
 {
-    public abstract String GetName();
-    public abstract UInt64 Size();
-    public abstract UInt32 CRC();
-    public abstract Stream CreateContentReader();
-    public abstract bool IsDeletion();
-
-    public string Name { get { return GetName(); } }
-}
-
-
-public class PackagedFileInfo : PackagedFileInfoCommon, IAbstractFileInfo
-{
+    public Package Package;
     public MemoryMappedFile PackageFile;
     public MemoryMappedViewAccessor PackageView;
     public bool Solid;
     public ulong SolidOffset;
     public Stream SolidStream;
 
-    public String GetName() => FileName;
-
     public UInt64 Size() => Flags.Method() == CompressionMethod.None ? SizeOnDisk : UncompressedSize;
-
-    public UInt32 CRC() => Crc;
 
     public Stream CreateContentReader()
     {
@@ -52,10 +37,11 @@ public class PackagedFileInfo : PackagedFileInfoCommon, IAbstractFileInfo
         }
     }
 
-    internal static PackagedFileInfo CreateFromEntry(ILSPKFile entry, MemoryMappedFile file, MemoryMappedViewAccessor view)
+    internal static PackagedFileInfo CreateFromEntry(Package package, ILSPKFile entry, MemoryMappedFile file, MemoryMappedViewAccessor view)
     {
         var info = new PackagedFileInfo
         {
+            Package = package,
             PackageFile = file,
             PackageView = view,
             Solid = false
@@ -75,68 +61,6 @@ public class PackagedFileInfo : PackagedFileInfoCommon, IAbstractFileInfo
     public bool IsDeletion()
     {
         return (OffsetInFile & 0x0000ffffffffffff) == 0xbeefdeadbeef;
-    }
-}
-
-public class FilesystemFileInfo : IAbstractFileInfo
-{
-    public long CachedSize;
-    public string FilesystemPath;
-    public string FileName;
-
-    public String GetName() => FileName;
-
-    public UInt64 Size() => (UInt64) CachedSize;
-
-    public UInt32 CRC() => throw new NotImplementedException("!");
-
-    public Stream CreateContentReader() => File.Open(FilesystemPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-
-    public static FilesystemFileInfo CreateFromEntry(string filesystemPath, string name)
-    {
-        var info = new FilesystemFileInfo
-        {
-            FileName = name,
-            FilesystemPath = filesystemPath
-        };
-
-        var fsInfo = new FileInfo(filesystemPath);
-        info.CachedSize = fsInfo.Length;
-        return info;
-    }
-
-    public bool IsDeletion()
-    {
-        return false;
-    }
-}
-
-public class StreamFileInfo : IAbstractFileInfo
-{
-    public Stream Stream;
-    public String FileName;
-
-    public String GetName() => FileName;
-
-    public UInt64 Size() => (UInt64) Stream.Length;
-
-    public UInt32 CRC() => throw new NotImplementedException("!");
-
-    public Stream CreateContentReader() => Stream;
-
-    public static StreamFileInfo CreateFromStream(Stream stream, string name)
-    {
-        var info = new StreamFileInfo
-        {
-            FileName = name,
-            Stream = stream
-        };
-        return info;
-    }
-
-    public bool IsDeletion()
-    {
-        return false;
     }
 }
 
@@ -212,14 +136,14 @@ public class Packager
         ProgressUpdate(file.Path, numerator, denominator);
     }
 
-    public void UncompressPackage(Package package, string outputPath, Func<IAbstractFileInfo, bool> filter = null)
+    public void UncompressPackage(Package package, string outputPath, Func<PackagedFileInfo, bool> filter = null)
     {
         if (outputPath.Length > 0 && !outputPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
         {
             outputPath += Path.DirectorySeparatorChar;
         }
 
-        List<IAbstractFileInfo> files = package.Files;
+        List<PackagedFileInfo> files = package.Files;
 
         if (filter != null)
         {
@@ -246,7 +170,7 @@ public class Packager
         }
     }
 
-    public void UncompressPackage(string packagePath, string outputPath, Func<IAbstractFileInfo, bool> filter = null)
+    public void UncompressPackage(string packagePath, string outputPath, Func<PackagedFileInfo, bool> filter = null)
     {
         ProgressUpdate("Reading package headers ...", 0, 1);
         var reader = new PackageReader();

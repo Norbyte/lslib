@@ -37,7 +37,7 @@ public class Package : IDisposable
     internal MemoryMappedViewAccessor[] Views;
 
     public PackageHeaderCommon Metadata;
-    public List<IAbstractFileInfo> Files = [];
+    public List<PackagedFileInfo> Files = [];
     
     public PackageVersion Version
     {
@@ -133,7 +133,7 @@ public class PackageReader
 
         foreach (var entry in entries)
         {
-            Pak.Files.Add(PackagedFileInfo.CreateFromEntry(entry, Pak.Parts[entry.ArchivePartNumber()], Pak.Views[entry.ArchivePartNumber()]));
+            Pak.Files.Add(PackagedFileInfo.CreateFromEntry(Pak, entry, Pak.Parts[entry.ArchivePartNumber()], Pak.Views[entry.ArchivePartNumber()]));
         }
     }
 
@@ -145,7 +145,7 @@ public class PackageReader
 
         foreach (var entry in entries)
         {
-            var file = PackagedFileInfo.CreateFromEntry(entry, Pak.Parts[entry.ArchivePartNumber()], Pak.Views[entry.ArchivePartNumber()]);
+            var file = PackagedFileInfo.CreateFromEntry(Pak, entry, Pak.Parts[entry.ArchivePartNumber()], Pak.Views[entry.ArchivePartNumber()]);
             if (file.ArchivePart == 0)
             {
                 file.OffsetInFile += Pak.Metadata.DataOffset;

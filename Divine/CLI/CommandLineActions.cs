@@ -125,7 +125,7 @@ internal class CommandLineActions
 
     private static void Process(CommandLineArguments args)
     {
-        Func<IAbstractFileInfo, bool> filter;
+        Func<PackagedFileInfo, bool> filter;
 
         if (args.Expression != null)
         {

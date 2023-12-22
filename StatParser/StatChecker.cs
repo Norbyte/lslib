@@ -11,6 +11,7 @@ namespace LSTools.StatParser;
 class StatChecker : IDisposable
 {
     private string GameDataPath;
+    private VFS FS;
     private ModResources Mods = new ModResources();
     private StatDefinitionRepository Definitions;
     private StatLoadingContext Context;
@@ -33,16 +34,16 @@ class StatChecker : IDisposable
     {
         foreach (var file in mod.Stats)
         {
-            using var statStream = file.Value.CreateContentReader();
-            Loader.LoadStatsFromStream(file.Key, statStream);
+            using var statStream = FS.Open(file);
+            Loader.LoadStatsFromStream(file, statStream);
         }
     }
 
-    private XmlDocument LoadXml(IAbstractFileInfo file)
+    private XmlDocument LoadXml(string path)
     {
-        if (file == null) return null;
+        if (path == null) return null;
 
-        using var stream = file.CreateContentReader();
+        using var stream = FS.Open(path);
 
         var doc = new XmlDocument();
         doc.Load(stream);
@@ -78,8 +79,8 @@ class StatChecker : IDisposable
     private void LoadStatDefinitions(ModResources resources)
     {
         Definitions = new StatDefinitionRepository();
-        Definitions.LoadEnumerations(resources.Mods["Shared"].ValueListsFile.CreateContentReader());
-        Definitions.LoadDefinitions(resources.Mods["Shared"].ModifiersFile.CreateContentReader());
+        Definitions.LoadEnumerations(FS.Open(resources.Mods["Shared"].ValueListsFile));
+        Definitions.LoadDefinitions(FS.Open(resources.Mods["Shared"].ModifiersFile));
     }
 
     private void CompilationDiagnostic(StatLoadingError message)
@@ -110,16 +111,26 @@ class StatChecker : IDisposable
         Context = new StatLoadingContext();
 
         Loader = new StatLoader(Context);
-        
-        var visitor = new ModPathVisitor(Mods)
+
+        FS = new VFS();
+        if (LoadPackages)
+        {
+            FS.AttachGameDirectory(GameDataPath);
+        }
+        else
+        {
+            FS.AttachRoot(GameDataPath);
+        }
+        packagePaths.ForEach(path => FS.AttachPackage(path));
+        FS.FinishBuild();
+
+        var visitor = new ModPathVisitor(Mods, FS)
         {
             Game = LSLib.LS.Story.Compiler.TargetGame.DOS2DE,
             CollectStats = true,
-            CollectGuidResources = true,
-            LoadPackages = LoadPackages
+            CollectGuidResources = true
         };
-        visitor.Discover(GameDataPath);
-        packagePaths.ForEach(path => visitor.DiscoverUserPackages(path));
+        visitor.Discover();
 
         LoadStatDefinitions(visitor.Resources);
         Context.Definitions = Definitions;

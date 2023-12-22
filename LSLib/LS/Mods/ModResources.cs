@@ -10,19 +10,23 @@ namespace LSLib.LS;
 public class ModInfo(string name)
 {
     public string Name = name;
-    public IAbstractFileInfo Meta;
-    public Dictionary<string, IAbstractFileInfo> Scripts = [];
-    public Dictionary<string, IAbstractFileInfo> Stats = [];
-    public Dictionary<string, IAbstractFileInfo> Globals = [];
-    public Dictionary<string, IAbstractFileInfo> LevelObjects = [];
-    public IAbstractFileInfo OrphanQueryIgnoreList;
-    public IAbstractFileInfo StoryHeaderFile;
-    public IAbstractFileInfo TypeCoercionWhitelistFile;
-    public IAbstractFileInfo ModifiersFile;
-    public IAbstractFileInfo ValueListsFile;
-    public IAbstractFileInfo ActionResourcesFile;
-    public IAbstractFileInfo ActionResourceGroupsFile;
-    public List<IAbstractFileInfo> TagFiles = [];
+
+    public string ModsPath;
+    public string PublicPath;
+
+    public string Meta;
+    public List<string> Scripts = [];
+    public List<string> Stats = [];
+    public List<string> Globals = [];
+    public List<string> LevelObjects = [];
+    public string OrphanQueryIgnoreList;
+    public string StoryHeaderFile;
+    public string TypeCoercionWhitelistFile;
+    public string ModifiersFile;
+    public string ValueListsFile;
+    public string ActionResourcesFile;
+    public string ActionResourceGroupsFile;
+    public List<string> TagFiles = [];
 }
 
 public class ModResources : IDisposable
@@ -39,18 +43,11 @@ public class ModResources : IDisposable
 
 public partial class ModPathVisitor
 {
-    private static readonly Regex metaRe = MetaRegex();
-    private static readonly Regex scriptRe = ScriptRegex();
-    private static readonly Regex statRe = StatRegex();
-    private static readonly Regex staticLsxRe = StaticLsxRegex();
-    private static readonly Regex statStructureRe = StatStructureRegex();
-    private static readonly Regex orphanQueryIgnoresRe = OrphanQueryIgnoresRegex();
-    private static readonly Regex storyDefinitionsRe = StoryDefinitionsRegex();
-    private static readonly Regex typeCoercionWhitelistRe = TypeCoercionWhitelistRegex();
-    private static readonly Regex globalsRe = GlobalsRegex();
-    private static readonly Regex levelObjectsRe = LevelObjectsRegex();
     // Pattern for excluding subsequent parts of a multi-part archive
     public static readonly Regex archivePartRe = ArchivePartRegex();
+
+    public const string ModsPath = "Mods";
+    public const string PublicPath = "Public";
 
     public readonly ModResources Resources;
 
@@ -59,31 +56,13 @@ public partial class ModPathVisitor
     public bool CollectGlobals = false;
     public bool CollectLevels = false;
     public bool CollectGuidResources = false;
-    public bool LoadPackages = true;
     public TargetGame Game = TargetGame.DOS2;
+    public VFS FS;
 
-    public ModPathVisitor(ModResources resources)
+    public ModPathVisitor(ModResources resources, VFS fs)
     {
         Resources = resources;
-    }
-
-    private static void EnumerateFiles(List<string> paths, string rootPath, string currentPath, string pattern)
-    {
-        foreach (string filePath in Directory.GetFiles(currentPath, pattern))
-        {
-            var relativePath = filePath[rootPath.Length..];
-            if (relativePath[0] == '/' || relativePath[0] == '\\')
-            {
-                relativePath = relativePath[1..];
-            }
-
-            paths.Add(relativePath);
-        }
-
-        foreach (string directoryPath in Directory.GetDirectories(currentPath))
-        {
-            EnumerateFiles(paths, rootPath, directoryPath, pattern);
-        }
+        FS = fs;
     }
 
     private ModInfo GetMod(string modName)
@@ -97,443 +76,183 @@ public partial class ModPathVisitor
         return mod;
     }
 
-    private void AddMetadataToMod(string modName, IAbstractFileInfo file)
+    private void AddGlobalsToMod(string modName, string path)
     {
-        GetMod(modName).Meta = file;
+        GetMod(modName).Globals.Add(path);
     }
 
-    private void AddStatToMod(string modName, string path, IAbstractFileInfo file)
+    private void AddLevelObjectsToMod(string modName, string path)
     {
-        GetMod(modName).Stats[path] = file;
+        GetMod(modName).LevelObjects.Add(path);
     }
 
-    private void AddScriptToMod(string modName, string scriptName, IAbstractFileInfo file)
+    private void DiscoverModGoals(ModInfo mod)
     {
-        GetMod(modName).Scripts[scriptName] = file;
-    }
+        var goalPath = Path.Join(mod.ModsPath, @"Story/RawFiles/Goals");
+        if (!FS.DirectoryExists(goalPath)) return;
 
-    private void AddGlobalsToMod(string modName, string path, IAbstractFileInfo file)
-    {
-        GetMod(modName).Globals[path] = file;
-    }
+        var goalFiles = FS.EnumerateFiles(goalPath, false, p => Path.GetExtension(p) == ".txt");
 
-    private void AddLevelObjectsToMod(string modName, string path, IAbstractFileInfo file)
-    {
-        GetMod(modName).LevelObjects[path] = file;
-    }
-
-    private void DiscoverPackagedFile(IAbstractFileInfo file)
-    {
-        if (file.IsDeletion()) return;
-
-        if (file.Name.EndsWith("meta.lsx", StringComparison.Ordinal))
+        foreach (var goalFile in goalFiles)
         {
-            var match = metaRe.Match(file.Name);
-            if (match != null && match.Success)
-            {
-                AddMetadataToMod(match.Groups[1].Value, file);
-            }
+            mod.Scripts.Add(goalFile);
+        }
+    }
+
+    private void DiscoverModStats(ModInfo mod)
+    {
+        var statsPath = Path.Join(mod.PublicPath, @"Stats/Generated/Data");
+        if (!FS.DirectoryExists(statsPath)) return;
+
+        var statFiles = FS.EnumerateFiles(statsPath, false, p => Path.GetExtension(p) == ".txt");
+
+        foreach (var statFile in statFiles)
+        {
+            mod.Stats.Add(statFile);
+        }
+    }
+
+    private void DiscoverModStatsStructure(ModInfo mod)
+    {
+        var modifiersPath = Path.Join(mod.PublicPath, @"Stats/Generated/Structure/Modifiers.txt");
+        if (FS.FileExists(modifiersPath))
+        {
+            mod.ModifiersFile = modifiersPath;
+        }
+        
+        var valueListsPath = Path.Join(mod.PublicPath, @"Stats/Generated/Structure/ValueLists.txt");
+        if (FS.FileExists(valueListsPath))
+        {
+            mod.ValueListsFile = valueListsPath;
+        }
+    }
+
+    private void DiscoverModGuidResources(ModInfo mod)
+    {
+        var actionResGrpPath = Path.Join(mod.PublicPath, @"ActionResourceGroupDefinitions/ActionResourceGroupDefinitions.lsx");
+        if (FS.FileExists(actionResGrpPath))
+        {
+            mod.ActionResourceGroupsFile = actionResGrpPath;
         }
 
+        var actionResPath = Path.Join(mod.PublicPath, @"ActionResourceDefinitions/ActionResourceDefinitions.lsx");
+        if (FS.FileExists(actionResPath))
+        {
+            mod.ActionResourcesFile = actionResPath;
+        }
+
+        var tagPath = Path.Join(mod.PublicPath, @"Tags");
+        if (FS.DirectoryExists(tagPath))
+        {
+            var tagFiles = FS.EnumerateFiles(tagPath, false, p => Path.GetExtension(p) == ".lsf");
+
+            foreach (var tagFile in tagFiles)
+            {
+                mod.TagFiles.Add(tagFile);
+            }
+        }
+    }
+
+    private void DiscoverModGlobals(ModInfo mod)
+    {
+        var globalsPath = Path.Join(mod.ModsPath, "Globals");
+        if (!FS.DirectoryExists(globalsPath)) return;
+
+        var globalFiles = FS.EnumerateFiles(globalsPath, false, p => Path.GetExtension(p) == ".lsf");
+
+        foreach (var globalFile in globalFiles)
+        {
+            mod.Globals.Add(globalFile);
+        }
+    }
+
+    private void DiscoverModLevelObjects(ModInfo mod)
+    {
+        var levelsPath = Path.Join(mod.ModsPath, "Levels");
+        if (!FS.DirectoryExists(levelsPath)) return;
+
+        var levelFiles = FS.EnumerateFiles(levelsPath, false, p => Path.GetExtension(p) == ".lsf");
+
+        foreach (var levelFile in levelFiles)
+        {
+            mod.LevelObjects.Add(levelFile);
+        }
+    }
+
+    public void DiscoverModDirectory(ModInfo mod)
+    {
         if (CollectStoryGoals)
         {
-            if (file.Name.EndsWith(".txt", StringComparison.Ordinal) && file.Name.Contains("/Story/RawFiles/Goals"))
+            DiscoverModGoals(mod);
+
+            var headerPath = Path.Join(mod.ModsPath, @"Story/RawFiles/story_header.div");
+            if (FS.FileExists(headerPath))
             {
-                var match = scriptRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    AddScriptToMod(match.Groups[1].Value, match.Groups[2].Value, file);
-                }
+                mod.StoryHeaderFile = headerPath;
             }
 
-            if (file.Name.EndsWith("/Story/story_orphanqueries_ignore_local.txt", StringComparison.Ordinal))
+            var orphanQueryIgnoresPath = Path.Join(mod.ModsPath, @"Story/story_orphanqueries_ignore_local.txt");
+            if (FS.FileExists(orphanQueryIgnoresPath))
             {
-                var match = orphanQueryIgnoresRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    GetMod(match.Groups[1].Value).OrphanQueryIgnoreList = file;
-                }
+                mod.OrphanQueryIgnoreList = orphanQueryIgnoresPath;
             }
 
-            if (file.Name.EndsWith("/Story/RawFiles/story_header.div", StringComparison.Ordinal))
+            var typeCoercionWhitelistPath = Path.Join(mod.ModsPath, @"Story/RawFiles/TypeCoercionWhitelist.txt");
+            if (FS.FileExists(typeCoercionWhitelistPath))
             {
-                var match = storyDefinitionsRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    GetMod(match.Groups[1].Value).StoryHeaderFile = file;
-                }
-            }
-
-            if (file.Name.EndsWith("/Story/RawFiles/TypeCoercionWhitelist.txt", StringComparison.Ordinal))
-            {
-                var match = typeCoercionWhitelistRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    GetMod(match.Groups[1].Value).TypeCoercionWhitelistFile = file;
-                }
+                mod.TypeCoercionWhitelistFile = typeCoercionWhitelistPath;
             }
         }
 
         if (CollectStats)
         {
-            if (file.Name.EndsWith(".txt", StringComparison.Ordinal))
-            {
-                if (file.Name.Contains("/Stats/Generated/Data"))
-                {
-                    var match = statRe.Match(file.Name);
-                    if (match != null && match.Success)
-                    {
-                        AddStatToMod(match.Groups[1].Value, match.Groups[2].Value, file);
-                    }
-                }
-                else if (file.Name.Contains("/Stats/Generated/Structure"))
-                {
-                    var match = statStructureRe.Match(file.Name);
-                    if (match != null && match.Success)
-                    {
-                        if (file.Name.EndsWith("Modifiers.txt"))
-                        {
-                            GetMod(match.Groups[1].Value).ModifiersFile = file;
-                        }
-                        else if (file.Name.EndsWith("ValueLists.txt"))
-                        {
-                            GetMod(match.Groups[1].Value).ValueListsFile = file;
-                        }
-                    }
-                }
-            }
+            DiscoverModStats(mod);
+            DiscoverModStatsStructure(mod);
         }
 
         if (CollectGuidResources)
         {
-            if (file.Name.EndsWith(".lsx", StringComparison.Ordinal))
-            {
-                var match = staticLsxRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    if (match.Groups[2].Value == "ActionResourceDefinitions/ActionResourceDefinitions.lsx")
-                    {
-                        GetMod(match.Groups[1].Value).ActionResourcesFile = file;
-                    }
-                    else if (match.Groups[2].Value == "ActionResourceGroupDefinitions/ActionResourceGroupDefinitions.lsx")
-                    {
-                        GetMod(match.Groups[1].Value).ActionResourceGroupsFile = file;
-                    }
-                    else if (match.Groups[2].Value.StartsWith("Tags/"))
-                    {
-                        GetMod(match.Groups[1].Value).TagFiles.Add(file);
-                    }
-                }
-            }
+            DiscoverModGuidResources(mod);
         }
 
         if (CollectGlobals)
         {
-            if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Globals/"))
-            {
-                var match = globalsRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    AddGlobalsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
-                }
-            }
+            DiscoverModGlobals(mod);
         }
 
         if (CollectLevels)
         {
-            if (file.Name.EndsWith(".lsf", StringComparison.Ordinal) && file.Name.Contains("/Levels/"))
+            DiscoverModLevelObjects(mod);
+        }
+    }
+
+    public void DiscoverMods()
+    {
+        var modPaths = FS.EnumerateDirectories(ModsPath);
+
+        foreach (var modPath in modPaths)
+        {
+            var modName = Path.GetFileName(modPath);
+            var metaPath = Path.Combine(modPath, "meta.lsx");
+
+            if (FS.FileExists(metaPath))
             {
-                var match = levelObjectsRe.Match(file.Name);
-                if (match != null && match.Success)
-                {
-                    AddLevelObjectsToMod(match.Groups[1].Value, match.Groups[0].Value, file);
-                }
+                var mod = GetMod(modName);
+                mod.ModsPath = modPath;
+                mod.PublicPath = Path.Combine(PublicPath, Path.GetFileName(modPath));
+                mod.Meta = metaPath;
+
+                DiscoverModDirectory(mod);
             }
         }
     }
 
-    public void DiscoverPackage(string packagePath)
+    public void Discover()
     {
-        var reader = new PackageReader();
-        var package = reader.Read(packagePath);
-        Resources.LoadedPackages.Add(package);
-
-        foreach (var file in package.Files)
-        {
-            DiscoverPackagedFile(file);
-        }
+        DiscoverMods();
     }
 
-    public void DiscoverBuiltinPackages(string gameDataPath)
-    {
-        // List of packages we won't ever load
-        // These packages don't contain any mod resources, but have a large
-        // file table that makes loading unneccessarily slow.
-        HashSet<string> packageBlacklist =
-        [
-            "Assets.pak",
-            "Effects.pak",
-            "Engine.pak",
-            "EngineShaders.pak",
-            "Game.pak",
-            "GamePlatform.pak",
-            "Gustav_NavCloud.pak",
-            "Gustav_Textures.pak",
-            "Gustav_Video.pak",
-            "Icons.pak",
-            "LowTex.pak",
-            "Materials.pak",
-            "Minimaps.pak",
-            "Models.pak",
-            "PsoCache.pak",
-            "SharedSoundBanks.pak",
-            "SharedSounds.pak",
-            "Textures.pak",
-            "VirtualTextures.pak"
-        ];
-
-        // Collect priority value from headers
-        var packagePriorities = new List<Tuple<string, int>>();
-
-        foreach (var path in Directory.GetFiles(gameDataPath, "*.pak"))
-        {
-            var baseName = Path.GetFileName(path);
-            if (!packageBlacklist.Contains(baseName)
-                // Don't load 2nd, 3rd, ... parts of a multi-part archive
-                && !archivePartRe.IsMatch(baseName))
-            {
-                var reader = new PackageReader();
-                var package = reader.Read(path, true);
-                packagePriorities.Add(new Tuple<string, int>(path, package.Metadata.Priority));
-            }
-        }
-
-        packagePriorities.Sort(
-            delegate (Tuple<string, int> a, Tuple<string, int> b)
-            {
-                return a.Item2.CompareTo(b.Item2);
-            }
-        );
-
-        // Load non-patch packages first
-        foreach (var package in packagePriorities)
-        {
-             DiscoverPackage(package.Item1);
-        }
-    }
-
-    public void DiscoverUserPackages(string gameDataPath)
-    {
-        foreach (var packagePath in Directory.GetFiles(gameDataPath, "*.pak"))
-        {
-            // Don't load 2nd, 3rd, ... parts of a multi-part archive
-            if (!archivePartRe.IsMatch(packagePath))
-            {
-                DiscoverPackage(packagePath);
-            }
-        }
-    }
-
-    private void DiscoverModGoals(string modName, string modPath)
-    {
-        var goalPath = Path.Join(modPath, @"Story\RawFiles\Goals");
-        if (!Directory.Exists(goalPath)) return;
-
-        List<string> goalFiles = [];
-        EnumerateFiles(goalFiles, goalPath, goalPath, "*.txt");
-
-        foreach (var goalFile in goalFiles)
-        {
-            var fileInfo = new FilesystemFileInfo
-            {
-                FilesystemPath = Path.Join(goalPath, goalFile),
-                FileName = goalFile
-            };
-            AddScriptToMod(modName, goalFile, fileInfo);
-        }
-    }
-
-    private void DiscoverModStats(string modName, string modPublicPath)
-    {
-        var statsPath = Path.Join(modPublicPath, @"Stats\Generated\Data");
-        if (!Directory.Exists(statsPath)) return;
-
-        List<string> statFiles = [];
-        EnumerateFiles(statFiles, statsPath, statsPath, "*.txt");
-
-        foreach (var statFile in statFiles)
-        {
-            var fileInfo = new FilesystemFileInfo
-            {
-                FilesystemPath = Path.Join(statsPath, statFile),
-                FileName = statFile
-            };
-            AddStatToMod(modName, statFile, fileInfo);
-        }
-    }
-
-    private void DiscoverModGlobals(string modName, string modPath)
-    {
-        var globalsPath = Path.Join(modPath, "Globals");
-        if (!Directory.Exists(globalsPath)) return;
-
-        List<string> globalFiles = [];
-        EnumerateFiles(globalFiles, globalsPath, globalsPath, "*.lsf");
-
-        foreach (var globalFile in globalFiles)
-        {
-            var fileInfo = new FilesystemFileInfo
-            {
-                FilesystemPath = Path.Join(globalsPath, globalFile),
-                FileName = globalFile
-            };
-            AddGlobalsToMod(modName, globalFile, fileInfo);
-        }
-    }
-
-    private void DiscoverModLevelObjects(string modName, string modPath)
-    {
-        var levelsPath = Path.Join(modPath, "Levels");
-        if (!Directory.Exists(levelsPath)) return;
-
-        List<string> levelFiles = [];
-        EnumerateFiles(levelFiles, levelsPath, levelsPath, "*.lsf");
-
-        var levelObjectsRe = LevelObjectsLocalRegex();
-        foreach (var levelFile in levelFiles)
-        {
-            var fileInfo = new FilesystemFileInfo
-            {
-                FilesystemPath = Path.Join(levelsPath, levelFile),
-                FileName = levelFile
-            };
-            AddLevelObjectsToMod(modName, levelFile, fileInfo);
-        }
-    }
-
-    public void DiscoverModDirectory(string modName, string modPath, string publicPath)
-    {
-        // Trigger mod entry creation even if there are no resources
-        GetMod(modName);
-
-        if (CollectStoryGoals)
-        {
-            DiscoverModGoals(modName, modPath);
-
-            var headerPath = Path.Join(modPath, @"Story\RawFiles\story_header.div");
-            if (File.Exists(headerPath))
-            {
-                var fileInfo = new FilesystemFileInfo
-                {
-                    FilesystemPath = headerPath,
-                    FileName = headerPath
-                };
-                GetMod(modName).StoryHeaderFile = fileInfo;
-            }
-
-            var orphanQueryIgnoresPath = Path.Join(modPath, @"Story\story_orphanqueries_ignore_local.txt");
-            if (File.Exists(orphanQueryIgnoresPath))
-            {
-                var fileInfo = new FilesystemFileInfo
-                {
-                    FilesystemPath = orphanQueryIgnoresPath,
-                    FileName = orphanQueryIgnoresPath
-                };
-                GetMod(modName).OrphanQueryIgnoreList = fileInfo;
-            }
-
-            var typeCoercionWhitelistPath = Path.Join(modPath, @"Story\RawFiles\TypeCoercionWhitelist.txt");
-            if (File.Exists(typeCoercionWhitelistPath))
-            {
-                var fileInfo = new FilesystemFileInfo
-                {
-                    FilesystemPath = typeCoercionWhitelistPath,
-                    FileName = typeCoercionWhitelistPath
-                };
-                GetMod(modName).TypeCoercionWhitelistFile = fileInfo;
-            }
-        }
-
-        if (CollectStats)
-        {
-            DiscoverModStats(modName, publicPath);
-        }
-
-        if (CollectGlobals)
-        {
-            DiscoverModGlobals(modName, modPath);
-        }
-
-        if (CollectLevels)
-        {
-            DiscoverModLevelObjects(modName, modPath);
-        }
-    }
-
-    public void DiscoverMods(string gameDataPath)
-    {
-        var modsPath = Path.Combine(gameDataPath, "Mods");
-        var publicPath = Path.Combine(gameDataPath, "Public");
-
-        if (Directory.Exists(modsPath))
-        {
-            var modPaths = Directory.GetDirectories(modsPath);
-
-            foreach (var modPath in modPaths)
-            {
-                if (File.Exists(Path.Combine(modPath, "meta.lsx")))
-                {
-                    var modName = Path.GetFileNameWithoutExtension(modPath);
-                    var modPublicPath = Path.Combine(publicPath, Path.GetFileName(modPath));
-                    DiscoverModDirectory(modName, modPath, modPublicPath);
-                }
-            }
-        }
-    }
-
-    public void Discover(String gameDataPath)
-    {
-        if (LoadPackages)
-        {
-            DiscoverBuiltinPackages(gameDataPath);
-        }
-
-        DiscoverMods(gameDataPath);
-    }
-
-    [GeneratedRegex("^Mods/([^/]+)/meta\\.lsx$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex MetaRegex();
-
-    [GeneratedRegex("^Mods/([^/]+)/Story/RawFiles/Goals/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex ScriptRegex();
-
-    [GeneratedRegex("^Public/([^/]+)/Stats/Generated/Data/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex StatRegex();
-
-    [GeneratedRegex("^Public/([^/]+)/(.*\\.lsx)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex StaticLsxRegex();
-
-    [GeneratedRegex("^Public/([^/]+)/Stats/Generated/Structure/(.*\\.txt)$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex StatStructureRegex();
-
-    [GeneratedRegex("^Mods/([^/]+)/Story/story_orphanqueries_ignore_local\\.txt$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex OrphanQueryIgnoresRegex();
-
-    [GeneratedRegex("^Mods/([^/]+)/Story/RawFiles/story_header\\.div$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex StoryDefinitionsRegex();
-
-    [GeneratedRegex("^Mods/([^/]+)/Story/RawFiles/TypeCoercionWhitelist\\.txt$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex TypeCoercionWhitelistRegex();
-
-    [GeneratedRegex("^Mods/([^/]+)/Globals/.*/.*/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex GlobalsRegex();
-
-    [GeneratedRegex("^Mods/([^/]+)/Levels/.*/(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex LevelObjectsRegex();
 
     [GeneratedRegex("^(.*)_[0-9]+\\.pak$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex ArchivePartRegex();
-
-    [GeneratedRegex("^(Characters|Items|Triggers)/.*\\.lsf$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex LevelObjectsLocalRegex();
 }
