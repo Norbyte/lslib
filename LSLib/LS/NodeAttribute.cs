@@ -12,7 +12,14 @@ public class TranslatedString
 
     public override string ToString()
     {
-        return Value;
+        if (Value != null && Value != "")
+        {
+            return Value;
+        }
+        else
+        {
+            return Handle + ";" + Version;
+        }
     }
 }
 
