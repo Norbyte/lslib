@@ -14,9 +14,9 @@ public class LSXWriter(Stream stream)
     public LSXVersion Version = LSXVersion.V3;
     public NodeSerializationSettings SerializationSettings = new();
 
-    public void Write(Resource rsrc)
+    private XmlWriter PrepareWrite(uint? majorVersion)
     {
-        if (Version == LSXVersion.V3 && rsrc.Metadata.MajorVersion == 4)
+        if (Version == LSXVersion.V3 && majorVersion != null && majorVersion == 4)
         {
             throw new InvalidDataException("Cannot resave a BG3 (v4.x) resource in D:OS2 (v3.x) file format, maybe you have the wrong game selected?");
         }
@@ -27,7 +27,12 @@ public class LSXWriter(Stream stream)
             IndentChars = "\t"
         };
 
-        using (this.writer = XmlWriter.Create(stream, settings))
+        return XmlWriter.Create(stream, settings);
+    }
+
+    public void Write(Resource rsrc)
+    {
+        using (this.writer = PrepareWrite(rsrc.Metadata.MajorVersion))
         {
             writer.WriteStartElement("save");
 
@@ -43,7 +48,14 @@ public class LSXWriter(Stream stream)
             WriteRegions(rsrc);
 
             writer.WriteEndElement();
-            writer.Flush();
+        }
+    }
+
+    public void Write(Node node)
+    {
+        using (this.writer = PrepareWrite(null))
+        {
+            WriteNode(node);
         }
     }
 
