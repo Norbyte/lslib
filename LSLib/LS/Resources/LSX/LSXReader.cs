@@ -1,4 +1,5 @@
 ﻿using LSLib.LS.Enums;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,6 +19,8 @@ public class LSXReader(Stream stream) : IDisposable
     private int lastLine, lastColumn;
     private LSXVersion Version = LSXVersion.V3;
     public NodeSerializationSettings SerializationSettings = new();
+    private NodeAttribute LastAttribute = null;
+    private int ValueOffset = 0;
 
     public void Dispose()
     {
@@ -163,6 +166,27 @@ public class LSXReader(Stream stream) : IDisposable
                 {
                     attr.FromString(attrValue, SerializationSettings);
                 }
+                else
+                {
+                    // Preallocate value for vector/matrix types
+                    switch (attr.Type)
+                    {
+                        case NodeAttribute.DataType.DT_Vec2: attr.Value = new float[2]; break;
+                        case NodeAttribute.DataType.DT_Vec3: attr.Value = new float[3]; break;
+                        case NodeAttribute.DataType.DT_Vec4: attr.Value = new float[4]; break;
+                        case NodeAttribute.DataType.DT_Mat2: attr.Value = new float[2*2]; break;
+                        case NodeAttribute.DataType.DT_Mat3: attr.Value = new float[3*3]; break;
+                        case NodeAttribute.DataType.DT_Mat3x4: attr.Value = new float[3*4]; break;
+                        case NodeAttribute.DataType.DT_Mat4: attr.Value = new float[4*4]; break;
+                        case NodeAttribute.DataType.DT_Mat4x3: attr.Value = new float[4*3]; break;
+                        case NodeAttribute.DataType.DT_TranslatedString: break;
+                        case NodeAttribute.DataType.DT_TranslatedFSString: break;
+                        default: throw new Exception($"Attribute of type {attr.Type} should have an inline value!");
+                    }
+
+                    ValueOffset = 0;
+                    LastAttribute = attr;
+                }
 
                 if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)
                 {
@@ -186,12 +210,45 @@ public class LSXReader(Stream stream) : IDisposable
                 stack.Last().Attributes.Add(attrName, attr);
                 break;
 
+            case "float2":
+                {
+                    var val = (float[])LastAttribute.Value;
+                    val[ValueOffset++] = Single.Parse(reader["x"]);
+                    val[ValueOffset++] = Single.Parse(reader["y"]);
+                    break;
+                }
+
+            case "float3":
+                {
+                    var val = (float[])LastAttribute.Value;
+                    val[ValueOffset++] = Single.Parse(reader["x"]);
+                    val[ValueOffset++] = Single.Parse(reader["y"]);
+                    val[ValueOffset++] = Single.Parse(reader["z"]);
+                    break;
+                }
+
+            case "float4":
+                {
+                    var val = (float[])LastAttribute.Value;
+                    val[ValueOffset++] = Single.Parse(reader["x"]);
+                    val[ValueOffset++] = Single.Parse(reader["y"]);
+                    val[ValueOffset++] = Single.Parse(reader["z"]);
+                    val[ValueOffset++] = Single.Parse(reader["w"]);
+                    break;
+                }
+
+            case "mat2":
+            case "mat3":
+            case "mat4":
+                // These are read in the float2/3/4 nodes
+                break;
+
             case "children":
                 // Child nodes are handled in the "node" case
                 break;
 
             default:
-                throw new InvalidFormatException(String.Format("Unknown element encountered: {0}", reader.Name));
+                throw new InvalidFormatException($"Unknown element encountered: {reader.Name}");
         }
     }
 
@@ -216,6 +273,15 @@ public class LSXReader(Stream stream) : IDisposable
 
             case "node":
                 stack.RemoveAt(stack.Count - 1);
+                break;
+
+            // Value nodes, processed in ReadElement()
+            case "float2":
+            case "float3":
+            case "float4":
+            case "mat2":
+            case "mat3":
+            case "mat4":
                 break;
 
             default:
