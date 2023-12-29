@@ -87,7 +87,11 @@ public class LocaReader(Stream stream) : IDisposable
         var entries = new LocaEntry[header.NumEntries];
         BinUtils.ReadStructs<LocaEntry>(reader, entries);
 
-        Stream.Position = header.TextsOffset;
+        if (Stream.Position != header.TextsOffset)
+        {
+            Stream.Position = header.TextsOffset;
+        }
+
         foreach (var entry in entries)
         {
             var text = Encoding.UTF8.GetString(reader.ReadBytes((int)entry.Length - 1));
@@ -237,7 +241,7 @@ public enum LocaFormat
     Xml
 };
 
-public class LocaUtils
+public static class LocaUtils
 {
     public static LocaFormat ExtensionToFileFormat(string path)
     {
