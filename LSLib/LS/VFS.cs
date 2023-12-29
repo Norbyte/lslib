@@ -106,7 +106,11 @@ public class VFS : IDisposable
                 "SharedSoundBanks.pak",
                 "SharedSounds.pak",
                 "Textures.pak",
-                "VirtualTextures.pak"
+                "VirtualTextures.pak",
+                // Localization
+                "English_Animations.pak",
+                "VoiceMeta.pak",
+                "Voice.pak"
             ];
         }
 
@@ -114,6 +118,17 @@ public class VFS : IDisposable
         var packagePriorities = new List<Tuple<string, int>>();
 
         foreach (var path in Directory.GetFiles(gameDataPath, "*.pak"))
+        {
+            var baseName = Path.GetFileName(path);
+            if (!packageBlacklist.Contains(baseName)
+                // Don't load 2nd, 3rd, ... parts of a multi-part archive
+                && !ModPathVisitor.archivePartRe.IsMatch(baseName))
+            {
+                AttachPackage(path);
+            }
+        }
+
+        foreach (var path in Directory.GetFiles(Path.Join(gameDataPath, "Localization"), "*.pak"))
         {
             var baseName = Path.GetFileName(path);
             if (!packageBlacklist.Contains(baseName)
