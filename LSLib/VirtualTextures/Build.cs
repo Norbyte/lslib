@@ -857,7 +857,10 @@ public class TileSetBuilder
         {
             PageFiles = SetBuilder.BuildSingleFile();
         }
+    }
 
+    private void BuildPageFileMetadata()
+    {
         TileSet.PageFileInfos = [];
         uint firstPageIndex = 0;
         foreach (var file in PageFiles)
@@ -917,6 +920,7 @@ public class TileSetBuilder
         SetBuilder.CommitPageFiles();
 
         OnStepStarted("Generating tile lists");
+        BuildPageFileMetadata();
         BuildFlatTileList();
 
         OnStepStarted("Building metadata");
