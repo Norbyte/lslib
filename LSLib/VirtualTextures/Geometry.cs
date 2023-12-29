@@ -23,7 +23,7 @@ public class TileSetGeometryCalculator
 
     private void GrowPlacementGrid()
     {
-        if (PlacementGridWidth <= PlacementGridHeight)
+        if (PlacementGridWidth * PlacementTileWidth <= PlacementGridHeight * PlacementTileHeight)
         {
             ResizePlacementGrid(PlacementGridWidth * 2, PlacementGridHeight);
         }
