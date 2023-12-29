@@ -352,13 +352,12 @@ public class VFS : IDisposable
 
         if (RootDir != null)
         {
-            try
+            var realPath = Path.Join(RootDir, path);
+            if (File.Exists(realPath))
             {
-                stream = File.OpenRead(Path.Join(RootDir, path));
+                stream = File.OpenRead(realPath);
                 return true;
             }
-            catch (FileNotFoundException) { }
-            catch (DirectoryNotFoundException) { }
         }
 
         stream = null;
