@@ -124,23 +124,23 @@ public class TileSetGeometryCalculator
         var minTexSize = 0x10000;
         foreach (var tex in Textures)
         {
-            minTexSize = Math.Min(minTexSize, Math.Min(tex.Height, tex.Width));
+            minTexSize = Math.Min(minTexSize, Math.Min(tex.Height / BuildData.RawTileHeight, tex.Width / BuildData.RawTileHeight));
         }
 
         BuildData.MipFileStartLevel = 0;
-        while (minTexSize >= BuildData.RawTileHeight)
+        while (minTexSize > 0)
         {
             BuildData.MipFileStartLevel++;
             minTexSize >>= 1;
         }
 
-        // Max W/H of all textures
-        var maxSize = Math.Max(BuildData.TotalWidth, BuildData.TotalHeight);
+        // Min W/H of all textures
+        var minSize = Math.Min(BuildData.TotalWidth / BuildData.RawTileHeight, BuildData.TotalHeight / BuildData.RawTileHeight);
         BuildData.PageFileLevels = 0;
-        while (maxSize >= BuildData.RawTileHeight)
+        while (minSize > 0)
         {
             BuildData.PageFileLevels++;
-            maxSize >>= 1;
+            minSize >>= 1;
         }
 
         BuildData.BuildLevels = BuildData.PageFileLevels + 1;
