@@ -141,7 +141,7 @@ public class PackageReader
         where TFile : struct, ILSPKFile
     {
         var entries = new TFile[Pak.Metadata.NumFiles];
-        view.ReadArray(offset, entries, 0, (int)Pak.Metadata.NumFiles);
+        BinUtils.ReadStructs(view, offset, entries);
 
         foreach (var entry in entries)
         {

@@ -156,6 +156,22 @@ public static class BinUtils
         handle.Free();
     }
 
+    public static void ReadStructs<T>(MemoryMappedViewAccessor view, long offset, T[] elements)
+    {
+        int elementSize = Marshal.SizeOf(typeof(T));
+        int bytes = elementSize * elements.Length;
+        byte[] readBuffer = new byte[bytes];
+        view.ReadArray<byte>(offset, readBuffer, 0, bytes);
+        GCHandle handle = GCHandle.Alloc(readBuffer, GCHandleType.Pinned);
+        var addr = handle.AddrOfPinnedObject();
+        for (var i = 0; i < elements.Length; i++)
+        {
+            var elementAddr = new IntPtr(addr.ToInt64() + elementSize * i);
+            elements[i] = Marshal.PtrToStructure<T>(elementAddr);
+        }
+        handle.Free();
+    }
+
     public static void WriteStruct<T>(BinaryWriter writer, ref T inStruct)
     {
         int count = Marshal.SizeOf(typeof(T));

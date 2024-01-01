@@ -1,6 +1,7 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.LS.Enums;
 using System;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 
 namespace LSLib.LS;
@@ -114,7 +115,7 @@ internal struct LSPKHeader10 : ILSPKHeader
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal struct LSPKHeader13 : ILSPKHeader
+internal unsafe struct LSPKHeader13 : ILSPKHeader
 {
     public UInt32 Version;
     public UInt32 FileListOffset;
@@ -122,13 +123,11 @@ internal struct LSPKHeader13 : ILSPKHeader
     public UInt16 NumParts;
     public Byte Flags;
     public Byte Priority;
-
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-    public byte[] Md5;
+    public fixed byte Md5[16];
 
     public readonly PackageHeaderCommon ToCommonHeader()
     {
-        return new PackageHeaderCommon
+        var header = new PackageHeaderCommon
         {
             Version = Version,
             DataOffset = 0,
@@ -137,22 +136,31 @@ internal struct LSPKHeader13 : ILSPKHeader
             NumParts = NumParts,
             Flags = (PackageFlags)Flags,
             Priority = Priority,
-            Md5 = Md5
+            Md5 = new byte[16]
         };
+
+        fixed (byte* md = Md5)
+        {
+            Marshal.Copy(new IntPtr(md), header.Md5, 0, 0x10);
+        }
+
+        return header;
     }
 
     public static ILSPKHeader FromCommonHeader(PackageHeaderCommon h)
     {
-        return new LSPKHeader13
+        var header = new LSPKHeader13
         {
             Version = h.Version,
             FileListOffset = (UInt32)h.FileListOffset,
             FileListSize = h.FileListSize,
             NumParts = (UInt16)h.NumParts,
             Flags = (byte)h.Flags,
-            Priority = h.Priority,
-            Md5 = h.Md5
+            Priority = h.Priority
         };
+
+        Marshal.Copy(h.Md5, 0, new IntPtr(header.Md5), 0x10);
+        return header;
     }
 }
 

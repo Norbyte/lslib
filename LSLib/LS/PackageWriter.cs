@@ -303,6 +303,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         Metadata.Version = (UInt32)Build.Version;
         Metadata.Flags = Build.Flags;
         Metadata.Priority = Build.Priority;
+        Metadata.Md5 = new byte[16];
 
         switch (Build.Version)
         {
