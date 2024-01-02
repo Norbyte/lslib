@@ -271,7 +271,7 @@ public class PackageReader
         }
 
         // Check for v9 and v7 package headers
-        version = view.ReadInt32(4);
+        version = view.ReadInt32(0);
         if (version == 7 || version == 9)
         {
             return ReadHeaderAndFileList<LSPKHeader7, FileEntry7>(view, 0);

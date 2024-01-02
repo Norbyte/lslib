@@ -63,7 +63,7 @@ internal struct LSPKHeader7 : ILSPKHeader
         return new LSPKHeader7
         {
             Version = h.Version,
-            DataOffset = (uint)(h.FileListOffset + h.FileListSize),
+            DataOffset = h.DataOffset,
             NumParts = h.NumParts,
             FileListSize = h.FileListSize,
             LittleEndian = 0,
@@ -104,7 +104,7 @@ internal struct LSPKHeader10 : ILSPKHeader
         return new LSPKHeader10
         {
             Version = h.Version,
-            DataOffset = (uint)(h.FileListOffset + 4 + h.FileListSize),
+            DataOffset = h.DataOffset,
             FileListSize = h.FileListSize,
             NumParts = (UInt16)h.NumParts,
             Flags = (byte)h.Flags,
