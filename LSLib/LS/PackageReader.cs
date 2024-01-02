@@ -241,10 +241,8 @@ public class PackageReader
         }
     }
 
-    public Package Read(string path, bool metadataOnly = false)
+    public Package ReadInternal(string path)
     {
-        MetadataOnly = metadataOnly;
-
         Pak = new Package(path);
         var view = Pak.MetadataView;
 
@@ -280,5 +278,20 @@ public class PackageReader
         }
 
         throw new NotAPackageException("No valid signature found in package file");
+    }
+
+    public Package Read(string path, bool metadataOnly = false)
+    {
+        MetadataOnly = metadataOnly;
+
+        try
+        {
+            return ReadInternal(path);
+        }
+        catch (Exception)
+        {
+            Pak.Dispose();
+            throw;
+        }
     }
 }
