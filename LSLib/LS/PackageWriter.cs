@@ -59,7 +59,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         Stream stream = Streams.Last();
         var packaged = new PackageBuildTransientFile
         {
-            Name = input.Path,
+            Name = input.Path.Replace('\\', '/'),
             UncompressedSize = (ulong)uncompressed.Length,
             SizeOnDisk = (ulong)compressed.Length,
             ArchivePart = (UInt32)(Streams.Count - 1),
@@ -109,12 +109,22 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         where THeader : ILSPKHeader
         where TFile : ILSPKFile
     {
+        // <= v9 packages don't support LZ4
+        if ((Build.Version == PackageVersion.V7 || Build.Version == PackageVersion.V9) && Build.Compression == CompressionMethod.LZ4)
+        {
+            Build.Compression = CompressionMethod.Zlib;
+        }
+
         Metadata.NumFiles = (uint)Build.Files.Count;
         Metadata.FileListSize = (UInt32)(Marshal.SizeOf(typeof(TFile)) * Build.Files.Count);
 
         using var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true);
 
-        Metadata.DataOffset = 4 + (UInt32)Marshal.SizeOf(typeof(THeader)) + Metadata.FileListSize;
+        Metadata.DataOffset = (UInt32)Marshal.SizeOf(typeof(THeader)) + Metadata.FileListSize;
+        if (Metadata.Version >= 10)
+        {
+            Metadata.DataOffset += 4;
+        }
 
         int paddingLength = Build.Version.PaddingSize();
         if (Metadata.DataOffset % paddingLength > 0)
@@ -130,7 +140,10 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         var writtenFiles = PackFiles();
 
         mainStream.Seek(0, SeekOrigin.Begin);
-        writer.Write(PackageHeaderCommon.Signature);
+        if (Metadata.Version >= 10)
+        {
+            writer.Write(PackageHeaderCommon.Signature);
+        }
         Metadata.NumParts = (UInt16)Streams.Count;
         Metadata.Md5 = ComputeArchiveHash();
 
