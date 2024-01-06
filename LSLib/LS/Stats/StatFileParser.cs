@@ -83,7 +83,7 @@ public class StatLoadingContext
             Code = code,
             Message = message,
             Path = path,
-            Line = line > 0 ? (line + 1) : 0,
+            Line = line,
             StatObjectName = statObjectName
         });
     }

@@ -10,7 +10,7 @@ namechar [a-zA-Z_]
 
 %%
 
-data([ ]+)\"([^\"]+)\"([ ]+)\"(.*)\" { yylval = MakeDataProperty(yylloc, yytext); return (int)StatTokens.DATA_ITEM; }
+data([ ]+)\"([^\"]+)\"([ ]+)\"(.*)\" { yylval = MakeDataProperty(tokLin, tokCol, tokELin, tokECol, yytext); return (int)StatTokens.DATA_ITEM; }
 
 /* Reserved words */
 "new"        return (int)StatTokens.NEW;

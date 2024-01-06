@@ -32,7 +32,7 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
         return MakeLiteral(Regex.Unescape(lit.Substring(1, lit.Length - 2)));
     }
 
-    protected StatProperty MakeDataProperty(CodeLocation location, string lit)
+    protected StatProperty MakeDataProperty(int startLine, int startCol, int endLine, int endCol, string lit)
     {
         var re = new Regex(@"data\s+""([^""]+)""\s+""(.*)""\s*", RegexOptions.CultureInvariant);
         var matches = re.Match(lit);
@@ -45,7 +45,7 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
         {
             Key = matches.Groups[1].Value,
             Value = matches.Groups[2].Value,
-            Location = location
+            Location = new CodeLocation(null, startLine, startCol, endLine, endCol)
         };
     }
 }
