@@ -120,7 +120,7 @@ public partial class ModPathVisitor
             mod.ModifiersFile = modifiersPath;
         }
         
-        var valueListsPath = Path.Join(mod.PublicPath, @"Stats/Generated/Structure/ValueLists.txt");
+        var valueListsPath = Path.Join(mod.PublicPath, @"Stats/Generated/Structure/Base/ValueLists.txt");
         if (FS.FileExists(valueListsPath))
         {
             mod.ValueListsFile = valueListsPath;
