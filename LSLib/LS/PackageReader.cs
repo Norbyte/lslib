@@ -290,7 +290,7 @@ public class PackageReader
         }
         catch (Exception)
         {
-            Pak.Dispose();
+            Pak?.Dispose();
             throw;
         }
     }
