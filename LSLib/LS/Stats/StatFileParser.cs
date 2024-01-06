@@ -210,12 +210,14 @@ public class StatLoader
     private readonly StatLoadingContext Context;
     private readonly StatValueParserFactory ParserFactory;
     private readonly StatLoaderReferenceValidator ReferenceValidator;
+    public readonly DiagnosticContext DiagContext;
 
     public StatLoader(StatLoadingContext ctx)
     {
         Context = ctx;
-        ReferenceValidator = new StatLoaderReferenceValidator(ctx);
-        ParserFactory = new StatValueParserFactory(ReferenceValidator);
+        ReferenceValidator = new(ctx);
+        ParserFactory = new(ReferenceValidator);
+        DiagContext = new();
     }
 
     private List<StatDeclaration> ParseStatStream(string path, Stream stream)
@@ -312,7 +314,7 @@ public class StatLoader
         else if (field.Type != "Passthrough")
         {
             var parser = field.GetParser(ParserFactory, Context.Definitions);
-            parsed = parser.Parse((string)value, ref succeeded, ref errorText);
+            parsed = parser.Parse(DiagContext, value, ref succeeded, ref errorText);
         }
         else
         {

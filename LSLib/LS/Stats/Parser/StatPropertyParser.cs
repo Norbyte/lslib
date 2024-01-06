@@ -36,15 +36,17 @@ public abstract class StatPropertyScanBase : AbstractScanner<object, LexLocation
 public class StatActionValidator
 {
     private StatDefinitionRepository Definitions;
+    private DiagnosticContext Context;
     private StatValueParserFactory ParserFactory;
     private readonly ExpressionType ExprType;
 
     public delegate void ErrorReportingDelegate(string message);
     public event ErrorReportingDelegate OnError;
 
-    public StatActionValidator(StatDefinitionRepository definitions, StatValueParserFactory parserFactory, ExpressionType type)
+    public StatActionValidator(StatDefinitionRepository definitions, DiagnosticContext ctx, StatValueParserFactory parserFactory, ExpressionType type)
     {
         Definitions = definitions;
+        Context = ctx;
         ParserFactory = parserFactory;
         ExprType = type;
     }
@@ -112,7 +114,7 @@ public class StatActionValidator
             if (arg.Type.Length > 0)
             {
                 var parser = ParserFactory.CreateParser(arg.Type, null, null, Definitions);
-                parser.Parse(args[i], ref succeeded, ref errorText);
+                parser.Parse(Context, args[i], ref succeeded, ref errorText);
                 if (!succeeded)
                 {
                     OnError($"'{action.Action}' argument {i + 1}: {errorText}");
@@ -126,6 +128,7 @@ public partial class StatPropertyParser
 {
     private IStatValueParser RequirementParser;
     private StatEnumeration RequirementsWithArgument;
+    private DiagnosticContext Context;
     private int LiteralStart;
     private StatActionValidator ActionValidator;
     private byte[] Source;
@@ -136,11 +139,12 @@ public partial class StatPropertyParser
     private StatPropertyScanner StatScanner;
 
     public StatPropertyParser(StatPropertyScanner scnr, StatDefinitionRepository definitions,
-        StatValueParserFactory parserFactory, byte[] source, ExpressionType type) : base(scnr)
+        DiagnosticContext ctx, StatValueParserFactory parserFactory, byte[] source, ExpressionType type) : base(scnr)
     {
+        Context = ctx;
         StatScanner = scnr;
         Source = source;
-        ActionValidator = new StatActionValidator(definitions, parserFactory, type);
+        ActionValidator = new StatActionValidator(definitions, ctx, parserFactory, type);
         ActionValidator.OnError += (message) => { OnError(message); };
     }
 
@@ -268,7 +272,7 @@ public partial class StatPropertyParser
         {
             bool succeeded = false;
             string errorText = null;
-            parser.Parse(value, ref succeeded, ref errorText);
+            parser.Parse(Context, value, ref succeeded, ref errorText);
             if (!succeeded)
             {
                 errorText = $"'{value}': {errorText}";

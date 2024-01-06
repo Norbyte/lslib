@@ -8,9 +8,24 @@ using System.Text;
 
 namespace LSLib.LS.Stats;
 
+public class DiagnosticContext
+{
+    public bool IgnoreMissingReferences = false;
+}
+
 public interface IStatValueParser
 {
-    object Parse(string value, ref bool succeeded, ref string errorText);
+    object Parse(DiagnosticContext ctx, object value, ref bool succeeded, ref string errorText);
+}
+
+abstract public class StatStringParser : IStatValueParser
+{
+    abstract public object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText);
+
+    public object Parse(DiagnosticContext ctx, object value, ref bool succeeded, ref string errorText)
+    {
+        return Parse(ctx, (string)value, ref succeeded, ref errorText);
+    }
 }
 
 public class StatReferenceConstraint
@@ -24,9 +39,9 @@ public interface IStatReferenceValidator
     bool IsValidGuidResource(string name, string resourceType);
 }
 
-public class BooleanParser : IStatValueParser
+public class BooleanParser : StatStringParser
 {
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value == "true" || value == "false" || value == "")
         {
@@ -42,9 +57,9 @@ public class BooleanParser : IStatValueParser
     }
 }
 
-public class Int32Parser : IStatValueParser
+public class Int32Parser : StatStringParser
 {
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value == "")
         {
@@ -65,9 +80,9 @@ public class Int32Parser : IStatValueParser
     }
 }
 
-public class FloatParser : IStatValueParser
+public class FloatParser : StatStringParser
 {
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value == "")
         {
@@ -88,11 +103,11 @@ public class FloatParser : IStatValueParser
     }
 }
 
-public class EnumParser(StatEnumeration enumeration) : IStatValueParser
+public class EnumParser(StatEnumeration enumeration) : StatStringParser
 {
     private readonly StatEnumeration Enumeration = enumeration ?? throw new ArgumentNullException();
 
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value == null || value == "")
         {
@@ -120,11 +135,11 @@ public class EnumParser(StatEnumeration enumeration) : IStatValueParser
     }
 }
 
-public class MultiValueEnumParser(StatEnumeration enumeration) : IStatValueParser
+public class MultiValueEnumParser(StatEnumeration enumeration) : StatStringParser
 {
     private readonly EnumParser Parser = new(enumeration);
 
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         succeeded = true;
 
@@ -135,7 +150,7 @@ public class MultiValueEnumParser(StatEnumeration enumeration) : IStatValueParse
 
         foreach (var item in value.Split([';']))
         {
-            Parser.Parse(item.Trim([' ']), ref succeeded, ref errorText);
+            Parser.Parse(ctx, item.Trim([' ']), ref succeeded, ref errorText);
             if (!succeeded)
             {
                 errorText = $"Value '{item}' not supported; {errorText}";
@@ -147,9 +162,9 @@ public class MultiValueEnumParser(StatEnumeration enumeration) : IStatValueParse
     }
 }
 
-public class StringParser : IStatValueParser
+public class StringParser : StatStringParser
 {
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value.Length > 2048)
         {
@@ -166,9 +181,9 @@ public class StringParser : IStatValueParser
     }
 }
 
-public class UUIDParser : IStatValueParser
+public class UUIDParser : StatStringParser
 {
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value == "")
         {
@@ -189,11 +204,11 @@ public class UUIDParser : IStatValueParser
     }
 }
 
-public class StatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : IStatValueParser
+public class StatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : StatStringParser
 {
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
-        if (value == "")
+        if (ctx.IgnoreMissingReferences || value == "")
         {
             succeeded = true;
             return value;
@@ -215,11 +230,11 @@ public class StatReferenceParser(IStatReferenceValidator validator, List<StatRef
     }
 }
 
-public class MultiValueStatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : IStatValueParser
+public class MultiValueStatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : StatStringParser
 {
     private readonly StatReferenceParser Parser = new(validator, constraints);
 
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         succeeded = true;
 
@@ -228,7 +243,7 @@ public class MultiValueStatReferenceParser(IStatReferenceValidator validator, Li
             var trimmed = item.Trim([' ']);
             if (trimmed.Length > 0)
             {
-                Parser.Parse(trimmed, ref succeeded, ref errorText);
+                Parser.Parse(ctx, trimmed, ref succeeded, ref errorText);
                 if (!succeeded)
                 {
                     return null;
@@ -248,9 +263,9 @@ public enum ExpressionType
 };
 
 public class ExpressionParser(String validatorType, StatDefinitionRepository definitions,
-    StatValueParserFactory parserFactory, ExpressionType type) : IStatValueParser
+    StatValueParserFactory parserFactory, ExpressionType type) : StatStringParser
 {
-    public virtual object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + validatorType + "__ " + value.TrimEnd());
         using var buf = new MemoryStream(valueBytes);
@@ -258,7 +273,7 @@ public class ExpressionParser(String validatorType, StatDefinitionRepository def
 
         var scanner = new StatPropertyScanner();
         scanner.SetSource(buf);
-        var parser = new StatPropertyParser(scanner, definitions, parserFactory, valueBytes, type);
+        var parser = new StatPropertyParser(scanner, definitions, ctx, parserFactory, valueBytes, type);
         parser.OnError += (string message) => errorTexts.Add(message);
         succeeded = parser.Parse();
         if (!succeeded)
@@ -282,9 +297,9 @@ public class ExpressionParser(String validatorType, StatDefinitionRepository def
     }
 }
 
-public class LuaExpressionParser : IStatValueParser
+public class LuaExpressionParser : StatStringParser
 {
-    public virtual object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         value = "BHAALS_BOON_SLAYER.Duration-1";
         var valueBytes = Encoding.UTF8.GetBytes(value);
@@ -307,9 +322,9 @@ public class LuaExpressionParser : IStatValueParser
     }
 }
 
-public class UseCostsParser(IStatReferenceValidator validator) : IStatValueParser
+public class UseCostsParser(IStatReferenceValidator validator) : StatStringParser
 {
-    public virtual object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value.Length == 0) return value;
 
@@ -325,7 +340,7 @@ public class UseCostsParser(IStatReferenceValidator validator) : IStatValueParse
                 return null;
             }
 
-            if (!validator.IsValidGuidResource(parts[0], "ActionResource") && !validator.IsValidGuidResource(parts[0], "ActionResourceGroup"))
+            if (!ctx.IgnoreMissingReferences && !validator.IsValidGuidResource(parts[0], "ActionResource") && !validator.IsValidGuidResource(parts[0], "ActionResourceGroup"))
             {
                 errorText = $"Nonexistent action resource or action resource group: {parts[0]}";
                 return null;
@@ -365,9 +380,9 @@ public class UseCostsParser(IStatReferenceValidator validator) : IStatValueParse
     }
 }
 
-public class DiceRollParser : IStatValueParser
+public class DiceRollParser : StatStringParser
 {
-    public virtual object Parse(string value, ref bool succeeded, ref string errorText)
+    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
     {
         if (value.Length == 0) return value;
 
@@ -395,14 +410,14 @@ public class AnyParser(IEnumerable<IStatValueParser> parsers, string message = n
 {
     private readonly List<IStatValueParser> Parsers = parsers.ToList();
 
-    public object Parse(string value, ref bool succeeded, ref string errorText)
+    public object Parse(DiagnosticContext ctx, object value, ref bool succeeded, ref string errorText)
     {
         List<string> errors = [];
         foreach (var parser in Parsers)
         {
             succeeded = false;
             string error = null;
-            var result = parser.Parse(value, ref succeeded, ref error);
+            var result = parser.Parse(ctx, value, ref succeeded, ref error);
             if (succeeded)
             {
                 return result;
