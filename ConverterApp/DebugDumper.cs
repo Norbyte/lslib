@@ -253,7 +253,10 @@ public class DebugDumperTask
         Stream storyStream;
         if (storySave != null)
         {
-            storyStream = storySave.CreateContentReader();
+            var bin = storySave.CreateContentReader();
+            storyStream = new MemoryStream();
+            bin.CopyTo(storyStream);
+            storyStream.Position = 0;
         }
         else
         {
