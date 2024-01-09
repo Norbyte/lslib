@@ -1,4 +1,7 @@
 ﻿using LSLib.LS.Stats.Properties;
+using LSLib.LS.Stats.StatParser;
+using LSLib.LS.Story;
+using LSLib.LS.Story.GoalParser;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,20 +14,112 @@ namespace LSLib.LS.Stats;
 public class DiagnosticContext
 {
     public bool IgnoreMissingReferences = false;
+    public StatDeclaration CurrentDeclaration;
+    public CodeLocation PropertyValueSpan;
 }
 
-public interface IStatValueParser
+public enum PropertyDiagnosticContextType
 {
-    object Parse(DiagnosticContext ctx, object value, ref bool succeeded, ref string errorText);
+    Argument,
+    Call,
+    Property,
+    Entry
 }
 
-abstract public class StatStringParser : IStatValueParser
+public struct PropertyDiagnosticContext
 {
-    abstract public object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText);
+    public PropertyDiagnosticContextType Type;
+    public string Context;
+    public CodeLocation Location;
+}
 
-    public object Parse(DiagnosticContext ctx, object value, ref bool succeeded, ref string errorText)
+public class PropertyDiagnostic
+{
+    public string Message;
+    public CodeLocation Location;
+    public List<PropertyDiagnosticContext> Contexts;
+}
+
+public class PropertyDiagnosticContainer
+{
+    public List<PropertyDiagnostic> Messages;
+
+    public bool Empty
     {
-        return Parse(ctx, (string)value, ref succeeded, ref errorText);
+        get {  return Messages == null || Messages.Count == 0; }
+    }
+
+    public void AddContext(PropertyDiagnosticContextType type, string name, CodeLocation location = null)
+    {
+        if (Empty) return;
+
+        var context = new PropertyDiagnosticContext
+        {
+            Type = type,
+            Context = name,
+            Location = location
+        };
+
+        foreach (var msg in Messages)
+        {
+            msg.Contexts ??= [];
+            msg.Contexts.Add(context);
+        }
+    }
+
+    public void Add(string message, CodeLocation location = null)
+    {
+        Messages ??= [];
+        Messages.Add(new PropertyDiagnostic
+        {
+            Message = message,
+            Location = location
+        });
+    }
+
+    public void MergeInto(PropertyDiagnosticContainer container)
+    {
+        if (Empty) return;
+
+        container.Messages ??= [];
+        container.Messages.AddRange(Messages);
+    }
+
+    public void MergeInto(StatLoadingContext context, string declarationName)
+    {
+        if (Empty) return;
+
+        foreach (var message in Messages)
+        {
+            var location = message.Location;
+            foreach (var ctx in message.Contexts)
+            {
+                location ??= ctx.Location;
+            }
+
+            context.LogError(DiagnosticCode.StatPropertyValueInvalid, message.Message,
+                location, message.Contexts);
+        }
+    }
+
+    public void Clear()
+    {
+        Messages?.Clear();
+    }
+}
+
+public interface IStatValueValidator
+{
+    void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors);
+}
+
+abstract public class StatStringValidator : IStatValueValidator
+{
+    abstract public void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors);
+
+    public void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors)
+    {
+        Validate(ctx, (string)value, errors);
     }
 }
 
@@ -39,219 +134,130 @@ public interface IStatReferenceValidator
     bool IsValidGuidResource(string name, string resourceType);
 }
 
-public class BooleanParser : StatStringParser
+public class BooleanValidator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value == "true" || value == "false" || value == "")
+        if (value != "true" && value != "false" && value != "")
         {
-            succeeded = true;
-            return (value == "true");
-        }
-        else
-        {
-            succeeded = false;
-            errorText = "expected boolean value 'true' or 'false'";
-            return null;
+            errors.Add("expected boolean value 'true' or 'false'");
         }
     }
 }
 
-public class Int32Parser : StatStringParser
+public class Int32Validator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value == "")
+        if (value != "" && !Int32.TryParse(value, out int intval))
         {
-            succeeded = true;
-            return 0;
-        }
-        else if (Int32.TryParse(value, out int intval))
-        {
-            succeeded = true;
-            return intval;
-        }
-        else
-        {
-            succeeded = false;
-            errorText = "expected an integer value";
-            return null;
+            errors.Add("expected an integer value");
         }
     }
 }
 
-public class FloatParser : StatStringParser
+public class FloatValidator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value == "")
+        if (value != "" && !Single.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatval))
         {
-            succeeded = true;
-            return 0.0f;
-        }
-        else if (Single.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatval))
-        {
-            succeeded = true;
-            return floatval;
-        }
-        else
-        {
-            succeeded = false;
-            errorText = "expected a float value";
-            return null;
+            errors.Add("expected a float value");
         }
     }
 }
 
-public class EnumParser(StatEnumeration enumeration) : StatStringParser
+public class EnumValidator(StatEnumeration enumeration) : StatStringValidator
 {
     private readonly StatEnumeration Enumeration = enumeration ?? throw new ArgumentNullException();
 
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value == null || value == "")
+        if (value != "" && !Enumeration.ValueToIndexMap.ContainsKey(value))
         {
-            value = Enumeration.Values[0];
-        }
-
-        if (Enumeration.ValueToIndexMap.ContainsKey(value))
-        {
-            succeeded = true;
-            return value;
-        }
-        else
-        {
-            succeeded = false;
-            if (Enumeration.Values.Count > 4)
+            if (Enumeration.Values.Count > 20)
             {
-                errorText = "expected one of: " + String.Join(", ", Enumeration.Values.Take(4)) + ", ...";
+                errors.Add("expected one of: " + String.Join(", ", Enumeration.Values.Take(20)) + ", ...");
             }
             else
             {
-                errorText = "expected one of: " + String.Join(", ", Enumeration.Values);
+                errors.Add("expected one of: " + String.Join(", ", Enumeration.Values));
             }
-            return null;
         }
     }
 }
 
-public class MultiValueEnumParser(StatEnumeration enumeration) : StatStringParser
+public class MultiValueEnumValidator(StatEnumeration enumeration) : StatStringValidator
 {
-    private readonly EnumParser Parser = new(enumeration);
+    private readonly EnumValidator Validator = new(enumeration);
 
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        succeeded = true;
-
-        if (value.Length == 0)
-        {
-            return true;
-        }
+        if (value.Length == 0) return;
 
         foreach (var item in value.Split([';']))
         {
-            Parser.Parse(ctx, item.Trim([' ']), ref succeeded, ref errorText);
-            if (!succeeded)
-            {
-                errorText = $"Value '{item}' not supported; {errorText}";
-                return null;
-            }
-        }
-
-        return value;
-    }
-}
-
-public class StringParser : StatStringParser
-{
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
-    {
-        if (value.Length > 2048)
-        {
-            errorText = "Value cannot be longer than 2048 characters";
-            succeeded = false;
-            return null;
-        }
-        else
-        {
-            errorText = null;
-            succeeded = true;
-            return value;
+            Validator.Validate(ctx, item.Trim([' ']), errors);
         }
     }
 }
 
-public class UUIDParser : StatStringParser
+public class StringValidator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value == "")
+        if (value.Length > 2047)
         {
-            succeeded = true;
-            return Guid.Empty;
-        }
-        else if (Guid.TryParseExact(value, "D", out Guid parsed))
-        {
-            succeeded = true;
-            return parsed;
-        }
-        else
-        {
-            errorText = $"'{value}' is not a valid UUID";
-            succeeded = false;
-            return null;
+            // FixedString constructors crash over 2047 chars as there is no pool for that string size
+            errors.Add("Value cannot be longer than 2047 characters");
         }
     }
 }
 
-public class StatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : StatStringParser
+public class UUIDValidator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (ctx.IgnoreMissingReferences || value == "")
+        if (value != "" && !Guid.TryParseExact(value, "D", out Guid parsed))
         {
-            succeeded = true;
-            return value;
+            errors.Add($"'{value}' is not a valid UUID");
         }
+    }
+}
+
+public class StatReferenceValidator(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : StatStringValidator
+{
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        if (ctx.IgnoreMissingReferences || value == "") return;
 
         foreach (var constraint in constraints)
         {
             if (validator.IsValidReference(value, constraint.StatType))
             {
-                succeeded = true;
-                return value;
+                return;
             }
         }
 
         var refTypes = String.Join("/", constraints.Select(c => c.StatType));
-        errorText = $"'{value}' is not a valid {refTypes} reference";
-        succeeded = false;
-        return null;
+        errors.Add($"'{value}' is not a valid {refTypes} reference");
     }
 }
 
-public class MultiValueStatReferenceParser(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : StatStringParser
+public class MultiValueStatReferenceValidator(IStatReferenceValidator validator, List<StatReferenceConstraint> constraints) : StatStringValidator
 {
-    private readonly StatReferenceParser Parser = new(validator, constraints);
+    private readonly StatReferenceValidator Validator = new(validator, constraints);
 
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        succeeded = true;
-
         foreach (var item in value.Split([';']))
         {
             var trimmed = item.Trim([' ']);
             if (trimmed.Length > 0)
             {
-                Parser.Parse(ctx, trimmed, ref succeeded, ref errorText);
-                if (!succeeded)
-                {
-                    return null;
-                }
+                Validator.Validate(ctx, trimmed, errors);
             }
         }
-
-        return value;
     }
 }
 
@@ -262,71 +268,60 @@ public enum ExpressionType
     DescriptionParams
 };
 
-public class ExpressionParser(String validatorType, StatDefinitionRepository definitions,
-    StatValueParserFactory parserFactory, ExpressionType type) : StatStringParser
+public class ExpressionValidator(String validatorType, StatDefinitionRepository definitions,
+    StatValueValidatorFactory validatorFactory, ExpressionType type) : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
+        var typeLen = 10 + validatorType.Length;
         var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + validatorType + "__ " + value.TrimEnd());
         using var buf = new MemoryStream(valueBytes);
-        List<string> errorTexts = [];
 
         var scanner = new StatPropertyScanner();
         scanner.SetSource(buf);
-        var parser = new StatPropertyParser(scanner, definitions, ctx, parserFactory, valueBytes, type);
-        parser.OnError += (string message) => errorTexts.Add(message);
-        succeeded = parser.Parse();
+        var parser = new StatPropertyParser(scanner, definitions, ctx, validatorFactory, valueBytes, type, errors, ctx.PropertyValueSpan, typeLen);
+        var succeeded = parser.Parse();
         if (!succeeded)
         {
+            // FIXME pass location to error container
             var location = scanner.LastLocation();
-            var column = location.StartColumn - 10 - validatorType.Length + 1;
-            errorText = $"Syntax error at or near character {column}";
-            return null;
-        }
-        else if (errorTexts.Count > 0)
-        {
-            succeeded = false;
-            errorText = String.Join("; ", errorTexts);
-            return null;
-        }
-        else
-        {
-            succeeded = true;
-            return parser.GetParsedObject();
+            var column = location.StartColumn - typeLen;
+            errors.Add($"Syntax error at or near character {column}");
         }
     }
 }
 
-public class LuaExpressionParser : StatStringParser
+public class LuaExpressionValidator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        value = "BHAALS_BOON_SLAYER.Duration-1";
         var valueBytes = Encoding.UTF8.GetBytes(value);
         using var buf = new MemoryStream(valueBytes);
         var scanner = new Lua.StatLuaScanner();
         scanner.SetSource(buf);
         var parser = new Lua.StatLuaParser(scanner);
-        succeeded = parser.Parse();
+        var succeeded = parser.Parse();
         if (!succeeded)
         {
+            // FIXME pass location to error container
             var location = scanner.LastLocation();
-            errorText = $"Syntax error at or near character {location.StartColumn}";
-            return null;
-        }
-        else
-        {
-            succeeded = true;
-            return null;
+            if (location.StartColumn != -1)
+            {
+                errors.Add($"Syntax error at or near character {location.StartColumn}");
+            }
+            else
+            {
+                errors.Add($"Syntax error");
+            }
         }
     }
 }
 
-public class UseCostsParser(IStatReferenceValidator validator) : StatStringParser
+public class UseCostsValidator(IStatReferenceValidator validator) : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value.Length == 0) return value;
+        if (value.Length == 0) return;
 
         foreach (var resource in value.Split(';'))
         {
@@ -336,14 +331,13 @@ public class UseCostsParser(IStatReferenceValidator validator) : StatStringParse
             var parts = res.Split(':');
             if (parts.Length < 2 || parts.Length > 4)
             {
-                errorText = $"Malformed use costs";
-                return null;
+                errors.Add($"Malformed use costs");
+                return;
             }
 
             if (!ctx.IgnoreMissingReferences && !validator.IsValidGuidResource(parts[0], "ActionResource") && !validator.IsValidGuidResource(parts[0], "ActionResourceGroup"))
             {
-                errorText = $"Nonexistent action resource or action resource group: {parts[0]}";
-                return null;
+                errors.Add($"Nonexistent action resource or action resource group: {parts[0]}");
             }
 
             var distanceExpr = parts[1].Split('*');
@@ -351,93 +345,114 @@ public class UseCostsParser(IStatReferenceValidator validator) : StatStringParse
             {
                 if (distanceExpr.Length > 1 && !Single.TryParse(distanceExpr[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float floatval))
                 {
-                    errorText = $"Malformed distance multiplier: {distanceExpr[1]}";
-                    return null;
+                    errors.Add($"Malformed distance multiplier: {distanceExpr[1]}");
+                    continue;
                 }
 
             }
             else if (!Single.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float floatval))
             {
-                errorText = $"Malformed resource amount: {parts[1]}";
-                return null;
+                errors.Add($"Malformed resource amount: {parts[1]}");
+                continue;
             }
 
             if (parts.Length == 3 && !Int32.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int intval))
             {
-                errorText = $"Malformed level: {parts[2]}";
-                return null;
+                errors.Add($"Malformed level: {parts[2]}");
+                continue;
             }
 
             if (parts.Length == 4 && !Int32.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out intval))
             {
-                errorText = $"Malformed level: {parts[3]}";
-                return null;
+                errors.Add($"Malformed level: {parts[3]}");
+                continue;
             }
         }
-
-        succeeded = true;
-        return value;
     }
 }
 
-public class DiceRollParser : StatStringParser
+public class DiceRollValidator : StatStringValidator
 {
-    public override object Parse(DiagnosticContext ctx, string value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        if (value.Length == 0) return value;
+        if (value.Length == 0) return;
 
         var parts = value.Split('d');
         if (parts.Length != 2 
             || !Int32.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int numDice)
             || !Int32.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int dieSize))
         {
-            errorText = $"Malformed dice roll";
-            return null;
+            errors.Add($"Malformed dice roll");
+            return;
         }
 
         if (dieSize != 4 && dieSize != 6 && dieSize != 8 && dieSize != 10 && dieSize != 12 && dieSize != 20 && dieSize != 100)
         {
-            errorText = $"Invalid die size: {dieSize}";
-            return null;
+            errors.Add($"Invalid die size: {dieSize}");
+            return;
         }
-
-        succeeded = true;
-        return value;
     }
 }
 
-public class AnyParser(IEnumerable<IStatValueParser> parsers, string message = null) : IStatValueParser
+public class TreasureDropValidator(IStatReferenceValidator validator) : StatStringValidator
 {
-    private readonly List<IStatValueParser> Parsers = parsers.ToList();
-
-    public object Parse(DiagnosticContext ctx, object value, ref bool succeeded, ref string errorText)
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
-        List<string> errors = [];
-        foreach (var parser in Parsers)
+        if (value.Length > 2 && value[0] == 'I' && value[1] == '_')
         {
-            succeeded = false;
-            string error = null;
-            var result = parser.Parse(ctx, value, ref succeeded, ref error);
-            if (succeeded)
+            var item = value.Substring(2);
+            if (!validator.IsValidReference(item, "Object") 
+                && !validator.IsValidReference(item, "Armor")
+                && !validator.IsValidReference(item, "Weapon"))
             {
-                return result;
-            }
-            else
-            {
-                errors.Add(error);
+                errors.Add($"Nonexistent object, armor or weapon: {item}");
             }
         }
-
-        if (message != null && message.Length > 0)
+        else if (value.Length > 2 && value[0] == 'T' && value[1] == '_')
         {
-            errorText = $"'{value}': {message}";
+            var treasureTable = value.Substring(2);
+            if (!validator.IsValidReference(treasureTable, "TreasureTable"))
+            {
+                errors.Add($"Nonexistent treasure table: {treasureTable}");
+            }
         }
-        else
+        else if (!validator.IsValidReference(value, "ObjectCategory"))
         {
-            errorText = String.Join("; ", errors);
+            errors.Add($"Nonexistent object category: {value}");
+        }
+    }
+}
+
+public class ObjectListValidator(IPropertyValidator PropertyValidator, StatEntryType ObjectType) : IStatValueValidator
+{
+    public void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors)
+    {
+        var objs = (IEnumerable<object>)value;
+        foreach (var subobject in objs)
+        {
+            // FIXME - pass declaration name from ctx
+            PropertyValidator.ValidateEntry(ObjectType, "", (StatDeclaration)subobject, errors);
+        }
+    }
+}
+
+public class AnyParser(IEnumerable<IStatValueValidator> validators, string message = null) : IStatValueValidator
+{
+    private readonly List<IStatValueValidator> Validators = validators.ToList();
+
+    public void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors)
+    {
+        foreach (var validator in Validators)
+        {
+            errors.Messages?.Clear();
+            validator.Validate(ctx, location, value, errors);
+            if (errors.Messages == null || errors.Messages.Count == 0) return;
         }
 
-        return null;
+        if (message != null)
+        {
+            errors.Add(message);
+        }
     }
 }
 
@@ -447,14 +462,14 @@ public class AnyType
     public string Message;
 }
 
-public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
+public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidator, IPropertyValidator PropertyValidator)
 {
-    public IStatValueParser CreateReferenceParser(List<StatReferenceConstraint> constraints)
+    public IStatValueValidator CreateReferenceValidator(List<StatReferenceConstraint> constraints)
     {
-        return new StatReferenceParser(referenceValidator, constraints);
+        return new StatReferenceValidator(ReferenceValidator, constraints);
     }
 
-    public IStatValueParser CreateParser(StatField field, StatDefinitionRepository definitions)
+    public IStatValueValidator CreateValidator(StatField field, StatDefinitionRepository definitions)
     {
         switch (field.Name)
         {
@@ -462,38 +477,38 @@ public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
             case "DefaultBoosts":
             case "BoostsOnEquipMainHand":
             case "BoostsOnEquipOffHand":
-                return new ExpressionParser("Properties", definitions, this, ExpressionType.Boost);
+                return new ExpressionValidator("Properties", definitions, this, ExpressionType.Boost);
 
             case "TooltipDamage":
             case "TooltipDamageList":
             case "TooltipStatusApply":
             case "TooltipConditionalDamage":
-                return new ExpressionParser("Properties", definitions, this, ExpressionType.DescriptionParams);
+                return new ExpressionValidator("Properties", definitions, this, ExpressionType.DescriptionParams);
 
             case "DescriptionParams":
             case "ExtraDescriptionParams":
             case "ShortDescriptionParams":
             case "TooltipUpcastDescriptionParams":
-                return new ExpressionParser("DescriptionParams", definitions, this, ExpressionType.DescriptionParams);
+                return new ExpressionValidator("DescriptionParams", definitions, this, ExpressionType.DescriptionParams);
 
             case "ConcentrationSpellID":
             case "CombatAIOverrideSpell":
             case "SpellContainerID":
             case "FollowUpOriginalSpell":
             case "RootSpellID":
-                return new StatReferenceParser(referenceValidator,
+                return new StatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "SpellData" }
                 ]);
 
             case "ContainerSpells":
-                return new MultiValueStatReferenceParser(referenceValidator,
+                return new MultiValueStatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "SpellData" }
                 ]);
 
             case "InterruptPrototype":
-                return new StatReferenceParser(referenceValidator,
+                return new StatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "InterruptData" }
                 ]);
@@ -502,14 +517,14 @@ public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
             case "PassivesOnEquip":
             case "PassivesMainHand":
             case "PassivesOffHand":
-                return new MultiValueStatReferenceParser(referenceValidator,
+                return new MultiValueStatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "PassiveData" }
                 ]);
 
             case "StatusOnEquip":
             case "StatusInInventory":
-                return new MultiValueStatReferenceParser(referenceValidator,
+                return new MultiValueStatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "StatusData" }
                 ]);
@@ -521,12 +536,12 @@ public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
             case "TooltipUseCosts":
             case "RitualCosts":
             case "HitCosts":
-                return new UseCostsParser(referenceValidator);
+                return new UseCostsValidator(ReferenceValidator);
 
             case "Damage":
             case "VersatileDamage":
             case "StableRoll":
-                return new DiceRollParser();
+                return new DiceRollValidator();
 
             case "Template":
             case "StatusEffectOverride":
@@ -544,16 +559,16 @@ public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
             case "CastEffect":
             case "PrepareEffect":
             case "TooltipOnSave":
-                return new UUIDParser();
+                return new UUIDValidator();
 
             case "AmountOfTargets":
-                return new LuaExpressionParser();
+                return new LuaExpressionValidator();
         }
 
-        return CreateParser(field.Type, field.EnumType, field.ReferenceTypes, definitions);
+        return CreateValidator(field.Type, field.EnumType, field.ReferenceTypes, definitions);
     }
 
-    public IStatValueParser CreateParser(string type, StatEnumeration enumType, List<StatReferenceConstraint> constraints, StatDefinitionRepository definitions)
+    public IStatValueValidator CreateValidator(string type, StatEnumeration enumType, List<StatReferenceConstraint> constraints, StatDefinitionRepository definitions)
     {
         if (enumType == null && definitions.Enumerations.TryGetValue(type, out StatEnumeration enumInfo) && enumInfo.Values.Count > 0)
         {
@@ -581,73 +596,79 @@ public class StatValueParserFactory(IStatReferenceValidator referenceValidator)
                 || type == "StatusGroupFlags"
                 || type == "StatsFunctorContext")
             {
-                return new MultiValueEnumParser(enumType);
+                return new MultiValueEnumValidator(enumType);
             }
             else
             {
-                return new EnumParser(enumType);
+                return new EnumValidator(enumType);
             }
         }
 
         return type switch
         {
-            "Boolean" => new BooleanParser(),
-            "ConstantInt" or "Int" => new Int32Parser(),
-            "ConstantFloat" or "Float" => new FloatParser(),
-            "String" or "FixedString" or "TranslatedString" => new StringParser(),
-            "Guid" => new UUIDParser(),
-            "Requirements" => new ExpressionParser("Requirements", definitions, this, ExpressionType.Functor),
-            "StatsFunctors" => new ExpressionParser("Properties", definitions, this, ExpressionType.Functor),
-            "Lua" or "RollConditions" or "TargetConditions" or "Conditions" => new LuaExpressionParser(),
-            "UseCosts" => new UseCostsParser(referenceValidator),
-            "StatReference" => new StatReferenceParser(referenceValidator, constraints),
-            "StatusId" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["EngineStatusType"]),
-                    new StatReferenceParser(referenceValidator,
+            "Boolean" => new BooleanValidator(),
+            "ConstantInt" or "Int" => new Int32Validator(),
+            "ConstantFloat" or "Float" => new FloatValidator(),
+            "String" or "FixedString" or "TranslatedString" => new StringValidator(),
+            "Guid" => new UUIDValidator(),
+            "Requirements" => new ExpressionValidator("Requirements", definitions, this, ExpressionType.Functor),
+            "StatsFunctors" => new ExpressionValidator("Properties", definitions, this, ExpressionType.Functor),
+            "Lua" or "RollConditions" or "TargetConditions" or "Conditions" => new LuaExpressionValidator(),
+            "UseCosts" => new UseCostsValidator(ReferenceValidator),
+            "StatReference" => new StatReferenceValidator(ReferenceValidator, constraints),
+            "StatusId" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["EngineStatusType"]),
+                    new StatReferenceValidator(ReferenceValidator,
                     [
                         new StatReferenceConstraint{ StatType = "StatusData" }
                     ])
                 }, "Expected a status name"),
-            "ResurrectTypes" => new MultiValueEnumParser(definitions.Enumerations["ResurrectType"]),
-            "StatusIdOrGroup" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["StatusGroupFlags"]),
-                    new EnumParser(definitions.Enumerations["EngineStatusType"]),
-                    new StatReferenceParser(referenceValidator,
+            "ResurrectTypes" => new MultiValueEnumValidator(definitions.Enumerations["ResurrectType"]),
+            "StatusIdOrGroup" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["StatusGroupFlags"]),
+                    new EnumValidator(definitions.Enumerations["EngineStatusType"]),
+                    new StatReferenceValidator(ReferenceValidator,
                     [
                         new StatReferenceConstraint{ StatType = "StatusData" }
                     ])
                 }, "Expected a status or StatusGroup name"),
-            "SummonDurationOrInt" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["SummonDuration"]),
-                    new Int32Parser()
+            "SummonDurationOrInt" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["SummonDuration"]),
+                    new Int32Validator()
                 }),
-            "AllOrDamageType" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["AllEnum"]),
-                    new EnumParser(definitions.Enumerations["Damage Type"]),
+            "AllOrDamageType" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["AllEnum"]),
+                    new EnumValidator(definitions.Enumerations["Damage Type"]),
                 }),
-            "RollAdjustmentTypeOrDamageType" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["RollAdjustmentType"]),
-                    new EnumParser(definitions.Enumerations["Damage Type"]),
+            "RollAdjustmentTypeOrDamageType" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["RollAdjustmentType"]),
+                    new EnumValidator(definitions.Enumerations["Damage Type"]),
                 }),
-            "AbilityOrAttackRollAbility" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["Ability"]),
-                    new EnumParser(definitions.Enumerations["AttackRollAbility"]),
+            "AbilityOrAttackRollAbility" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["Ability"]),
+                    new EnumValidator(definitions.Enumerations["AttackRollAbility"]),
                 }),
-            "DamageTypeOrDealDamageWeaponDamageType" => new AnyParser(new List<IStatValueParser> {
-                    new EnumParser(definitions.Enumerations["Damage Type"]),
-                    new EnumParser(definitions.Enumerations["DealDamageWeaponDamageType"]),
+            "DamageTypeOrDealDamageWeaponDamageType" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["Damage Type"]),
+                    new EnumValidator(definitions.Enumerations["DealDamageWeaponDamageType"]),
                 }),
-            "SpellId" => new StatReferenceParser(referenceValidator,
+            "SpellId" => new StatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "SpellData" }
                 ]),
-            "Interrupt" => new StatReferenceParser(referenceValidator,
+            "Interrupt" => new StatReferenceValidator(ReferenceValidator,
                 [
                     new StatReferenceConstraint{ StatType = "InterruptData" }
                 ]),
-            // THESE NEED TO BE FIXED!
-            "StatusIDs" => new StringParser(),
-            _ => throw new ArgumentException($"Could not create parser for type '{type}'"),
+            "TreasureSubtables" => new ObjectListValidator(PropertyValidator, definitions.Types["TreasureSubtable"]),
+            "TreasureSubtableObject" => new ObjectListValidator(PropertyValidator, definitions.Types["TreasureSubtableObject"]),
+            "TreasureDrop" => new TreasureDropValidator(ReferenceValidator),
+            "StatusIDs" =>
+                new MultiValueStatReferenceValidator(ReferenceValidator,
+                [
+                    new StatReferenceConstraint { StatType = "StatusData" }
+                ]),
+        _ => throw new ArgumentException($"Could not create parser for type '{type}'"),
         };
     }
 }

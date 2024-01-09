@@ -1,10 +1,9 @@
-﻿using LSLib.Granny;
+﻿using LSLib.LS.Story.GoalParser;
 using QUT.Gppg;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using static LSLib.Granny.Model.CurveData.AnimationCurveData;
 
 namespace LSLib.LS.Stats.Properties;
 
@@ -35,23 +34,20 @@ public abstract class StatPropertyScanBase : AbstractScanner<object, LexLocation
 
 public class StatActionValidator
 {
-    private StatDefinitionRepository Definitions;
-    private DiagnosticContext Context;
-    private StatValueParserFactory ParserFactory;
+    private readonly StatDefinitionRepository Definitions;
+    private readonly DiagnosticContext Context;
+    private readonly StatValueValidatorFactory ValidatorFactory;
     private readonly ExpressionType ExprType;
 
-    public delegate void ErrorReportingDelegate(string message);
-    public event ErrorReportingDelegate OnError;
-
-    public StatActionValidator(StatDefinitionRepository definitions, DiagnosticContext ctx, StatValueParserFactory parserFactory, ExpressionType type)
+    public StatActionValidator(StatDefinitionRepository definitions, DiagnosticContext ctx, StatValueValidatorFactory validatorFactory, ExpressionType type)
     {
         Definitions = definitions;
         Context = ctx;
-        ParserFactory = parserFactory;
+        ValidatorFactory = validatorFactory;
         ExprType = type;
     }
 
-    public void Validate(PropertyAction action)
+    public void Validate(PropertyAction action, PropertyDiagnosticContainer errors)
     {
         Dictionary<string, StatFunctorType> functors = null;
         switch (ExprType)
@@ -65,7 +61,7 @@ public class StatActionValidator
         {
             if (ExprType != ExpressionType.DescriptionParams)
             {
-                OnError($"'{action.Action}' is not a valid {ExprType}");
+                errors.Add($"'{action.Action}' is not a valid {ExprType}");
             }
 
             return;
@@ -95,29 +91,28 @@ public class StatActionValidator
 
         if (args.Count > functor.Args.Count)
         {
-            OnError($"Too many arguments to '{action.Action}'; {args.Count} passed, expected at most {functor.Args.Count}");
-            return;
+            errors.Add($"Too many arguments to '{action.Action}'; {args.Count} passed, expected at most {functor.Args.Count}");
         }
 
         if (args.Count < functor.RequiredArgs)
         {
-            OnError($"Not enough arguments to '{action.Action}'; {args.Count} passed, expected at least {functor.RequiredArgs}");
-            return;
+            errors.Add($"Not enough arguments to '{action.Action}'; {args.Count} passed, expected at least {functor.RequiredArgs}");
         }
 
+        var argErrors = new PropertyDiagnosticContainer();
         for (var i = 0; i < Math.Min(args.Count, functor.Args.Count); i++)
         {
-            bool succeeded = false;
-            string errorText = null;
-
             var arg = functor.Args[i];
             if (arg.Type.Length > 0)
             {
-                var parser = ParserFactory.CreateParser(arg.Type, null, null, Definitions);
-                parser.Parse(Context, args[i], ref succeeded, ref errorText);
-                if (!succeeded)
+                var validator = ValidatorFactory.CreateValidator(arg.Type, null, null, Definitions);
+                // FIXME pass codelocation
+                validator.Validate(Context, null, args[i], argErrors);
+                if (!argErrors.Empty)
                 {
-                    OnError($"'{action.Action}' argument {i + 1}: {errorText}");
+                    argErrors.AddContext(PropertyDiagnosticContextType.Argument, $"argument {i + 1} ({arg.Name})");
+                    argErrors.MergeInto(errors);
+                    argErrors.Clear();
                 }
             }
         }
@@ -126,90 +121,33 @@ public class StatActionValidator
 
 public partial class StatPropertyParser
 {
-    private IStatValueParser RequirementParser;
-    private StatEnumeration RequirementsWithArgument;
-    private DiagnosticContext Context;
+    private readonly DiagnosticContext Context;
+    private readonly StatActionValidator ActionValidator;
+    private readonly byte[] Source;
+    private readonly PropertyDiagnosticContainer Errors;
+    private readonly CodeLocation RootLocation;
+    private readonly StatPropertyScanner StatScanner;
+    private readonly int TokenOffset;
+
     private int LiteralStart;
-    private StatActionValidator ActionValidator;
-    private byte[] Source;
-
-    public delegate void ErrorReportingDelegate(string message);
-    public event ErrorReportingDelegate OnError;
-
-    private StatPropertyScanner StatScanner;
+    private int ActionStart;
 
     public StatPropertyParser(StatPropertyScanner scnr, StatDefinitionRepository definitions,
-        DiagnosticContext ctx, StatValueParserFactory parserFactory, byte[] source, ExpressionType type) : base(scnr)
+        DiagnosticContext ctx, StatValueValidatorFactory validatorFactory, byte[] source, ExpressionType type,
+        PropertyDiagnosticContainer errors, CodeLocation rootLocation, int tokenOffset) : base(scnr)
     {
         Context = ctx;
         StatScanner = scnr;
         Source = source;
-        ActionValidator = new StatActionValidator(definitions, ctx, parserFactory, type);
-        ActionValidator.OnError += (message) => { OnError(message); };
+        ActionValidator = new StatActionValidator(definitions, ctx, validatorFactory, type);
+        Errors = errors;
+        RootLocation = rootLocation;
+        TokenOffset = tokenOffset;
     }
 
     public object GetParsedObject()
     {
         return CurrentSemanticValue;
-    }
-
-    private List<Requirement> MakeRequirements() => new List<Requirement>();
-
-    private List<Requirement> AddRequirement(object requirements, object requirement)
-    {
-        var req = requirements as List<Requirement>;
-        req.Add(requirement as Requirement);
-        return req;
-    }
-
-    private Requirement MakeNotRequirement(object requirement)
-    {
-        var req = requirement as Requirement;
-        req.Not = true;
-        return req;
-    }
-
-    private Requirement MakeRequirement(object name)
-    {
-        Validate(RequirementParser, name as string);
-
-        return new Requirement
-        {
-            Not = false,
-            RequirementName = name as string,
-            IntParam = 0,
-            TagParam = ""
-        };
-    }
-
-    private Requirement MakeIntRequirement(object name, object intArg)
-    {
-        var reqmtName = name as string;
-        Validate(RequirementParser, reqmtName);
-
-        if (!RequirementsWithArgument.ValueToIndexMap.ContainsKey(reqmtName))
-        {
-            OnError?.Invoke($"Requirement '{reqmtName}' doesn't need any arguments");
-        }
-
-        return new Requirement
-        {
-            Not = false,
-            RequirementName = reqmtName,
-            IntParam = Int32.Parse(intArg as string),
-            TagParam = ""
-        };
-    }
-
-    private Requirement MakeTagRequirement(object name, object tag)
-    {
-        return new Requirement
-        {
-            Not = false,
-            RequirementName = name as string,
-            IntParam = 0,
-            TagParam = tag as string
-        };
     }
 
     private List<Property> MakePropertyList() => new List<Property>();
@@ -255,30 +193,35 @@ public partial class StatPropertyParser
         return args;
     }
 
+    private object MarkActionStart()
+    {
+        ActionStart = StatScanner.TokenStartPos();
+        return null;
+    }
+
     private PropertyAction MakeAction(object action, object arguments)
     {
+        var callErrors = new PropertyDiagnosticContainer();
         var act = new PropertyAction
         {
             Action = action as string,
-            Arguments = arguments as List<string>
+            Arguments = arguments as List<string>,
+            StartPos = ActionStart,
+            EndPos = StatScanner.TokenEndPos()
         };
-        ActionValidator.Validate(act);
-        return act;
-    }
+        ActionValidator.Validate(act, callErrors);
 
-    private void Validate(IStatValueParser parser, string value)
-    {
-        if (parser != null)
+        CodeLocation location = null;
+        if (RootLocation != null)
         {
-            bool succeeded = false;
-            string errorText = null;
-            parser.Parse(Context, value, ref succeeded, ref errorText);
-            if (!succeeded)
-            {
-                errorText = $"'{value}': {errorText}";
-                OnError?.Invoke(errorText);
-            }
+            location = new CodeLocation(RootLocation.FileName, 
+                RootLocation.StartLine, RootLocation.StartColumn + act.StartPos - TokenOffset, 
+                RootLocation.StartLine, RootLocation.StartColumn + act.EndPos - TokenOffset);
         }
+
+        callErrors.AddContext(PropertyDiagnosticContextType.Call, act.Action, location);
+        callErrors.MergeInto(Errors);
+        return act;
     }
     
     private object InitLiteral()

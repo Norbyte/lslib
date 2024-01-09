@@ -82,8 +82,9 @@ data([ ]+)\"([^\"]+)\"([ ]+)\"(.*)\" { yylval = MakeDataProperty(tokLin, tokCol,
 "EndLevel"            return (int)StatTokens.END_LEVEL;
 "MinLevel"            return (int)StatTokens.MIN_LEVEL;
 "MaxLevel"            return (int)StatTokens.MAX_LEVEL;
+"CanMerge"            return (int)StatTokens.CAN_MERGE;
 "IgnoreLevelDiff"     return (int)StatTokens.IGNORE_LEVEL_DIFF;
-"UseTreasureGroups"   return (int)StatTokens.USE_TREASURE_GROUPS;
+"UseTreasureGroupCounters" return (int)StatTokens.USE_TREASURE_GROUPS;
 
 /* Special characters */
 ","                return (int)',';

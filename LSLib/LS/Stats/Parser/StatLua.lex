@@ -59,6 +59,7 @@ nonseparator [^,;:()\[\]!+*/^&%~|><=.# ]
 '[^']*' { yylval = yytext; return (int)StatLuaTokens.LITERAL_STRING; }
 {letter}({namechar})+ { yylval = yytext; return (int)StatLuaTokens.NAME; }
 {digit}({digit})* { yylval = yytext; return (int)StatLuaTokens.INTEGER; }
+{digit}({digit})*\.{digit}({digit})* { yylval = yytext; return (int)StatLuaTokens.FLOAT; }
 {digit}{digit}*d{digit}{digit}* { yylval = yytext; return (int)StatLuaTokens.DICE_ROLL; }
 
 . return ((int)StatLuaTokens.BAD);

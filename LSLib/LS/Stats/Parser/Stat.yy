@@ -76,6 +76,7 @@
 %token END_LEVEL
 %token MIN_LEVEL
 %token MAX_LEVEL
+%token CAN_MERGE
 %token IGNORE_LEVEL_DIFF
 %token USE_TREASURE_GROUPS
 
@@ -245,6 +246,7 @@ EntryProperty : EntryType
               | TreasureSubtable
               | TreasureTableMinLevel
               | TreasureTableMaxLevel
+              | TreasureTableCanMerge
               | TreasureTableIgnoreLevelDiff
               | TreasureTableUseTreasureGroups
               ;
@@ -297,7 +299,7 @@ DeltaModifierBoost : NEW_BOOST STRING ',' INTEGER
 						{"Multiplier", Unwrap($4)},
 				}); };
 
-EquipmentGroup : ADD_EQUIPMENTGROUP EquipmentEntries { $$ = MakeElement("EquipmentGroups", $2); };
+EquipmentGroup : ADD_EQUIPMENTGROUP EquipmentEntries { $$ = MakeElement("EquipmentGroups", $2, @2); };
 
 EquipmentEntries : /* empty */ { $$ = MakeCollection(); }
                 | EquipmentEntries EquipmentEntry { $$ = AddElement($1, $2); }
@@ -305,28 +307,28 @@ EquipmentEntries : /* empty */ { $$ = MakeCollection(); }
 
 EquipmentEntry : ADD_EQUIPMENT_ENTRY STRING { $$ = $2; };
 
-ItemComboPropertyEntry: NEW_ITEMCOMBOPROPERTYENTRY EntrySubProperties { $$ = MakeElement("Entries", $2); };
+ItemComboPropertyEntry: NEW_ITEMCOMBOPROPERTYENTRY EntrySubProperties { $$ = MakeElement("Entries", $2, @2); };
 
 EntrySubProperties : /* empty */ { $$ = MakeDeclaration(); }
                 | EntrySubProperties EntryData { $$ = AddProperty($1, $2); }
                 ;
 
-SkillSetSkill : ADD SKILL STRING { $$ = MakeElement("NameGroups", $3); };
+SkillSetSkill : ADD SKILL STRING { $$ = MakeElement("NameGroups", $3, @3); };
 
 TreasureGroupWeaponCounter : WEAPON_COUNTER STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
+                { $$ = MakeDeclaration(@$, new [] {
 					MakeProperty(@2, "WeaponTreasureGroup", $2),
 					MakeProperty(@4, "WeaponDefaultCounter", $4)
 				}); };
 
 TreasureGroupSkillbookCounter : SKILLBOOK_COUNTER STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
+                { $$ = MakeDeclaration(@$, new [] {
 					MakeProperty(@2, "SkillbookTreasureGroup", $2),
 					MakeProperty(@4, "SkillbookDefaultCounter", $4)
 				}); };
 
 TreasureGroupArmorCounter : ARMOR_COUNTER STRING ',' STRING
-                { $$ = MakeDeclaration(new [] {
+                { $$ = MakeDeclaration(@$, new [] {
 					MakeProperty(@2, "ArmorTreasureGroup", $2),
 					MakeProperty(@4, "ArmorDefaultCounter", $4)
 				}); };
@@ -334,18 +336,21 @@ TreasureGroupArmorCounter : ARMOR_COUNTER STRING ',' STRING
 TreasureSubtable : NEW_SUBTABLE STRING TreasureTableObjects
                 { $$ = MakeElement("Subtables", 
 					AddProperty(
-						MakeDeclaration(new [] { MakeProperty(@2, "DropCount", $2) }),
+						MakeDeclaration(@$, new [] { MakeProperty(@2, "DropCount", $2) }),
 						$3
-					));
+					), @$);
 				};
 
 TreasureTableMinLevel : MIN_LEVEL STRING { $$ = MakeProperty(@$, "MinLevel", $2); };
 
 TreasureTableMaxLevel : MAX_LEVEL STRING { $$ = MakeProperty(@$, "MaxLevel", $2); };
 
+TreasureTableCanMerge : CAN_MERGE STRING { $$ = MakeProperty(@$, "CanMerge", $2); }
+                      | CAN_MERGE INTEGER { $$ = MakeProperty(@$, "CanMerge", $2); };
+
 TreasureTableIgnoreLevelDiff : IGNORE_LEVEL_DIFF INTEGER { $$ = MakeProperty(@$, "IgnoreLevelDiff", $2); };
 
-TreasureTableUseTreasureGroups : USE_TREASURE_GROUPS INTEGER { $$ = MakeProperty(@$, "UseTreasureGroups", $2); };
+TreasureTableUseTreasureGroups : USE_TREASURE_GROUPS INTEGER { $$ = MakeProperty(@$, "UseTreasureGroupCounters", $2); };
 
 TreasureTableObjects : /* empty */ { $$ = MakeDeclaration(); }
                 | TreasureTableObjects TreasureTableEntry { $$ = AddProperty($1, $2); }
@@ -361,15 +366,15 @@ TreasureTableObjectStartLevel : START_LEVEL STRING { $$ = MakeProperty(@$, "Star
 TreasureTableObjectEndLevel : END_LEVEL STRING { $$ = MakeProperty(@$, "EndLevel", $2); };
 
 TreasureTableObject : OBJECT_CATEGORY STRING ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER
-                { $$ = MakeElement("Objects", MakeDeclaration(new [] {
-					MakeProperty("ObjectCategory", $2),
-					MakeProperty("Frequency", $4),
-					MakeProperty("Common", $6),
-					MakeProperty("Uncommon", $8),
-					MakeProperty("Rare", $10),
-					MakeProperty("Epic", $12),
-					MakeProperty("Legendary", $14),
-					MakeProperty("Divine", $16),
-					MakeProperty("Unique", $18),
-					}));
+                { $$ = MakeElement("Objects", MakeDeclaration(@$, new [] {
+					MakeProperty(@2, "Drop", $2),
+					MakeProperty(@4, "Frequency", $4),
+					MakeProperty(@6, "Common", $6),
+					MakeProperty(@8, "Uncommon", $8),
+					MakeProperty(@10, "Rare", $10),
+					MakeProperty(@12, "Epic", $12),
+					MakeProperty(@14, "Legendary", $14),
+					MakeProperty(@16, "Divine", $16),
+					MakeProperty(@18, "Unique", $18),
+					}), @$);
 				};

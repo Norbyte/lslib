@@ -96,10 +96,10 @@ class StatChecker : IDisposable
             Console.Write("WARN ");
         }
 
-        if (message.Path != null)
+        if (message.Location != null)
         {
-            var baseName = Path.GetFileName(message.Path);
-            Console.Write($"{baseName}:{message.Line}: ");
+            var baseName = Path.GetFileName(message.Location.FileName);
+            Console.Write($"{baseName}:{message.Location.StartLine}: ");
         }
 
         Console.WriteLine("[{0}] {1}", message.Code, message.Message);
@@ -141,7 +141,7 @@ class StatChecker : IDisposable
         }
 
         Loader.ResolveUsageRef();
-        Loader.InstantiateEntries();
+        Loader.ValidateEntries();
 
         Context.Errors.Clear();
 
@@ -151,7 +151,7 @@ class StatChecker : IDisposable
         }
 
         Loader.ResolveUsageRef();
-        Loader.InstantiateEntries();
+        Loader.ValidateEntries();
 
         foreach (var message in Context.Errors)
         {

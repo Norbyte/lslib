@@ -1,7 +1,9 @@
 ﻿using LSLib.LS.Stats.StatParser;
+using LSLib.LS.Story;
 using LSLib.LS.Story.GoalParser;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -63,9 +65,8 @@ public class StatLoadingError
 {
     public string Code;
     public string Message;
-    public string Path;
-    public Int32 Line;
-    public string StatObjectName;
+    public CodeLocation Location;
+    public List<PropertyDiagnosticContext> Contexts;
 }
 
 public class StatLoadingContext
@@ -75,16 +76,17 @@ public class StatLoadingContext
     public Dictionary<string, Dictionary<string, StatDeclaration>> DeclarationsByType = [];
     public Dictionary<string, Dictionary<string, StatDeclaration>> ResolvedDeclarationsByType = [];
     public Dictionary<string, Dictionary<string, object>> GuidResources = [];
+    public readonly HashSet<string> ObjectCategories = [];
 
-    public void LogError(string code, string message, string path = null, int line = 0, string statObjectName = null)
+    public void LogError(string code, string message, CodeLocation location = null, 
+        List<PropertyDiagnosticContext> contexts = null)
     {
         Errors.Add(new StatLoadingError
         {
             Code = code,
             Message = message,
-            Path = path,
-            Line = line,
-            StatObjectName = statObjectName
+            Location = location,
+            Contexts = contexts
         });
     }
 }
@@ -105,10 +107,10 @@ class StatEntryReferenceResolver(StatLoadingContext context)
         out StatDeclaration basedOn)
     {
         var props = declaration.Properties;
-        var name = (string)props[type.NameProperty];
-        if (type.BasedOnProperty != null && props.TryGetValue(type.BasedOnProperty, out object value))
+        var name = (string)props[type.NameProperty].Value;
+        if (type.BasedOnProperty != null && props.TryGetValue(type.BasedOnProperty, out StatProperty prop))
         {
-            var baseClass = (string)value;
+            var baseClass = (string)prop.Value;
 
             if (declarations.TryGetValue(baseClass, out StatDeclaration baseDeclaration))
             {
@@ -118,7 +120,7 @@ class StatEntryReferenceResolver(StatLoadingContext context)
             else
             {
                 context.LogError(DiagnosticCode.StatBaseClassNotKnown, $"Stats entry '{name}' references nonexistent base '{baseClass}'",
-                    declaration.Location.FileName, declaration.Location.StartLine, name);
+                    declaration.Location);
                 basedOn = null;
                 return false;
             }
@@ -132,10 +134,11 @@ class StatEntryReferenceResolver(StatLoadingContext context)
     {
         foreach (var prop in parent.Properties)
         {
-            if (!descendant.Properties.ContainsKey(prop.Key))
+            if (!descendant.Properties.ContainsKey(prop.Key)
+                // Only propagate types that are required to determine properties of stats entry subtypes
+                && (prop.Key == "SpellType" || prop.Key == "StatusType"))
             {
                 descendant.Properties[prop.Key] = prop.Value;
-                descendant.PropertyLocations[prop.Key] = parent.PropertyLocations[prop.Key];
             }
         }
     }
@@ -151,6 +154,20 @@ class StatEntryReferenceResolver(StatLoadingContext context)
         }
     }
 
+    private void ResolveObjectCategories(StatDeclaration declaration)
+    {
+        if (declaration.Properties.TryGetValue("ObjectCategory", out var prop))
+        {
+            foreach (var category in ((string)prop.Value).Split(';'))
+            {
+                if (category.Length > 0)
+                {
+                    context.ObjectCategories.Add(category);
+                }
+            }
+        }
+    }
+
     public Dictionary<string, StatDeclaration> ResolveUsageRefs(StatEntryType type, Dictionary<string, StatDeclaration> declarations)
     {
         var mappings = new List<BaseClassMapping>();
@@ -158,7 +175,7 @@ class StatEntryReferenceResolver(StatLoadingContext context)
 
         foreach (var declaration in declarations)
         {
-            if (declaration.Value.WasInstantiated) continue;
+            if (declaration.Value.WasValidated) continue;
 
             var succeeded = ResolveUsageRef(type, declaration.Value, declarations, out StatDeclaration baseClass);
             if (succeeded && baseClass != null)
@@ -173,6 +190,7 @@ class StatEntryReferenceResolver(StatLoadingContext context)
             if (succeeded || AllowMappingErrors)
             {
                 resolved.Add(declaration.Key, declaration.Value);
+                ResolveObjectCategories(declaration.Value);
             }
         }
 
@@ -186,7 +204,11 @@ class StatLoaderReferenceValidator(StatLoadingContext ctx) : IStatReferenceValid
 {
     public bool IsValidReference(string reference, string statType)
     {
-        if (ctx.DeclarationsByType.TryGetValue(statType, out var stats))
+        if (statType == "ObjectCategory")
+        {
+            return ctx.ObjectCategories.Contains(reference);
+        }
+        else if (ctx.DeclarationsByType.TryGetValue(statType, out var stats))
         {
             return stats.TryGetValue(reference, out _);
         }
@@ -205,10 +227,15 @@ class StatLoaderReferenceValidator(StatLoadingContext ctx) : IStatReferenceValid
     }
 }
 
-public class StatLoader
+public interface IPropertyValidator
+{
+    public void ValidateEntry(StatEntryType type, string declarationName, StatDeclaration declaration, PropertyDiagnosticContainer errors);
+}
+
+public class StatLoader : IPropertyValidator
 {
     private readonly StatLoadingContext Context;
-    private readonly StatValueParserFactory ParserFactory;
+    private readonly StatValueValidatorFactory ValidatorFactory;
     private readonly StatLoaderReferenceValidator ReferenceValidator;
     public readonly DiagnosticContext DiagContext;
 
@@ -216,7 +243,7 @@ public class StatLoader
     {
         Context = ctx;
         ReferenceValidator = new(ctx);
-        ParserFactory = new(ReferenceValidator);
+        ValidatorFactory = new(ReferenceValidator, this);
         DiagContext = new();
     }
 
@@ -229,7 +256,7 @@ public class StatLoader
         if (!parsed)
         {
             var location = scanner.LastLocation();
-            Context.LogError(DiagnosticCode.StatSyntaxError, $"Syntax error at or near line {location.StartLine}, column {location.StartColumn}", path, location.StartLine);
+            Context.LogError(DiagnosticCode.StatSyntaxError, $"Syntax error at or near line {location.StartLine}, column {location.StartColumn}", location);
         }
 
         return parsed ? parser.GetDeclarations() : null;
@@ -242,21 +269,21 @@ public class StatLoader
             // Fixup type
             if (!declaration.Properties.ContainsKey("EntityType"))
             {
-                Context.LogError(DiagnosticCode.StatEntityTypeUnknown, "Unable to determine type of stat declaration", declaration.Location.FileName, declaration.Location.StartLine);
+                Context.LogError(DiagnosticCode.StatEntityTypeUnknown, "Unable to determine type of stat declaration", declaration.Location);
                 continue;
             }
             
-            var statType = declaration.Properties["EntityType"].ToString();
+            var statType = declaration.Properties["EntityType"].Value.ToString();
 
             if (!Context.Definitions.Types.TryGetValue(statType, out StatEntryType type))
             {
-                Context.LogError(DiagnosticCode.StatEntityTypeUnknown, $"No definition exists for stat type '{statType}'", declaration.Location.FileName, declaration.Location.StartLine);
+                Context.LogError(DiagnosticCode.StatEntityTypeUnknown, $"No definition exists for stat type '{statType}'", declaration.Location);
                 continue;
             }
 
             if (!declaration.Properties.ContainsKey(type.NameProperty))
             {
-                Context.LogError(DiagnosticCode.StatNameMissing, $"Stat entry has no '{type.NameProperty}' property", declaration.Location.FileName, declaration.Location.StartLine);
+                Context.LogError(DiagnosticCode.StatNameMissing, $"Stat entry has no '{type.NameProperty}' property", declaration.Location);
                 continue;
             }
 
@@ -267,7 +294,7 @@ public class StatLoader
             }
 
             // TODO - duplicate declaration check?
-            var name = declaration.Properties[type.NameProperty].ToString();
+            var name = declaration.Properties[type.NameProperty].Value.ToString();
             declarationsByType[name] = declaration;
         }
     }
@@ -291,109 +318,69 @@ public class StatLoader
         }
     }
 
-    private object ParseProperty(StatEntryType type, string propertyName, object value, CodeLocation location,
-        string declarationName)
+    public void ValidateProperty(StatEntryType type, StatProperty property,
+        string declarationName, PropertyDiagnosticContainer errors)
     {
-        if (!type.Fields.TryGetValue(propertyName, out StatField field))
+        if (!type.Fields.TryGetValue(property.Key, out StatField field))
         {
-            Context.LogError(DiagnosticCode.StatPropertyUnsupported, $"Property '{propertyName}' is not supported on {type.Name} '{declarationName}'",
-                location?.FileName, location?.StartLine ?? 0, declarationName);
-            return null;
+            errors.Add($"Property '{property.Key}' is not supported on type {type.Name}");
+            return;
         }
 
-        bool succeeded = false;
-        string errorText = null;
-        object parsed;
-
-        if (value is String && propertyName.Length + ((string)value).Length > 4085)
+        if (property.Value is String && property.Key.Length + ((string)property.Value).Length > 4085)
         {
-            parsed = null;
-            Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: Line cannot be longer than 4095 characters",
-                location?.FileName, location?.StartLine ?? 0, declarationName);
+            errors.Add("Line cannot be longer than 4095 characters");
         }
         else if (field.Type != "Passthrough")
         {
-            var parser = field.GetParser(ParserFactory, Context.Definitions);
-            parsed = parser.Parse(DiagContext, value, ref succeeded, ref errorText);
-        }
-        else
-        {
-            parsed = value;
-            succeeded = true;
-        }
-
-        if (errorText != null)
-        {
-            if (value is string v && v.Length > 500)
-            {
-                Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: {errorText}",
-                    location?.FileName, location?.StartLine ?? 0, declarationName);
-            }
-            else
-            {
-                Context.LogError(DiagnosticCode.StatPropertyValueInvalid, $"{type.Name} '{declarationName}' has invalid {propertyName}: '{value}' ({errorText})",
-                    location?.FileName, location?.StartLine ?? 0, declarationName);
-            }
-        }
-
-        if (succeeded)
-        {
-            return parsed;
-        }
-        else
-        {
-            return null;
+            var validator = field.GetValidator(ValidatorFactory, Context.Definitions);
+            validator.Validate(DiagContext, property.ValueLocation, property.Value, errors);
         }
     }
 
-    private StatEntry InstantiateEntry(StatEntryType type, string declarationName, StatDeclaration declaration)
+    public void ValidateEntry(StatEntryType type, string declarationName, StatDeclaration declaration, PropertyDiagnosticContainer entryErrors)
     {
-        return InstantiateEntryInternal(type, declarationName, declaration.Location,
-            declaration.Properties, declaration.PropertyLocations);
-    }
-
-    private StatEntry InstantiateEntryInternal(StatEntryType type, string declarationName, 
-        CodeLocation location, Dictionary<string, object> properties, Dictionary<string, CodeLocation> propertyLocations)
-    {
-        var entity = new StatEntry
-        {
-            Name = declarationName,
-            Type = type,
-            BasedOn = null, // FIXME
-            Location = location,
-            Properties = [],
-            PropertyLocations = propertyLocations
-        };
-
-        foreach (var property in properties)
+        var errors = new PropertyDiagnosticContainer();
+        foreach (var property in declaration.Properties)
         {
             if (property.Key == "EntityType")
             {
                 continue;
             }
 
-            propertyLocations.TryGetValue(property.Key, out CodeLocation propLocation);
-            var parsed = ParseProperty(type, property.Key, property.Value, propLocation, declarationName);
-            if (parsed != null)
+            var lastPropertySpan = DiagContext.PropertyValueSpan;
+            DiagContext.PropertyValueSpan = property.Value.ValueLocation;
+            ValidateProperty(type, property.Value, declarationName, errors);
+            DiagContext.PropertyValueSpan = lastPropertySpan;
+
+            if (!errors.Empty)
             {
-                entity.Properties.Add(property.Key, parsed);
+                errors.AddContext(PropertyDiagnosticContextType.Property, property.Key, property.Value.ValueLocation ?? property.Value.Location);
+                errors.MergeInto(entryErrors);
+                errors.Clear();
             }
         }
-
-        return entity;
     }
 
-    public void InstantiateEntries()
+    public void ValidateEntries()
     {
+        var errors = new PropertyDiagnosticContainer();
         foreach (var type in Context.ResolvedDeclarationsByType)
         {
             var typeDefn = Context.Definitions.Types[type.Key];
             foreach (var declaration in type.Value)
             {
-                if (!declaration.Value.WasInstantiated)
+                if (!declaration.Value.WasValidated)
                 {
-                    InstantiateEntry(typeDefn, declaration.Key, declaration.Value);
-                    declaration.Value.WasInstantiated = true;
+                    ValidateEntry(typeDefn, declaration.Key, declaration.Value, errors);
+                    declaration.Value.WasValidated = true;
+
+                    if (!errors.Empty)
+                    {
+                        errors.AddContext(PropertyDiagnosticContextType.Entry, declaration.Key, declaration.Value.Location);
+                        errors.MergeInto(Context, declaration.Key);
+                        errors.Clear();
+                    }
                 }
             }
         }

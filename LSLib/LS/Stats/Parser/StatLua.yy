@@ -12,6 +12,8 @@
 
 /* Integer literal */
 %token INTEGER
+/* Floating point literal */
+%token FLOAT
 /* Text-like (unquoted) literal */
 %token NAME
 /* eg. 1d10 */
@@ -53,6 +55,7 @@ LExp : LExpNoUnOp
 
 LExpNoUnOp : LUA_RESERVED_VAL
      | INTEGER 
+     | FLOAT 
      | LITERAL_STRING
      | DICE_ROLL
      | LPrefixExp 

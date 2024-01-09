@@ -37,12 +37,12 @@ public class StatField
     public StatEnumeration EnumType;
     public List<StatReferenceConstraint> ReferenceTypes;
 
-    private IStatValueParser parser;
+    private IStatValueValidator Validator;
 
-    public IStatValueParser GetParser(StatValueParserFactory factory, StatDefinitionRepository definitions)
+    public IStatValueValidator GetValidator(StatValueValidatorFactory factory, StatDefinitionRepository definitions)
     {
-        parser ??= factory.CreateParser(this, definitions);
-        return parser;
+        Validator ??= factory.CreateValidator(this, definitions);
+        return Validator;
     }
 }
 
@@ -213,6 +213,35 @@ public class StatDefinitionRepository
         Types.Add(dataType.Name, dataType);
         AddField(dataType, "Key", "FixedString");
         AddField(dataType, "Value", "FixedString");
+
+        var treasureTableType = new StatEntryType("TreasureTable", "Name", null);
+        Types.Add(treasureTableType.Name, treasureTableType);
+        AddField(treasureTableType, "Name", "FixedString");
+        AddField(treasureTableType, "MinLevel", "ConstantInt");
+        AddField(treasureTableType, "MaxLevel", "ConstantInt");
+        AddField(treasureTableType, "CanMerge", "ConstantInt");
+        AddField(treasureTableType, "IgnoreLevelDiff", "ConstantInt");
+        AddField(treasureTableType, "UseTreasureGroupCounters", "ConstantInt");
+        AddField(treasureTableType, "Subtables", "TreasureSubtables");
+
+        var treasureSubtableType = new StatEntryType("TreasureSubtable", null, null);
+        Types.Add(treasureSubtableType.Name, treasureSubtableType);
+        AddField(treasureSubtableType, "DropCount", "FixedString"); // FIXME validate
+        AddField(treasureSubtableType, "StartLevel", "ConstantInt");
+        AddField(treasureSubtableType, "EndLevel", "ConstantInt");
+        AddField(treasureSubtableType, "Objects", "TreasureSubtableObject");
+
+        var treasureObjectType = new StatEntryType("TreasureSubtableObject", null, null);
+        Types.Add(treasureObjectType.Name, treasureObjectType);
+        AddField(treasureObjectType, "Drop", "TreasureDrop"); // FIXME validate
+        AddField(treasureObjectType, "Frequency", "ConstantInt");
+        AddField(treasureObjectType, "Common", "ConstantInt");
+        AddField(treasureObjectType, "Uncommon", "ConstantInt");
+        AddField(treasureObjectType, "Rare", "ConstantInt");
+        AddField(treasureObjectType, "Epic", "ConstantInt");
+        AddField(treasureObjectType, "Legendary", "ConstantInt");
+        AddField(treasureObjectType, "Divine", "ConstantInt");
+        AddField(treasureObjectType, "Unique", "ConstantInt");
 
         AddEnumeration("ResurrectType",
         [

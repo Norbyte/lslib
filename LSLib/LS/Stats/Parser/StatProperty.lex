@@ -14,7 +14,6 @@ nonseparator [^,;:()\[\]! ]
 /* Special trigger words to determine expression type */
 "__TYPE_Properties__" return (int)StatPropertyTokens.EXPR_PROPERTIES;
 "__TYPE_DescriptionParams__" return (int)StatPropertyTokens.EXPR_DESCRIPTION_PARAMS;
-"__TYPE_Requirements__" return (int)StatPropertyTokens.EXPR_REQUIREMENTS;
 
 /* Reserved words */
 "IF"         return (int)StatPropertyTokens.IF;
@@ -80,8 +79,6 @@ nonseparator [^,;:()\[\]! ]
 "-"          return (int)'-';
 "."          return (int)'.';
 [ ]          ;
-
-"Tag" { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.REQUIREMENT_TAG; }
 
 {letter}({namechar})+ { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.NAME; }
 (-)?{digit}({digit})* { yylval = MakeLiteral(yytext); return (int)StatPropertyTokens.INTEGER; }

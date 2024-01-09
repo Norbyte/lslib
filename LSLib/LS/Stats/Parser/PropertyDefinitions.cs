@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LSLib.LS.Story.GoalParser;
+using System;
 using System.Collections.Generic;
 
 namespace LSLib.LS.Stats.Properties;
@@ -27,6 +28,8 @@ public class PropertyAction
 {
     public string Action;
     public List<string> Arguments;
+    public int StartPos;
+    public int EndPos;
 }
 
 public enum ConditionOperator

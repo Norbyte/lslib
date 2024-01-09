@@ -45,7 +45,8 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
         {
             Key = matches.Groups[1].Value,
             Value = matches.Groups[2].Value,
-            Location = new CodeLocation(null, startLine, startCol, endLine, endCol)
+            Location = new CodeLocation(null, startLine, startCol, endLine, endCol),
+            ValueLocation = new CodeLocation(null, startLine, startCol + matches.Groups[2].Index, endLine, startCol + matches.Groups[2].Index + matches.Groups[2].Value.Length)
         };
     }
 }
@@ -127,38 +128,30 @@ public partial class StatParser
     private StatDeclaration AddProperty(object declaration, object property)
     {
         var decl = (StatDeclaration)declaration;
-        if (property is StatProperty)
+        if (property is StatProperty prop)
         {
-            var prop = (StatProperty)property;
-            decl.Properties[prop.Key] = prop.Value;
-            if (prop.Location != null)
-            {
-                decl.PropertyLocations[prop.Key] = prop.Location;
-            }
+            decl.Properties[prop.Key] = prop;
         }
-        else if (property is StatElement)
+        else if (property is StatElement ele)
         {
-            var ele = (StatElement)property;
-            object cont;
-            if (!decl.Properties.TryGetValue(ele.Collection, out cont))
+            if (!decl.Properties.TryGetValue(ele.Collection, out prop))
             {
-                cont = new List<object>();
-                decl.Properties[ele.Collection] = cont;
+                prop = new StatProperty
+                {
+                    Key = ele.Collection,
+                    Value = new StatCollection(),
+                    Location = ele.Location
+                };
+                decl.Properties[ele.Collection] = prop;
             }
 
-            (cont as List<object>).Add(ele.Value);
+            (prop.Value as StatCollection).Add(ele.Value);
         }
-        else if (property is StatDeclaration)
+        else if (property is StatDeclaration otherDecl)
         {
-            var otherDecl = (StatDeclaration)property;
             foreach (var kv in otherDecl.Properties)
             {
                 decl.Properties[kv.Key] = kv.Value;
-            }
-
-            foreach (var kv in otherDecl.PropertyLocations)
-            {
-                decl.PropertyLocations[kv.Key] = kv.Value;
             }
         }
         else
@@ -210,42 +203,21 @@ public partial class StatParser
 
     private StatElement MakeElement(String key, object value)
     {
-        if (value is string)
+        return new StatElement()
         {
-            return new StatElement()
-            {
-                Collection = key,
-                Value = (string)value
-            };
-        }
-        else if (value is StatCollection)
+            Collection = key,
+            Value = value
+        };
+    }
+
+    private StatElement MakeElement(String key, object value, CodeLocation location)
+    {
+        return new StatElement()
         {
-            return new StatElement()
-            {
-                Collection = key,
-                Value = (StatCollection)value
-            };
-        }
-        else if (value is Dictionary<string, object>)
-        {
-            return new StatElement()
-            {
-                Collection = key,
-                Value = (Dictionary<string, object>)value
-            };
-        }
-        else if (value is StatDeclaration)
-        {
-            return new StatElement()
-            {
-                Collection = key,
-                Value = ((StatDeclaration)value).Properties
-            };
-        }
-        else
-        {
-            throw new Exception("Unknown stat element type");
-        }
+            Location = location,
+            Collection = key,
+            Value = value
+        };
     }
 
     private StatCollection MakeCollection() => new List<object>();

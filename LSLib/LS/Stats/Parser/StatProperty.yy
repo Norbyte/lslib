@@ -10,10 +10,6 @@
 /* Trigger Lexemes */
 %token EXPR_PROPERTIES
 %token EXPR_DESCRIPTION_PARAMS
-%token EXPR_REQUIREMENTS
-
-/* Requirements */
-%token REQUIREMENT_TAG
 
 /* Reserved words */
 %token IF
@@ -36,32 +32,7 @@
 /* A special "trigger word" is prepended to support parsing multiple types from the same lexer/parser */
 Root : EXPR_PROPERTIES Properties { $$ = $2; }
      | EXPR_DESCRIPTION_PARAMS OptionalFunctorArgs { $$ = $2; }
-     | EXPR_REQUIREMENTS Requirements { $$ = $2; }
      ;
-
-
-/******************************************************************
- *
- *                      REQUIREMENTS PARSING
- *
- ******************************************************************/
- 
-Requirements : /* empty */ { $$ = MakeRequirements(); }
-             | UnaryRequirement { $$ = AddRequirement(MakeRequirements(), $1); }
-             | Requirements ';'
-             | Requirements ';' UnaryRequirement { $$ = AddRequirement($1, $3); }
-             ;
-
-UnaryRequirement : Requirement
-                 | '!' Requirement { $$ = MakeNotRequirement($2); }
-                 ;
-
-Requirement : NAME { $$ = MakeRequirement($1); }
-            | NAME INTEGER { $$ = MakeIntRequirement($1, $2); }
-            | REQUIREMENT_TAG TEXT { $$ = MakeTagRequirement($1, $2); }
-            | REQUIREMENT_TAG NAME { $$ = MakeTagRequirement($1, $2); }
-            ;
-
 
 /******************************************************************
  *
@@ -97,9 +68,7 @@ PropCondition : /* empty */
 
 FunctorCall : FunctorName OptionalFunctorArgList { $$ = MakeAction($1, $2); };
 
-FunctorName : NAME
-            | REQUIREMENT_TAG
-            ;
+FunctorName : NAME { $$ = $1; MarkActionStart(); };
 
 OptionalFunctorArgList : /* empty */ { $$ = MakeArgumentList(); }
                        | '(' OptionalFunctorArgs ')' { $$ = $2; }
