@@ -1,0 +1,4 @@
+root = true
+
+[*.cs]
+dotnet_diagnostic.SYSLIB0051.severity=silent
