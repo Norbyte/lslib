@@ -139,11 +139,13 @@ public static class VertexSerializationHelpers
         var quat = Quaternion.FromMatrix(m);
         quat.Normalize();
 
-        quat.Conjugate();
         if (quat.W < 0.0f)
         {
+            quat.W = -quat.W;
+        }
+        else
+        {
             quat.Conjugate();
-            quat.Invert();
         }
 
         // Make sure we don't end up with 0 as w component
@@ -159,8 +161,7 @@ public static class VertexSerializationHelpers
         // if Y axis needs to be flipped, positive otherwise
         if (reflect)
         {
-            quat.Conjugate();
-            quat.Invert();
+            quat = new Quaternion(-quat.Xyz, -quat.W);
         }
 
         return quat;
