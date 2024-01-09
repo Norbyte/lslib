@@ -110,6 +110,12 @@ public partial class ModPathVisitor
         {
             mod.Stats.Add(statFile);
         }
+
+        var treasurePath = Path.Join(mod.PublicPath, @"Stats/Generated/TreasureTable.txt");
+        if (FS.FileExists(treasurePath))
+        {
+            mod.Stats.Add(treasurePath);
+        }
     }
 
     private void DiscoverModStatsStructure(ModInfo mod)
