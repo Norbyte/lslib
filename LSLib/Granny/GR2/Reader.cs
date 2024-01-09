@@ -106,10 +106,10 @@ public class GR2Reader(Stream stream)
         Debug.Assert(magic.reserved2 == 0);
 
 #if DEBUG_GR2_SERIALIZATION
-        System.Console.WriteLine(" ===== GR2 Magic ===== ");
-        System.Console.WriteLine(String.Format("Format: {0}", magic.format));
-        System.Console.WriteLine(String.Format("Headers size: {0:X8}, format: ", magic.headersSize, magic.headerFormat));
-        System.Console.WriteLine(String.Format("Reserved1-2: {0:X8} {1:X8}", magic.reserved1, magic.reserved2));
+        Debug.WriteLine(" ===== GR2 Magic ===== ");
+        Debug.WriteLine(String.Format("Format: {0}", magic.format));
+        Debug.WriteLine(String.Format("Headers size: {0:X8}, format: ", magic.headersSize, magic.headerFormat));
+        Debug.WriteLine(String.Format("Reserved1-2: {0:X8} {1:X8}", magic.reserved1, magic.reserved2));
 #endif
         return magic;
     }
@@ -156,14 +156,14 @@ public class GR2Reader(Stream stream)
         Debug.Assert(header.reserved3 == 0);
 
 #if DEBUG_GR2_SERIALIZATION
-        System.Console.WriteLine(" ===== GR2 Header ===== ");
-        System.Console.WriteLine(String.Format("Version {0}, Size {1}, CRC {2:X8}", header.version, header.fileSize, header.crc));
-        System.Console.WriteLine(String.Format("Offset of sections: {0}, num sections: {1}", header.sectionsOffset, header.numSections));
-        System.Console.WriteLine(String.Format("Root type section {0}, Root type offset {1:X8}", header.rootType.Section, header.rootType.Offset));
-        System.Console.WriteLine(String.Format("Root node section {0} {1:X8}", header.rootNode.Section, header.rootNode.Offset));
-        System.Console.WriteLine(String.Format("Tag: {0:X8}, Strings CRC: {1:X8}", header.tag, header.stringTableCrc));
-        System.Console.WriteLine(String.Format("Extra tags: {0:X8} {1:X8} {2:X8} {3:X8}", header.extraTags[0], header.extraTags[1], header.extraTags[2], header.extraTags[3]));
-        System.Console.WriteLine(String.Format("Reserved: {0:X8} {1:X8} {2:X8}", new object[] { header.reserved1, header.reserved2, header.reserved3 }));
+        Debug.WriteLine(" ===== GR2 Header ===== ");
+        Debug.WriteLine(String.Format("Version {0}, Size {1}, CRC {2:X8}", header.version, header.fileSize, header.crc));
+        Debug.WriteLine(String.Format("Offset of sections: {0}, num sections: {1}", header.sectionsOffset, header.numSections));
+        Debug.WriteLine(String.Format("Root type section {0}, Root type offset {1:X8}", header.rootType.Section, header.rootType.Offset));
+        Debug.WriteLine(String.Format("Root node section {0} {1:X8}", header.rootNode.Section, header.rootNode.Offset));
+        Debug.WriteLine(String.Format("Tag: {0:X8}, Strings CRC: {1:X8}", header.tag, header.stringTableCrc));
+        Debug.WriteLine(String.Format("Extra tags: {0:X8} {1:X8} {2:X8} {3:X8}", header.extraTags[0], header.extraTags[1], header.extraTags[2], header.extraTags[3]));
+        Debug.WriteLine(String.Format("Reserved: {0:X8} {1:X8} {2:X8}", new object[] { header.reserved1, header.reserved2, header.reserved3 }));
 #endif
 
         return header;
@@ -199,13 +199,13 @@ public class GR2Reader(Stream stream)
         }
 
 #if DEBUG_GR2_SERIALIZATION
-        System.Console.WriteLine(" ===== Section Header ===== ");
-        System.Console.WriteLine(String.Format("Compression: {0}", header.compression));
-        System.Console.WriteLine(String.Format("Offset {0:X8} Comp/UncompSize {1:X8}/{2:X8}", header.offsetInFile, header.compressedSize, header.uncompressedSize));
-        System.Console.WriteLine(String.Format("Alignment {0}", header.alignment));
-        System.Console.WriteLine(String.Format("First 16/8bit: {0:X8}/{1:X8}", header.first16bit, header.first8bit));
-        System.Console.WriteLine(String.Format("Relocations: {0:X8} count {1}", header.relocationsOffset, header.numRelocations));
-        System.Console.WriteLine(String.Format("Marshalling data: {0:X8} count {1}", header.mixedMarshallingDataOffset, header.numMixedMarshallingData));
+        Debug.WriteLine(" ===== Section Header ===== ");
+        Debug.WriteLine(String.Format("Compression: {0}", header.compression));
+        Debug.WriteLine(String.Format("Offset {0:X8} Comp/UncompSize {1:X8}/{2:X8}", header.offsetInFile, header.compressedSize, header.uncompressedSize));
+        Debug.WriteLine(String.Format("Alignment {0}", header.alignment));
+        Debug.WriteLine(String.Format("First 16/8bit: {0:X8}/{1:X8}", header.first16bit, header.first8bit));
+        Debug.WriteLine(String.Format("Relocations: {0:X8} count {1}", header.relocationsOffset, header.numRelocations));
+        Debug.WriteLine(String.Format("Marshalling data: {0:X8} count {1}", header.mixedMarshallingDataOffset, header.numMixedMarshallingData));
 #endif
         return header;
     }
@@ -213,7 +213,7 @@ public class GR2Reader(Stream stream)
     private void UncompressStream()
     {
 #if DEBUG_GR2_SERIALIZATION
-        System.Console.WriteLine(String.Format(" ===== Repacking sections ===== "));
+        Debug.WriteLine(String.Format(" ===== Repacking sections ===== "));
 #endif
 
         uint totalSize = 0;
@@ -260,7 +260,7 @@ public class GR2Reader(Stream stream)
             }
 
 #if DEBUG_GR2_SERIALIZATION
-            System.Console.WriteLine(String.Format("    {0}: {1:X8} ({2}) --> {3:X8} ({4})", i, originalOffset, hdr.compressedSize, hdr.offsetInFile, hdr.uncompressedSize));
+            Debug.WriteLine(String.Format("    {0}: {1:X8} ({2}) --> {3:X8} ({4})", i, originalOffset, hdr.compressedSize, hdr.offsetInFile, hdr.uncompressedSize));
 #endif
         }
     }
@@ -268,7 +268,7 @@ public class GR2Reader(Stream stream)
     private void ReadSectionRelocationsInternal(Section section, Stream relocationsStream)
     {
 #if DEBUG_GR2_SERIALIZATION
-        System.Console.WriteLine(String.Format(" ===== Relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
+        Debug.WriteLine(String.Format(" ===== Relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
 #endif
 
         using var relocationsReader = new BinaryReader(relocationsStream, Encoding.Default, true);
@@ -283,8 +283,8 @@ public class GR2Reader(Stream stream)
             Stream.Write(BitConverter.GetBytes(fixupAddress), 0, 4);
 
 #if DEBUG_GR2_SERIALIZATION
-            System.Console.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
-            System.Console.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}",
+            Debug.WriteLine(String.Format("    LOCAL  {0:X8} --> {1}:{2:X8}", offsetInSection, (SectionType)reference.Section, reference.Offset));
+            Debug.WriteLine(String.Format("    GLOBAL {0:X8} --> {1:X8}",
                 offsetInSection + section.Header.offsetInFile,
                 reference.Offset + Sections[(int)reference.Section].Header.offsetInFile));
 #endif
@@ -352,7 +352,7 @@ public class GR2Reader(Stream stream)
     private void ReadSectionMixedMarshallingRelocationsInternal(Section section, Stream relocationsStream)
     {
 #if DEBUG_GR2_SERIALIZATION
-        System.Console.WriteLine(String.Format(" ===== Mixed marshalling relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
+        Debug.WriteLine(String.Format(" ===== Mixed marshalling relocations for section at {0:X8} ===== ", section.Header.offsetInFile));
 #endif
 
         using var relocationsReader = new BinaryReader(relocationsStream, Encoding.Default, true);
@@ -371,7 +371,7 @@ public class GR2Reader(Stream stream)
             MixedMarshal(count, typeDefn.Resolve(this));
 
 #if DEBUG_GR2_SERIALIZATION
-            System.Console.WriteLine(String.Format("    {0:X8} [{1}] --> {2}:{3:X8}", offsetInSection, count, (SectionType)type.Section, type.Offset));
+            Debug.WriteLine(String.Format("    {0:X8} [{1}] --> {2}:{3:X8}", offsetInSection, count, (SectionType)type.Section, type.Offset));
 #endif
         }
     }
@@ -537,9 +537,9 @@ public class GR2Reader(Stream stream)
                 if (!DebugPendingResolve.Contains(defn.Definition))
                 {
                     DebugPendingResolve.Add(defn.Definition);
-                    System.Console.WriteLine(String.Format(" ===== Debug resolve for {0:X8} ===== ", defn.Definition.Offset));
+                    Debug.WriteLine(String.Format(" ===== Debug resolve for {0:X8} ===== ", defn.Definition.Offset));
                     defn.Definition.Resolve(this);
-                    System.Console.WriteLine(String.Format(" ===== End debug resolve for {0:X8} ===== ", defn.Definition.Offset));
+                    Debug.WriteLine(String.Format(" ===== End debug resolve for {0:X8} ===== ", defn.Definition.Offset));
                 }
                 description += String.Format(" <struct {0:X8}>", defn.Definition.Offset);
             }
@@ -552,7 +552,7 @@ public class GR2Reader(Stream stream)
             description = String.Format("    <invalid>: {0}", defn.Type.ToString());
         }
 
-        System.Console.WriteLine(description);
+        Debug.WriteLine(description);
 #endif
         return defn;
     }
@@ -579,7 +579,7 @@ public class GR2Reader(Stream stream)
         if (memberType != MemberType.Inline && CachedStructs.TryGetValue(offset, out cachedNode))
         {
 #if DEBUG_GR2_SERIALIZATION
-            System.Console.WriteLine(String.Format("Skipped cached struct {1} at {0:X8}", offset, node.ToString()));
+            Debug.WriteLine(String.Format("Skipped cached struct {1} at {0:X8}", offset, node.ToString()));
 #endif
             Stream.Position += definition.Size(this);
             return cachedNode;
@@ -765,14 +765,14 @@ public class GR2Reader(Stream stream)
             case MemberType.Inline:
                 Debug.Assert(definition.Definition.IsValid);
 #if DEBUG_GR2_SERIALIZATION
-                System.Console.WriteLine(String.Format(" === Inline Struct {0} === ", definition.Name));
+                Debug.WriteLine(String.Format(" === Inline Struct {0} === ", definition.Name));
 #endif
                 if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
                     node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
                 else
                     node = ReadStruct(definition.Definition.Resolve(this), definition.Type, node, parent);
 #if DEBUG_GR2_SERIALIZATION
-                System.Console.WriteLine(" === End Struct === ");
+                Debug.WriteLine(" === End Struct === ");
 #endif
                 break;
 
@@ -786,14 +786,14 @@ public class GR2Reader(Stream stream)
                         var originalPos = Stream.Position;
                         Seek(r);
 #if DEBUG_GR2_SERIALIZATION
-                        System.Console.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
+                        Debug.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
 #endif
                         if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
                             node = definition.Serializer.Read(this, definition.Definition.Resolve(this), definition, 0, parent);
                         else
                             node = ReadStruct(definition.Definition.Resolve(this), definition.Type, node, parent);
 #if DEBUG_GR2_SERIALIZATION
-                        System.Console.WriteLine(" === End Struct === ");
+                        Debug.WriteLine(" === End Struct === ");
 #endif
                         Stream.Seek(originalPos, SeekOrigin.Begin);
                     }
@@ -820,14 +820,14 @@ public class GR2Reader(Stream stream)
                             var originalPos = Stream.Position;
                             Seek(r);
 #if DEBUG_GR2_SERIALIZATION
-                            System.Console.WriteLine(String.Format(" === Variant Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
+                            Debug.WriteLine(String.Format(" === Variant Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
 #endif
                             if (kind == SerializationKind.UserElement || kind == SerializationKind.UserMember)
                                 node = definition.Serializer.Read(this, structDefn, definition, 0, parent);
                             else
                                 node = ReadStruct(structRef.Resolve(this), definition.Type, node, parent);
 #if DEBUG_GR2_SERIALIZATION
-                            System.Console.WriteLine(" === End Struct === ");
+                            Debug.WriteLine(" === End Struct === ");
 #endif
                             Stream.Seek(originalPos, SeekOrigin.Begin);
                         }
@@ -844,7 +844,7 @@ public class GR2Reader(Stream stream)
                     Debug.Assert(definition.Definition.IsValid);
                     var indices = ReadArrayIndicesReference();
 #if DEBUG_GR2_SERIALIZATION
-                    System.Console.WriteLine(String.Format("    Array of references at [{0:X8}]", indices.Offset));
+                    Debug.WriteLine(String.Format("    Array of references at [{0:X8}]", indices.Offset));
 #endif
 
                     if (Header.version >= 7)
@@ -863,7 +863,7 @@ public class GR2Reader(Stream stream)
                         {
                             Seek(refs[i]);
 #if DEBUG_GR2_SERIALIZATION
-                            System.Console.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
+                            Debug.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
 #endif
                             if (kind == SerializationKind.UserElement)
                             {
@@ -879,7 +879,7 @@ public class GR2Reader(Stream stream)
 
                             }
 #if DEBUG_GR2_SERIALIZATION
-                            System.Console.WriteLine(" === End Struct === ");
+                            Debug.WriteLine(" === End Struct === ");
 #endif
                         }
 
@@ -934,7 +934,7 @@ public class GR2Reader(Stream stream)
                             for (int i = 0; i < itemsRef.Size; i++)
                             {
 #if DEBUG_GR2_SERIALIZATION
-                                System.Console.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
+                                Debug.WriteLine(String.Format(" === Struct <{0}> at {1:X8} === ", definition.Name, Stream.Position));
 #endif
                                 if (kind == SerializationKind.UserElement)
                                 {
@@ -948,7 +948,7 @@ public class GR2Reader(Stream stream)
                                     items.Add(element);
                                 }
 #if DEBUG_GR2_SERIALIZATION
-                                System.Console.WriteLine(" === End Struct === ");
+                                Debug.WriteLine(" === End Struct === ");
 #endif
                             }
                         }
@@ -1030,9 +1030,9 @@ public class GR2Reader(Stream stream)
 
 #if DEBUG_GR2_SERIALIZATION
         if (node != null)
-            System.Console.WriteLine(String.Format("    [{0:X8}] {1}: {2}", offsetInFile, definition.Name, node.ToString()));
+            Debug.WriteLine(String.Format("    [{0:X8}] {1}: {2}", offsetInFile, definition.Name, node.ToString()));
         else
-            System.Console.WriteLine(String.Format("    [{0:X8}] {1}: <null>", offsetInFile, definition.Name));
+            Debug.WriteLine(String.Format("    [{0:X8}] {1}: <null>", offsetInFile, definition.Name));
 #endif
 
         return node;

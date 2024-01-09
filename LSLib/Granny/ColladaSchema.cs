@@ -9910,15 +9910,8 @@ namespace LSLib.Granny
         {
             string[] elements = regex.Split(arrayStr.Trim());
             double[] ret = new double[elements.Length];
-            try
-            {
-                for (int i = 0; i < ret.Length; i++)
-                    ret[i] = double.Parse(elements[i], NumberStyles.Float, CultureInfo.InvariantCulture);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            for (int i = 0; i < ret.Length; i++)
+                ret[i] = double.Parse(elements[i], NumberStyles.Float, CultureInfo.InvariantCulture);
             return ret;
         }
 

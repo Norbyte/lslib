@@ -665,7 +665,7 @@ public class StructReference : RelocatableReference
         {
             // We haven't seen this type before, read its definition from the file and cache it
 #if DEBUG_GR2_SERIALIZATION
-            System.Console.WriteLine(String.Format(" ===== Struct definition at {0:X8} ===== ", Offset));
+            Debug.WriteLine(String.Format(" ===== Struct definition at {0:X8} ===== ", Offset));
 #endif
             var originalPos = gr2.Stream.Position;
             gr2.Seek(this);
@@ -734,7 +734,7 @@ public class ArrayIndicesReference : ArrayReference
         if (Items == null)
         {
 #if DEBUG_GR2_SERIALIZATION
-            System.Console.WriteLine(String.Format("    (Reference list at {0:X8})", Offset));
+            Debug.WriteLine(String.Format("    (Reference list at {0:X8})", Offset));
 #endif
             var originalPos = gr2.Stream.Position;
             gr2.Seek(this);
@@ -743,7 +743,7 @@ public class ArrayIndicesReference : ArrayReference
             {
                 Items.Add(gr2.ReadReference());
 #if DEBUG_GR2_SERIALIZATION
-                System.Console.WriteLine(String.Format("        {0:X8}", r.Offset));
+                Debug.WriteLine(String.Format("        {0:X8}", r.Offset));
 #endif
             }
             gr2.Stream.Seek(originalPos, SeekOrigin.Begin);

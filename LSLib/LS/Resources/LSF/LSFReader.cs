@@ -61,7 +61,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
     private void ReadNames(Stream s)
     {
 #if DEBUG_LSF_SERIALIZATION
-        Console.WriteLine(" ----- DUMP OF NAME TABLE -----");
+        Debug.WriteLine(" ----- DUMP OF NAME TABLE -----");
 #endif
 
         // Format:
@@ -85,7 +85,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                 var name = System.Text.Encoding.UTF8.GetString(bytes);
                 hash.Add(name);
 #if DEBUG_LSF_SERIALIZATION
-                Console.WriteLine(String.Format("{0,3:X}/{1}: {2}", Names.Count - 1, hash.Count - 1, name));
+                Debug.WriteLine(String.Format("{0,3:X}/{1}: {2}", Names.Count - 1, hash.Count - 1, name));
 #endif
             }
         }
@@ -99,7 +99,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
     private void ReadNodes(Stream s, bool longNodes)
     {
 #if DEBUG_LSF_SERIALIZATION
-        Console.WriteLine(" ----- DUMP OF NODE TABLE -----");
+        Debug.WriteLine(" ----- DUMP OF NODE TABLE -----");
 #endif
 
         using var reader = new BinaryReader(s);
@@ -129,7 +129,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
             }
 
 #if DEBUG_LSF_SERIALIZATION
-            Console.WriteLine(String.Format(
+            Debug.WriteLine(String.Format(
                 "{0}: {1} @ {2:X} (parent {3}, firstAttribute {4})",
                 index, Names[resolved.NameIndex][resolved.NameOffset], pos, resolved.ParentIndex,
                 resolved.FirstAttributeIndex
@@ -199,14 +199,14 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
         }
 
 #if DEBUG_LSF_SERIALIZATION
-        Console.WriteLine(" ----- DUMP OF ATTRIBUTE REFERENCES -----");
+        Debug.WriteLine(" ----- DUMP OF ATTRIBUTE REFERENCES -----");
         for (int i = 0; i < prevAttributeRefs.Count; i++)
         {
-            Console.WriteLine(String.Format("Node {0}: last attribute {1}", i, prevAttributeRefs[i]));
+            Debug.WriteLine(String.Format("Node {0}: last attribute {1}", i, prevAttributeRefs[i]));
         }
 
 
-        Console.WriteLine(" ----- DUMP OF V2 ATTRIBUTE TABLE -----");
+        Debug.WriteLine(" ----- DUMP OF V2 ATTRIBUTE TABLE -----");
         for (int i = 0; i < Attributes.Count; i++)
         {
             var resolved = Attributes[i];
@@ -217,7 +217,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                 i, Names[resolved.NameIndex][resolved.NameOffset], resolved.DataOffset,
                 resolved.TypeId, resolved.NextAttributeIndex, attribute.NodeIndex
             );
-            Console.WriteLine(debug);
+            Debug.WriteLine(debug);
         }
 #endif
     }
@@ -247,7 +247,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
         }
 
 #if DEBUG_LSF_SERIALIZATION
-        Console.WriteLine(" ----- DUMP OF V3 ATTRIBUTE TABLE -----");
+        Debug.WriteLine(" ----- DUMP OF V3 ATTRIBUTE TABLE -----");
         for (int i = 0; i < Attributes.Count; i++)
         {
             var resolved = Attributes[i];
@@ -257,7 +257,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                 i, Names[resolved.NameIndex][resolved.NameOffset], resolved.DataOffset,
                 resolved.TypeId, resolved.NextAttributeIndex
             );
-            Console.WriteLine(debug);
+            Debug.WriteLine(debug);
         }
 #endif
     }
@@ -443,7 +443,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
         node.Name = Names[defn.NameIndex][defn.NameOffset];
 
 #if DEBUG_LSF_SERIALIZATION
-        Console.WriteLine(String.Format("Begin node {0}", node.Name));
+        Debug.WriteLine(String.Format("Begin node {0}", node.Name));
 #endif
 
         if (defn.FirstAttributeIndex != -1)
@@ -456,7 +456,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                 node.Attributes[Names[attribute.NameIndex][attribute.NameOffset]] = value;
 
 #if DEBUG_LSF_SERIALIZATION
-                Console.WriteLine(String.Format("    {0:X}: {1} ({2})", attribute.DataOffset, Names[attribute.NameIndex][attribute.NameOffset], value));
+                Debug.WriteLine(String.Format("    {0:X}: {1} ({2})", attribute.DataOffset, Names[attribute.NameIndex][attribute.NameOffset], value));
 #endif
 
                 if (attribute.NextAttributeIndex == -1)
