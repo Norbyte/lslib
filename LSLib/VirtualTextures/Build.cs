@@ -631,21 +631,24 @@ public class TileSetBuilder
         int sourceY = 0;
         for (var tileY = firstTileY; tileY <= lastTileY; tileY++)
         {
+            var tileYPixelsMin = tileY * BuildData.RawTileHeight;
+            var tileYPixelsMax = tileYPixelsMin + BuildData.RawTileHeight;
+
+            var stitchYMin = Clamp(y, tileYPixelsMin, tileYPixelsMax);
+            var stitchYMax = Clamp(y + mip.Height, tileYPixelsMin, tileYPixelsMax);
+
+            var stitchH = stitchYMax - stitchYMin;
+
             int sourceX = 0;
             for (var tileX = firstTileX; tileX <= lastTileX; tileX++)
             {
                 var tileXPixelsMin = tileX * BuildData.RawTileWidth;
-                var tileYPixelsMin = tileY * BuildData.RawTileHeight;
                 var tileXPixelsMax = tileXPixelsMin + BuildData.RawTileWidth;
-                var tileYPixelsMax = tileYPixelsMin + BuildData.RawTileHeight;
 
                 var stitchXMin = Clamp(x, tileXPixelsMin, tileXPixelsMax);
-                var stitchYMin = Clamp(y, tileYPixelsMin, tileYPixelsMax);
                 var stitchXMax = Clamp(x + mip.Width, tileXPixelsMin, tileXPixelsMax);
-                var stitchYMax = Clamp(y + mip.Height, tileYPixelsMin, tileYPixelsMax);
 
                 var stitchW = stitchXMax - stitchXMin;
-                var stitchH = stitchYMax - stitchYMin;
 
                 // GIGA JANK
                 if (stitchW >= 4 && stitchH >= 4)
@@ -660,10 +663,10 @@ public class TileSetBuilder
                     );
                 }
 
-                sourceX += BuildData.RawTileWidth;
+                sourceX += stitchW;
             }
 
-            sourceY += BuildData.RawTileHeight;
+            sourceY += stitchH;
         }
     }
 
