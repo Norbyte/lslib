@@ -438,13 +438,7 @@ public static class BinUtils
                     using (var decompressedStream = new MemoryStream())
                     using (var stream = new ZLibStream(compressedStream, CompressionMode.Decompress))
                     {
-                        byte[] buf = new byte[0x10000];
-                        int length = 0;
-                        while ((length = stream.Read(buf, 0, buf.Length)) > 0)
-                        {
-                            decompressedStream.Write(buf, 0, length);
-                        }
-
+                        stream.CopyTo(decompressedStream);
                         return decompressedStream.ToArray();
                     }
                 }
@@ -465,6 +459,17 @@ public static class BinUtils
                         throw new InvalidDataException(msg);
                     }
                     return decompressed;
+                }
+
+            case CompressionMethod.Zstd:
+                {
+                    using (var compressedStream = new MemoryStream(compressed))
+                    using (var decompressedStream = new MemoryStream())
+                    using (var stream = new ZstdSharp.DecompressionStream(compressedStream))
+                    {
+                        stream.CopyTo(decompressedStream);
+                        return decompressedStream.ToArray();
+                    }
                 }
 
             default:
@@ -493,6 +498,10 @@ public static class BinUtils
             case CompressionMethod.LZ4:
                 return new LZ4DecompressionStream(view, sourceOffset, sourceSize, decompressedSize);
 
+            case CompressionMethod.Zstd:
+                var zstdStream = file.CreateViewStream(sourceOffset, sourceSize, MemoryMappedFileAccess.Read);
+                return new ZstdSharp.DecompressionStream(zstdStream);
+
             default:
                  throw new InvalidDataException($"No decompressor found for this format: {compression}");
         }
@@ -510,6 +519,7 @@ public static class BinUtils
             CompressionMethod.None => uncompressed,
             CompressionMethod.Zlib => CompressZlib(uncompressed, level),
             CompressionMethod.LZ4 => CompressLZ4(uncompressed, level, chunked),
+            CompressionMethod.Zstd => CompressZstd(uncompressed, level),
             _ => throw new ArgumentException("Invalid compression method specified")
         };
     }
@@ -548,5 +558,24 @@ public static class BinUtils
         {
             return LZ4Codec.EncodeHC(uncompressed, 0, uncompressed.Length);
         }
+    }
+
+    public static byte[] CompressZstd(byte[] uncompressed, LSCompressionLevel level)
+    {
+        var zLevel = level switch
+        {
+            LSCompressionLevel.Fast => 3,
+            LSCompressionLevel.Default => 9,
+            LSCompressionLevel.Max => 22,
+            _ => throw new ArgumentException()
+        };
+
+        using var outputStream = new MemoryStream();
+        using (var compressor = new ZstdSharp.CompressionStream(outputStream, zLevel, 0, true))
+        {
+            compressor.Write(uncompressed, 0, uncompressed.Length);
+        }
+
+        return outputStream.ToArray();
     }
 }

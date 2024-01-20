@@ -146,6 +146,24 @@ namespace ConverterApp
                         build.Compression = CompressionMethod.LZ4;
                         break;
                     }
+                    case 5:
+                    {
+                        build.Compression = CompressionMethod.Zstd;
+                        build.CompressionLevel = LSCompressionLevel.Fast;
+                        break;
+                    }
+                    case 6:
+                    {
+                        build.Compression = CompressionMethod.Zstd;
+                        build.CompressionLevel = LSCompressionLevel.Default;
+                        break;
+                    }
+                    case 7:
+                    {
+                        build.Compression = CompressionMethod.Zstd;
+                        build.CompressionLevel = LSCompressionLevel.Max;
+                        break;
+                    }
                 }
 
                 // Fallback to Zlib, if the package version doesn't support LZ4

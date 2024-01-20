@@ -349,7 +349,11 @@
             "Zlib Fast",
             "Zlib Optimal",
             "LZ4",
-            "LZ4 HC"});
+            "LZ4 HC",
+            "ZStd Fast",
+            "ZStd Optimal",
+            "ZStd Max"
+            });
             this.compressionMethod.Location = new System.Drawing.Point(353, 156);
             this.compressionMethod.Margin = new System.Windows.Forms.Padding(4);
             this.compressionMethod.Name = "compressionMethod";

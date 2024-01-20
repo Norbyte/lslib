@@ -6,7 +6,8 @@ public enum CompressionMethod
 {
     None,
     Zlib,
-    LZ4
+    LZ4,
+    Zstd
 };
 
 public enum LSCompressionLevel
@@ -21,6 +22,7 @@ public enum CompressionFlags : byte
     MethodNone = 0,
     MethodZlib = 1,
     MethodLZ4 = 2,
+    MethodZstd = 3,
     FastCompress = 0x10,
     DefaultCompress = 0x20,
     MaxCompress = 0x40
@@ -35,6 +37,7 @@ public static class CompressionFlagExtensions
             CompressionFlags.MethodNone => CompressionMethod.None,
             CompressionFlags.MethodZlib => CompressionMethod.Zlib,
             CompressionFlags.MethodLZ4 => CompressionMethod.LZ4,
+            CompressionFlags.MethodZstd => CompressionMethod.Zstd,
             _ => throw new NotSupportedException($"Unsupported compression method: {(byte)f & 0x0F}")
         };
     }
@@ -58,6 +61,7 @@ public static class CompressionFlagExtensions
             CompressionMethod.None => CompressionFlags.MethodNone,
             CompressionMethod.Zlib => CompressionFlags.MethodZlib,
             CompressionMethod.LZ4 => CompressionFlags.MethodLZ4,
+            CompressionMethod.Zstd => CompressionFlags.MethodZstd,
             _ => throw new NotSupportedException($"Unsupported compression method: {method}")
         };
     }
