@@ -1,7 +1,4 @@
 ﻿using LSLib.LS;
-using System;
-using System.Collections.Generic;
-using System.IO;
 
 namespace LSLib.VirtualTextures;
 

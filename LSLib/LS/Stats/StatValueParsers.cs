@@ -1,13 +1,7 @@
 ﻿using LSLib.LS.Stats.Properties;
 using LSLib.LS.Stats.StatParser;
-using LSLib.LS.Story;
 using LSLib.LS.Story.GoalParser;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace LSLib.LS.Stats;
 

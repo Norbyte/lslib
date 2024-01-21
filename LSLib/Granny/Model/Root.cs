@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using LSLib.Granny.GR2;
+﻿using LSLib.Granny.GR2;
 using OpenTK.Mathematics;
 
 namespace LSLib.Granny.Model;

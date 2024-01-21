@@ -1,5 +1,4 @@
 ﻿namespace LSLib.LS.Enums;
-
 public enum Game
 {
     DivinityOriginalSin = 0,

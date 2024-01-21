@@ -1,8 +1,4 @@
-﻿using LSLib.LS.Story.GoalParser;
-using System;
-using System.Collections.Generic;
-
-namespace LSLib.LS.Stats.Properties;
+﻿namespace LSLib.LS.Stats.Properties;
 
 public class Requirement
 {

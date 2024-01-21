@@ -1,8 +1,4 @@
 ﻿using LSLib.Granny.GR2;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using LSLib.LS;
 using LSLib.LS.Enums;
 

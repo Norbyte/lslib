@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace LSLib.VirtualTextures;
+﻿namespace LSLib.VirtualTextures;
 
 public class TileSetGeometryCalculator
 {

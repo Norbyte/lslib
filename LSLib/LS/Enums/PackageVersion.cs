@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LSLib.LS.Enums;
+﻿namespace LSLib.LS.Enums;
 
 public enum PackageVersion
 {

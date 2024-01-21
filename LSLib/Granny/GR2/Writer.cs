@@ -1,10 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using OpenTK;
+﻿using System.Diagnostics;
 
 namespace LSLib.Granny.GR2;
 

@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using LZ4;
+﻿using LZ4;
 
 namespace LSLib.VirtualTextures;
 

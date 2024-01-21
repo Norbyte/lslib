@@ -1,7 +1,5 @@
 ﻿using LSLib.Granny.GR2;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 

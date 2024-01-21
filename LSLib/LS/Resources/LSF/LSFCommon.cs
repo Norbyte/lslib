@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-namespace LSLib.LS;
+﻿namespace LSLib.LS;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct LSFMagic

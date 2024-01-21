@@ -1,6 +1,4 @@
 ﻿using LSLib.LS.Story.Compiler;
-using System;
-using System.Collections.Generic;
 
 namespace LSLib.LS.Story.HeaderParser;
 

@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace LSLib.LS.Story;
+﻿namespace LSLib.LS.Story;
 
 public class DatabaseNode : DataNode
 {

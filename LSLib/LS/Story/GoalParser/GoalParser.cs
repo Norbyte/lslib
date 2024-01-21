@@ -1,10 +1,7 @@
 ﻿using LSLib.LS.Story.Compiler;
-using System;
 using System.Globalization;
-using System.IO;
 using System.Text.RegularExpressions;
 using QUT.Gppg;
-using System.Collections.Generic;
 
 namespace LSLib.LS.Story.GoalParser;
 

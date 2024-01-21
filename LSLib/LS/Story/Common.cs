@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-
-namespace LSLib.LS.Story;
+﻿namespace LSLib.LS.Story;
 
 public interface OsirisSerializable
 {

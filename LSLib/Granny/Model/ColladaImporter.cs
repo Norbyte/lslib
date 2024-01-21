@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+﻿using System.Diagnostics;
 using LSLib.Granny.GR2;
 using LSLib.LS;
 using OpenTK.Mathematics;

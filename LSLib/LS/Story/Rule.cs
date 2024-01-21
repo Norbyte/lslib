@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace LSLib.LS.Story;
+﻿namespace LSLib.LS.Story;
 
 public enum RuleType
 {

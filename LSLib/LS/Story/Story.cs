@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-namespace LSLib.LS.Story;
+﻿namespace LSLib.LS.Story;
 
 public class Story
 {

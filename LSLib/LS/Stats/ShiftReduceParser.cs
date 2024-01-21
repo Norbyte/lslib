@@ -2,11 +2,7 @@
 // Copyright (c) Wayne Kelly, QUT 2005-2014
 // (see accompanying GPPGcopyright.rtf)
 
-using System;
-using System.Text;
 using System.Globalization;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Diagnostics.CodeAnalysis;
 
 namespace QUT.Gppg

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LSLib.LS;
+﻿namespace LSLib.LS;
 
 public enum CompressionMethod
 {

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
+﻿using System.Diagnostics;
 using OpenTK.Mathematics;
-using System.IO;
 using System.Reflection;
 using System.IO.Hashing;
 

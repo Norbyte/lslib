@@ -33,7 +33,6 @@
 		OTHER DEALINGS IN THE SOFTWARE.
 */
 
-using System;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS;

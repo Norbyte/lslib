@@ -1,6 +1,5 @@
 ﻿using LSLib.LS.Story.Compiler;
 using QUT.Gppg;
-using System;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS.Story.HeaderParser;

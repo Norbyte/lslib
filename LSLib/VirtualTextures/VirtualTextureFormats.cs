@@ -1,9 +1,4 @@
-﻿using LSLib.Granny;
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-
-namespace LSLib.VirtualTextures;
+﻿namespace LSLib.VirtualTextures;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct DDSHeader

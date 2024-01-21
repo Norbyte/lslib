@@ -1,8 +1,4 @@
 ﻿using LSLib.LS.Story.Compiler;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace LSLib.LS;
@@ -261,4 +257,27 @@ public partial class ModPathVisitor
 
     [GeneratedRegex("^(.*)_[0-9]+\\.pak$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex ArchivePartRegex();
+}
+
+public class GameDataContext
+{
+    public VFS FS;
+    public ModResources Resources;
+
+    public GameDataContext(string path, TargetGame game = TargetGame.BG3, bool excludeAssets = true)
+    {
+        FS = new VFS();
+        FS.AttachGameDirectory(path, excludeAssets);
+        FS.FinishBuild();
+
+        Resources = new ModResources();
+        var visitor = new ModPathVisitor(Resources, FS)
+        {
+            Game = game,
+            CollectStoryGoals = true,
+            CollectGlobals = false,
+            CollectLevels = false
+        };
+        visitor.Discover();
+    }
 }

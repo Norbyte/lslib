@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using LSLib.Granny.GR2;
+﻿using LSLib.Granny.GR2;
 
 namespace LSLib.Granny.Model;
 
