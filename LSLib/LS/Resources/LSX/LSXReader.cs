@@ -11,7 +11,7 @@ public class LSXReader(Stream stream) : IDisposable
     private Resource resource;
     private Region currentRegion;
     private List<Node> stack;
-    private int lastLine, lastColumn;
+    public int lastLine, lastColumn;
     private LSXVersion Version = LSXVersion.V3;
     public NodeSerializationSettings SerializationSettings = new();
     private NodeAttribute LastAttribute = null;
@@ -130,7 +130,8 @@ public class LSXReader(Stream stream) : IDisposable
                     // New node under the current parent
                     node = new Node
                     {
-                        Parent = stack.Last()
+                        Parent = stack.Last(),
+                        Line = ((IXmlLineInfo)reader).LineNumber
                     };
                 }
 
@@ -150,11 +151,14 @@ public class LSXReader(Stream stream) : IDisposable
                 }
 
                 var attrName = reader["id"];
-                if (attrTypeId > (int)NodeAttribute.DataType.DT_Max)
+                if (attrTypeId > (int)AttributeType.Max)
                     throw new InvalidFormatException(String.Format("Unsupported attribute data type: {0}", attrTypeId));
 
                 Debug.Assert(attrName != null);
-                var attr = new NodeAttribute((NodeAttribute.DataType)attrTypeId);
+                var attr = new NodeAttribute((AttributeType)attrTypeId)
+                {
+                    Line = ((IXmlLineInfo)reader).LineNumber
+                };
 
                 var attrValue = reader["value"];
                 if (attrValue != null)
@@ -166,16 +170,16 @@ public class LSXReader(Stream stream) : IDisposable
                     // Preallocate value for vector/matrix types
                     switch (attr.Type)
                     {
-                        case NodeAttribute.DataType.DT_Vec2: attr.Value = new float[2]; break;
-                        case NodeAttribute.DataType.DT_Vec3: attr.Value = new float[3]; break;
-                        case NodeAttribute.DataType.DT_Vec4: attr.Value = new float[4]; break;
-                        case NodeAttribute.DataType.DT_Mat2: attr.Value = new float[2*2]; break;
-                        case NodeAttribute.DataType.DT_Mat3: attr.Value = new float[3*3]; break;
-                        case NodeAttribute.DataType.DT_Mat3x4: attr.Value = new float[3*4]; break;
-                        case NodeAttribute.DataType.DT_Mat4: attr.Value = new float[4*4]; break;
-                        case NodeAttribute.DataType.DT_Mat4x3: attr.Value = new float[4*3]; break;
-                        case NodeAttribute.DataType.DT_TranslatedString: break;
-                        case NodeAttribute.DataType.DT_TranslatedFSString: break;
+                        case AttributeType.Vec2: attr.Value = new float[2]; break;
+                        case AttributeType.Vec3: attr.Value = new float[3]; break;
+                        case AttributeType.Vec4: attr.Value = new float[4]; break;
+                        case AttributeType.Mat2: attr.Value = new float[2*2]; break;
+                        case AttributeType.Mat3: attr.Value = new float[3*3]; break;
+                        case AttributeType.Mat3x4: attr.Value = new float[3*4]; break;
+                        case AttributeType.Mat4: attr.Value = new float[4*4]; break;
+                        case AttributeType.Mat4x3: attr.Value = new float[4*3]; break;
+                        case AttributeType.TranslatedString: break;
+                        case AttributeType.TranslatedFSString: break;
                         default: throw new Exception($"Attribute of type {attr.Type} should have an inline value!");
                     }
 
@@ -183,7 +187,7 @@ public class LSXReader(Stream stream) : IDisposable
                     LastAttribute = attr;
                 }
 
-                if (attr.Type == NodeAttribute.DataType.DT_TranslatedString)
+                if (attr.Type == AttributeType.TranslatedString)
                 {
                     attr.Value ??= new TranslatedString();
 
@@ -196,7 +200,7 @@ public class LSXReader(Stream stream) : IDisposable
                         ts.Version = UInt16.Parse(reader["version"]);
                     }
                 }
-                else if (attr.Type == NodeAttribute.DataType.DT_TranslatedFSString)
+                else if (attr.Type == AttributeType.TranslatedFSString)
                 {
                     var fs = ((TranslatedFSString)attr.Value);
                     ReadTranslatedFSString(fs);

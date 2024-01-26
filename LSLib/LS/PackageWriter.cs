@@ -32,7 +32,11 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         var compression = Build.Compression;
         var compressionLevel = Build.CompressionLevel;
 
-        if (input.Path.EndsWith(".gts") || input.Path.EndsWith(".gtp") || inputStream.Length == 0)
+        if (input.Path.EndsWith(".gts") 
+            || input.Path.EndsWith(".gtp") 
+            || input.Path.EndsWith(".wem") 
+            || input.Path.EndsWith(".bnk") 
+            || inputStream.Length == 0)
         {
             compression = CompressionMethod.None;
             compressionLevel = LSCompressionLevel.Fast;

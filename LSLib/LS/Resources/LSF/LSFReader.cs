@@ -448,7 +448,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
             while (true)
             {
                 Values.Position = attribute.DataOffset;
-                var value = ReadAttribute((NodeAttribute.DataType)attribute.TypeId, attributeReader, attribute.Length);
+                var value = ReadAttribute((AttributeType)attribute.TypeId, attributeReader, attribute.Length);
                 node.Attributes[Names[attribute.NameIndex][attribute.NameOffset]] = value;
 
 #if DEBUG_LSF_SERIALIZATION
@@ -467,19 +467,19 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
         }
     }
 
-    private NodeAttribute ReadAttribute(NodeAttribute.DataType type, BinaryReader reader, uint length)
+    private NodeAttribute ReadAttribute(AttributeType type, BinaryReader reader, uint length)
     {
         // LSF and LSB serialize the buffer types differently, so specialized
         // code is added to the LSB and LSf serializers, and the common code is
         // available in BinUtils.ReadAttribute()
         switch (type)
         {
-            case NodeAttribute.DataType.DT_String:
-            case NodeAttribute.DataType.DT_Path:
-            case NodeAttribute.DataType.DT_FixedString:
-            case NodeAttribute.DataType.DT_LSString:
-            case NodeAttribute.DataType.DT_WString:
-            case NodeAttribute.DataType.DT_LSWString:
+            case AttributeType.String:
+            case AttributeType.Path:
+            case AttributeType.FixedString:
+            case AttributeType.LSString:
+            case AttributeType.WString:
+            case AttributeType.LSWString:
                 {
                     var attr = new NodeAttribute(type)
                     {
@@ -488,7 +488,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                     return attr;
                 }
 
-            case NodeAttribute.DataType.DT_TranslatedString:
+            case AttributeType.TranslatedString:
                 {
                     var attr = new NodeAttribute(type);
                     var str = new TranslatedString();
@@ -514,7 +514,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                     return attr;
                 }
 
-            case NodeAttribute.DataType.DT_TranslatedFSString:
+            case AttributeType.TranslatedFSString:
                 {
                     var attr = new NodeAttribute(type)
                     {
@@ -523,7 +523,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                     return attr;
                 }
 
-            case NodeAttribute.DataType.DT_ScratchBuffer:
+            case AttributeType.ScratchBuffer:
                 {
                     var attr = new NodeAttribute(type)
                     {

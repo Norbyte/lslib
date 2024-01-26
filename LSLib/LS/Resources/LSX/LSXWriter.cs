@@ -115,7 +115,7 @@ public class LSXWriter(Stream stream)
                 writer.WriteAttributeString("type", ((int)attribute.Value.Type).ToString());
             }
 
-            if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedString)
+            if (attribute.Value.Type == AttributeType.TranslatedString)
             {
                 var ts = ((TranslatedString)attribute.Value.Value);
                 writer.WriteAttributeString("handle", ts.Handle);
@@ -128,7 +128,7 @@ public class LSXWriter(Stream stream)
                     writer.WriteAttributeString("version", ts.Version.ToString());
                 }
             }
-            else if (attribute.Value.Type == NodeAttribute.DataType.DT_TranslatedFSString)
+            else if (attribute.Value.Type == AttributeType.TranslatedFSString)
             {
                 var fs = ((TranslatedFSString)attribute.Value.Value);
                 writer.WriteAttributeString("value", fs.Value);

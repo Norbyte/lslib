@@ -65,54 +65,125 @@ public class NodeSerializationSettings
         return String.Join(",", tags);
     }
 }
-
-public class NodeAttribute(NodeAttribute.DataType type)
+public enum AttributeType
 {
-    public enum DataType
+    None = 0,
+    Byte = 1,
+    Short = 2,
+    UShort = 3,
+    Int = 4,
+    UInt = 5,
+    Float = 6,
+    Double = 7,
+    IVec2 = 8,
+    IVec3 = 9,
+    IVec4 = 10,
+    Vec2 = 11,
+    Vec3 = 12,
+    Vec4 = 13,
+    Mat2 = 14,
+    Mat3 = 15,
+    Mat3x4 = 16,
+    Mat4x3 = 17,
+    Mat4 = 18,
+    Bool = 19,
+    String = 20,
+    Path = 21,
+    FixedString = 22,
+    LSString = 23,
+    ULongLong = 24,
+    ScratchBuffer = 25,
+    // Seems to be unused?
+    Long = 26,
+    Int8 = 27,
+    TranslatedString = 28,
+    WString = 29,
+    LSWString = 30,
+    UUID = 31,
+    Int64 = 32,
+    TranslatedFSString = 33,
+    // Last supported datatype, always keep this one at the end
+    Max = TranslatedFSString
+};
+
+public static class AttributeTypeExtensions
+{
+    public static int GetRows(this AttributeType type)
     {
-        DT_None = 0,
-        DT_Byte = 1,
-        DT_Short = 2,
-        DT_UShort = 3,
-        DT_Int = 4,
-        DT_UInt = 5,
-        DT_Float = 6,
-        DT_Double = 7,
-        DT_IVec2 = 8,
-        DT_IVec3 = 9,
-        DT_IVec4 = 10,
-        DT_Vec2 = 11,
-        DT_Vec3 = 12,
-        DT_Vec4 = 13,
-        DT_Mat2 = 14,
-        DT_Mat3 = 15,
-        DT_Mat3x4 = 16,
-        DT_Mat4x3 = 17,
-        DT_Mat4 = 18,
-        DT_Bool = 19,
-        DT_String = 20,
-        DT_Path = 21,
-        DT_FixedString = 22,
-        DT_LSString = 23,
-        DT_ULongLong = 24,
-        DT_ScratchBuffer = 25,
-        // Seems to be unused?
-        DT_Long = 26,
-        DT_Int8 = 27,
-        DT_TranslatedString = 28,
-        DT_WString = 29,
-        DT_LSWString = 30,
-        DT_UUID = 31,
-        DT_Int64 = 32,
-        DT_TranslatedFSString = 33,
-        // Last supported datatype, always keep this one at the end
-        DT_Max = DT_TranslatedFSString
-    };
+        switch (type)
+        {
+            case AttributeType.IVec2:
+            case AttributeType.IVec3:
+            case AttributeType.IVec4:
+            case AttributeType.Vec2:
+            case AttributeType.Vec3:
+            case AttributeType.Vec4:
+                return 1;
 
-    private readonly DataType type = type;
+            case AttributeType.Mat2:
+                return 2;
+
+            case AttributeType.Mat3:
+            case AttributeType.Mat3x4:
+                return 3;
+
+            case AttributeType.Mat4x3:
+            case AttributeType.Mat4:
+                return 4;
+
+            default:
+                throw new NotSupportedException("Data type does not have rows");
+        }
+    }
+
+    public static int GetColumns(this AttributeType type)
+    {
+        switch (type)
+        {
+            case AttributeType.IVec2:
+            case AttributeType.Vec2:
+            case AttributeType.Mat2:
+                return 2;
+
+            case AttributeType.IVec3:
+            case AttributeType.Vec3:
+            case AttributeType.Mat3:
+            case AttributeType.Mat4x3:
+                return 3;
+
+            case AttributeType.IVec4:
+            case AttributeType.Vec4:
+            case AttributeType.Mat3x4:
+            case AttributeType.Mat4:
+                return 4;
+
+            default:
+                throw new NotSupportedException("Data type does not have columns");
+        }
+    }
+
+    public static bool IsNumeric(this AttributeType type)
+    {
+        return type == AttributeType.Byte
+            || type == AttributeType.Short
+            || type == AttributeType.Short
+            || type == AttributeType.Int
+            || type == AttributeType.UInt
+            || type == AttributeType.Float
+            || type == AttributeType.Double
+            || type == AttributeType.ULongLong
+            || type == AttributeType.Long
+            || type == AttributeType.Int8;
+    }
+}
+
+public class NodeAttribute(AttributeType type)
+{
+    private readonly AttributeType type = type;
     private object value;
+    public int? Line = null;
 
-    public DataType Type
+    public AttributeType Type
     {
         get { return type; }
     }
@@ -143,21 +214,21 @@ public class NodeAttribute(NodeAttribute.DataType type)
     {
         switch (type)
         {
-            case DataType.DT_ScratchBuffer:
+            case AttributeType.ScratchBuffer:
                 // ScratchBuffer is a special case, as its stored as byte[] and ToString() doesn't really do what we want
                 return Convert.ToBase64String((byte[])value);
 
-            case DataType.DT_IVec2:
-            case DataType.DT_IVec3:
-            case DataType.DT_IVec4:
+            case AttributeType.IVec2:
+            case AttributeType.IVec3:
+            case AttributeType.IVec4:
                 return String.Join(" ", new List<int>((int[])value).ConvertAll(i => i.ToString()).ToArray());
 
-            case DataType.DT_Vec2:
-            case DataType.DT_Vec3:
-            case DataType.DT_Vec4:
+            case AttributeType.Vec2:
+            case AttributeType.Vec3:
+            case AttributeType.Vec4:
                 return String.Join(" ", new List<float>((float[])value).ConvertAll(i => i.ToString()).ToArray());
 
-            case DataType.DT_UUID:
+            case AttributeType.UUID:
                 if (settings.ByteSwapGuids)
                 {
                     return ByteSwapGuid((Guid)value).ToString();
@@ -172,77 +243,48 @@ public class NodeAttribute(NodeAttribute.DataType type)
         }
     }
 
-    public int GetRows()
+    public Guid AsGuid(NodeSerializationSettings settings)
     {
-        switch (this.type)
-        {
-            case DataType.DT_IVec2:
-            case DataType.DT_IVec3:
-            case DataType.DT_IVec4:
-            case DataType.DT_Vec2:
-            case DataType.DT_Vec3:
-            case DataType.DT_Vec4:
-                return 1;
-
-            case DataType.DT_Mat2:
-                return 2;
-
-            case DataType.DT_Mat3:
-            case DataType.DT_Mat3x4:
-                return 3;
-
-            case DataType.DT_Mat4x3:
-            case DataType.DT_Mat4:
-                return 4;
-
-            default:
-                throw new NotSupportedException("Data type does not have rows");
-        }
+        return AsGuid(settings.ByteSwapGuids);
     }
 
-    public int GetColumns()
+    public Guid AsGuid()
     {
-        switch (this.type)
-        {
-            case DataType.DT_IVec2:
-            case DataType.DT_Vec2:
-            case DataType.DT_Mat2:
-                return 2;
-
-            case DataType.DT_IVec3:
-            case DataType.DT_Vec3:
-            case DataType.DT_Mat3:
-            case DataType.DT_Mat4x3:
-                return 3;
-
-            case DataType.DT_IVec4:
-            case DataType.DT_Vec4:
-            case DataType.DT_Mat3x4:
-            case DataType.DT_Mat4:
-                return 4;
-
-            default:
-                throw new NotSupportedException("Data type does not have columns");
-        }
+        return AsGuid(true);
     }
 
-    public bool IsNumeric()
+    public Guid AsGuid(bool byteSwapGuids)
     {
-        return this.type == DataType.DT_Byte
-            || this.type == DataType.DT_Short
-            || this.type == DataType.DT_Short
-            || this.type == DataType.DT_Int
-            || this.type == DataType.DT_UInt
-            || this.type == DataType.DT_Float
-            || this.type == DataType.DT_Double
-            || this.type == DataType.DT_ULongLong
-            || this.type == DataType.DT_Long
-            || this.type == DataType.DT_Int8;
+        switch (type)
+        {
+            case AttributeType.UUID:
+                return (Guid)value;
+
+            case AttributeType.String:
+            case AttributeType.FixedString:
+            case AttributeType.LSString:
+                if (byteSwapGuids)
+                {
+                    return ByteSwapGuid(Guid.Parse((string)value));
+                }
+                else
+                {
+                    return Guid.Parse((string)value);
+                }
+
+            default:
+                throw new NotSupportedException("Type not convertible to GUID");
+        }
     }
 
     public void FromString(string str, NodeSerializationSettings settings)
     {
-        if (IsNumeric())
+        value = ParseFromString(str, type, settings);
+    }
+
+    public static object ParseFromString(string str, AttributeType type, NodeSerializationSettings settings)
+    {
+        if (type.IsNumeric())
         {
             // Workaround: Some XML files use empty strings, instead of "0" for zero values.
             if (str == "")
@@ -256,46 +298,39 @@ public class NodeAttribute(NodeAttribute.DataType type)
             }
         }
 
-        switch (this.type)
+        switch (type)
         {
-            case DataType.DT_None:
+            case AttributeType.None:
                 // This is a null type, cannot have a value
-                break;
+                return null;
 
-            case DataType.DT_Byte:
-                value = Convert.ToByte(str);
-                break;
+            case AttributeType.Byte:
+                return Convert.ToByte(str);
 
-            case DataType.DT_Short:
-                value = Convert.ToInt16(str);
-                break;
+            case AttributeType.Short:
+                return Convert.ToInt16(str);
 
-            case DataType.DT_UShort:
-                value = Convert.ToUInt16(str);
-                break;
+            case AttributeType.UShort:
+                return Convert.ToUInt16(str);
 
-            case DataType.DT_Int:
-                value = Convert.ToInt32(str);
-                break;
+            case AttributeType.Int:
+                return Convert.ToInt32(str);
 
-            case DataType.DT_UInt:
-                value = Convert.ToUInt32(str);
-                break;
+            case AttributeType.UInt:
+                return Convert.ToUInt32(str);
 
-            case DataType.DT_Float:
-                value = Convert.ToSingle(str);
-                break;
+            case AttributeType.Float:
+                return Convert.ToSingle(str);
 
-            case DataType.DT_Double:
-                value = Convert.ToDouble(str);
-                break;
+            case AttributeType.Double:
+                return Convert.ToDouble(str);
 
-            case DataType.DT_IVec2:
-            case DataType.DT_IVec3:
-            case DataType.DT_IVec4:
+            case AttributeType.IVec2:
+            case AttributeType.IVec3:
+            case AttributeType.IVec4:
                 {
                     string[] nums = str.Split(' ');
-                    int length = GetColumns();
+                    int length = type.GetColumns();
                     if (length != nums.Length)
                         throw new FormatException(String.Format("A vector of length {0} was expected, got {1}", length, nums.Length));
 
@@ -303,16 +338,15 @@ public class NodeAttribute(NodeAttribute.DataType type)
                     for (int i = 0; i < length; i++)
                         vec[i] = int.Parse(nums[i]);
 
-                    value = vec;
-                    break;
+                    return vec;
                 }
 
-            case DataType.DT_Vec2:
-            case DataType.DT_Vec3:
-            case DataType.DT_Vec4:
+            case AttributeType.Vec2:
+            case AttributeType.Vec3:
+            case AttributeType.Vec4:
                 {
                     string[] nums = str.Split(' ');
-                    int length = GetColumns();
+                    int length = type.GetColumns();
                     if (length != nums.Length)
                         throw new FormatException(String.Format("A vector of length {0} was expected, got {1}", length, nums.Length));
 
@@ -320,83 +354,80 @@ public class NodeAttribute(NodeAttribute.DataType type)
                     for (int i = 0; i < length; i++)
                         vec[i] = float.Parse(nums[i]);
 
-                    value = vec;
-                    break;
+                    return vec;
                 }
 
-            case DataType.DT_Mat2:
-            case DataType.DT_Mat3:
-            case DataType.DT_Mat3x4:
-            case DataType.DT_Mat4x3:
-            case DataType.DT_Mat4:
+            case AttributeType.Mat2:
+            case AttributeType.Mat3:
+            case AttributeType.Mat3x4:
+            case AttributeType.Mat4x3:
+            case AttributeType.Mat4:
                 var mat = Matrix.Parse(str);
-                if (mat.cols != GetColumns() || mat.rows != GetRows())
+                if (mat.cols != type.GetColumns() || mat.rows != type.GetRows())
                     throw new FormatException("Invalid column/row count for matrix");
-                value = mat;
-                break;
+                return mat;
 
-            case DataType.DT_Bool:
-                if (str == "0") value = false;
-                else if (str == "1") value = true;
-                else value = Convert.ToBoolean(str);
-                break;
+            case AttributeType.Bool:
+                if (str == "0") return false;
+                else if (str == "1") return true;
+                else return Convert.ToBoolean(str);
 
-            case DataType.DT_String:
-            case DataType.DT_Path:
-            case DataType.DT_FixedString:
-            case DataType.DT_LSString:
-            case DataType.DT_WString:
-            case DataType.DT_LSWString:
-                value = str;
-                break;
+            case AttributeType.String:
+            case AttributeType.Path:
+            case AttributeType.FixedString:
+            case AttributeType.LSString:
+            case AttributeType.WString:
+            case AttributeType.LSWString:
+                return str;
 
-            case DataType.DT_TranslatedString:
-                // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
-                // That can be changed separately via attribute.Value.Handle
-                value ??= new TranslatedString();
+            case AttributeType.TranslatedString:
+                {
+                    // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
+                    // That can be changed separately via attribute.Value.Handle
+                    var value = new TranslatedString
+                    {
+                        Value = str
+                    };
+                    return value;
+                }
 
-                ((TranslatedString)value).Value = str;
-                break;
+            case AttributeType.TranslatedFSString:
+                {
+                    // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
+                    // That can be changed separately via attribute.Value.Handle
+                    var value = new TranslatedFSString
+                    {
+                        Value = str
+                    };
+                    return value;
+                }
 
-            case DataType.DT_TranslatedFSString:
-                // We'll only set the value part of the translated string, not the TranslatedStringKey / Handle part
-                // That can be changed separately via attribute.Value.Handle
-                value ??= new TranslatedFSString();
+            case AttributeType.ULongLong:
+                return Convert.ToUInt64(str);
 
-                ((TranslatedFSString)value).Value = str;
-                break;
+            case AttributeType.ScratchBuffer:
+                return Convert.FromBase64String(str);
 
-            case DataType.DT_ULongLong:
-                value = Convert.ToUInt64(str);
-                break;
+            case AttributeType.Long:
+            case AttributeType.Int64:
+                return Convert.ToInt64(str);
 
-            case DataType.DT_ScratchBuffer:
-                value = Convert.FromBase64String(str);
-                break;
+            case AttributeType.Int8:
+                return Convert.ToSByte(str);
 
-            case DataType.DT_Long:
-            case DataType.DT_Int64:
-                value = Convert.ToInt64(str);
-                break;
-
-            case DataType.DT_Int8:
-                value = Convert.ToSByte(str);
-                break;
-
-            case DataType.DT_UUID:
+            case AttributeType.UUID:
                 if (settings.ByteSwapGuids)
                 {
-                    value = ByteSwapGuid(new Guid(str));
+                    return ByteSwapGuid(new Guid(str));
                 }
                 else
                 {
-                    value = new Guid(str);
+                    return new Guid(str);
                 }
-                break;
 
             default:
                 // This should not happen!
-                throw new NotImplementedException(String.Format("FromString() not implemented for type {0}", this.type));
+                throw new NotImplementedException(String.Format("FromString() not implemented for type {0}", type));
         }
     }
 }

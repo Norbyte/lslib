@@ -71,10 +71,10 @@ public class LSBReader(Stream stream) : IDisposable
         {
             UInt32 attrNameId = reader.ReadUInt32();
             UInt32 attrTypeId = reader.ReadUInt32();
-            if (attrTypeId > (int)NodeAttribute.DataType.DT_Max)
+            if (attrTypeId > (int)AttributeType.Max)
                 throw new InvalidFormatException(String.Format("Unsupported attribute data type: {0}", attrTypeId));
 
-            node.Attributes[staticStrings[attrNameId]] = ReadAttribute((NodeAttribute.DataType)attrTypeId);
+            node.Attributes[staticStrings[attrNameId]] = ReadAttribute((AttributeType)attrTypeId);
         }
 
         for (UInt32 i = 0; i < childCount; i++)
@@ -88,14 +88,14 @@ public class LSBReader(Stream stream) : IDisposable
         }
     }
 
-    private NodeAttribute ReadAttribute(NodeAttribute.DataType type)
+    private NodeAttribute ReadAttribute(AttributeType type)
     {
         switch (type)
         {
-            case NodeAttribute.DataType.DT_String:
-            case NodeAttribute.DataType.DT_Path:
-            case NodeAttribute.DataType.DT_FixedString:
-            case NodeAttribute.DataType.DT_LSString:
+            case AttributeType.String:
+            case AttributeType.Path:
+            case AttributeType.FixedString:
+            case AttributeType.LSString:
                 {
                     var attr = new NodeAttribute(type)
                     {
@@ -104,8 +104,8 @@ public class LSBReader(Stream stream) : IDisposable
                     return attr;
                 }
 
-            case NodeAttribute.DataType.DT_WString:
-            case NodeAttribute.DataType.DT_LSWString:
+            case AttributeType.WString:
+            case AttributeType.LSWString:
                 {
                     var attr = new NodeAttribute(type)
                     {
@@ -114,7 +114,7 @@ public class LSBReader(Stream stream) : IDisposable
                     return attr;
                 }
 
-            case NodeAttribute.DataType.DT_TranslatedString:
+            case AttributeType.TranslatedString:
                 {
                     var attr = new NodeAttribute(type);
                     var str = new TranslatedString();
@@ -149,7 +149,7 @@ public class LSBReader(Stream stream) : IDisposable
                     return attr;
                 }
 
-            case NodeAttribute.DataType.DT_ScratchBuffer:
+            case AttributeType.ScratchBuffer:
                 {
                     var attr = new NodeAttribute(type);
                     var bufferLength = reader.ReadInt32();

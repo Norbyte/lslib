@@ -206,47 +206,47 @@ public static class BinUtils
         return b;
     }
 
-    public static NodeAttribute ReadAttribute(NodeAttribute.DataType type, BinaryReader reader)
+    public static NodeAttribute ReadAttribute(AttributeType type, BinaryReader reader)
     {
         var attr = new NodeAttribute(type);
         switch (type)
         {
-            case NodeAttribute.DataType.DT_None:
+            case AttributeType.None:
                 break;
 
-            case NodeAttribute.DataType.DT_Byte:
+            case AttributeType.Byte:
                 attr.Value = reader.ReadByte();
                 break;
 
-            case NodeAttribute.DataType.DT_Short:
+            case AttributeType.Short:
                 attr.Value = reader.ReadInt16();
                 break;
 
-            case NodeAttribute.DataType.DT_UShort:
+            case AttributeType.UShort:
                 attr.Value = reader.ReadUInt16();
                 break;
 
-            case NodeAttribute.DataType.DT_Int:
+            case AttributeType.Int:
                 attr.Value = reader.ReadInt32();
                 break;
 
-            case NodeAttribute.DataType.DT_UInt:
+            case AttributeType.UInt:
                 attr.Value = reader.ReadUInt32();
                 break;
 
-            case NodeAttribute.DataType.DT_Float:
+            case AttributeType.Float:
                 attr.Value = reader.ReadSingle();
                 break;
 
-            case NodeAttribute.DataType.DT_Double:
+            case AttributeType.Double:
                 attr.Value = reader.ReadDouble();
                 break;
 
-            case NodeAttribute.DataType.DT_IVec2:
-            case NodeAttribute.DataType.DT_IVec3:
-            case NodeAttribute.DataType.DT_IVec4:
+            case AttributeType.IVec2:
+            case AttributeType.IVec3:
+            case AttributeType.IVec4:
                 {
-                    int columns = attr.GetColumns();
+                    int columns = attr.Type.GetColumns();
                     var vec = new int[columns];
                     for (int i = 0; i < columns; i++)
                         vec[i] = reader.ReadInt32();
@@ -254,11 +254,11 @@ public static class BinUtils
                     break;
                 }
 
-            case NodeAttribute.DataType.DT_Vec2:
-            case NodeAttribute.DataType.DT_Vec3:
-            case NodeAttribute.DataType.DT_Vec4:
+            case AttributeType.Vec2:
+            case AttributeType.Vec3:
+            case AttributeType.Vec4:
                 {
-                    int columns = attr.GetColumns();
+                    int columns = attr.Type.GetColumns();
                     var vec = new float[columns];
                     for (int i = 0; i < columns; i++)
                         vec[i] = reader.ReadSingle();
@@ -266,14 +266,14 @@ public static class BinUtils
                     break;
                 }
 
-            case NodeAttribute.DataType.DT_Mat2:
-            case NodeAttribute.DataType.DT_Mat3:
-            case NodeAttribute.DataType.DT_Mat3x4:
-            case NodeAttribute.DataType.DT_Mat4x3:
-            case NodeAttribute.DataType.DT_Mat4:
+            case AttributeType.Mat2:
+            case AttributeType.Mat3:
+            case AttributeType.Mat3x4:
+            case AttributeType.Mat4x3:
+            case AttributeType.Mat4:
                 {
-                    int columns = attr.GetColumns();
-                    int rows = attr.GetRows();
+                    int columns = attr.Type.GetColumns();
+                    int rows = attr.Type.GetRows();
                     var mat = new Matrix(rows, columns);
                     attr.Value = mat;
 
@@ -287,24 +287,24 @@ public static class BinUtils
                     break;
                 }
 
-            case NodeAttribute.DataType.DT_Bool:
+            case AttributeType.Bool:
                 attr.Value = reader.ReadByte() != 0;
                 break;
 
-            case NodeAttribute.DataType.DT_ULongLong:
+            case AttributeType.ULongLong:
                 attr.Value = reader.ReadUInt64();
                 break;
 
-            case NodeAttribute.DataType.DT_Long:
-            case NodeAttribute.DataType.DT_Int64:
+            case AttributeType.Long:
+            case AttributeType.Int64:
                 attr.Value = reader.ReadInt64();
                 break;
 
-            case NodeAttribute.DataType.DT_Int8:
+            case AttributeType.Int8:
                 attr.Value = reader.ReadSByte();
                 break;
 
-            case NodeAttribute.DataType.DT_UUID:
+            case AttributeType.UUID:
                 attr.Value = new Guid(reader.ReadBytes(16));
                 break;
 
@@ -321,60 +321,60 @@ public static class BinUtils
     {
         switch (attr.Type)
         {
-            case NodeAttribute.DataType.DT_None:
+            case AttributeType.None:
                 break;
 
-            case NodeAttribute.DataType.DT_Byte:
+            case AttributeType.Byte:
                 writer.Write((Byte)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_Short:
+            case AttributeType.Short:
                 writer.Write((Int16)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_UShort:
+            case AttributeType.UShort:
                 writer.Write((UInt16)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_Int:
+            case AttributeType.Int:
                 writer.Write((Int32)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_UInt:
+            case AttributeType.UInt:
                 writer.Write((UInt32)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_Float:
+            case AttributeType.Float:
                 writer.Write((float)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_Double:
+            case AttributeType.Double:
                 writer.Write((Double)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_IVec2:
-            case NodeAttribute.DataType.DT_IVec3:
-            case NodeAttribute.DataType.DT_IVec4:
+            case AttributeType.IVec2:
+            case AttributeType.IVec3:
+            case AttributeType.IVec4:
                 foreach (var item in (int[])attr.Value)
                 {
                     writer.Write(item);
                 }
                 break;
 
-            case NodeAttribute.DataType.DT_Vec2:
-            case NodeAttribute.DataType.DT_Vec3:
-            case NodeAttribute.DataType.DT_Vec4:
+            case AttributeType.Vec2:
+            case AttributeType.Vec3:
+            case AttributeType.Vec4:
                 foreach (var item in (float[])attr.Value)
                 {
                     writer.Write(item);
                 }
                 break;
 
-            case NodeAttribute.DataType.DT_Mat2:
-            case NodeAttribute.DataType.DT_Mat3:
-            case NodeAttribute.DataType.DT_Mat3x4:
-            case NodeAttribute.DataType.DT_Mat4x3:
-            case NodeAttribute.DataType.DT_Mat4:
+            case AttributeType.Mat2:
+            case AttributeType.Mat3:
+            case AttributeType.Mat3x4:
+            case AttributeType.Mat4x3:
+            case AttributeType.Mat4:
                 {
                     var mat = (Matrix)attr.Value;
                     for (int col = 0; col < mat.cols; col++)
@@ -387,24 +387,24 @@ public static class BinUtils
                     break;
                 }
 
-            case NodeAttribute.DataType.DT_Bool:
+            case AttributeType.Bool:
                 writer.Write((Byte)((Boolean)attr.Value ? 1 : 0));
                 break;
 
-            case NodeAttribute.DataType.DT_ULongLong:
+            case AttributeType.ULongLong:
                 writer.Write((UInt64)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_Long:
-            case NodeAttribute.DataType.DT_Int64:
+            case AttributeType.Long:
+            case AttributeType.Int64:
                 writer.Write((Int64)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_Int8:
+            case AttributeType.Int8:
                 writer.Write((SByte)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_UUID:
+            case AttributeType.UUID:
                 writer.Write(((Guid)attr.Value).ToByteArray());
                 break;
 

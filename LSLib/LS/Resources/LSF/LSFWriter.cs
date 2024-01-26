@@ -408,16 +408,16 @@ public class LSFWriter(Stream stream)
     {
         switch (attr.Type)
         {
-            case NodeAttribute.DataType.DT_String:
-            case NodeAttribute.DataType.DT_Path:
-            case NodeAttribute.DataType.DT_FixedString:
-            case NodeAttribute.DataType.DT_LSString:
-            case NodeAttribute.DataType.DT_WString:
-            case NodeAttribute.DataType.DT_LSWString:
+            case AttributeType.String:
+            case AttributeType.Path:
+            case AttributeType.FixedString:
+            case AttributeType.LSString:
+            case AttributeType.WString:
+            case AttributeType.LSWString:
                 WriteString(writer, (string)attr.Value);
                 break;
 
-            case NodeAttribute.DataType.DT_TranslatedString:
+            case AttributeType.TranslatedString:
                 {
                     var ts = (TranslatedString)attr.Value;
                     if (Version >= LSFVersion.VerBG3)
@@ -433,14 +433,14 @@ public class LSFWriter(Stream stream)
                     break;
                 }
 
-            case NodeAttribute.DataType.DT_TranslatedFSString:
+            case AttributeType.TranslatedFSString:
                 {
                     var fs = (TranslatedFSString)attr.Value;
                     WriteTranslatedFSString(writer, fs);
                     break;
                 }
 
-            case NodeAttribute.DataType.DT_ScratchBuffer:
+            case AttributeType.ScratchBuffer:
                 {
                     var buffer = (byte[])attr.Value;
                     writer.Write(buffer);

@@ -158,15 +158,15 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                         type = (uint)AttributeTypeMaps.TypeToId[(string)reader.Value];
                     }
 
-                    attribute = new NodeAttribute((NodeAttribute.DataType)type);
-                    if (type == (uint)NodeAttribute.DataType.DT_TranslatedString)
+                    attribute = new NodeAttribute((AttributeType)type);
+                    if (type == (uint)AttributeType.TranslatedString)
                     {
                         attribute.Value = new TranslatedString
                         {
                             Handle = handle
                         };
                     }
-                    else if (type == (uint)NodeAttribute.DataType.DT_TranslatedFSString)
+                    else if (type == (uint)AttributeType.TranslatedFSString)
                     {
                         attribute.Value = new TranslatedFSString
                         {
@@ -179,48 +179,48 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                 {
                     switch (attribute.Type)
                     {
-                        case NodeAttribute.DataType.DT_Byte:
+                        case AttributeType.Byte:
                             attribute.Value = Convert.ToByte(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_Short:
+                        case AttributeType.Short:
                             attribute.Value = Convert.ToInt16(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_UShort:
+                        case AttributeType.UShort:
                             attribute.Value = Convert.ToUInt16(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_Int:
+                        case AttributeType.Int:
                             attribute.Value = Convert.ToInt32(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_UInt:
+                        case AttributeType.UInt:
                             attribute.Value = Convert.ToUInt32(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_Float:
+                        case AttributeType.Float:
                             attribute.Value = Convert.ToSingle(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_Double:
+                        case AttributeType.Double:
                             attribute.Value = Convert.ToDouble(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_Bool:
+                        case AttributeType.Bool:
                             attribute.Value = Convert.ToBoolean(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_String:
-                        case NodeAttribute.DataType.DT_Path:
-                        case NodeAttribute.DataType.DT_FixedString:
-                        case NodeAttribute.DataType.DT_LSString:
-                        case NodeAttribute.DataType.DT_WString:
-                        case NodeAttribute.DataType.DT_LSWString:
+                        case AttributeType.String:
+                        case AttributeType.Path:
+                        case AttributeType.FixedString:
+                        case AttributeType.LSString:
+                        case AttributeType.WString:
+                        case AttributeType.LSWString:
                             attribute.Value = reader.Value.ToString();
                             break;
 
-                        case NodeAttribute.DataType.DT_ULongLong:
+                        case AttributeType.ULongLong:
                             if (reader.Value.GetType() == typeof(System.Int64))
                                 attribute.Value = Convert.ToUInt64((long)reader.Value);
                             else if (reader.Value.GetType() == typeof(BigInteger))
@@ -230,20 +230,20 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                             break;
 
                         // TODO: Not sure if this is the correct format
-                        case NodeAttribute.DataType.DT_ScratchBuffer:
+                        case AttributeType.ScratchBuffer:
                             attribute.Value = Convert.FromBase64String(reader.Value.ToString());
                             break;
 
-                        case NodeAttribute.DataType.DT_Long:
-                        case NodeAttribute.DataType.DT_Int64:
+                        case AttributeType.Long:
+                        case AttributeType.Int64:
                             attribute.Value = Convert.ToInt64(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_Int8:
+                        case AttributeType.Int8:
                             attribute.Value = Convert.ToSByte(reader.Value);
                             break;
 
-                        case NodeAttribute.DataType.DT_TranslatedString:
+                        case AttributeType.TranslatedString:
                             {
                                 attribute.Value ??= new TranslatedString();
 
@@ -253,7 +253,7 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                                 break;
                             }
 
-                        case NodeAttribute.DataType.DT_TranslatedFSString:
+                        case AttributeType.TranslatedFSString:
                             {
                                 attribute.Value ??= new TranslatedFSString();
 
@@ -265,7 +265,7 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                                 break;
                             }
 
-                        case NodeAttribute.DataType.DT_UUID:
+                        case AttributeType.UUID:
                             if (SerializationSettings.ByteSwapGuids)
                             {
                                 attribute.Value = NodeAttribute.ByteSwapGuid(new Guid(reader.Value.ToString()));
@@ -276,12 +276,12 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                             }
                             break;
 
-                        case NodeAttribute.DataType.DT_IVec2:
-                        case NodeAttribute.DataType.DT_IVec3:
-                        case NodeAttribute.DataType.DT_IVec4:
+                        case AttributeType.IVec2:
+                        case AttributeType.IVec3:
+                        case AttributeType.IVec4:
                             {
                                 string[] nums = reader.Value.ToString().Split(' ');
-                                int length = attribute.GetColumns();
+                                int length = attribute.Type.GetColumns();
                                 if (length != nums.Length)
                                     throw new FormatException(String.Format("A vector of length {0} was expected, got {1}", length, nums.Length));
 
@@ -293,12 +293,12 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                                 break;
                             }
 
-                        case NodeAttribute.DataType.DT_Vec2:
-                        case NodeAttribute.DataType.DT_Vec3:
-                        case NodeAttribute.DataType.DT_Vec4:
+                        case AttributeType.Vec2:
+                        case AttributeType.Vec3:
+                        case AttributeType.Vec4:
                             {
                                 string[] nums = reader.Value.ToString().Split(' ');
-                                int length = attribute.GetColumns();
+                                int length = attribute.Type.GetColumns();
                                 if (length != nums.Length)
                                     throw new FormatException(String.Format("A vector of length {0} was expected, got {1}", length, nums.Length));
 
@@ -310,18 +310,18 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                                 break;
                             }
 
-                        case NodeAttribute.DataType.DT_Mat2:
-                        case NodeAttribute.DataType.DT_Mat3:
-                        case NodeAttribute.DataType.DT_Mat3x4:
-                        case NodeAttribute.DataType.DT_Mat4x3:
-                        case NodeAttribute.DataType.DT_Mat4:
+                        case AttributeType.Mat2:
+                        case AttributeType.Mat3:
+                        case AttributeType.Mat3x4:
+                        case AttributeType.Mat4x3:
+                        case AttributeType.Mat4:
                             var mat = Matrix.Parse(reader.Value.ToString());
-                            if (mat.cols != attribute.GetColumns() || mat.rows != attribute.GetRows())
+                            if (mat.cols != attribute.Type.GetColumns() || mat.rows != attribute.Type.GetRows())
                                 throw new FormatException("Invalid column/row count for matrix");
                             attribute.Value = mat;
                             break;
 
-                        case NodeAttribute.DataType.DT_None:
+                        case AttributeType.None:
                         default:
                             throw new NotImplementedException("Don't know how to unserialize type " + attribute.Type.ToString());
                     }
@@ -330,13 +330,13 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                 {
                     if (attribute != null)
                     {
-                        if (attribute.Type == NodeAttribute.DataType.DT_TranslatedString)
+                        if (attribute.Type == AttributeType.TranslatedString)
                         {
                             attribute.Value ??= new TranslatedString();
 
                             ((TranslatedString)attribute.Value).Handle = reader.Value.ToString();
                         }
-                        else if (attribute.Type == NodeAttribute.DataType.DT_TranslatedFSString)
+                        else if (attribute.Type == AttributeType.TranslatedFSString)
                         {
                             attribute.Value ??= new TranslatedFSString();
 
@@ -638,73 +638,73 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                 writer.WriteValue((int)attribute.Value.Type);
             }
 
-            if (attribute.Value.Type != NodeAttribute.DataType.DT_TranslatedString)
+            if (attribute.Value.Type != AttributeType.TranslatedString)
             {
                 writer.WritePropertyName("value");
             }
 
             switch (attribute.Value.Type)
             {
-                case NodeAttribute.DataType.DT_Byte:
+                case AttributeType.Byte:
                     writer.WriteValue(Convert.ToByte(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Short:
+                case AttributeType.Short:
                     writer.WriteValue(Convert.ToInt16(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_UShort:
+                case AttributeType.UShort:
                     writer.WriteValue(Convert.ToUInt16(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Int:
+                case AttributeType.Int:
                     writer.WriteValue(Convert.ToInt32(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_UInt:
+                case AttributeType.UInt:
                     writer.WriteValue(Convert.ToUInt32(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Float:
+                case AttributeType.Float:
                     writer.WriteValue(Convert.ToSingle(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Double:
+                case AttributeType.Double:
                     writer.WriteValue(Convert.ToDouble(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Bool:
+                case AttributeType.Bool:
                     writer.WriteValue(Convert.ToBoolean(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_String:
-                case NodeAttribute.DataType.DT_Path:
-                case NodeAttribute.DataType.DT_FixedString:
-                case NodeAttribute.DataType.DT_LSString:
-                case NodeAttribute.DataType.DT_WString:
-                case NodeAttribute.DataType.DT_LSWString:
+                case AttributeType.String:
+                case AttributeType.Path:
+                case AttributeType.FixedString:
+                case AttributeType.LSString:
+                case AttributeType.WString:
+                case AttributeType.LSWString:
                     writer.WriteValue(attribute.Value.AsString(SerializationSettings));
                     break;
 
-                case NodeAttribute.DataType.DT_ULongLong:
+                case AttributeType.ULongLong:
                     writer.WriteValue(Convert.ToUInt64(attribute.Value.Value));
                     break;
 
                 // TODO: Not sure if this is the correct format
-                case NodeAttribute.DataType.DT_ScratchBuffer:
+                case AttributeType.ScratchBuffer:
                     writer.WriteValue(Convert.ToBase64String((byte[])attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Long:
-                case NodeAttribute.DataType.DT_Int64:
+                case AttributeType.Long:
+                case AttributeType.Int64:
                     writer.WriteValue(Convert.ToInt64(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_Int8:
+                case AttributeType.Int8:
                     writer.WriteValue(Convert.ToSByte(attribute.Value.Value));
                     break;
 
-                case NodeAttribute.DataType.DT_TranslatedString:
+                case AttributeType.TranslatedString:
                     {
                         var ts = (TranslatedString)attribute.Value.Value;
 
@@ -725,14 +725,14 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_TranslatedFSString:
+                case AttributeType.TranslatedFSString:
                     {
                         var fs = (TranslatedFSString)attribute.Value.Value;
                         WriteTranslatedFSStringInner(writer, fs);
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_UUID:
+                case AttributeType.UUID:
                     if (SerializationSettings.ByteSwapGuids)
                     {
                         writer.WriteValue((NodeAttribute.ByteSwapGuid((Guid)attribute.Value.Value)).ToString());
@@ -744,29 +744,29 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                     break;
 
                 // TODO: haven't seen any vectors/matrices in D:OS JSON files so far
-                case NodeAttribute.DataType.DT_Vec2:
-                case NodeAttribute.DataType.DT_Vec3:
-                case NodeAttribute.DataType.DT_Vec4:
+                case AttributeType.Vec2:
+                case AttributeType.Vec3:
+                case AttributeType.Vec4:
                     {
                         var vec = (float[])attribute.Value.Value;
                         writer.WriteValue(String.Join(" ", vec));
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_IVec2:
-                case NodeAttribute.DataType.DT_IVec3:
-                case NodeAttribute.DataType.DT_IVec4:
+                case AttributeType.IVec2:
+                case AttributeType.IVec3:
+                case AttributeType.IVec4:
                     {
                         var ivec = (int[])attribute.Value.Value;
                         writer.WriteValue(String.Join(" ", ivec));
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_Mat2:
-                case NodeAttribute.DataType.DT_Mat3:
-                case NodeAttribute.DataType.DT_Mat3x4:
-                case NodeAttribute.DataType.DT_Mat4x3:
-                case NodeAttribute.DataType.DT_Mat4:
+                case AttributeType.Mat2:
+                case AttributeType.Mat3:
+                case AttributeType.Mat3x4:
+                case AttributeType.Mat4x3:
+                case AttributeType.Mat4:
                     {
                         var mat = (Matrix)attribute.Value.Value;
                         var str = "";
@@ -781,7 +781,7 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                         break;
                     }
 
-                case NodeAttribute.DataType.DT_None:
+                case AttributeType.None:
                 default:
                     throw new NotImplementedException("Don't know how to serialize type " + attribute.Value.Type.ToString());
             }
