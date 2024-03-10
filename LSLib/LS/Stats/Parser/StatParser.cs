@@ -1,4 +1,4 @@
-﻿using LSLib.LS.Story.GoalParser;
+﻿using LSLib.Parser;
 using QUT.Gppg;
 using System.Text.RegularExpressions;
 

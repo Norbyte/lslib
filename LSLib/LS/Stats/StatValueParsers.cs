@@ -1,6 +1,6 @@
 ﻿using LSLib.LS.Stats.Properties;
 using LSLib.LS.Stats.StatParser;
-using LSLib.LS.Story.GoalParser;
+using LSLib.Parser;
 using System.Globalization;
 
 namespace LSLib.LS.Stats;

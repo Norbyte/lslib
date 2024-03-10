@@ -4,7 +4,7 @@
 %parsertype StatParser
 %tokentype StatTokens
 %YYSTYPE System.Object
-%YYLTYPE LSLib.LS.Story.GoalParser.CodeLocation
+%YYLTYPE LSLib.Parser.CodeLocation
 
 %start StatFile
 

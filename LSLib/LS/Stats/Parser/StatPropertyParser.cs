@@ -1,4 +1,5 @@
 ﻿using LSLib.LS.Story.GoalParser;
+using LSLib.Parser;
 using QUT.Gppg;
 
 namespace LSLib.LS.Stats.Properties;

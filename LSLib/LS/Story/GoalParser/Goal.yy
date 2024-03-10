@@ -4,7 +4,7 @@
 %parsertype GoalParser
 %tokentype GoalTokens
 %YYSTYPE System.Object
-%YYLTYPE LSLib.LS.Story.GoalParser.CodeLocation
+%YYLTYPE LSLib.Parser.CodeLocation
 
 %start GoalFile
 

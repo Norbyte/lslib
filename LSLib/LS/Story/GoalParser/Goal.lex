@@ -69,5 +69,5 @@ L?\"(\\.|[^\\"])*\"             { yylval = MakeString(yytext); return (int)GoalT
 . return ((int)GoalTokens.BAD);
 
 %{
-    yylloc = new CodeLocation(fileName, tokLin, tokCol, tokELin, tokECol/*, tokPos, tokEPos, buffer*/);
+    yylloc = new LSLib.Parser.CodeLocation(fileName, tokLin, tokCol, tokELin, tokECol/*, tokPos, tokEPos, buffer*/);
 %}

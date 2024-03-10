@@ -1,4 +1,4 @@
-﻿using LSLib.LS.Story.GoalParser;
+﻿using LSLib.Parser;
 using System.Diagnostics;
 
 namespace LSLib.LS.Story.Compiler;

@@ -279,10 +279,10 @@ public class NodeAttribute(AttributeType type)
 
     public void FromString(string str, NodeSerializationSettings settings)
     {
-        value = ParseFromString(str, type, settings);
+        value = ParseFromString(str, type, settings.ByteSwapGuids);
     }
 
-    public static object ParseFromString(string str, AttributeType type, NodeSerializationSettings settings)
+    public static object ParseFromString(string str, AttributeType type, bool byteSwapGuids)
     {
         if (type.IsNumeric())
         {
@@ -416,7 +416,7 @@ public class NodeAttribute(AttributeType type)
                 return Convert.ToSByte(str);
 
             case AttributeType.UUID:
-                if (settings.ByteSwapGuids)
+                if (byteSwapGuids)
                 {
                     return ByteSwapGuid(new Guid(str));
                 }
