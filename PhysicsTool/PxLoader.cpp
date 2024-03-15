@@ -199,11 +199,11 @@ public:
     PxJointAngularLimitPair LoadProperty(TiXmlElement& ele, char const* name)
     {
         auto attr = ele.FirstChildElement(name);
-        PxJointAngularLimitPair v(-(float)M_PI /2, (float)M_PI /2);
+        PxJointAngularLimitPair v(-PxPi / 2, PxPi / 2);
         if (attr == nullptr) return v;
 
-        v.lower = LoadProperty<PxReal>(*attr, "Lower", -(float)M_PI / 2);
-        v.upper = LoadProperty<PxReal>(*attr, "Upper", (float)M_PI / 2);
+        v.lower = LoadProperty<PxReal>(*attr, "Lower", -PxPi / 2);
+        v.upper = LoadProperty<PxReal>(*attr, "Upper", PxPi / 2);
         v.restitution = LoadProperty<PxReal>(*attr, "Restitution", 0.0f);
         v.bounceThreshold = LoadProperty<PxReal>(*attr, "BounceThreshold", 0.0f);
         v.stiffness = LoadProperty<PxReal>(*attr, "Stiffness", 0.0f);
@@ -216,11 +216,11 @@ public:
     PxJointLimitCone LoadProperty(TiXmlElement& ele, char const* name)
     {
         auto attr = ele.FirstChildElement(name);
-        PxJointLimitCone v((float)M_PI /2, (float)M_PI /2);
+        PxJointLimitCone v(PxPi / 2, PxPi / 2);
         if (attr == nullptr) return v;
 
-        v.yAngle = LoadProperty<PxReal>(*attr, "YAngle", (float)M_PI / 2);
-        v.zAngle = LoadProperty<PxReal>(*attr, "ZAngle", (float)M_PI / 2);
+        v.yAngle = LoadProperty<PxReal>(*attr, "YAngle", PxPi / 2);
+        v.zAngle = LoadProperty<PxReal>(*attr, "ZAngle", PxPi / 2);
         v.restitution = LoadProperty<PxReal>(*attr, "Restitution", 0.0f);
         v.bounceThreshold = LoadProperty<PxReal>(*attr, "BounceThreshold", 0.0f);
         v.stiffness = LoadProperty<PxReal>(*attr, "Stiffness", 0.0f);
@@ -233,13 +233,13 @@ public:
     PxJointLimitPyramid LoadProperty(TiXmlElement& ele, char const* name)
     {
         auto attr = ele.FirstChildElement(name);
-        PxJointLimitPyramid v(-(float)M_PI / 2, (float)M_PI / 2, -(float)M_PI / 2, (float)M_PI / 2);
+        PxJointLimitPyramid v(-PxPi / 2, PxPi / 2, -PxPi / 2, PxPi / 2);
         if (attr == nullptr) return v;
 
-        v.yAngleMin = LoadProperty<PxReal>(*attr, "YAngleMin", -(float)M_PI / 2);
-        v.yAngleMax = LoadProperty<PxReal>(*attr, "YAngleMax", (float)M_PI / 2);
-        v.zAngleMin = LoadProperty<PxReal>(*attr, "ZAngleMin", -(float)M_PI / 2);
-        v.zAngleMax = LoadProperty<PxReal>(*attr, "ZAngleMax", (float)M_PI / 2);
+        v.yAngleMin = LoadProperty<PxReal>(*attr, "YAngleMin", -PxPi / 2);
+        v.yAngleMax = LoadProperty<PxReal>(*attr, "YAngleMax", PxPi / 2);
+        v.zAngleMin = LoadProperty<PxReal>(*attr, "ZAngleMin", -PxPi / 2);
+        v.zAngleMax = LoadProperty<PxReal>(*attr, "ZAngleMax", PxPi / 2);
         v.restitution = LoadProperty<PxReal>(*attr, "Restitution", 0.0f);
         v.bounceThreshold = LoadProperty<PxReal>(*attr, "BounceThreshold", 0.0f);
         v.stiffness = LoadProperty<PxReal>(*attr, "Stiffness", 0.0f);
@@ -533,14 +533,14 @@ public:
         SET_PR(InternalCompliance, PxReal, 0.0f);
         SET_PR(ExternalCompliance, PxReal, 0.0f);
 
-        o->setSwingLimit(PR(SwingLimitZ, PxReal, (float)M_PI / 4), PR(SwingLimitY, PxReal, (float)M_PI / 4));
+        o->setSwingLimit(PR(SwingLimitZ, PxReal, PxPi / 4), PR(SwingLimitY, PxReal, PxPi / 4));
 
         SET_PR(TangentialStiffness, PxReal, 0.0f);
         SET_PR(TangentialDamping, PxReal, 0.0f);
         SET_PR(SwingLimitContactDistance, PxReal, 0.05f);
         SET_PR(SwingLimitEnabled, bool, false);
 
-        o->setTwistLimit(PR(TwistLimitLower, PxReal, -(float)M_PI / 4), PR(TwistLimitUpper, PxReal, (float)M_PI / 4));
+        o->setTwistLimit(PR(TwistLimitLower, PxReal, -PxPi / 4), PR(TwistLimitUpper, PxReal, PxPi / 4));
 
         SET_PR(TwistLimitContactDistance, PxReal, 0.05f);
         SET_PR(TwistLimitEnabled, bool, false);

@@ -41,6 +41,15 @@ public:
     }
 
     template <>
+    void ExportProperty<PxReal>(TiXmlNode& ele, char const* name, PxReal obj)
+    {
+        auto& prop = *ele.InsertEndChild(TiXmlElement(name));
+        char val[32];
+        std::snprintf(val, sizeof(val), "%.8f", obj);
+        prop.InsertEndChild(TiXmlText(val));
+    }
+
+    template <>
     void ExportProperty<char const*>(TiXmlNode& ele, char const* name, char const* obj)
     {
         auto& prop = *ele.InsertEndChild(TiXmlElement(name));

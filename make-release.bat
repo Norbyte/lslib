@@ -1,6 +1,9 @@
 mkdir Release\Packed
 mkdir Release\Packed\Tools
 
+copy x64\Release\*.dll Release\Packed\Tools\
+copy x64\Release\*.exe Release\Packed\Tools\
+
 copy RconClient\bin\Release\net8.0\*.config Release\Packed\Tools\
 copy RconClient\bin\Release\net8.0\*.runtimeconfig.json Release\Packed\Tools\
 copy RconClient\bin\Release\net8.0\*.dll Release\Packed\Tools\
