@@ -203,8 +203,8 @@ class DebugInfoLoader
         var compressed = new byte[msgPayload.Length - 4];
         Array.Copy(msgPayload, 0, compressed, 0, msgPayload.Length - 4);
 
-        var flags = BinUtils.MakeCompressionFlags(CompressionMethod.LZ4, LSCompressionLevel.Fast);
-        byte[] decompressed = BinUtils.Decompress(compressed, (int)decompressedSize, flags);
+        var flags = CompressionHelpers.MakeCompressionFlags(CompressionMethod.LZ4, LSCompressionLevel.Fast);
+        byte[] decompressed = CompressionHelpers.Decompress(compressed, (int)decompressedSize, flags);
         var msg = StoryDebugInfoMsg.Parser.ParseFrom(decompressed);
         var debugInfo = FromProtobuf(msg);
         return debugInfo;

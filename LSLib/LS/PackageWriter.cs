@@ -93,7 +93,7 @@ abstract public class PackageWriter : IDisposable
 
         var uncompressed = new byte[inputStream.Length];
         inputStream.ReadExactly(uncompressed, 0, uncompressed.Length);
-        var compressed = BinUtils.Compress(uncompressed, compression, compressionLevel);
+        var compressed = CompressionHelpers.Compress(uncompressed, compression, compressionLevel);
 
         if (Streams.Last().Position + compressed.Length > Build.Version.MaxPackageSize())
         {
@@ -111,7 +111,7 @@ abstract public class PackageWriter : IDisposable
             SizeOnDisk = (ulong)compressed.Length,
             ArchivePart = (UInt32)(Streams.Count - 1),
             OffsetInFile = (ulong)stream.Position,
-            Flags = BinUtils.MakeCompressionFlags(compression, compressionLevel)
+            Flags = CompressionHelpers.MakeCompressionFlags(compression, compressionLevel)
         };
 
         stream.Write(compressed, 0, compressed.Length);

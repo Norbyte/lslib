@@ -311,7 +311,7 @@ internal struct FileEntry7 : ILSPKFile
         info.Name = BinUtils.NullTerminatedBytesToString(Name);
         info.ArchivePart = ArchivePart;
         info.Crc = 0;
-        info.Flags = UncompressedSize > 0 ? BinUtils.MakeCompressionFlags(CompressionMethod.Zlib, LSCompressionLevel.Default) : 0;
+        info.Flags = UncompressedSize > 0 ? CompressionHelpers.MakeCompressionFlags(CompressionMethod.Zlib, LSCompressionLevel.Default) : 0;
         info.OffsetInFile = OffsetInFile;
         info.SizeOnDisk = SizeOnDisk;
         info.UncompressedSize = UncompressedSize;

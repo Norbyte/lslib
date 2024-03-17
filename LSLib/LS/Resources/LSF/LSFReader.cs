@@ -283,7 +283,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
         bool isCompressed = Metadata.CompressionFlags.Method() != CompressionMethod.None;
         uint compressedSize = isCompressed ? sizeOnDisk : uncompressedSize;
         byte[] compressed = reader.ReadBytes((int)compressedSize);
-        var uncompressed = BinUtils.Decompress(compressed, (int)uncompressedSize, Metadata.CompressionFlags, chunked);
+        var uncompressed = CompressionHelpers.Decompress(compressed, (int)uncompressedSize, Metadata.CompressionFlags, chunked);
 
 #if DUMP_LSF_SERIALIZATION
         using (var nodesFile = new FileStream(debugDumpTo, FileMode.Create, FileAccess.Write))

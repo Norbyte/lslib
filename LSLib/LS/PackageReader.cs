@@ -114,7 +114,7 @@ public class PackageReader
         }
 
         int fileBufferSize = Marshal.SizeOf(typeof(TFile)) * numFiles;
-        var fileBuf = BinUtils.Decompress(compressed, fileBufferSize, CompressionFlags.MethodLZ4);
+        var fileBuf = CompressionHelpers.Decompress(compressed, fileBufferSize, CompressionFlags.MethodLZ4);
 
         using var ms = new MemoryStream(fileBuf);
         using var msr = new BinaryReader(ms);

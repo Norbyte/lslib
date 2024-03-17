@@ -28,7 +28,7 @@ public class PackagedFileInfo : PackagedFileInfoCommon
         }
         else
         {
-            return BinUtils.Decompress(PackageFile, PackageView, (long)OffsetInFile, (int)SizeOnDisk, (int)UncompressedSize, Flags);
+            return CompressionHelpers.Decompress(PackageFile, PackageView, (long)OffsetInFile, (int)SizeOnDisk, (int)UncompressedSize, Flags);
         }
     }
 

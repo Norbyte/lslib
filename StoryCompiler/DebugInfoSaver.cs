@@ -192,8 +192,8 @@ class DebugInfoSaver
             codedStream.Flush();
 
             byte[] proto = ms.ToArray();
-            var flags = BinUtils.MakeCompressionFlags(CompressionMethod.LZ4, LSCompressionLevel.Fast);
-            byte[] compressed = BinUtils.Compress(proto, flags);
+            var flags = CompressionHelpers.MakeCompressionFlags(CompressionMethod.LZ4, LSCompressionLevel.Fast);
+            byte[] compressed = CompressionHelpers.Compress(proto, flags);
             stream.Write(compressed, 0, compressed.Length);
 
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))

@@ -110,10 +110,10 @@ public class LSFWriter(Stream stream)
             }
 
             bool chunked = Version >= LSFVersion.VerChunkedCompress;
-            byte[] stringsCompressed = BinUtils.Compress(stringBuffer, Compression, CompressionLevel);
-            byte[] nodesCompressed = BinUtils.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
-            byte[] attributesCompressed = BinUtils.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
-            byte[] valuesCompressed = BinUtils.Compress(valueBuffer, Compression, CompressionLevel, chunked);
+            byte[] stringsCompressed = CompressionHelpers.Compress(stringBuffer, Compression, CompressionLevel);
+            byte[] nodesCompressed = CompressionHelpers.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
+            byte[] attributesCompressed = CompressionHelpers.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
+            byte[] valuesCompressed = CompressionHelpers.Compress(valueBuffer, Compression, CompressionLevel, chunked);
 
             if (Version < LSFVersion.VerBG3AdditionalBlob)
             {
