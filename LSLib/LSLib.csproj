@@ -36,9 +36,7 @@
   </ItemGroup>
   <PropertyGroup />
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(ProjectDir)\LS\Story\GoalParser\Goal.lex.cs" "$(ProjectDir)\LS\Story\GoalParser\Goal.lex"
-
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex"
+    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex"
 "$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.yy.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.yy"
 
 "$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex"
