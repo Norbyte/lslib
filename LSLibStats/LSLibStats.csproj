@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>annotations</Nullable>
+  </PropertyGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\File\Stat.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\File\Stat.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\File\Stat.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\File\Stat.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.yy&quot;&#xD;&#xA;" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LSLib\LSLib.csproj" />
+  </ItemGroup>
+
+</Project>

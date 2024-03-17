@@ -42,14 +42,6 @@
 "$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex"
 "$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.yy"
 
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Stats\Parser\Stat.lex.cs" "$(MSBuildProjectDirectory)\LS\Stats\Parser\Stat.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Stats\Parser\Stat.yy.cs" "$(MSBuildProjectDirectory)\LS\Stats\Parser\Stat.yy"
-
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Stats\Parser\StatProperty.lex.cs" "$(MSBuildProjectDirectory)\LS\Stats\Parser\StatProperty.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Stats\Parser\StatProperty.yy.cs" "$(MSBuildProjectDirectory)\LS\Stats\Parser\StatProperty.yy"
-
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Stats\Parser\StatLua.lex.cs" "$(MSBuildProjectDirectory)\LS\Stats\Parser\StatLua.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Stats\Parser\StatLua.yy.cs" "$(MSBuildProjectDirectory)\LS\Stats\Parser\StatLua.yy"
 </PreBuildEvent>
     <AssemblyTitle>LSLib</AssemblyTitle>
     <Product>LSLib</Product>

@@ -11,6 +11,7 @@
     <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\LSLibStats\LSLibStats.csproj" />
     <ProjectReference Include="..\LSLib\LSLib.csproj" />
   </ItemGroup>
   <ItemGroup>

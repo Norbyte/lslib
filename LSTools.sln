@@ -38,6 +38,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PhysicsTool", "PhysicsTool\PhysicsTool.vcxproj", "{043514DF-5822-41A0-A5CE-CBC349B1398B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LSLibStats", "LSLibStats\LSLibStats.csproj", "{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -246,6 +248,24 @@ Global
 		{043514DF-5822-41A0-A5CE-CBC349B1398B}.RelWithDebInfo|x64.Build.0 = Release|x64
 		{043514DF-5822-41A0-A5CE-CBC349B1398B}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
 		{043514DF-5822-41A0-A5CE-CBC349B1398B}.RelWithDebInfo|x86.Build.0 = Release|Win32
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Debug|x64.Build.0 = Debug|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Debug|x86.Build.0 = Debug|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Release|x64.ActiveCfg = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Release|x64.Build.0 = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Release|x86.ActiveCfg = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.Release|x86.Build.0 = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.RelWithDebInfo|x86.ActiveCfg = Release|Any CPU
+		{A721CE1D-F76D-476B-86E7-C8B2D85D7E73}.RelWithDebInfo|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

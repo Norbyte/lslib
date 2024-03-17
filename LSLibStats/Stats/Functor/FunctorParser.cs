@@ -1,10 +1,12 @@
-﻿using LSLib.LS.Story.GoalParser;
-using LSLib.Parser;
+﻿using LSLib.Parser;
+using LSLib.Stats;
+using LSLib.Stats.Functors;
 using QUT.Gppg;
+using System.Text;
 
-namespace LSLib.LS.Stats.Properties;
+namespace LSLib.Stats.Functors;
 
-public partial class StatPropertyScanner
+public partial class FunctorScanner
 {
     public LexLocation LastLocation()
     {
@@ -24,19 +26,19 @@ public partial class StatPropertyScanner
     private object MakeLiteral(string s) => s;
 }
 
-public abstract class StatPropertyScanBase : AbstractScanner<object, LexLocation>
+public abstract class FunctorScanBase : AbstractScanner<object, LexLocation>
 {
     protected virtual bool yywrap() { return true; }
 }
 
-public class StatActionValidator
+public class FunctorActionValidator
 {
     private readonly StatDefinitionRepository Definitions;
     private readonly DiagnosticContext Context;
     private readonly StatValueValidatorFactory ValidatorFactory;
     private readonly ExpressionType ExprType;
 
-    public StatActionValidator(StatDefinitionRepository definitions, DiagnosticContext ctx, StatValueValidatorFactory validatorFactory, ExpressionType type)
+    public FunctorActionValidator(StatDefinitionRepository definitions, DiagnosticContext ctx, StatValueValidatorFactory validatorFactory, ExpressionType type)
     {
         Definitions = definitions;
         Context = ctx;
@@ -44,17 +46,17 @@ public class StatActionValidator
         ExprType = type;
     }
 
-    public void Validate(PropertyAction action, PropertyDiagnosticContainer errors)
+    public void Validate(FunctorAction action, PropertyDiagnosticContainer errors)
     {
-        Dictionary<string, StatFunctorType> functors = null;
-        switch (ExprType)
+        var functors = (ExprType) switch
         {
-            case ExpressionType.Boost: functors = Definitions.Boosts; break;
-            case ExpressionType.Functor: functors = Definitions.Functors; break;
-            case ExpressionType.DescriptionParams: functors = Definitions.DescriptionParams; break;
-        }
+            ExpressionType.Boost => Definitions.Boosts,
+            ExpressionType.Functor => Definitions.Functors,
+            ExpressionType.DescriptionParams => Definitions.DescriptionParams,
+            _ => throw new NotImplementedException("Cannot validate expressions of this type")
+        };
 
-        if (!functors.TryGetValue(action.Action, out StatFunctorType functor))
+        if (!functors.TryGetValue(action.Action, out StatFunctorType? functor))
         {
             if (ExprType != ExpressionType.DescriptionParams)
             {
@@ -116,27 +118,27 @@ public class StatActionValidator
     }
 }
 
-public partial class StatPropertyParser
+public partial class FunctorParser
 {
     private readonly DiagnosticContext Context;
-    private readonly StatActionValidator ActionValidator;
+    private readonly FunctorActionValidator ActionValidator;
     private readonly byte[] Source;
     private readonly PropertyDiagnosticContainer Errors;
     private readonly CodeLocation RootLocation;
-    private readonly StatPropertyScanner StatScanner;
+    private readonly FunctorScanner StatScanner;
     private readonly int TokenOffset;
 
     private int LiteralStart;
     private int ActionStart;
 
-    public StatPropertyParser(StatPropertyScanner scnr, StatDefinitionRepository definitions,
+    public FunctorParser(FunctorScanner scnr, StatDefinitionRepository definitions,
         DiagnosticContext ctx, StatValueValidatorFactory validatorFactory, byte[] source, ExpressionType type,
         PropertyDiagnosticContainer errors, CodeLocation rootLocation, int tokenOffset) : base(scnr)
     {
         Context = ctx;
         StatScanner = scnr;
         Source = source;
-        ActionValidator = new StatActionValidator(definitions, ctx, validatorFactory, type);
+        ActionValidator = new FunctorActionValidator(definitions, ctx, validatorFactory, type);
         Errors = errors;
         RootLocation = rootLocation;
         TokenOffset = tokenOffset;
@@ -147,11 +149,11 @@ public partial class StatPropertyParser
         return CurrentSemanticValue;
     }
 
-    private List<Property> MakePropertyList() => new List<Property>();
+    private List<Functor> MakeFunctorList() => new List<Functor>();
 
-    private List<Property> SetTextKey(object properties, object textKey)
+    private List<Functor> SetTextKey(object functors, object textKey)
     {
-        var props = properties as List<Property>;
+        var props = functors as List<Functor>;
         var tk = (string)textKey;
         foreach (var property in props)
         {
@@ -160,28 +162,28 @@ public partial class StatPropertyParser
         return props;
     }
 
-    private List<Property> MergeProperties(object properties, object properties2)
+    private List<Functor> MergeFunctors(object functors, object functors2)
     {
-        var props = properties as List<Property>;
-        props.Concat(properties2 as List<Property>);
+        var props = functors as List<Functor>;
+        props.Concat(functors2 as List<Functor>);
         return props;
     }
 
-    private List<Property> AddProperty(object properties, object property)
+    private List<Functor> AddFunctor(object functorss, object functors)
     {
-        var props = properties as List<Property>;
-        props.Add(property as Property);
+        var props = functorss as List<Functor>;
+        props.Add(functors as Functor);
         return props;
     }
 
-    private Property MakeProperty(object context, object condition, object action) => new Property
+    private Functor MakeFunctor(object context, object condition, object action) => new Functor
     {
         Context = (string)context,
         Condition = condition as object,
-        Action = action as PropertyAction
+        Action = action as FunctorAction
     };
 
-    private List<string> MakeArgumentList() => new List<string>();
+    private List<string> MakeArgumentList() => new();
 
     private List<string> AddArgument(object arguments, object arg)
     {
@@ -196,19 +198,19 @@ public partial class StatPropertyParser
         return null;
     }
 
-    private PropertyAction MakeAction(object action, object arguments)
+    private FunctorAction MakeAction(object action, object arguments)
     {
         var callErrors = new PropertyDiagnosticContainer();
-        var act = new PropertyAction
+        var act = new FunctorAction
         {
-            Action = action as string,
-            Arguments = arguments as List<string>,
+            Action = (string)action,
+            Arguments = (List<string>)arguments,
             StartPos = ActionStart,
             EndPos = StatScanner.TokenEndPos()
         };
         ActionValidator.Validate(act, callErrors);
 
-        CodeLocation location = null;
+        CodeLocation? location = null;
         if (RootLocation != null)
         {
             location = new CodeLocation(RootLocation.FileName, 

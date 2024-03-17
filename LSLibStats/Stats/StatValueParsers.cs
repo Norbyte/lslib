@@ -1,15 +1,16 @@
-﻿using LSLib.LS.Stats.Properties;
-using LSLib.LS.Stats.StatParser;
-using LSLib.Parser;
+﻿using LSLib.Parser;
+using LSLib.Stats.Functors;
+using LSLib.Stats.StatParser;
 using System.Globalization;
+using System.Text;
 
-namespace LSLib.LS.Stats;
+namespace LSLib.Stats;
 
 public class DiagnosticContext
 {
     public bool IgnoreMissingReferences = false;
-    public StatDeclaration CurrentDeclaration;
-    public CodeLocation PropertyValueSpan;
+    public StatDeclaration? CurrentDeclaration;
+    public CodeLocation? PropertyValueSpan;
 }
 
 public enum PropertyDiagnosticContextType
@@ -27,23 +28,23 @@ public struct PropertyDiagnosticContext
     public CodeLocation Location;
 }
 
-public class PropertyDiagnostic
+public class PropertyDiagnostic(string message, CodeLocation? location = null, List<PropertyDiagnosticContext>? contexts = null)
 {
-    public string Message;
-    public CodeLocation Location;
-    public List<PropertyDiagnosticContext> Contexts;
+    public string Message = message;
+    public CodeLocation? Location = location;
+    public List<PropertyDiagnosticContext>? Contexts = contexts;
 }
 
 public class PropertyDiagnosticContainer
 {
-    public List<PropertyDiagnostic> Messages;
+    public List<PropertyDiagnostic>? Messages;
 
     public bool Empty
     {
-        get {  return Messages == null || Messages.Count == 0; }
+        get { return Messages == null || Messages.Count == 0; }
     }
 
-    public void AddContext(PropertyDiagnosticContextType type, string name, CodeLocation location = null)
+    public void AddContext(PropertyDiagnosticContextType type, string name, CodeLocation? location = null)
     {
         if (Empty) return;
 
@@ -61,14 +62,10 @@ public class PropertyDiagnosticContainer
         }
     }
 
-    public void Add(string message, CodeLocation location = null)
+    public void Add(string message, CodeLocation? location = null)
     {
         Messages ??= [];
-        Messages.Add(new PropertyDiagnostic
-        {
-            Message = message,
-            Location = location
-        });
+        Messages.Add(new PropertyDiagnostic(message, location));
     }
 
     public void MergeInto(PropertyDiagnosticContainer container)
@@ -76,17 +73,17 @@ public class PropertyDiagnosticContainer
         if (Empty) return;
 
         container.Messages ??= [];
-        container.Messages.AddRange(Messages);
+        container.Messages.AddRange(Messages ?? []);
     }
 
-    public void MergeInto(StatLoadingContext context, string declarationName)
+    public void MergeInto(StatLoadingContext context)
     {
         if (Empty) return;
 
-        foreach (var message in Messages)
+        foreach (var message in Messages ?? [])
         {
             var location = message.Location;
-            foreach (var ctx in message.Contexts)
+            foreach (var ctx in message.Contexts ?? [])
             {
                 location ??= ctx.Location;
             }
@@ -104,14 +101,14 @@ public class PropertyDiagnosticContainer
 
 public interface IStatValueValidator
 {
-    void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors);
+    void Validate(DiagnosticContext ctx, CodeLocation? location, object value, PropertyDiagnosticContainer errors);
 }
 
 abstract public class StatStringValidator : IStatValueValidator
 {
     abstract public void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors);
 
-    public void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors)
+    public void Validate(DiagnosticContext ctx, CodeLocation? location, object value, PropertyDiagnosticContainer errors)
     {
         Validate(ctx, (string)value, errors);
     }
@@ -271,9 +268,9 @@ public class ExpressionValidator(String validatorType, StatDefinitionRepository 
         var valueBytes = Encoding.UTF8.GetBytes("__TYPE_" + validatorType + "__ " + value.TrimEnd());
         using var buf = new MemoryStream(valueBytes);
 
-        var scanner = new StatPropertyScanner();
+        var scanner = new FunctorScanner();
         scanner.SetSource(buf);
-        var parser = new StatPropertyParser(scanner, definitions, ctx, validatorFactory, valueBytes, type, errors, ctx.PropertyValueSpan, typeLen);
+        var parser = new FunctorParser(scanner, definitions, ctx, validatorFactory, valueBytes, type, errors, ctx.PropertyValueSpan, typeLen);
         var succeeded = parser.Parse();
         if (!succeeded)
         {
@@ -419,7 +416,7 @@ public class TreasureDropValidator(IStatReferenceValidator validator) : StatStri
 
 public class ObjectListValidator(IPropertyValidator PropertyValidator, StatEntryType ObjectType) : IStatValueValidator
 {
-    public void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors)
+    public void Validate(DiagnosticContext ctx, CodeLocation? location, object value, PropertyDiagnosticContainer errors)
     {
         var objs = (IEnumerable<object>)value;
         foreach (var subobject in objs)
@@ -430,11 +427,11 @@ public class ObjectListValidator(IPropertyValidator PropertyValidator, StatEntry
     }
 }
 
-public class AnyParser(IEnumerable<IStatValueValidator> validators, string message = null) : IStatValueValidator
+public class AnyParser(IEnumerable<IStatValueValidator> validators, string? defaultMessage = null) : IStatValueValidator
 {
     private readonly List<IStatValueValidator> Validators = validators.ToList();
 
-    public void Validate(DiagnosticContext ctx, CodeLocation location, object value, PropertyDiagnosticContainer errors)
+    public void Validate(DiagnosticContext ctx, CodeLocation? location, object value, PropertyDiagnosticContainer errors)
     {
         foreach (var validator in Validators)
         {
@@ -443,17 +440,11 @@ public class AnyParser(IEnumerable<IStatValueValidator> validators, string messa
             if (errors.Messages == null || errors.Messages.Count == 0) return;
         }
 
-        if (message != null)
+        if (defaultMessage != null)
         {
-            errors.Add(message);
+            errors.Add(defaultMessage);
         }
     }
-}
-
-public class AnyType
-{
-    public List<string> Types;
-    public string Message;
 }
 
 public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidator, IPropertyValidator PropertyValidator)
@@ -562,9 +553,9 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
         return CreateValidator(field.Type, field.EnumType, field.ReferenceTypes, definitions);
     }
 
-    public IStatValueValidator CreateValidator(string type, StatEnumeration enumType, List<StatReferenceConstraint> constraints, StatDefinitionRepository definitions)
+    public IStatValueValidator CreateValidator(string type, StatEnumeration? enumType, List<StatReferenceConstraint>? constraints, StatDefinitionRepository definitions)
     {
-        if (enumType == null && definitions.Enumerations.TryGetValue(type, out StatEnumeration enumInfo) && enumInfo.Values.Count > 0)
+        if (enumType == null && definitions.Enumerations.TryGetValue(type, out var enumInfo) && enumInfo.Values.Count > 0)
         {
             enumType = enumInfo;
         }
@@ -609,7 +600,7 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
             "StatsFunctors" => new ExpressionValidator("Properties", definitions, this, ExpressionType.Functor),
             "Lua" or "RollConditions" or "TargetConditions" or "Conditions" => new LuaExpressionValidator(),
             "UseCosts" => new UseCostsValidator(ReferenceValidator),
-            "StatReference" => new StatReferenceValidator(ReferenceValidator, constraints),
+            "StatReference" => new StatReferenceValidator(ReferenceValidator, constraints!),
             "StatusId" => new AnyParser(new List<IStatValueValidator> {
                     new EnumValidator(definitions.Enumerations["EngineStatusType"]),
                     new StatReferenceValidator(ReferenceValidator,

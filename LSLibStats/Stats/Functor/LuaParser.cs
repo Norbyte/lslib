@@ -1,6 +1,6 @@
 ﻿using QUT.Gppg;
 
-namespace LSLib.LS.Stats.Lua;
+namespace LSLib.Stats.Lua;
 
 public partial class StatLuaScanner
 {

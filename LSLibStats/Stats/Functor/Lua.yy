@@ -1,4 +1,4 @@
-﻿%namespace LSLib.LS.Stats.Lua
+﻿%namespace LSLib.Stats.Lua
 %partial 
 %visibility public
 %parsertype StatLuaParser

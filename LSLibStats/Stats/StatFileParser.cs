@@ -1,18 +1,8 @@
-﻿using LSLib.LS.Stats.StatParser;
-using LSLib.Parser;
+﻿using LSLib.Parser;
+using LSLib.Stats.StatParser;
 using System.Xml;
 
-namespace LSLib.LS.Stats;
-
-public class StatEntry
-{
-    public string Name;
-    public StatEntryType Type;
-    public StatEntry BasedOn;
-    public CodeLocation Location;
-    public Dictionary<string, object> Properties = [];
-    public Dictionary<string, CodeLocation> PropertyLocations = [];
-}
+namespace LSLib.Stats;
 
 /// <summary>
 /// Holder for stat loader diagnostic codes.
@@ -54,33 +44,27 @@ public class DiagnosticCode
     public const string StatNameMissing = "S07";
 }
 
-public class StatLoadingError
+public class StatLoadingError(string code, string message, CodeLocation? location, List<PropertyDiagnosticContext>? contexts)
 {
-    public string Code;
-    public string Message;
-    public CodeLocation Location;
-    public List<PropertyDiagnosticContext> Contexts;
+    public string Code = code;
+    public string Message = message;
+    public CodeLocation? Location = location;
+    public List<PropertyDiagnosticContext>? Contexts = contexts;
 }
 
-public class StatLoadingContext
+public class StatLoadingContext(StatDefinitionRepository definitions)
 {
-    public StatDefinitionRepository Definitions;
+    public StatDefinitionRepository Definitions = definitions;
     public List<StatLoadingError> Errors = [];
     public Dictionary<string, Dictionary<string, StatDeclaration>> DeclarationsByType = [];
     public Dictionary<string, Dictionary<string, StatDeclaration>> ResolvedDeclarationsByType = [];
     public Dictionary<string, Dictionary<string, object>> GuidResources = [];
     public readonly HashSet<string> ObjectCategories = [];
 
-    public void LogError(string code, string message, CodeLocation location = null, 
-        List<PropertyDiagnosticContext> contexts = null)
+    public void LogError(string code, string message, CodeLocation? location = null, 
+        List<PropertyDiagnosticContext>? contexts = null)
     {
-        Errors.Add(new StatLoadingError
-        {
-            Code = code,
-            Message = message,
-            Location = location,
-            Contexts = contexts
-        });
+        Errors.Add(new StatLoadingError(code, message, location, contexts));
     }
 }
 
@@ -97,15 +81,15 @@ class StatEntryReferenceResolver(StatLoadingContext context)
     public bool ResolveUsageRef(
         StatEntryType type,StatDeclaration declaration, 
         Dictionary<string, StatDeclaration> declarations,
-        out StatDeclaration basedOn)
+        out StatDeclaration? basedOn)
     {
         var props = declaration.Properties;
         var name = (string)props[type.NameProperty].Value;
-        if (type.BasedOnProperty != null && props.TryGetValue(type.BasedOnProperty, out StatProperty prop))
+        if (type.BasedOnProperty != null && props.TryGetValue(type.BasedOnProperty, out var prop))
         {
             var baseClass = (string)prop.Value;
 
-            if (declarations.TryGetValue(baseClass, out StatDeclaration baseDeclaration))
+            if (declarations.TryGetValue(baseClass, out var baseDeclaration))
             {
                 basedOn = baseDeclaration;
                 return true;
@@ -170,7 +154,7 @@ class StatEntryReferenceResolver(StatLoadingContext context)
         {
             if (declaration.Value.WasValidated) continue;
 
-            var succeeded = ResolveUsageRef(type, declaration.Value, declarations, out StatDeclaration baseClass);
+            var succeeded = ResolveUsageRef(type, declaration.Value, declarations, out var baseClass);
             if (succeeded && baseClass != null)
             {
                 mappings.Add(new BaseClassMapping
@@ -240,7 +224,7 @@ public class StatLoader : IPropertyValidator
         DiagContext = new();
     }
 
-    private List<StatDeclaration> ParseStatStream(string path, Stream stream)
+    private List<StatDeclaration>? ParseStatStream(string path, Stream stream)
     {
         var scanner = new StatScanner(path);
         scanner.SetSource(stream);
@@ -266,9 +250,9 @@ public class StatLoader : IPropertyValidator
                 continue;
             }
             
-            var statType = declaration.Properties["EntityType"].Value.ToString();
+            var statType = declaration.Properties["EntityType"].Value.ToString()!;
 
-            if (!Context.Definitions.Types.TryGetValue(statType, out StatEntryType type))
+            if (!Context.Definitions.Types.TryGetValue(statType, out var type))
             {
                 Context.LogError(DiagnosticCode.StatEntityTypeUnknown, $"No definition exists for stat type '{statType}'", declaration.Location);
                 continue;
@@ -280,14 +264,14 @@ public class StatLoader : IPropertyValidator
                 continue;
             }
 
-            if (!Context.DeclarationsByType.TryGetValue(statType, out Dictionary<string, StatDeclaration> declarationsByType))
+            if (!Context.DeclarationsByType.TryGetValue(statType, out var declarationsByType))
             {
                 declarationsByType = [];
                 Context.DeclarationsByType[statType] = declarationsByType;
             }
 
             // TODO - duplicate declaration check?
-            var name = declaration.Properties[type.NameProperty].Value.ToString();
+            var name = declaration.Properties[type.NameProperty].Value.ToString()!;
             declarationsByType[name] = declaration;
         }
     }
@@ -314,7 +298,7 @@ public class StatLoader : IPropertyValidator
     public void ValidateProperty(StatEntryType type, StatProperty property,
         string declarationName, PropertyDiagnosticContainer errors)
     {
-        if (!type.Fields.TryGetValue(property.Key, out StatField field))
+        if (!type.Fields.TryGetValue(property.Key, out var field))
         {
             errors.Add($"Property '{property.Key}' is not supported on type {type.Name}");
             return;
@@ -371,7 +355,7 @@ public class StatLoader : IPropertyValidator
                     if (!errors.Empty)
                     {
                         errors.AddContext(PropertyDiagnosticContextType.Entry, declaration.Key, declaration.Value.Location);
-                        errors.MergeInto(Context, declaration.Key);
+                        errors.MergeInto(Context);
                         errors.Clear();
                     }
                 }
@@ -383,7 +367,7 @@ public class StatLoader : IPropertyValidator
     {
         foreach (var node in nodes)
         {
-            var attributes = (node as XmlElement).GetElementsByTagName("attribute");
+            var attributes = ((XmlElement)node).GetElementsByTagName("attribute");
             foreach (var attribute in attributes)
             {
                 var attr = attribute as XmlElement;
@@ -405,18 +389,18 @@ public class StatLoader : IPropertyValidator
             Context.GuidResources[typeName] = guidResources;
         }
 
-        var regions = doc.DocumentElement.GetElementsByTagName("region");
+        var regions = doc.DocumentElement!.GetElementsByTagName("region");
         foreach (var region in regions)
         {
-            if ((region as XmlElement).GetAttribute("id") == regionName)
+            if (((XmlElement)region).GetAttribute("id") == regionName)
             {
-                var root = (region as XmlElement).GetElementsByTagName("node");
+                var root = ((XmlElement)region).GetElementsByTagName("node")!;
                 if (root.Count > 0)
                 {
-                    var children = (root[0] as XmlElement).GetElementsByTagName("children");
+                    var children = ((XmlElement)root[0]).GetElementsByTagName("children");
                     if (children.Count > 0)
                     {
-                        var resources = (children[0] as XmlElement).GetElementsByTagName("node");
+                        var resources = ((XmlElement)children[0]).GetElementsByTagName("node");
                         LoadGuidResources(guidResources, resources);
                     }
                 }

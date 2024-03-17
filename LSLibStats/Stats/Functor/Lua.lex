@@ -1,4 +1,4 @@
-﻿%namespace LSLib.LS.Stats.Lua
+﻿%namespace LSLib.Stats.Lua
 %visibility public
 %scannertype StatLuaScanner
 %scanbasetype StatLuaScanBase

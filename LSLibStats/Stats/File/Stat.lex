@@ -1,4 +1,4 @@
-﻿%namespace LSLib.LS.Stats.StatParser
+﻿%namespace LSLib.Stats.StatParser
 %visibility public
 %scannertype StatScanner
 %scanbasetype StatScanBase

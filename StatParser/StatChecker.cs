@@ -1,5 +1,5 @@
 ﻿using LSLib.LS;
-using LSLib.LS.Stats;
+using LSLib.Stats;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -108,10 +108,6 @@ class StatChecker : IDisposable
 
     public void Check(List<string> mods, List<string> dependencies, List<string> packagePaths)
     {
-        Context = new StatLoadingContext();
-
-        Loader = new StatLoader(Context);
-
         FS = new VFS();
         if (LoadPackages)
         {
@@ -133,7 +129,9 @@ class StatChecker : IDisposable
         visitor.Discover();
 
         LoadStatDefinitions(visitor.Resources);
-        Context.Definitions = Definitions;
+
+        Context = new StatLoadingContext(Definitions);
+        Loader = new StatLoader(Context);
 
         foreach (var modName in dependencies)
         {

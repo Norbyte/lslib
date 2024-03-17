@@ -2,7 +2,7 @@
 using QUT.Gppg;
 using System.Text.RegularExpressions;
 
-namespace LSLib.LS.Stats.StatParser;
+namespace LSLib.Stats.StatParser;
 
 /// <summary>
 /// A collection of sub-stats.
@@ -17,9 +17,9 @@ using StatDeclarations = List<StatDeclaration>;
 
 public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
 {
-    protected String fileName;
+    protected string? fileName = null;
 
-    public override CodeLocation yylloc { get; set; }
+    //public override CodeLocation yylloc { get; set; }
     
     protected virtual bool yywrap() { return true; }
 
@@ -39,19 +39,18 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
             throw new Exception("Stat data entry match error");
         }
 
-        return new StatProperty
-        {
-            Key = matches.Groups[1].Value,
-            Value = matches.Groups[2].Value,
-            Location = new CodeLocation(null, startLine, startCol, endLine, endCol),
-            ValueLocation = new CodeLocation(null, startLine, startCol + matches.Groups[2].Index, endLine, startCol + matches.Groups[2].Index + matches.Groups[2].Value.Length)
-        };
+        return new StatProperty(
+            matches.Groups[1].Value,
+            matches.Groups[2].Value,
+            new CodeLocation(null, startLine, startCol, endLine, endCol),
+            new CodeLocation(null, startLine, startCol + matches.Groups[2].Index, endLine, startCol + matches.Groups[2].Index + matches.Groups[2].Value.Length)
+        );
     }
 }
 
 public partial class StatScanner
 {
-    public StatScanner(String fileName)
+    public StatScanner(string? fileName)
     {
         this.fileName = fileName;
     }
@@ -89,7 +88,7 @@ public partial class StatParser
         Location = location
     };
 
-    private StatDeclaration MakeDeclaration(CodeLocation location, StatProperty[] properties)
+    private StatDeclaration MakeDeclaration(CodeLocation? location, StatProperty[] properties)
     {
         var decl = new StatDeclaration()
         {
@@ -134,16 +133,11 @@ public partial class StatParser
         {
             if (!decl.Properties.TryGetValue(ele.Collection, out prop))
             {
-                prop = new StatProperty
-                {
-                    Key = ele.Collection,
-                    Value = new StatCollection(),
-                    Location = ele.Location
-                };
+                prop = new StatProperty(ele.Collection, new StatCollection(), ele.Location, null);
                 decl.Properties[ele.Collection] = prop;
             }
 
-            (prop.Value as StatCollection).Add(ele.Value);
+            ((StatCollection)prop.Value).Add(ele.Value);
         }
         else if (property is StatDeclaration otherDecl)
         {
@@ -160,62 +154,18 @@ public partial class StatParser
         return decl;
     }
 
-    private StatProperty MakeProperty(object key, object value) => new StatProperty()
-    {
-        Key = (string)key,
-        Value = (string)value
-    };
+    private StatProperty MakeProperty(object key, object value) => new StatProperty((string)key, (string)value);
 
-    private StatProperty MakeProperty(String key, object value) => new StatProperty()
-    {
-        Key = key,
-        Value = (string)value
-    };
-
-    private StatProperty MakeProperty(String key, String value) => new StatProperty()
-    {
-        Key = key,
-        Value = value
-    };
-
-    private StatProperty MakeProperty(CodeLocation location, object key, object value) => new StatProperty()
+    private StatProperty MakeProperty(CodeLocation location, object key, object value) => new StatProperty((string)key, (string)value, location)
     {
         Key = (string)key,
         Value = (string)value,
         Location = location
     };
 
-    private StatProperty MakeProperty(CodeLocation location, String key, object value) => new StatProperty()
+    private StatElement MakeElement(String key, object value, CodeLocation? location = null)
     {
-        Key = key,
-        Value = (string)value,
-        Location = location
-    };
-
-    private StatProperty MakeProperty(CodeLocation location, String key, String value) => new StatProperty()
-    {
-        Key = key,
-        Value = value,
-        Location = location
-    };
-
-    private StatElement MakeElement(String key, object value)
-    {
-        return new StatElement()
-        {
-            Collection = key,
-            Value = value
-        };
-    }
-
-    private StatElement MakeElement(String key, object value, CodeLocation location)
-    {
-        return new StatElement()
-        {
-            Location = location,
-            Collection = key,
-            Value = value
-        };
+        return new StatElement(key, value, location);
     }
 
     private StatCollection MakeCollection() => new List<object>();
