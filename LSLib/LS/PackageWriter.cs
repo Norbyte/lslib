@@ -1,4 +1,5 @@
-﻿using System.IO.Hashing;
+﻿using System.IO;
+using System.IO.Hashing;
 using System.Security.Cryptography;
 using LSLib.LS.Enums;
 using LZ4;
@@ -9,13 +10,31 @@ public class PackageBuildTransientFile : PackagedFileInfoCommon
 {
 }
 
-public class PackageWriter(PackageBuildData Build, string PackagePath) : IDisposable
+abstract public class PackageWriter : IDisposable
 {
     public delegate void WriteProgressDelegate(PackageBuildInputFile file, long numerator, long denominator);
 
-    private readonly PackageHeaderCommon Metadata = new();
-    private readonly List<Stream> Streams = [];
+    protected readonly PackageHeaderCommon Metadata = new();
+    protected readonly List<Stream> Streams = [];
+    protected readonly PackageBuildData Build;
+    protected readonly string PackagePath;
+    protected readonly Stream MainStream;
     public WriteProgressDelegate WriteProgress = delegate { };
+
+    public PackageWriter(PackageBuildData build, string packagePath)
+    {
+        Build = build;
+        PackagePath = packagePath;
+
+        MainStream = File.Open(PackagePath, FileMode.Create, FileAccess.Write);
+        Streams.Add(MainStream);
+
+        Metadata.Version = (UInt32)Build.Version;
+        Metadata.Flags = Build.Flags;
+        Metadata.Priority = Build.Priority;
+        Metadata.Md5 = new byte[16];
+    }
+
 
     public void Dispose()
     {
@@ -25,6 +44,40 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         }
     }
 
+    private bool CanCompressFile(PackageBuildInputFile file, Stream inputStream)
+    {
+        var extension = Path.GetExtension(file.Path).ToLowerInvariant();
+        return extension != ".gts"
+            && extension != ".gtp"
+            && extension != ".wem"
+            && extension != ".bnk"
+            && inputStream.Length > 0;
+    }
+
+    private void WritePadding(Stream stream)
+    {
+        int padLength = Build.Version.PaddingSize();
+        long alignTo;
+        if (Build.Version >= PackageVersion.V16)
+        {
+            alignTo = stream.Position - Marshal.SizeOf(typeof(LSPKHeader16)) - 4;
+        }
+        else
+        {
+            alignTo = stream.Position;
+        }
+
+        // Pad the file to a multiple of 64 bytes
+        var padBytes = (padLength - alignTo % padLength) % padLength;
+        var pad = new byte[padBytes];
+        for (var i = 0; i < pad.Length; i++)
+        {
+            pad[i] = 0xAD;
+        }
+
+        stream.Write(pad, 0, pad.Length);
+    }
+
     private PackageBuildTransientFile WriteFile(PackageBuildInputFile input)
     {
         using var inputStream = input.MakeInputStream();
@@ -32,11 +85,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         var compression = Build.Compression;
         var compressionLevel = Build.CompressionLevel;
 
-        if (input.Path.EndsWith(".gts") 
-            || input.Path.EndsWith(".gtp") 
-            || input.Path.EndsWith(".wem") 
-            || input.Path.EndsWith(".bnk") 
-            || inputStream.Length == 0)
+        if (!CanCompressFile(input, inputStream))
         {
             compression = CompressionMethod.None;
             compressionLevel = LSCompressionLevel.Fast;
@@ -78,102 +127,13 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
 
         if (!Build.Flags.HasFlag(PackageFlags.Solid))
         {
-            int padLength = Build.Version.PaddingSize();
-            long alignTo;
-            if (Build.Version >= PackageVersion.V16)
-            {
-                alignTo = stream.Position - Marshal.SizeOf(typeof(LSPKHeader16)) - 4;
-            }
-            else
-            {
-                alignTo = stream.Position;
-            }
-
-            // Pad the file to a multiple of 64 bytes
-            var padBytes = (padLength - alignTo % padLength) % padLength;
-            var pad = new byte[padBytes];
-            for (var i = 0; i < pad.Length; i++)
-            {
-                pad[i] = 0xAD;
-            }
-
-            stream.Write(pad, 0, pad.Length);
+            WritePadding(stream);
         }
 
         return packaged;
     }
 
-    private void PackV7<THeader, TFile>(FileStream mainStream)
-        where THeader : ILSPKHeader
-        where TFile : ILSPKFile
-    {
-        // <= v9 packages don't support LZ4
-        if ((Build.Version == PackageVersion.V7 || Build.Version == PackageVersion.V9) && Build.Compression == CompressionMethod.LZ4)
-        {
-            Build.Compression = CompressionMethod.Zlib;
-        }
-
-        Metadata.NumFiles = (uint)Build.Files.Count;
-        Metadata.FileListSize = (UInt32)(Marshal.SizeOf(typeof(TFile)) * Build.Files.Count);
-
-        using var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true);
-
-        Metadata.DataOffset = (UInt32)Marshal.SizeOf(typeof(THeader)) + Metadata.FileListSize;
-        if (Metadata.Version >= 10)
-        {
-            Metadata.DataOffset += 4;
-        }
-
-        int paddingLength = Build.Version.PaddingSize();
-        if (Metadata.DataOffset % paddingLength > 0)
-        {
-            Metadata.DataOffset += (UInt32)(paddingLength - Metadata.DataOffset % paddingLength);
-        }
-
-        // Write a placeholder instead of the actual headers; we'll write them after we
-        // compressed and flushed all files to disk
-        var placeholder = new byte[Metadata.DataOffset];
-        writer.Write(placeholder);
-
-        var writtenFiles = PackFiles();
-
-        mainStream.Seek(0, SeekOrigin.Begin);
-        if (Metadata.Version >= 10)
-        {
-            writer.Write(PackageHeaderCommon.Signature);
-        }
-        Metadata.NumParts = (UInt16)Streams.Count;
-        Metadata.Md5 = ComputeArchiveHash();
-
-        var header = (THeader)THeader.FromCommonHeader(Metadata);
-        BinUtils.WriteStruct(writer, ref header);
-
-        WriteFileList<TFile>(writer, writtenFiles);
-    }
-
-    private void PackV13<THeader, TFile>(FileStream mainStream)
-        where THeader : ILSPKHeader
-        where TFile : ILSPKFile
-    {
-        var writtenFiles = PackFiles();
-
-        using var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true);
-
-        Metadata.FileListOffset = (UInt64)mainStream.Position;
-        WriteCompressedFileList<TFile>(writer, writtenFiles);
-
-        Metadata.FileListSize = (UInt32)(mainStream.Position - (long)Metadata.FileListOffset);
-        Metadata.Md5 = ComputeArchiveHash();
-        Metadata.NumParts = (UInt16)Streams.Count;
-
-        var header = (THeader)THeader.FromCommonHeader(Metadata);
-        BinUtils.WriteStruct(writer, ref header);
-
-        writer.Write((UInt32)(8 + Marshal.SizeOf(typeof(THeader))));
-        writer.Write(PackageHeaderCommon.Signature);
-    }
-
-    private List<PackageBuildTransientFile> PackFiles()
+    protected List<PackageBuildTransientFile> PackFiles()
     {
         long totalSize = Build.Files.Sum(p => (long)p.Size());
         long currentSize = 0;
@@ -189,7 +149,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         return writtenFiles;
     }
 
-    private void WriteFileList<TFile>(BinaryWriter metadataWriter, List<PackageBuildTransientFile> files)
+    internal void WriteFileList<TFile>(BinaryWriter metadataWriter, List<PackageBuildTransientFile> files)
         where TFile : ILSPKFile
     {
         foreach (var file in files)
@@ -207,7 +167,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         }
     }
 
-    private void WriteCompressedFileList<TFile>(BinaryWriter metadataWriter, List<PackageBuildTransientFile> files)
+    internal void WriteCompressedFileList<TFile>(BinaryWriter metadataWriter, List<PackageBuildTransientFile> files)
         where TFile : ILSPKFile
     {
         byte[] fileListBuf;
@@ -239,43 +199,7 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         metadataWriter.Write(compressedFileList);
     }
 
-    private void PackV15<THeader, TFile>(FileStream mainStream)
-        where THeader : ILSPKHeader
-        where TFile : ILSPKFile
-    {
-        using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
-        {
-            writer.Write(PackageHeaderCommon.Signature);
-            var header = (THeader)THeader.FromCommonHeader(Metadata);
-            BinUtils.WriteStruct(writer, ref header);
-        }
-
-        var writtenFiles = PackFiles();
-
-        using (var writer = new BinaryWriter(mainStream, new UTF8Encoding(), true))
-        {
-            Metadata.FileListOffset = (UInt64)mainStream.Position;
-            WriteCompressedFileList<TFile>(writer, writtenFiles);
-
-            Metadata.FileListSize = (UInt32)(mainStream.Position - (long)Metadata.FileListOffset);
-            if (Build.Hash)
-            {
-                Metadata.Md5 = ComputeArchiveHash();
-            }
-            else
-            {
-                Metadata.Md5 = new byte[0x10];
-            }
-
-            Metadata.NumParts = (UInt16)Streams.Count;
-
-            mainStream.Seek(4, SeekOrigin.Begin);
-            var header = (THeader)THeader.FromCommonHeader(Metadata);
-            BinUtils.WriteStruct(writer, ref header);
-        }
-    }
-
-    public byte[] ComputeArchiveHash()
+    protected byte[] ComputeArchiveHash()
     {
         // MD5 is computed over the contents of all files in an alphabetically sorted order
         var orderedFileList = Build.Files.Select(item => item).ToList();
@@ -306,26 +230,149 @@ public class PackageWriter(PackageBuildData Build, string PackagePath) : IDispos
         return hash;
     }
 
-    public void Write()
+    abstract public void Write();
+}
+
+
+internal class PackageWriter_V7<THeader, TFile> : PackageWriter
+    where THeader : ILSPKHeader
+    where TFile : ILSPKFile
+{
+    public PackageWriter_V7(PackageBuildData build, string packagePath) : base(build, packagePath)
+    { }
+
+    public override void Write()
     {
-        var mainStream = File.Open(PackagePath, FileMode.Create, FileAccess.Write);
-        Streams.Add(mainStream);
-
-        Metadata.Version = (UInt32)Build.Version;
-        Metadata.Flags = Build.Flags;
-        Metadata.Priority = Build.Priority;
-        Metadata.Md5 = new byte[16];
-
-        switch (Build.Version)
+        // <= v9 packages don't support LZ4
+        if ((Build.Version == PackageVersion.V7 || Build.Version == PackageVersion.V9) && Build.Compression == CompressionMethod.LZ4)
         {
-            case PackageVersion.V18: PackV15<LSPKHeader16, FileEntry18>(mainStream); break;
-            case PackageVersion.V16: PackV15<LSPKHeader16, FileEntry15>(mainStream); break;
-            case PackageVersion.V15: PackV15<LSPKHeader15, FileEntry18>(mainStream); break;
-            case PackageVersion.V13: PackV13<LSPKHeader13, FileEntry10>(mainStream); break;
-            case PackageVersion.V10: PackV7<LSPKHeader10, FileEntry10>(mainStream); break;
-            case PackageVersion.V9:
-            case PackageVersion.V7: PackV7<LSPKHeader7, FileEntry7>(mainStream); break;
-            default: throw new ArgumentException($"Cannot write version {Build.Version} packages");
+            Build.Compression = CompressionMethod.Zlib;
         }
+
+        Metadata.NumFiles = (uint)Build.Files.Count;
+        Metadata.FileListSize = (UInt32)(Marshal.SizeOf(typeof(TFile)) * Build.Files.Count);
+
+        using var writer = new BinaryWriter(MainStream, new UTF8Encoding(), true);
+
+        Metadata.DataOffset = (UInt32)Marshal.SizeOf(typeof(THeader)) + Metadata.FileListSize;
+        if (Metadata.Version >= 10)
+        {
+            Metadata.DataOffset += 4;
+        }
+
+        int paddingLength = Build.Version.PaddingSize();
+        if (Metadata.DataOffset % paddingLength > 0)
+        {
+            Metadata.DataOffset += (UInt32)(paddingLength - Metadata.DataOffset % paddingLength);
+        }
+
+        // Write a placeholder instead of the actual headers; we'll write them after we
+        // compressed and flushed all files to disk
+        var placeholder = new byte[Metadata.DataOffset];
+        writer.Write(placeholder);
+
+        var writtenFiles = PackFiles();
+
+        MainStream.Seek(0, SeekOrigin.Begin);
+        if (Metadata.Version >= 10)
+        {
+            writer.Write(PackageHeaderCommon.Signature);
+        }
+        Metadata.NumParts = (UInt16)Streams.Count;
+        Metadata.Md5 = ComputeArchiveHash();
+
+        var header = (THeader)THeader.FromCommonHeader(Metadata);
+        BinUtils.WriteStruct(writer, ref header);
+
+        WriteFileList<TFile>(writer, writtenFiles);
+    }
+}
+
+
+internal class PackageWriter_V13<THeader, TFile> : PackageWriter
+    where THeader : ILSPKHeader
+    where TFile : ILSPKFile
+{
+    public PackageWriter_V13(PackageBuildData build, string packagePath) : base(build, packagePath)
+    { }
+
+    public override void Write()
+    {
+        var writtenFiles = PackFiles();
+
+        using var writer = new BinaryWriter(MainStream, new UTF8Encoding(), true);
+
+        Metadata.FileListOffset = (UInt64)MainStream.Position;
+        WriteCompressedFileList<TFile>(writer, writtenFiles);
+
+        Metadata.FileListSize = (UInt32)(MainStream.Position - (long)Metadata.FileListOffset);
+        Metadata.Md5 = ComputeArchiveHash();
+        Metadata.NumParts = (UInt16)Streams.Count;
+
+        var header = (THeader)THeader.FromCommonHeader(Metadata);
+        BinUtils.WriteStruct(writer, ref header);
+
+        writer.Write((UInt32)(8 + Marshal.SizeOf(typeof(THeader))));
+        writer.Write(PackageHeaderCommon.Signature);
+    }
+}
+
+
+internal class PackageWriter_V15<THeader, TFile> : PackageWriter
+    where THeader : ILSPKHeader
+    where TFile : ILSPKFile
+{
+    public PackageWriter_V15(PackageBuildData build, string packagePath) : base(build, packagePath)
+    { }
+
+    public override void Write()
+    {
+        using (var writer = new BinaryWriter(MainStream, new UTF8Encoding(), true))
+        {
+            writer.Write(PackageHeaderCommon.Signature);
+            var header = (THeader)THeader.FromCommonHeader(Metadata);
+            BinUtils.WriteStruct(writer, ref header);
+        }
+
+        var writtenFiles = PackFiles();
+
+        using (var writer = new BinaryWriter(MainStream, new UTF8Encoding(), true))
+        {
+            Metadata.FileListOffset = (UInt64)MainStream.Position;
+            WriteCompressedFileList<TFile>(writer, writtenFiles);
+
+            Metadata.FileListSize = (UInt32)(MainStream.Position - (long)Metadata.FileListOffset);
+            if (Build.Hash)
+            {
+                Metadata.Md5 = ComputeArchiveHash();
+            }
+            else
+            {
+                Metadata.Md5 = new byte[0x10];
+            }
+
+            Metadata.NumParts = (UInt16)Streams.Count;
+
+            MainStream.Seek(4, SeekOrigin.Begin);
+            var header = (THeader)THeader.FromCommonHeader(Metadata);
+            BinUtils.WriteStruct(writer, ref header);
+        }
+    }
+}
+
+public static class PackageWriterFactory
+{
+    public static PackageWriter Create(PackageBuildData build, string packagePath)
+    {
+        return build.Version switch
+        {
+            PackageVersion.V18 => new PackageWriter_V15<LSPKHeader16, FileEntry18>(build, packagePath),
+            PackageVersion.V16 => new PackageWriter_V15<LSPKHeader16, FileEntry15>(build, packagePath),
+            PackageVersion.V15 => new PackageWriter_V15<LSPKHeader15, FileEntry18>(build, packagePath),
+            PackageVersion.V13 => new PackageWriter_V13<LSPKHeader13, FileEntry10>(build, packagePath),
+            PackageVersion.V10 => new PackageWriter_V7<LSPKHeader10, FileEntry10>(build, packagePath),
+            PackageVersion.V9 or PackageVersion.V7 => new PackageWriter_V7<LSPKHeader7, FileEntry7>(build, packagePath),
+            _ => throw new ArgumentException($"Cannot write version {build.Version} packages"),
+        };
     }
 }

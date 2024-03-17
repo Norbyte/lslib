@@ -195,7 +195,7 @@ public class Packager
         AddFilesFromPath(build, inputPath);
 
         ProgressUpdate("Creating archive ...", 0, 1);
-        using var writer = new PackageWriter(build, packagePath);
+        using var writer = PackageWriterFactory.Create(build, packagePath);
         writer.WriteProgress += WriteProgressUpdate;
         writer.Write();
     }

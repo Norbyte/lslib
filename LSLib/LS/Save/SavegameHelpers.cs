@@ -131,7 +131,7 @@ public class SavegameHelpers : IDisposable
             }
         }
 
-        using (var packageWriter = new PackageWriter(build, path))
+        using (var packageWriter = PackageWriterFactory.Create(build, path))
         {
             packageWriter.Write();
         }
