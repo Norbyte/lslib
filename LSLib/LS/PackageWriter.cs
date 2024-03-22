@@ -44,7 +44,7 @@ abstract public class PackageWriter : IDisposable
         }
     }
 
-    private bool CanCompressFile(PackageBuildInputFile file, Stream inputStream)
+    protected bool CanCompressFile(PackageBuildInputFile file, Stream inputStream)
     {
         var extension = Path.GetExtension(file.Path).ToLowerInvariant();
         return extension != ".gts"
@@ -54,7 +54,7 @@ abstract public class PackageWriter : IDisposable
             && inputStream.Length > 0;
     }
 
-    private void WritePadding(Stream stream)
+    protected void WritePadding(Stream stream)
     {
         int padLength = Build.Version.PaddingSize();
         long alignTo;
@@ -78,7 +78,7 @@ abstract public class PackageWriter : IDisposable
         stream.Write(pad, 0, pad.Length);
     }
 
-    private PackageBuildTransientFile WriteFile(PackageBuildInputFile input)
+    protected PackageBuildTransientFile WriteFile(PackageBuildInputFile input)
     {
         using var inputStream = input.MakeInputStream();
 
