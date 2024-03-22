@@ -195,7 +195,6 @@ public class Database : OsirisSerializable
     public ParameterList Parameters;
     public FactCollection Facts;
     public Node OwnerNode;
-    public long FactsPosition;
 
     public void Read(OsiReader reader)
     {
@@ -203,7 +202,6 @@ public class Database : OsirisSerializable
         Parameters = new ParameterList();
         Parameters.Read(reader);
 
-        FactsPosition = reader.BaseStream.Position;
         Facts = new FactCollection(this, reader.Story);
         reader.ReadList<Fact>(Facts);
     }
@@ -229,7 +227,6 @@ public class Database : OsirisSerializable
             writer.Write("(Not owned)");
         }
 
-        writer.Write(" @ {0:X}: ", FactsPosition);
         Parameters.DebugDump(writer, story);
 
         writer.WriteLine("");
