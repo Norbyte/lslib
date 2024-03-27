@@ -5,9 +5,10 @@ using LSLib.LS.Enums;
 
 namespace LSLib.Granny.Model;
 
-public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
+public class ColladaMeshExporter(Mesh mesh, string exportedId, ExporterOptions options)
 {
     private Mesh ExportedMesh = mesh;
+    private string ExportedId = exportedId;
     private ExporterOptions Options = options;
     private List<source> Sources;
     private List<InputLocal> Inputs;
@@ -57,7 +58,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
             {
                 case "Position":
                     {
-                        var positions = ExportedMesh.PrimaryVertexData.MakeColladaPositions(ExportedMesh.Name);
+                        var positions = ExportedMesh.PrimaryVertexData.MakeColladaPositions(ExportedId);
                         AddInput(positions, "POSITION", "VERTEX");
                         break;
                     }
@@ -66,7 +67,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
                     {
                         if (Options.ExportNormals)
                         {
-                            var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedMesh.Name);
+                            var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedId);
                             AddInput(normals, "NORMAL");
                         }
                         break;
@@ -76,7 +77,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
                     {
                         if (Options.ExportTangents)
                         {
-                            var tangents = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
+                            var tangents = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedId);
                             AddInput(tangents, "TEXTANGENT");
                         }
                         break;
@@ -86,7 +87,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
                     {
                         if (Options.ExportTangents)
                         {
-                            var binormals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
+                            var binormals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedId);
                             AddInput(binormals, "TEXBINORMAL");
                         }
                         break;
@@ -102,7 +103,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
                         if (Options.ExportUVs)
                         {
                             int uvIndex = Int32.Parse(component[^1..]);
-                            var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
+                            var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedId, uvIndex, Options.FlipUVs);
                             AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
                         }
                         break;
@@ -118,7 +119,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
                         if (Options.ExportUVs)
                         {
                             int uvIndex = Int32.Parse(component[^1..]) - 1;
-                            var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
+                            var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedId, uvIndex, Options.FlipUVs);
                             AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
                         }
                         break;
@@ -133,7 +134,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
                     {
                         if (Options.ExportColors)
                         {
-                            var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedMesh.Name, 0);
+                            var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedId, 0);
                             AddInput(colors, null, "COLOR", 0);
                         }
                         break;
@@ -154,27 +155,27 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
         }
 
         // Vertex positions
-        var positions = ExportedMesh.PrimaryVertexData.MakeColladaPositions(ExportedMesh.Name);
+        var positions = ExportedMesh.PrimaryVertexData.MakeColladaPositions(ExportedId);
         AddInput(positions, "POSITION", "VERTEX");
 
         // Normals
         if (desc.NormalType != NormalType.None && Options.ExportNormals)
         {
-            var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedMesh.Name);
+            var normals = ExportedMesh.PrimaryVertexData.MakeColladaNormals(ExportedId);
             AddInput(normals, null, "NORMAL");
         }
 
         // Tangents
         if (desc.TangentType != NormalType.None && Options.ExportTangents)
         {
-            var normals = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedMesh.Name);
+            var normals = ExportedMesh.PrimaryVertexData.MakeColladaTangents(ExportedId);
             AddInput(normals, null, "TEXTANGENT");
         }
 
         // Binormals
         if (desc.BinormalType != NormalType.None && Options.ExportTangents)
         {
-            var normals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedMesh.Name);
+            var normals = ExportedMesh.PrimaryVertexData.MakeColladaBinormals(ExportedId);
             AddInput(normals, null, "TEXBINORMAL");
         }
 
@@ -183,7 +184,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
         {
             for (var uvIndex = 0; uvIndex < desc.TextureCoordinates; uvIndex++)
             {
-                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedMesh.Name, uvIndex, Options.FlipUVs);
+                var uvs = ExportedMesh.PrimaryVertexData.MakeColladaUVs(ExportedId, uvIndex, Options.FlipUVs);
                 AddInput(uvs, null, "TEXCOORD", (ulong)uvIndex);
             }
         }
@@ -193,7 +194,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
         {
             for (var colorIndex = 0; colorIndex < desc.ColorMaps; colorIndex++)
             {
-                var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedMesh.Name, colorIndex);
+                var colors = ExportedMesh.PrimaryVertexData.MakeColladaColors(ExportedId, colorIndex);
                 AddInput(colors, null, "COLOR", (ulong)colorIndex);
             }
         }
@@ -332,7 +333,7 @@ public class ColladaMeshExporter(Mesh mesh, ExporterOptions options)
         {
             vertices = new vertices
             {
-                id = ExportedMesh.Name + "-vertices",
+                id = ExportedId + "-vertices",
                 input = Inputs.ToArray()
             },
             source = Sources.ToArray(),
@@ -359,15 +360,35 @@ public class ColladaExporter
     [Serialization(Kind = SerializationKind.None)]
     public ExporterOptions Options = new();
 
+    private Dictionary<Mesh, string> MeshIds = new();
     private XmlDocument Xml = new();
+
+    private void GenerateUniqueMeshIds(List<Mesh> meshes)
+    {
+        HashSet<string> namesInUse = [];
+        foreach (var mesh in meshes)
+        {
+            var name = mesh.Name;
+            var nameNum = 1;
+            while (namesInUse.Contains(name))
+            {
+                name = mesh.Name + "_" + nameNum.ToString();
+                nameNum++;
+            }
+
+            namesInUse.Add(name);
+            MeshIds[mesh] = name;
+        }
+    }
 
     private void ExportMeshBinding(Model model, string skelRef, MeshBinding meshBinding, List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
     {
-        var exporter = new ColladaMeshExporter(meshBinding.Mesh, Options);
+        var meshId = MeshIds[meshBinding.Mesh];
+        var exporter = new ColladaMeshExporter(meshBinding.Mesh, meshId, Options);
         var mesh = exporter.Export();
         var geom = new geometry
         {
-            id = meshBinding.Mesh.Name + "-geom",
+            id = meshId + "-geom",
             name = meshBinding.Mesh.Name,
             Item = mesh
         };
@@ -387,7 +408,7 @@ public class ColladaExporter
             skin = ExportSkin(meshBinding.Mesh, model.Skeleton.Bones, boneNames, geom.id);
             ctrl = new controller
             {
-                id = meshBinding.Mesh.Name + "-skin",
+                id = meshId + "-skin",
                 name = meshBinding.Mesh.Name + "_Skin",
                 Item = skin
             };
@@ -397,7 +418,7 @@ public class ColladaExporter
         var geomNode = new node
         {
             id = geom.name + "-node",
-            name = geom.name,
+            name = meshBinding.Mesh.Name,
             type = NodeType.NODE
         };
 
@@ -424,6 +445,7 @@ public class ColladaExporter
 
     private skin ExportSkin(Mesh mesh, List<Bone> bones, Dictionary<string, Bone> nameMaps, string geometryId)
     {
+        var meshIds = MeshIds[mesh];
         var sources = new List<source>();
         var joints = new List<string>();
         var poses = new List<float>();
@@ -465,9 +487,9 @@ public class ColladaExporter
             });
         }
 
-        var jointSource = ColladaUtils.MakeNameSource(mesh.Name, "joints", ["JOINT"], joints.ToArray());
-        var poseSource = ColladaUtils.MakeFloatSource(mesh.Name, "poses", ["TRANSFORM"], poses.ToArray(), 16, "float4x4");
-        var weightsSource = mesh.PrimaryVertexData.MakeBoneWeights(mesh.Name);
+        var jointSource = ColladaUtils.MakeNameSource(meshIds, "joints", ["JOINT"], joints.ToArray());
+        var poseSource = ColladaUtils.MakeFloatSource(meshIds, "poses", ["TRANSFORM"], poses.ToArray(), 16, "float4x4");
+        var weightsSource = mesh.PrimaryVertexData.MakeBoneWeights(meshIds);
 
         var vertices = mesh.PrimaryVertexData.Deduplicator.Vertices.Uniques;
         var vertexInfluenceCounts = new List<int>(vertices.Count);
@@ -587,17 +609,12 @@ public class ColladaExporter
 
     private void ExportModels(Root root, List<geometry> geometries, List<controller> controllers, List<node> geomNodes)
     {
-        if (root.Models == null)
-        {
-            return;
-        }
-
-        foreach(var model in root.Models)
-			{
+        foreach (var model in root.Models ?? [])
+		{
             string skelRef = null;
             if (model.Skeleton != null && !model.Skeleton.IsDummy && model.Skeleton.Bones.Count > 1 && root.Skeletons.Any(s => s.Name == model.Skeleton.Name))
             {
-					Utils.Info($"Exporting model {model.Name} with skeleton {model.Skeleton.Name}");
+				Utils.Info($"Exporting model {model.Name} with skeleton {model.Skeleton.Name}");
                 var skeleton = ExportSkeleton(model.Skeleton, model.Name);
                 geomNodes.Add(skeleton);
                 skelRef = skeleton.id;
@@ -881,6 +898,8 @@ public class ColladaExporter
             asset.unit.meter = root.ArtToolInfo.UnitsPerMeter;
         else
             asset.unit.meter = 1;
+
+        GenerateUniqueMeshIds(root.Meshes ?? []);
 
         var geometries = new List<geometry>();
         var controllers = new List<controller>();
