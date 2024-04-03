@@ -1,0 +1,1099 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Definitions>
+	<EntryType Name="ItemColor" NameProperty="ItemColorName">
+		<Field Name="ItemColorName" Type="FixedString" />
+		<Field Name="Primary Color" Type="FixedString" />
+		<Field Name="Secondary Color" Type="FixedString" />
+		<Field Name="Tertiary Color" Type="FixedString" />
+	</EntryType>
+
+	<EntryType Name="ItemProgressionNames" NameProperty="Name">
+		<Field Name="Name" Type="FixedString" />
+		<Field Name="Names" Type="Passthrough" />
+	</EntryType>
+
+	<EntryType Name="ItemProgressionVisuals" NameProperty="Name">
+		<Field Name="Name" Type="FixedString" />
+		<Field Name="LevelGroups" Type="Passthrough" />
+		<Field Name="NameGroups" Type="Passthrough" />
+		<Field Name="RootGroups" Type="Passthrough" />
+	</EntryType>
+
+	<EntryType Name="Data" NameProperty="Key">
+		<Field Name="Key" Type="FixedString" />
+		<Field Name="Value" Type="FixedString" />
+	</EntryType>
+
+	<EntryType Name="TreasureTable" NameProperty="Name">
+		<Field Name="Name" Type="FixedString" />
+		<Field Name="MinLevel" Type="ConstantInt" />
+		<Field Name="MaxLevel" Type="ConstantInt" />
+		<Field Name="CanMerge" Type="ConstantInt" />
+		<Field Name="IgnoreLevelDiff" Type="ConstantInt" />
+		<Field Name="UseTreasureGroupCounters" Type="ConstantInt" />
+		<Field Name="Subtables" Type="TreasureSubtables" />
+	</EntryType>
+
+	<EntryType Name="TreasureSubtable">
+		<Field Name="DropCount" Type="FixedString" />
+		<Field Name="StartLevel" Type="ConstantInt" />
+		<Field Name="EndLevel" Type="ConstantInt" />
+		<Field Name="Objects" Type="TreasureSubtableObject" />
+	</EntryType>
+
+	<EntryType Name="TreasureSubtableObject">
+		<Field Name="Drop" Type="TreasureDrop" />
+		<Field Name="Frequency" Type="ConstantInt" />
+		<Field Name="Common" Type="ConstantInt" />
+		<Field Name="Uncommon" Type="ConstantInt" />
+		<Field Name="Rare" Type="ConstantInt" />
+		<Field Name="Epic" Type="ConstantInt" />
+		<Field Name="Legendary" Type="ConstantInt" />
+		<Field Name="Divine" Type="ConstantInt" />
+		<Field Name="Unique" Type="ConstantInt" />
+	</EntryType>
+
+	<Enumeration Name="ResurrectType">
+		<Label>Living</Label>
+		<Label>Guaranteed</Label>
+		<Label>Construct</Label>
+		<Label>Undead</Label>
+	</Enumeration>
+
+	<Enumeration Name="SetStatusDurationType">
+		<Label>SetMinimum</Label>
+		<Label>ForceSet</Label>
+		<Label>Add</Label>
+		<Label>Multiply</Label>
+	</Enumeration>
+
+	<Enumeration Name="ExecuteWeaponFunctorsType">
+		<Label>MainHand</Label>
+		<Label>OffHand</Label>
+		<Label>BothHands</Label>
+	</Enumeration>
+
+	<Enumeration Name="SpellCooldownType">
+		<Label>Default</Label>
+		<Label>OncePerTurn</Label>
+		<Label>OncePerCombat</Label>
+		<Label>UntilRest</Label>
+		<Label>OncePerTurnNoRealtime</Label>
+		<Label>UntilShortRest</Label>
+		<Label>UntilPerRestPerItem</Label>
+		<Label>OncePerShortRestPerItem</Label>
+	</Enumeration>
+
+	<Enumeration Name="SummonDuration">
+		<Label>UntilLongRest</Label>
+		<Label>Permanent</Label>
+	</Enumeration>
+
+	<Enumeration Name="ForceFunctorOrigin">
+		<Label>OriginToEntity</Label>
+		<Label>OriginToTarget</Label>
+		<Label>TargetToEntity</Label>
+	</Enumeration>
+
+	<Enumeration Name="ForceFunctorAggression">
+		<Label>Aggressive</Label>
+		<Label>Friendly</Label>
+		<Label>Neutral</Label>
+	</Enumeration>
+
+	<Enumeration Name="StatItemSlot">
+		<Label>Helmet</Label>
+		<Label>Breast</Label>
+		<Label>Cloak</Label>
+		<Label>MeleeMainHand</Label>
+		<Label>MeleeOffHand</Label>
+		<Label>RangedMainHand</Label>
+		<Label>RangedOffHand</Label>
+		<Label>Ring</Label>
+		<Label>Underwear</Label>
+		<Label>Boots</Label>
+		<Label>Gloves</Label>
+		<Label>Amulet</Label>
+		<Label>Ring2</Label>
+		<Label>Wings</Label>
+		<Label>Horns</Label>
+		<Label>Overhead</Label>
+		<Label>MusicalInstrument</Label>
+		<Label>VanityBody</Label>
+		<Label>VanityBoots</Label>
+		<Label>MainHand</Label>
+		<Label>OffHand</Label>
+	</Enumeration>
+
+	<Enumeration Name="Magical">
+		<Label>Magical</Label>
+		<Label>Nonmagical</Label>
+	</Enumeration>
+
+	<Enumeration Name="Nonlethal">
+		<Label>Lethal</Label>
+		<Label>Nonlethal</Label>
+	</Enumeration>
+
+	<Enumeration Name="AllEnum">
+		<Label>All</Label>
+	</Enumeration>
+
+	<Enumeration Name="ZoneShape">
+		<Label>Cone</Label>
+		<Label>Square</Label>
+	</Enumeration>
+
+	<Enumeration Name="SurfaceLayer">
+		<Label>Ground</Label>
+		<Label>Cloud</Label>
+	</Enumeration>
+
+	<Enumeration Name="RollAdjustmentType">
+		<Label>All</Label>
+		<Label>Distribute</Label>
+	</Enumeration>
+
+	<Enumeration Name="StatsRollType">
+		<Label>Attack</Label>
+		<Label>MeleeWeaponAttack</Label>
+		<Label>RangedWeaponAttack</Label>
+		<Label>MeleeSpellAttack</Label>
+		<Label>RangedSpellAttack</Label>
+		<Label>MeleeUnarmedAttack</Label>
+		<Label>RangedUnarmedAttack</Label>
+		<Label>SkillCheck</Label>
+		<Label>SavingThrow</Label>
+		<Label>RawAbility</Label>
+		<Label>Damage</Label>
+		<Label>MeleeOffHandWeaponAttack</Label>
+		<Label>RangedOffHandWeaponAttack</Label>
+		<Label>DeathSavingThrow</Label>
+		<Label>MeleeWeaponDamage</Label>
+		<Label>RangedWeaponDamage</Label>
+		<Label>MeleeSpellDamage</Label>
+		<Label>RangedSpellDamage</Label>
+		<Label>MeleeUnarmedDamage</Label>
+		<Label>RangedUnarmedDamage</Label>
+	</Enumeration>
+
+	<Enumeration Name="AdvantageType">
+		<Label>AttackRoll</Label>
+		<Label>AttackTarget</Label>
+		<Label>SavingThrow</Label>
+		<Label>AllSavingThrows</Label>
+		<Label>Ability</Label>
+		<Label>AllAbilities</Label>
+		<Label>Skill</Label>
+		<Label>AllSkills</Label>
+		<Label>SourceDialogue</Label>
+		<Label>DeathSavingThrow</Label>
+		<Label>Concentration</Label>
+	</Enumeration>
+
+	<Enumeration Name="SkillType">
+		<Label>Deception</Label>
+		<Label>Intimidation</Label>
+		<Label>Performance</Label>
+		<Label>Persuasion</Label>
+		<Label>Acrobatics</Label>
+		<Label>SleightOfHand</Label>
+		<Label>Stealth</Label>
+		<Label>Arcana</Label>
+		<Label>History</Label>
+		<Label>Investigation</Label>
+		<Label>Nature</Label>
+		<Label>Religion</Label>
+		<Label>Athletics</Label>
+		<Label>AnimalHandling</Label>
+		<Label>Insight</Label>
+		<Label>Medicine</Label>
+		<Label>Perception</Label>
+		<Label>Survival</Label>
+	</Enumeration>
+
+	<Enumeration Name="CriticalHitType">
+		<Label>AttackTarget</Label>
+		<Label>AttackRoll</Label>
+	</Enumeration>
+
+	<Enumeration Name="Result">
+		<Label>Success</Label>
+		<Label>Failure</Label>
+	</Enumeration>
+
+	<Enumeration Name="CriticalHitResult">
+		<Label>Success</Label>
+		<Label>Failure</Label>
+	</Enumeration>
+
+	<Enumeration Name="CriticalHitWhen">
+		<Label>Never</Label>
+		<Label>Always</Label>
+		<Label>ForcedAlways</Label>
+	</Enumeration>
+
+	<Enumeration Name="MovementSpeedType">
+		<Label>Stroll</Label>
+		<Label>Walk</Label>
+		<Label>Run</Label>
+		<Label>Sprint</Label>
+	</Enumeration>
+
+	<Enumeration Name="DamageReductionType">
+		<Label>Half</Label>
+		<Label>Flat</Label>
+		<Label>Threshold</Label>
+	</Enumeration>
+
+	<Enumeration Name="AttackRollAbility">
+		<Label>SpellCastingAbility</Label>
+		<Label>UnarmedMeleeAbility</Label>
+		<Label>AttackAbility</Label>
+	</Enumeration>
+
+	<Enumeration Name="HealingDirection">
+		<Label>Incoming</Label>
+		<Label>Outgoing</Label>
+	</Enumeration>
+
+	<Enumeration Name="ResistanceBoostFlags">
+		<Label>None</Label>
+		<Label>Resistant</Label>
+		<Label>Immune</Label>
+		<Label>Vulnerable</Label>
+		<Label>BelowDamageThreshold</Label>
+		<Label>ResistantToMagical</Label>
+		<Label>ImmuneToMagical</Label>
+		<Label>VulnerableToMagical</Label>
+		<Label>ResistantToNonMagical</Label>
+		<Label>ImmuneToNonMagical</Label>
+		<Label>VulnerableToNonMagical</Label>
+	</Enumeration>
+
+	<Enumeration Name="UnlockSpellType">
+		<Label>Singular</Label> 
+		<Label>AddChildren</Label> 
+		<Label>MostPowerful</Label>
+	</Enumeration>
+
+	<Enumeration Name="ProficiencyBonusBoostType">
+		<Label>AttackRoll</Label>
+		<Label>AttackTarget</Label>
+		<Label>SavingThrow</Label>
+		<Label>AllSavingThrows</Label>
+		<Label>Ability</Label>
+		<Label>AllAbilities</Label>
+		<Label>Skill</Label>
+		<Label>AllSkills</Label>
+		<Label>SourceDialogue</Label>
+		<Label>WeaponActionDC</Label>
+	</Enumeration>
+
+	<Enumeration Name="ResourceReplenishType">
+		<Label>Never</Label>
+		<Label>Default</Label>
+		<Label>Combat</Label>
+		<Label>Rest</Label>
+		<Label>ShortRest</Label>
+		<Label>FullRest</Label>
+		<Label>ExhaustedRest</Label>
+	</Enumeration>
+
+	<Enumeration Name="AttackType">
+		<Label>DirectHit</Label>
+		<Label>MeleeWeaponAttack</Label>
+		<Label>RangedWeaponAttack</Label>
+		<Label>MeleeOffHandWeaponAttack</Label>
+		<Label>RangedOffHandWeaponAttack</Label>
+		<Label>MeleeSpellAttack</Label>
+		<Label>RangedSpellAttack</Label>
+		<Label>MeleeUnarmedAttack</Label>
+		<Label>RangedUnarmedAttack</Label>
+	</Enumeration>
+
+	<Enumeration Name="DealDamageWeaponDamageType">
+		<Label>MainWeaponDamageType</Label>
+		<Label>OffhandWeaponDamageType</Label>
+		<Label>MainMeleeWeaponDamageType</Label>
+		<Label>OffhandMeleeWeaponDamageType</Label>
+		<Label>MainRangedWeaponDamageType</Label>
+		<Label>OffhandRangedWeaponDamageType</Label>
+		<Label>SourceWeaponDamageType</Label>
+		<Label>ThrownWeaponDamageType</Label>
+	</Enumeration>
+
+	<Enumeration Name="EngineStatusType">
+		<Label>DYING</Label>
+		<Label>HEAL</Label>
+		<Label>KNOCKED_DOWN</Label>
+		<Label>TELEPORT_FALLING</Label>
+		<Label>BOOST</Label>
+		<Label>REACTION</Label>
+		<Label>STORY_FROZEN</Label>
+		<Label>SNEAKING</Label>
+		<Label>UNLOCK</Label>
+		<Label>FEAR</Label>
+		<Label>SMELLY</Label>
+		<Label>INVISIBLE</Label>
+		<Label>ROTATE</Label>
+		<Label>MATERIAL</Label>
+		<Label>CLIMBING</Label>
+		<Label>INCAPACITATED</Label>
+		<Label>INSURFACE</Label>
+		<Label>POLYMORPHED</Label>
+		<Label>EFFECT</Label>
+		<Label>DEACTIVATED</Label>
+		<Label>DOWNED</Label>
+	</Enumeration>
+
+	 <!-- Add functors -->
+	<Function Type="Functor" Name="ApplyStatus" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusId" />
+		<Arg Name="Chance" Type="Int" />
+		<Arg Name="Duration" Type="Lua" />
+		<Arg Name="StatusSpecificParam1" Type="String" />
+		<Arg Name="StatusSpecificParam2" Type="Int" />
+		<Arg Name="StatusSpecificParam3" Type="Int" />
+		<Arg Name="StatsConditions" Type="Conditions" />
+		<Arg Name="RequiresConcentration" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="SurfaceChange" RequiredArgs="1">
+		<Arg Name="SurfaceChange" Type="Surface Change" />
+		<Arg Name="Chance" Type="Float" />
+		<Arg Name="Arg3" Type="Float" />
+		<Arg Name="Arg4" Type="Float" />
+		<Arg Name="Arg5" Type="Float" />
+	</Function>
+	<Function Type="Functor" Name="Resurrect" RequiredArgs="0">
+		<Arg Name="Chance" Type="Float" />
+		<Arg Name="HealthPercentage" Type="Float" />
+		<Arg Name="Type" Type="ResurrectType" />
+	</Function>
+	<Function Type="Functor" Name="Sabotage" RequiredArgs="0">
+		<Arg Name="Amount" Type="Int" />
+	</Function>
+	<Function Type="Functor" Name="Summon" RequiredArgs="1">
+		<Arg Name="Template" Type="Guid" /> <!-- Root template GUID -->
+		<Arg Name="Duration" Type="SummonDurationOrInt" />
+		<Arg Name="AIHelper" Type="SpellId" />
+		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="StackId" Type="String" />
+		<Arg Name="StatusToApply1" Type="StatusId" />
+		<Arg Name="StatusToApply2" Type="StatusId" />
+		<Arg Name="StatusToApply3" Type="StatusId" />
+		<Arg Name="StatusToApply4" Type="StatusId" />
+		<Arg Name="Arg10" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="Force" RequiredArgs="1">
+		<Arg Name="Distance" Type="Lua" />
+		<Arg Name="Origin" Type="ForceFunctorOrigin" />
+		<Arg Name="Aggression" Type="ForceFunctorAggression" />
+		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="Arg5" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="Douse" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Float" />
+		<Arg Name="Arg2" Type="Float" />
+	</Function>
+	<Function Type="Functor" Name="SwapPlaces" RequiredArgs="0">
+		<Arg Name="Animation" Type="String" />
+		<Arg Name="Arg2" Type="Boolean" />
+		<Arg Name="Arg3" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="Pickup" RequiredArgs="0">
+		<Arg Name="Arg1" Type="String" />
+	</Function>
+	<Function Type="Functor" Name="CreateSurface" RequiredArgs="3">
+		<Arg Name="Radius" Type="Float" />
+		<Arg Name="Duration" Type="Float" />
+		<Arg Name="SurfaceType" Type="Surface Type" />
+		<Arg Name="IsControlledByConcentration" Type="Boolean" />
+		<Arg Name="Arg5" Type="Float" />
+		<Arg Name="Arg6" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="CreateConeSurface" RequiredArgs="3">
+		<Arg Name="Radius" Type="Float" />
+		<Arg Name="Duration" Type="Float" />
+		<Arg Name="SurfaceType" Type="Surface Type" />
+		<Arg Name="IsControlledByConcentration" Type="Boolean" />
+		<Arg Name="Arg5" Type="Float" />
+		<Arg Name="Arg6" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="RemoveStatus" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusIdOrGroup" />
+	</Function>
+	<Function Type="Functor" Name="DealDamage" RequiredArgs="1">
+		<Arg Name="Damage" Type="Lua" />
+		<Arg Name="DamageType" Type="DamageTypeOrDealDamageWeaponDamageType" />
+		<Arg Name="Magical" Type="Magical" />
+		<Arg Name="Nonlethal" Type="Nonlethal" />
+		<Arg Name="CoinMultiplier" Type="Int" />
+		<Arg Name="Tooltip" Type="Guid" />
+		<Arg Name="Arg7" Type="Boolean" />
+		<Arg Name="Arg8" Type="Boolean" />
+		<Arg Name="Arg9" Type="Boolean" />
+		<Arg Name="Arg10" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="ExecuteWeaponFunctors" RequiredArgs="0">
+		<Arg Name="WeaponType" Type="ExecuteWeaponFunctorsType" />
+	</Function>
+	<Function Type="Functor" Name="RegainHitPoints" RequiredArgs="1">
+		<Arg Name="HitPoints" Type="Lua" />
+		<Arg Name="Type" Type="ResurrectType" />
+	</Function>
+	<Function Type="Functor" Name="TeleportSource" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Boolean" />
+		<Arg Name="Arg2" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="SetStatusDuration" RequiredArgs="2">
+		<Arg Name="StatusId" Type="StatusId" />
+		<Arg Name="Duration" Type="Float" />
+		<Arg Name="ChangeType" Type="SetStatusDurationType" />
+	</Function>
+	<Function Type="Functor" Name="UseSpell" RequiredArgs="1">
+		<Arg Name="SpellId" Type="SpellId" />
+		<Arg Name="IgnoreHasSpell" Type="Boolean" />
+		<Arg Name="IgnoreChecks" Type="Boolean" />
+		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="SpellCastGuid" Type="Guid" />
+	</Function>
+	<Function Type="Functor" Name="UseActionResource" RequiredArgs="1">
+		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Amount" Type="String" /> <!-- Float or percentage -->
+		<Arg Name="Level" Type="Int" />
+		<Arg Name="Arg4" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="UseAttack" RequiredArgs="0">
+		<Arg Name="IgnoreChecks" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="CreateExplosion" RequiredArgs="0">
+		<Arg Name="SpellId" Type="SpellId" />
+	</Function>
+	<Function Type="Functor" Name="BreakConcentration" RequiredArgs="0" />
+	<Function Type="Functor" Name="ApplyEquipmentStatus" RequiredArgs="2">
+		<Arg Name="ItemSlot" Type="StatItemSlot" />
+		<Arg Name="StatusId" Type="StatusId" />
+		<Arg Name="Chance" Type="Int" />
+		<Arg Name="Duration" Type="Lua" />
+		<Arg Name="StatusSpecificParam1" Type="String" />
+		<Arg Name="StatusSpecificParam2" Type="Int" />
+		<Arg Name="StatusSpecificParam3" Type="Int" />
+		<Arg Name="StatsConditions" Type="Conditions" />
+		<Arg Name="RequiresConcentration" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="RestoreResource" RequiredArgs="2">
+		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Amount" Type="Lua" /> <!-- or percentage? -->
+		<Arg Name="Level" Type="Int" />
+	</Function>
+	<Function Type="Functor" Name="Spawn" RequiredArgs="1">
+		<Arg Name="TemplateId" Type="Guid" /> <!-- Root template Guid -->
+		<Arg Name="AiHelper" Type="String" /> <!-- Should be SpellId, but seemingly defunct? -->
+		<Arg Name="StatusToApply1" Type="StatusId" />
+		<Arg Name="StatusToApply2" Type="StatusId" />
+		<Arg Name="StatusToApply3" Type="StatusId" />
+		<Arg Name="StatusToApply4" Type="StatusId" />
+		<Arg Name="Arg7" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="Stabilize" RequiredArgs="0" />
+	<Function Type="Functor" Name="Unlock" RequiredArgs="0" />
+	<Function Type="Functor" Name="ResetCombatTurn" RequiredArgs="0" />
+	<Function Type="Functor" Name="RemoveAuraByChildStatus" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusId" />
+	</Function>
+	<Function Type="Functor" Name="SummonInInventory" RequiredArgs="1">
+		<Arg Name="TemplateId" Type="Guid" /> <!-- Root template Guid -->
+		<Arg Name="Duration" Type="SummonDurationOrInt" />
+		<Arg Name="Arg3" Type="Int" />
+		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="Arg5" Type="Boolean" />
+		<Arg Name="Arg6" Type="Boolean" />
+		<Arg Name="Arg7" Type="Boolean" />
+		<Arg Name="Arg8" Type="String" />
+		<Arg Name="Arg9" Type="String" />
+		<Arg Name="Arg10" Type="String" />
+		<Arg Name="Arg11" Type="String" /> <!-- etc. -->
+	</Function>
+	<Function Type="Functor" Name="SpawnInInventory" RequiredArgs="1">
+		<Arg Name="TemplateId" Type="Guid" /> <!-- Root template Guid -->
+		<Arg Name="Arg2" Type="Int" />
+		<Arg Name="Arg3" Type="Boolean" />
+		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="Arg5" Type="Boolean" />
+		<Arg Name="Arg6" Type="String" />
+		<Arg Name="Arg7" Type="String" />
+		<Arg Name="Arg8" Type="String" /> <!-- etc. -->
+	</Function>
+	<Function Type="Functor" Name="RemoveUniqueStatus" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusId" />
+	</Function>
+	<Function Type="Functor" Name="DisarmWeapon" RequiredArgs="0" />
+	<Function Type="Functor" Name="DisarmAndStealWeapon" RequiredArgs="0" />
+	<Function Type="Functor" Name="SwitchDeathType" RequiredArgs="1">
+		<Arg Name="DeathType" Type="Death Type" />
+	</Function>
+	<Function Type="Functor" Name="TriggerRandomCast" RequiredArgs="2">
+		<Arg Name="Arg1" Type="Int" />
+		<Arg Name="Arg2" Type="Float" />
+		<Arg Name="Arg3" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="Arg4" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="Arg5" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="Arg6" Type="String" /> <!-- RandomCastOutcomesID resource -->
+	</Function>
+	<Function Type="Functor" Name="GainTemporaryHitPoints" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="Functor" Name="FireProjectile" RequiredArgs="1">
+		<Arg Name="Arg1" Type="String" />
+	</Function>
+	<Function Type="Functor" Name="ShortRest" RequiredArgs="0" />
+	<Function Type="Functor" Name="CreateZone" RequiredArgs="0">
+		<Arg Name="Shape" Type="ZoneShape" />
+		<Arg Name="Arg2" Type="Float" />
+		<Arg Name="Duration" Type="Float" />
+		<Arg Name="Arg4" Type="String" />
+		<Arg Name="Arg5" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="DoTeleport" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Float" />
+	</Function>
+	<Function Type="Functor" Name="RegainTemporaryHitPoints" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="Functor" Name="RemoveStatusByLevel" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusIdOrGroup" />
+		<Arg Name="Arg2" Type="Int" />
+		<Arg Name="Arg3" Type="Ability" />
+	</Function>
+	<Function Type="Functor" Name="SurfaceClearLayer" RequiredArgs="0">
+		<Arg Name="Layer1" Type="SurfaceLayer" />
+		<Arg Name="Layer2" Type="SurfaceLayer" />
+	</Function>
+	<Function Type="Functor" Name="Unsummon" RequiredArgs="0" />
+	<Function Type="Functor" Name="CreateWall" RequiredArgs="0" />
+	<Function Type="Functor" Name="Counterspell" RequiredArgs="0" />
+	<Function Type="Functor" Name="AdjustRoll" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Type" Type="RollAdjustmentType" />
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Functor" Name="SpawnExtraProjectiles" RequiredArgs="0">
+		<Arg Name="Arg1" Type="String" /> <!-- ProjectileTypeId -->
+	</Function>
+	<Function Type="Functor" Name="Kill" RequiredArgs="0" />
+	<Function Type="Functor" Name="TutorialEvent" RequiredArgs="0">
+		<Arg Name="Event" Type="Guid" />
+	</Function>
+	<Function Type="Functor" Name="Drop" RequiredArgs="0">
+		<Arg Name="Arg1" Type="String" />
+	</Function>
+	<Function Type="Functor" Name="ResetCooldowns" RequiredArgs="1">
+		<Arg Name="Type" Type="SpellCooldownType" />
+	</Function>
+	<Function Type="Functor" Name="SetRoll" RequiredArgs="1">
+		<Arg Name="Roll" Type="Int" />
+		<Arg Name="DistributionOrDamageType" Type="RollAdjustmentTypeOrDamageType" />
+	</Function>
+	<Function Type="Functor" Name="SetDamageResistance" RequiredArgs="1">
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Functor" Name="SetReroll" RequiredArgs="0">
+		<Arg Name="Roll" Type="Int" />
+		<Arg Name="Arg2" Type="Boolean" />
+	</Function>
+	<Function Type="Functor" Name="SetAdvantage" RequiredArgs="0" />
+	<Function Type="Functor" Name="SetDisadvantage" RequiredArgs="0" />
+	<Function Type="Functor" Name="MaximizeRoll" RequiredArgs="1">
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Functor" Name="CameraWait" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Float" />
+	</Function>
+
+
+
+	<Function Type="DescriptionParams" Name="DealDamage" RequiredArgs="1">
+		<Arg Name="Damage" Type="Lua" />
+		<Arg Name="DamageType" Type="DamageTypeOrDealDamageWeaponDamageType" />
+		<Arg Name="Magical" Type="Magical" />
+		<Arg Name="Nonlethal" Type="Nonlethal" />
+		<Arg Name="Arg5" Type="Int" />
+		<Arg Name="Tooltip" Type="Guid" />
+	</Function>
+	<Function Type="DescriptionParams" Name="RegainHitPoints" RequiredArgs="1">
+		<Arg Name="HitPoints" Type="Lua" />
+		<Arg Name="Tooltip" Type="Guid" />
+	</Function>
+	<Function Type="DescriptionParams" Name="Distance" RequiredArgs="1">
+		<Arg Name="Distance" Type="Float" />
+	</Function>
+	<Function Type="DescriptionParams" Name="GainTemporaryHitPoints" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="DescriptionParams" Name="LevelMapValue" RequiredArgs="1">
+		<Arg Name="LevelMap" Type="String" />
+	</Function>
+	<Function Type="DescriptionParams" Name="ApplyStatus" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusId" />
+		<Arg Name="Chance" Type="Int" />
+		<Arg Name="Duration" Type="Lua" />
+		<Arg Name="StatusSpecificParam1" Type="String" />
+		<Arg Name="StatusSpecificParam2" Type="Int" />
+		<Arg Name="StatusSpecificParam3" Type="Int" />
+		<Arg Name="StatsConditions" Type="Conditions" />
+		<Arg Name="RequiresConcentration" Type="Boolean" />
+	</Function>
+
+
+
+	<Function Type="Boost" Name="AC" RequiredArgs="1">
+		<Arg Name="AC" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="Ability" RequiredArgs="2">
+		<Arg Name="Ability" Type="Ability" />
+		<Arg Name="Amount" Type="Int" />
+		<Arg Name="Arg3" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="RollBonus" RequiredArgs="2">
+		<Arg Name="RollType" Type="StatsRollType" />
+		<Arg Name="Bonus" Type="Lua" />
+		<Arg Name="Arg3" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="Advantage" RequiredArgs="1">
+		<Arg Name="Type" Type="AdvantageType" />
+		<Arg Name="Arg2" Type="String" /> <!-- Depends on type -->
+		<Arg Name="Tag1" Type="String" /> <!-- TagManager resource -->
+		<Arg Name="Tag2" Type="String" /> <!-- TagManager resource -->
+		<Arg Name="Tag3" Type="String" /> <!-- TagManager resource -->
+	</Function>
+	<Function Type="Boost" Name="Disadvantage" RequiredArgs="1">
+		<Arg Name="Type" Type="AdvantageType" />
+		<Arg Name="Arg2" Type="String" /> <!-- Depends on type -->
+		<Arg Name="Tag1" Type="String" /> <!-- TagManager resource -->
+		<Arg Name="Tag2" Type="String" /> <!-- TagManager resource -->
+		<Arg Name="Tag3" Type="String" /> <!-- TagManager resource -->
+	</Function>
+	<Function Type="Boost" Name="ActionResource" RequiredArgs="2">
+		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Amount" Type="Float" />
+		<Arg Name="Level" Type="Int" />
+		<Arg Name="DieType" Type="DieType" />
+	</Function>
+	<Function Type="Boost" Name="CriticalHit" RequiredArgs="3">
+		<Arg Name="Type" Type="CriticalHitType" />
+		<Arg Name="Result" Type="CriticalHitResult" />
+		<Arg Name="When" Type="CriticalHitWhen" />
+		<Arg Name="Arg4" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="AbilityFailedSavingThrow" RequiredArgs="1">
+		<Arg Name="Ability" Type="Ability" />
+	</Function>
+	<Function Type="Boost" Name="Resistance" RequiredArgs="2">
+		<Arg Name="DamageType" Type="AllOrDamageType" />
+		<Arg Name="ResistanceBoostFlags" Type="ResistanceBoostFlags" />
+	</Function>
+	<Function Type="Boost" Name="WeaponDamageResistance" RequiredArgs="1">
+		<Arg Name="DamageType1" Type="Damage Type" />
+		<Arg Name="DamageType2" Type="Damage Type" />
+		<Arg Name="DamageType3" Type="Damage Type" />
+	</Function>
+	<Function Type="Boost" Name="ProficiencyBonusOverride" RequiredArgs="1">
+		<Arg Name="Bonus" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="ActionResourceOverride" RequiredArgs="2">
+		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Amount" Type="Float" />
+		<Arg Name="Level" Type="Int" />
+		<Arg Name="DieType" Type="DieType" />
+	</Function>
+	<Function Type="Boost" Name="AddProficiencyToAC" RequiredArgs="0" />
+	<Function Type="Boost" Name="JumpMaxDistanceMultiplier" RequiredArgs="1">
+		<Arg Name="Multiplier" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="AddProficiencyToDamage" RequiredArgs="0" />
+	<Function Type="Boost" Name="ActionResourceConsumeMultiplier" RequiredArgs="3">
+		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Multiplier" Type="Float" />
+		<Arg Name="Level" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="BlockVerbalComponent" RequiredArgs="0" />
+	<Function Type="Boost" Name="BlockSomaticComponent" RequiredArgs="0" />
+	<Function Type="Boost" Name="HalveWeaponDamage" RequiredArgs="1">
+		<Arg Name="Ability" Type="Ability" />
+	</Function>
+	<Function Type="Boost" Name="UnlockSpell" RequiredArgs="1">
+		<Arg Name="SpellId" Type="SpellId" />
+		<Arg Name="Type" Type="UnlockSpellType" />
+		<Arg Name="SpellGuid" Type="String" />  <!-- "None" or GUID or "" -->
+		<Arg Name="Cooldown" Type="SpellCooldownType" />
+		<Arg Name="Ability" Type="Ability" />
+	</Function>
+	<Function Type="Boost" Name="SourceAdvantageOnAttack" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="ProficiencyBonus" RequiredArgs="1">
+		<Arg Name="Type" Type="ProficiencyBonusBoostType" />
+		<Arg Name="Arg2" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="BlockSpellCast" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="Proficiency" RequiredArgs="1">
+		<Arg Name="Arg1" Type="ProficiencyGroupFlags" />
+		<Arg Name="Arg2" Type="ProficiencyGroupFlags" />
+		<Arg Name="Arg3" Type="ProficiencyGroupFlags" />
+	</Function>
+	<Function Type="Boost" Name="SourceAllyAdvantageOnAttack" RequiredArgs="0" />
+	<Function Type="Boost" Name="IncreaseMaxHP" RequiredArgs="1">
+		<Arg Name="Amount" Type="String" /> <!-- Lua or % -->
+	</Function>
+	<Function Type="Boost" Name="ActionResourceBlock" RequiredArgs="1">
+		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Level" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="StatusImmunity" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusIdOrGroup" />
+		<Arg Name="Tag1" Type="String" /> <!-- Tag resource name -->
+		<Arg Name="Tag2" Type="String" /> <!-- Tag resource name -->
+		<Arg Name="Tag3" Type="String" /> <!-- Tag resource name -->
+		<Arg Name="Tag4" Type="String" /> <!-- Tag resource name -->
+		<Arg Name="Tag5" Type="String" /> <!-- Tag resource name -->
+	</Function>
+	<Function Type="Boost" Name="UseBoosts" RequiredArgs="1">
+		<Arg Name="Arg1" Type="StatsFunctors" />
+	</Function>
+	<Function Type="Boost" Name="CannotHarmCauseEntity" RequiredArgs="1">
+		<Arg Name="Arg1" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="TemporaryHP" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="Weight" RequiredArgs="1">
+		<Arg Name="Weight" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="WeightCategory" RequiredArgs="1">
+		<Arg Name="Category" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="FactionOverride" RequiredArgs="1">
+		<Arg Name="Faction" Type="String" /> <!-- Faction resource GUID or "Source" -->
+	</Function>
+	<Function Type="Boost" Name="ActionResourceMultiplier" RequiredArgs="2">
+		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Multiplier" Type="Int" />
+		<Arg Name="Level" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="BlockRegainHP" RequiredArgs="0">
+		<Arg Name="Type" Type="ResurrectTypes" />
+	</Function>
+	<Function Type="Boost" Name="Initiative" RequiredArgs="1">
+		<Arg Name="Initiative" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="DarkvisionRange" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="DarkvisionRangeMin" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="DarkvisionRangeOverride" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="Tag" RequiredArgs="1">
+		<Arg Name="Arg1" Type="String" /> <!-- Tag resource name -->
+	</Function>
+	<Function Type="Boost" Name="IgnoreDamageThreshold" RequiredArgs="2">
+		<Arg Name="DamageType" Type="AllOrDamageType" />
+		<Arg Name="Threshold" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="Skill" RequiredArgs="2">
+		<Arg Name="Skill" Type="SkillType" />
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="WeaponDamage" RequiredArgs="2">
+		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="DamageType" Type="Damage Type" />
+		<Arg Name="Arg3" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="NullifyAbilityScore" RequiredArgs="1">
+		<Arg Name="Ability" Type="Ability" />
+	</Function>
+	<Function Type="Boost" Name="IgnoreFallDamage" RequiredArgs="0" />
+	<Function Type="Boost" Name="Reroll" RequiredArgs="3">
+		<Arg Name="RollType" Type="StatsRollType" />
+		<Arg Name="RollBelow" Type="Int" />
+		<Arg Name="Arg3" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="DownedStatus" RequiredArgs="1">
+		<Arg Name="StatusId" Type="StatusId" />
+		<Arg Name="Arg2" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="Invulnerable" RequiredArgs="0" />
+	<Function Type="Boost" Name="WeaponEnchantment" RequiredArgs="1">
+		<Arg Name="Enchantment" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="GuaranteedChanceRollOutcome" RequiredArgs="1">
+		<Arg Name="Arg1" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="Attribute" RequiredArgs="1">
+		<Arg Name="Flags" Type="AttributeFlags" />
+	</Function>
+	<Function Type="Boost" Name="IgnoreLeaveAttackRange" RequiredArgs="0" />
+	<Function Type="Boost" Name="GameplayLight" RequiredArgs="2">
+		<Arg Name="Arg1" Type="Float" />
+		<Arg Name="Arg2" Type="Boolean" />
+		<Arg Name="Arg3" Type="Float" />
+		<Arg Name="Arg4" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="DialogueBlock" RequiredArgs="0" />
+	<Function Type="Boost" Name="DualWielding" RequiredArgs="1">
+		<Arg Name="DW" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="Savant" RequiredArgs="1">
+		<Arg Name="SpellSchool" Type="SpellSchool" />
+	</Function>
+	<Function Type="Boost" Name="MinimumRollResult" RequiredArgs="2">
+		<Arg Name="RollType" Type="StatsRollType" />
+		<Arg Name="MinResult" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="Lootable" RequiredArgs="0" />
+	<Function Type="Boost" Name="CharacterWeaponDamage" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Boost" Name="ProjectileDeflect" RequiredArgs="0">
+		<Arg Name="Type1" Type="String" />
+		<Arg Name="Type2" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="AbilityOverrideMinimum" RequiredArgs="2">
+		<Arg Name="Ability" Type="Ability" />
+		<Arg Name="Minimum" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="ACOverrideFormula" RequiredArgs="2">
+		<Arg Name="AC" Type="Int" />
+		<Arg Name="Arg2" Type="Boolean" />
+		<Arg Name="Ability1" Type="Ability" />
+		<Arg Name="Ability2" Type="Ability" />
+		<Arg Name="Ability3" Type="Ability" />
+	</Function>
+	<Function Type="Boost" Name="FallDamageMultiplier" RequiredArgs="1">
+		<Arg Name="Multiplier" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="ActiveCharacterLight" RequiredArgs="1">
+		<Arg Name="Light" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="Invisibility" RequiredArgs="0" />
+	<Function Type="Boost" Name="TwoWeaponFighting" RequiredArgs="0" />
+	<Function Type="Boost" Name="WeaponAttackTypeOverride" RequiredArgs="1">
+		<Arg Name="Type" Type="AttackType" />
+	</Function>
+	<Function Type="Boost" Name="WeaponDamageDieOverride" RequiredArgs="1">
+		<Arg Name="DamageDie" Type="String" /> <!-- die, eg. 1d10 -->
+	</Function>
+	<Function Type="Boost" Name="CarryCapacityMultiplier" RequiredArgs="1">
+		<Arg Name="Multiplier" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="WeaponProperty" RequiredArgs="1">
+		<Arg Name="Flags1" Type="WeaponFlags" />
+	</Function>
+	<Function Type="Boost" Name="WeaponAttackRollAbilityOverride" RequiredArgs="1">
+		<Arg Name="Ability" Type="AbilityOrAttackRollAbility" />
+	</Function>
+	<Function Type="Boost" Name="BlockTravel" RequiredArgs="0" />
+	<Function Type="Boost" Name="BlockGatherAtCamp" RequiredArgs="0" />
+	<Function Type="Boost" Name="BlockAbilityModifierDamageBonus" RequiredArgs="0" />
+	<Function Type="Boost" Name="VoicebarkBlock" RequiredArgs="0" />
+	<Function Type="Boost" Name="HiddenDuringCinematic" RequiredArgs="0" />
+	<Function Type="Boost" Name="SightRangeAdditive" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="SightRangeMinimum" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="SightRangeMaximum" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="SightRangeOverride" RequiredArgs="1">
+		<Arg Name="Range" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="CannotBeDisarmed" RequiredArgs="0" />
+	<Function Type="Boost" Name="MovementSpeedLimit" RequiredArgs="1">
+		<Arg Name="Type" Type="MovementSpeedType" />
+	</Function>
+	<Function Type="Boost" Name="NonLethal" RequiredArgs="0" />
+	<Function Type="Boost" Name="UnlockSpellVariant" RequiredArgs="1">
+		<Arg Name="Modification1" Type="Lua" /> <!-- TODO - add Modification parser? -->
+		<Arg Name="Modification2" Type="Lua" />
+		<Arg Name="Modification3" Type="Lua" />
+		<Arg Name="Modification4" Type="Lua" />
+		<Arg Name="Modification5" Type="Lua" />
+		<Arg Name="Modification6" Type="Lua" />
+		<Arg Name="Modification7" Type="Lua" />
+		<Arg Name="Modification8" Type="Lua" />
+		<Arg Name="Modification9" Type="Lua" />
+		<Arg Name="Modification10" Type="Lua" />
+		<Arg Name="Modification11" Type="Lua" />
+		<Arg Name="Modification12" Type="Lua" />
+		<Arg Name="Modification13" Type="Lua" />
+		<Arg Name="Modification14" Type="Lua" />
+		<Arg Name="Modification15" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="DetectDisturbancesBlock" RequiredArgs="1">
+		<Arg Name="Arg1" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="BlockAbilityModifierFromAC" RequiredArgs="1">
+		<Arg Name="Ability" Type="Ability" />
+	</Function>
+	<Function Type="Boost" Name="ScaleMultiplier" RequiredArgs="0">
+		<Arg Name="Multiplier" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="CriticalDamageOnHit" RequiredArgs="0" />
+	<Function Type="Boost" Name="DamageReduction" RequiredArgs="2">
+		<Arg Name="DamageType" Type="AllOrDamageType" />
+		<Arg Name="ReductionType" Type="DamageReductionType" />
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="ReduceCriticalAttackThreshold" RequiredArgs="1">
+		<Arg Name="Threshold" Type="Int" />
+		<Arg Name="StatusId" Type="StatusIdOrGroup" />
+	</Function>
+	<Function Type="Boost" Name="PhysicalForceRangeBonus" RequiredArgs="1">
+		<Arg Name="Arg1" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="ObjectSize" RequiredArgs="1">
+		<Arg Name="Size" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="ObjectSizeOverride" RequiredArgs="1">
+		<Arg Name="Size" Type="String" />
+	</Function>
+	<Function Type="Boost" Name="ItemReturnToOwner" RequiredArgs="0" />
+	<Function Type="Boost" Name="AiArchetypeOverride" RequiredArgs="1">
+		<Arg Name="Archetype" Type="String" />
+		<Arg Name="Arg2" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="ExpertiseBonus" RequiredArgs="1">
+		<Arg Name="Skill" Type="SkillType" />
+	</Function>
+	<Function Type="Boost" Name="EntityThrowDamage" RequiredArgs="1">
+		<Arg Name="Die" Type="String" />
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Boost" Name="WeaponDamageTypeOverride" RequiredArgs="1">
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Boost" Name="MaximizeHealing" RequiredArgs="1">
+		<Arg Name="Direction" Type="HealingDirection" />
+		<Arg Name="Type" Type="ResurrectType" />
+	</Function>
+	<Function Type="Boost" Name="IgnoreEnterAttackRange" RequiredArgs="0" />
+	<Function Type="Boost" Name="DamageBonus" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="DamageType" Type="Damage Type" />
+		<Arg Name="Arg3" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="Detach" RequiredArgs="0" />
+	<Function Type="Boost" Name="ConsumeItemBlock" RequiredArgs="0" />
+	<Function Type="Boost" Name="AdvanceSpells" RequiredArgs="1">
+		<Arg Name="SpellId" Type="SpellId" />
+		<Arg Name="Arg2" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="SpellResistance" RequiredArgs="1">
+		<Arg Name="Resistance" Type="ResistanceBoostFlags" />
+	</Function>
+	<Function Type="Boost" Name="WeaponAttackRollBonus" RequiredArgs="1">
+		<Arg Name="Amount" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="SpellSaveDC" RequiredArgs="1">
+		<Arg Name="DC" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="RedirectDamage" RequiredArgs="1">
+		<Arg Name="Arg1" Type="Float" />
+		<Arg Name="DamageType" Type="Damage Type" />
+		<Arg Name="DamageType2" Type="Damage Type" />
+		<Arg Name="Arg4" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="CanSeeThrough" RequiredArgs="1">
+		<Arg Name="CanSeeThrough" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="CanShootThrough" RequiredArgs="1">
+		<Arg Name="CanShootThrough" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="CanWalkThrough" RequiredArgs="1">
+		<Arg Name="CanWalkThrough" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="MonkWeaponAttackOverride" RequiredArgs="0" />
+	<Function Type="Boost" Name="MonkWeaponDamageDiceOverride" RequiredArgs="1">
+		<Arg Name="Arg1" Type="Lua" />
+	</Function>
+	<Function Type="Boost" Name="IntrinsicSummonerProficiency" RequiredArgs="0" />
+	<Function Type="Boost" Name="HorizontalFOVOverride" RequiredArgs="1">
+		<Arg Name="FOV" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="CharacterUnarmedDamage" RequiredArgs="1">
+		<Arg Name="Damage" Type="Lua" />
+		<Arg Name="DamageType" Type="Damage Type" />
+	</Function>
+	<Function Type="Boost" Name="UnarmedMagicalProperty" RequiredArgs="0" />
+	<Function Type="Boost" Name="ActionResourceReplenishTypeOverride" RequiredArgs="2">
+		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="ReplenishType" Type="ResourceReplenishType" />
+	</Function>
+	<Function Type="Boost" Name="AreaDamageEvade" RequiredArgs="0" />
+	<Function Type="Boost" Name="ActionResourcePreventReduction" RequiredArgs="1">
+		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
+		<Arg Name="Level" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="AttackSpellOverride" RequiredArgs="1">
+		<Arg Name="AttackSpell" Type="SpellId" />
+		<Arg Name="OriginalSpell" Type="SpellId" />
+	</Function>
+	<Function Type="Boost" Name="Lock" RequiredArgs="0">
+		<Arg Name="DC" Type="Guid" />
+	</Function>
+	<Function Type="Boost" Name="NoAOEDamageOnLand" RequiredArgs="0" />
+	<Function Type="Boost" Name="IgnorePointBlankDisadvantage" RequiredArgs="1">
+		<Arg Name="Flags" Type="WeaponFlags" />
+	</Function>
+	<Function Type="Boost" Name="CriticalHitExtraDice" RequiredArgs="1">
+		<Arg Name="ExtraDice" Type="Int" />
+		<Arg Name="AttackType" Type="AttackType" />
+	</Function>
+	<Function Type="Boost" Name="DodgeAttackRoll" RequiredArgs="2">
+		<Arg Name="Arg1" Type="Int" />
+		<Arg Name="Arg2" Type="Int" />
+		<Arg Name="Status" Type="StatusIdOrGroup" />
+	</Function>
+	<Function Type="Boost" Name="GameplayObscurity" RequiredArgs="1">
+		<Arg Name="Obscurity" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="MaximumRollResult" RequiredArgs="2">
+		<Arg Name="RollType" Type="StatsRollType" />
+		<Arg Name="MinResult" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="UnlockInterrupt" RequiredArgs="1">
+		<Arg Name="Interrupt" Type="Interrupt" />
+	</Function>
+	<Function Type="Boost" Name="IntrinsicSourceProficiency" RequiredArgs="0" />
+	<Function Type="Boost" Name="JumpMaxDistanceBonus" RequiredArgs="1">
+		<Arg Name="Bonus" Type="Float" />
+	</Function>
+	<Function Type="Boost" Name="ArmorAbilityModifierCapOverride" RequiredArgs="2">
+		<Arg Name="ArmorType" Type="ArmorType" />
+		<Arg Name="Cap" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="IgnoreResistance" RequiredArgs="2">
+		<Arg Name="DamageType" Type="Damage Type" />
+		<Arg Name="Flags" Type="ResistanceBoostFlags" />
+	</Function>
+	<Function Type="Boost" Name="ConcentrationIgnoreDamage" RequiredArgs="1">
+		<Arg Name="SpellSchool" Type="SpellSchool" />
+	</Function>
+	<Function Type="Boost" Name="LeaveTriggers" RequiredArgs="0" />
+	<Function Type="Boost" Name="IgnoreLowGroundPenalty" RequiredArgs="1">
+		<Arg Name="RollType" Type="StatsRollType" />
+	</Function>
+	<Function Type="Boost" Name="IgnoreSurfaceCover" RequiredArgs="1">
+		<Arg Name="SurfaceType" Type="String" /> <!-- Surface type -->
+	</Function>
+	<Function Type="Boost" Name="EnableBasicItemInteractions" RequiredArgs="0" />
+	<Function Type="Boost" Name="SoundsBlocked" RequiredArgs="0" />
+</Definitions>
