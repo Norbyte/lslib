@@ -2,6 +2,8 @@
 using LSLib.LS;
 using System.Xml;
 using LSLib.LS.Enums;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace LSLib.Granny.Model;
 
@@ -366,9 +368,13 @@ public class ColladaExporter
     private void GenerateUniqueMeshIds(List<Mesh> meshes)
     {
         HashSet<string> namesInUse = [];
+        var charRe = new Regex("[^a-zA-Z0-9_.-]", RegexOptions.CultureInvariant);
         foreach (var mesh in meshes)
         {
+            // Sanitize name to make sure it satisfies Collada xsd:NCName requirements
+            mesh.Name = charRe.Replace(mesh.Name, "_");
             var name = mesh.Name;
+
             var nameNum = 1;
             while (namesInUse.Contains(name))
             {
