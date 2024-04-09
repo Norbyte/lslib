@@ -101,6 +101,7 @@ public class LSXReader(Stream stream) : IDisposable
                 Version = (resource.Metadata.MajorVersion >= 4) ? LSXVersion.V4 : LSXVersion.V3;
                 var lslibMeta = reader["lslib_meta"];
                 SerializationSettings.InitFromMeta(lslibMeta ?? "");
+                resource.MetadataFormat = SerializationSettings.LSFMetadata;
                 break;
 
             case "region":
@@ -138,6 +139,8 @@ public class LSXReader(Stream stream) : IDisposable
                 node.Name = reader["id"];
                 Debug.Assert(node.Name != null);
                 node.Parent?.AppendChild(node);
+
+                node.KeyAttribute = reader["key"];
 
                 if (!reader.IsEmptyElement)
                     stack.Add(node);

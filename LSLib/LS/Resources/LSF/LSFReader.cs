@@ -2,6 +2,7 @@
 // #define DUMP_LSF_SERIALIZATION
 
 using LSLib.LS.Enums;
+using System.Diagnostics;
 
 namespace LSLib.LS;
 
@@ -249,13 +250,42 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
             var resolved = Attributes[i];
 
             var debug = String.Format(
-                "{0}: {1} (offset {2:X}, typeId {3}, nextAttribute {4})",
+                "{0}: {1} (offset {2:X}, typeId {3}, length {4}, nextAttribute {5})",
                 i, Names[resolved.NameIndex][resolved.NameOffset], resolved.DataOffset,
-                resolved.TypeId, resolved.NextAttributeIndex
+                resolved.TypeId, resolved.Length, resolved.NextAttributeIndex
             );
             Debug.WriteLine(debug);
         }
 #endif
+    }
+
+    /// <summary>
+    /// Reads the V3 attribute headers for the LSOF resource
+    /// </summary>
+    /// <param name="s">Stream to read the attribute headers from</param>
+    private void ReadKeys(Stream s)
+    {
+        using var reader = new BinaryReader(s);
+
+#if DEBUG_LSF_SERIALIZATION
+        Debug.WriteLine(" ----- DUMP OF KEY TABLE -----");
+#endif
+
+        while (s.Position < s.Length)
+        {
+            var key = BinUtils.ReadStruct<LSFKeyEntry>(reader);
+            var KeyAttribute = Names[key.KeyNameIndex][key.KeyNameOffset];
+            var node = Nodes[(int)key.NodeIndex];
+            node.KeyAttribute = KeyAttribute;
+
+#if DEBUG_LSF_SERIALIZATION
+            var debug = String.Format(
+                "{0} ({1}): {2}",
+                key.NodeIndex, Names[node.NameIndex][node.NameOffset], KeyAttribute
+            );
+            Debug.WriteLine(debug);
+#endif
+        }
     }
 
     private MemoryStream Decompress(BinaryReader reader, uint sizeOnDisk, uint uncompressedSize, string debugDumpTo, bool allowChunked)
@@ -335,7 +365,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
             GameVersion = PackedVersion.FromInt32(hdr.EngineVersion);
         }
 
-        if (Version < LSFVersion.VerBG3AdditionalBlob)
+        if (Version < LSFVersion.VerBG3NodeKeys)
         {
             var meta = BinUtils.ReadStruct<LSFMetadataV5>(reader);
             Metadata = new LSFMetadataV6
@@ -349,7 +379,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                 ValuesUncompressedSize = meta.ValuesUncompressedSize,
                 ValuesSizeOnDisk = meta.ValuesSizeOnDisk,
                 CompressionFlags = meta.CompressionFlags,
-                HasSiblingData = meta.HasSiblingData
+                MetadataFormat = meta.MetadataFormat
             };
         }
         else
@@ -374,18 +404,18 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
         var nodesStream = Decompress(reader, Metadata.NodesSizeOnDisk, Metadata.NodesUncompressedSize, "nodes.bin", true);
         using (nodesStream)
         {
-            var longNodes = Version >= LSFVersion.VerExtendedNodes
-                && Metadata.HasSiblingData == 1;
-            ReadNodes(nodesStream, longNodes);
+            var hasAdjacencyData = Version >= LSFVersion.VerExtendedNodes
+                && Metadata.MetadataFormat == LSFMetadataFormat.KeysAndAdjacency;
+            ReadNodes(nodesStream, hasAdjacencyData);
         }
 
         Attributes = [];
         var attributesStream = Decompress(reader, Metadata.AttributesSizeOnDisk, Metadata.AttributesUncompressedSize, "attributes.bin", true);
         using (attributesStream)
         {
-            var hasSiblingData = Version >= LSFVersion.VerExtendedNodes
-                && Metadata.HasSiblingData == 1;
-            if (hasSiblingData)
+            var hasAdjacencyData = Version >= LSFVersion.VerExtendedNodes
+                && Metadata.MetadataFormat == LSFMetadataFormat.KeysAndAdjacency;
+            if (hasAdjacencyData)
             {
                 ReadAttributesV3(attributesStream);
             }
@@ -397,7 +427,17 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
 
         this.Values = Decompress(reader, Metadata.ValuesSizeOnDisk, Metadata.ValuesUncompressedSize, "values.bin", true);
 
+        if (Metadata.MetadataFormat == LSFMetadataFormat.KeysAndAdjacency)
+        {
+            var keysStream = Decompress(reader, Metadata.KeysSizeOnDisk, Metadata.KeysUncompressedSize, "keys.bin", true);
+            using (keysStream)
+            {
+                ReadKeys(keysStream);
+            }
+        }
+
         Resource resource = new();
+        resource.MetadataFormat = Metadata.MetadataFormat;
         ReadRegions(resource);
 
         resource.Metadata.MajorVersion = GameVersion.Major;
@@ -419,6 +459,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
             {
                 var region = new Region();
                 ReadNode(defn, region, attrReader);
+                region.KeyAttribute = defn.KeyAttribute;
                 NodeInstances.Add(region);
                 region.RegionName = region.Name;
                 resource.Regions[region.Name] = region;
@@ -427,6 +468,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
             {
                 var node = new Node();
                 ReadNode(defn, node, attrReader);
+                node.KeyAttribute = defn.KeyAttribute;
                 node.Parent = NodeInstances[defn.ParentIndex];
                 NodeInstances.Add(node);
                 NodeInstances[defn.ParentIndex].AppendChild(node);
@@ -440,6 +482,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
 
 #if DEBUG_LSF_SERIALIZATION
         Debug.WriteLine(String.Format("Begin node {0}", node.Name));
+        var debugSerializationSettings = new NodeSerializationSettings();
 #endif
 
         if (defn.FirstAttributeIndex != -1)
@@ -452,7 +495,7 @@ public class LSFReader(Stream stream, bool keepOpen = false) : IDisposable
                 node.Attributes[Names[attribute.NameIndex][attribute.NameOffset]] = value;
 
 #if DEBUG_LSF_SERIALIZATION
-                Debug.WriteLine(String.Format("    {0:X}: {1} ({2})", attribute.DataOffset, Names[attribute.NameIndex][attribute.NameOffset], value));
+                Debug.WriteLine(String.Format("    {0:X}: {1} ({2})", attribute.DataOffset, Names[attribute.NameIndex][attribute.NameOffset], value.AsString(debugSerializationSettings)));
 #endif
 
                 if (attribute.NextAttributeIndex == -1)

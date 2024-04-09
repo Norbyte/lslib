@@ -35,9 +35,10 @@ public class ResourceConversionParameters
     public LSFVersion LSF = LSFVersion.MaxWriteVersion;
 
     /// <summary>
-    /// Store sibling/neighbour node data in LSF files (usually done by savegames only)
+    /// Store sibling/neighbour node data in LSF files (usually done by savegames and dictionary-like files)
+    /// (null = auto-detect based on input resource file)
     /// </summary>
-    public bool LSFEncodeSiblingData = false;
+    public LSFMetadataFormat? MetadataFormat = null;
 
     /// <summary>
     /// Format of generated LSX files
@@ -52,7 +53,7 @@ public class ResourceConversionParameters
     /// <summary>
     /// LSF/LSB compression method
     /// </summary>
-    public CompressionMethod Compression = CompressionMethod.LZ4;
+    public CompressionMethod Compression = CompressionMethod.None;
 
     /// <summary>
     /// LSF/LSB compression level (i.e. size/compression time tradeoff)
@@ -77,6 +78,12 @@ public class ResourceConversionParameters
     public void ToSerializationSettings(NodeSerializationSettings settings)
     {
         settings.DefaultByteSwapGuids = ByteSwapGuids;
+    }
+
+    public void ToSerializationSettings(NodeSerializationSettings settings, Resource res)
+    {
+        settings.DefaultByteSwapGuids = ByteSwapGuids;
+        settings.LSFMetadata = res.MetadataFormat ?? settings.LSFMetadata;
     }
 }
 
@@ -167,7 +174,7 @@ public class ResourceUtils
                         Version = conversionParams.LSX,
                         PrettyPrint = conversionParams.PrettyPrint
                     };
-                    conversionParams.ToSerializationSettings(writer.SerializationSettings);
+                    conversionParams.ToSerializationSettings(writer.SerializationSettings, resource);
                     writer.Write(resource);
                     break;
                 }
@@ -184,7 +191,7 @@ public class ResourceUtils
                     var writer = new LSFWriter(file)
                     {
                         Version = conversionParams.LSF,
-                        EncodeSiblingData = conversionParams.LSFEncodeSiblingData,
+                        MetadataFormat = conversionParams.MetadataFormat ?? resource.MetadataFormat ?? LSFMetadataFormat.None,
                         Compression = conversionParams.Compression,
                         CompressionLevel = conversionParams.CompressionLevel
                     };
@@ -198,7 +205,7 @@ public class ResourceUtils
                     {
                         PrettyPrint = conversionParams.PrettyPrint
                     };
-                    conversionParams.ToSerializationSettings(writer.SerializationSettings);
+                    conversionParams.ToSerializationSettings(writer.SerializationSettings, resource);
                     writer.Write(resource);
                     break;
                 }

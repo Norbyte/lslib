@@ -28,9 +28,9 @@ public enum LSFVersion
     VerBG3ExtendedHeader = 0x05,
 
     /// <summary>
-    /// BG3 version with unknown additions
+    /// BG3 version with node key names
     /// </summary>
-    VerBG3AdditionalBlob = 0x06,
+    VerBG3NodeKeys = 0x06,
 
     /// <summary>
     /// BG3 Patch 3 version with unknown additions
@@ -45,7 +45,7 @@ public enum LSFVersion
     /// <summary>
     /// Latest output version supported by this library
     /// </summary>
-    MaxWriteVersion = 0x06
+    MaxWriteVersion = 0x07
 }
 
 public enum LSXVersion

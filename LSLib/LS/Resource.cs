@@ -164,6 +164,7 @@ public static class AttributeTypeMaps
 public class Resource
 {
     public LSMetadata Metadata;
+    public LSFMetadataFormat? MetadataFormat = null;
     public Dictionary<string, Region> Regions = [];
 
     public Resource()
@@ -184,6 +185,7 @@ public class Node
     public Dictionary<string, NodeAttribute> Attributes = [];
     public Dictionary<string, List<Node>> Children = [];
     public int? Line = null;
+    public string KeyAttribute = null;
 
     public int ChildCount
     {

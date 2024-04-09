@@ -39,6 +39,7 @@ public class NodeSerializationSettings
 {
     public bool DefaultByteSwapGuids = true;
     public bool ByteSwapGuids = true;
+    public LSFMetadataFormat LSFMetadata = LSFMetadataFormat.None;
 
     public void InitFromMeta(string meta)
     {
@@ -46,11 +47,22 @@ public class NodeSerializationSettings
         {
             // No metadata available, use defaults
             ByteSwapGuids = DefaultByteSwapGuids;
+            LSFMetadata = LSFMetadataFormat.None;
         }
         else
         {
             var tags = meta.Split(',');
             ByteSwapGuids = tags.Contains("bswap_guids");
+
+            LSFMetadata = LSFMetadataFormat.None;
+            if (tags.Contains("lsf_adjacency"))
+            {
+                LSFMetadata = LSFMetadataFormat.None2;
+            }
+            else if (tags.Contains("lsf_keys_adjacency"))
+            {
+                LSFMetadata = LSFMetadataFormat.KeysAndAdjacency;
+            }
         }
     }
 
@@ -60,6 +72,16 @@ public class NodeSerializationSettings
         if (ByteSwapGuids)
         {
             tags.Add("bswap_guids");
+        }
+        
+        if (LSFMetadata == LSFMetadataFormat.None2)
+        {
+            tags.Add("lsf_adjacency");
+        }
+        
+        if (LSFMetadata == LSFMetadataFormat.KeysAndAdjacency)
+        {
+            tags.Add("lsf_keys_adjacency");
         }
 
         return String.Join(",", tags);

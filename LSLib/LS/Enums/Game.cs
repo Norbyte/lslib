@@ -38,8 +38,8 @@ public static class GameEnumExtensions
             case Game.DivinityOriginalSinEE: return Enums.LSFVersion.VerChunkedCompress;
             case Game.DivinityOriginalSin2: return Enums.LSFVersion.VerExtendedNodes;
             case Game.DivinityOriginalSin2DE: return Enums.LSFVersion.VerExtendedNodes;
-            case Game.BaldursGate3: return Enums.LSFVersion.VerBG3AdditionalBlob;
-            default: return Enums.LSFVersion.VerBG3AdditionalBlob;
+            case Game.BaldursGate3: return Enums.LSFVersion.VerBG3Patch3;
+            default: return Enums.LSFVersion.VerBG3Patch3;
         }
     }
 

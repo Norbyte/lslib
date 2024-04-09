@@ -22,12 +22,15 @@ public class LSFWriter(Stream stream)
     private MemoryStream ValueStream;
     private BinaryWriter ValueWriter;
 
+    private MemoryStream KeyStream;
+    private BinaryWriter KeyWriter;
+
     private List<List<string>> StringHashMap;
     private List<int> NextSiblingIndices;
 
     public LSFVersion Version = LSFVersion.MaxWriteVersion;
-    public bool EncodeSiblingData = false;
-    public CompressionMethod Compression = CompressionMethod.LZ4;
+    public LSFMetadataFormat MetadataFormat = LSFMetadataFormat.None;
+    public CompressionMethod Compression = CompressionMethod.None;
     public LSCompressionLevel CompressionLevel = LSCompressionLevel.Default;
 
     public void Write(Resource resource)
@@ -47,6 +50,8 @@ public class LSFWriter(Stream stream)
         using (this.AttributeWriter = new BinaryWriter(AttributeStream))
         using (this.ValueStream = new MemoryStream())
         using (this.ValueWriter = new BinaryWriter(ValueStream))
+        using (this.KeyStream = new MemoryStream())
+        using (this.KeyWriter = new BinaryWriter(KeyStream))
         {
             NextNodeIndex = 0;
             NextAttributeIndex = 0;
@@ -58,7 +63,7 @@ public class LSFWriter(Stream stream)
                 StringHashMap.Add([]);
             }
 
-            if (EncodeSiblingData)
+            if (MetadataFormat != LSFMetadataFormat.None)
             {
                 ComputeSiblingIndices(resource);
             }
@@ -76,6 +81,7 @@ public class LSFWriter(Stream stream)
             var nodeBuffer = NodeStream.ToArray();
             var attributeBuffer = AttributeStream.ToArray();
             var valueBuffer = ValueStream.ToArray();
+            var keyBuffer = KeyStream.ToArray();
 
             var magic = new LSFMagic
             {
@@ -114,8 +120,19 @@ public class LSFWriter(Stream stream)
             byte[] nodesCompressed = CompressionHelpers.Compress(nodeBuffer, Compression, CompressionLevel, chunked);
             byte[] attributesCompressed = CompressionHelpers.Compress(attributeBuffer, Compression, CompressionLevel, chunked);
             byte[] valuesCompressed = CompressionHelpers.Compress(valueBuffer, Compression, CompressionLevel, chunked);
+            byte[] keysCompressed;
 
-            if (Version < LSFVersion.VerBG3AdditionalBlob)
+            if (MetadataFormat == LSFMetadataFormat.KeysAndAdjacency)
+            {
+                keysCompressed = CompressionHelpers.Compress(keyBuffer, Compression, CompressionLevel, chunked);
+            }
+            else
+            {
+                // Avoid generating a key blob with compression headers if key data should not be written at all
+                keysCompressed = new byte[0];
+            }
+
+            if (Version < LSFVersion.VerBG3NodeKeys)
             {
                 var meta = new LSFMetadataV5
                 {
@@ -140,10 +157,10 @@ public class LSFWriter(Stream stream)
                     meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
                 }
 
-                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                meta.CompressionFlags = CompressionHelpers.MakeCompressionFlags(Compression, CompressionLevel);
                 meta.Unknown2 = 0;
                 meta.Unknown3 = 0;
-                meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
+                meta.MetadataFormat = MetadataFormat;
 
                 BinUtils.WriteStruct<LSFMetadataV5>(Writer, ref meta);
             }
@@ -152,6 +169,7 @@ public class LSFWriter(Stream stream)
                 var meta = new LSFMetadataV6
                 {
                     StringsUncompressedSize = (UInt32)stringBuffer.Length,
+                    KeysUncompressedSize = (UInt32)keyBuffer.Length,
                     NodesUncompressedSize = (UInt32)nodeBuffer.Length,
                     AttributesUncompressedSize = (UInt32)attributeBuffer.Length,
                     ValuesUncompressedSize = (UInt32)valueBuffer.Length
@@ -160,6 +178,7 @@ public class LSFWriter(Stream stream)
                 if (Compression == CompressionMethod.None)
                 {
                     meta.StringsSizeOnDisk = 0;
+                    meta.KeysSizeOnDisk = 0;
                     meta.NodesSizeOnDisk = 0;
                     meta.AttributesSizeOnDisk = 0;
                     meta.ValuesSizeOnDisk = 0;
@@ -167,16 +186,16 @@ public class LSFWriter(Stream stream)
                 else
                 {
                     meta.StringsSizeOnDisk = (UInt32)stringsCompressed.Length;
+                    meta.KeysSizeOnDisk = (UInt32)keysCompressed.Length;
                     meta.NodesSizeOnDisk = (UInt32)nodesCompressed.Length;
                     meta.AttributesSizeOnDisk = (UInt32)attributesCompressed.Length;
                     meta.ValuesSizeOnDisk = (UInt32)valuesCompressed.Length;
                 }
 
-                meta.Unknown = 0;
-                meta.CompressionFlags = BinUtils.MakeCompressionFlags(Compression, CompressionLevel);
+                meta.CompressionFlags = CompressionHelpers.MakeCompressionFlags(Compression, CompressionLevel);
                 meta.Unknown2 = 0;
                 meta.Unknown3 = 0;
-                meta.HasSiblingData = EncodeSiblingData ? 1u : 0u;
+                meta.MetadataFormat = MetadataFormat;
 
                 BinUtils.WriteStruct<LSFMetadataV6>(Writer, ref meta);
             }
@@ -185,6 +204,7 @@ public class LSFWriter(Stream stream)
             Writer.Write(nodesCompressed, 0, nodesCompressed.Length);
             Writer.Write(attributesCompressed, 0, attributesCompressed.Length);
             Writer.Write(valuesCompressed, 0, valuesCompressed.Length);
+            Writer.Write(keysCompressed, 0, keysCompressed.Length);
         }
     }
 
@@ -236,7 +256,7 @@ public class LSFWriter(Stream stream)
         foreach (var region in resource.Regions)
         {
             if (Version >= LSFVersion.VerExtendedNodes
-                && EncodeSiblingData)
+                && MetadataFormat == LSFMetadataFormat.KeysAndAdjacency)
             {
                 WriteNodeV3(region.Value);
             }
@@ -302,7 +322,8 @@ public class LSFWriter(Stream stream)
         {
             foreach (var child in children.Value)
             {
-                if (Version >= LSFVersion.VerExtendedNodes && EncodeSiblingData)
+                if (Version >= LSFVersion.VerExtendedNodes 
+                    && MetadataFormat == LSFMetadataFormat.KeysAndAdjacency)
                 {
                     WriteNodeV3(child);
                 }
@@ -373,6 +394,17 @@ public class LSFWriter(Stream stream)
         }
 
         BinUtils.WriteStruct<LSFNodeEntryV3>(NodeWriter, ref nodeInfo);
+
+        if (node.KeyAttribute != null && MetadataFormat == LSFMetadataFormat.KeysAndAdjacency)
+        {
+            var keyInfo = new LSFKeyEntry
+            {
+                NodeIndex = (UInt32)NextNodeIndex,
+                KeyName = AddStaticString(node.KeyAttribute)
+            };
+            BinUtils.WriteStruct<LSFKeyEntry>(KeyWriter, ref keyInfo);
+        }
+
         NodeIndices[node] = NextNodeIndex;
         NextNodeIndex++;
 

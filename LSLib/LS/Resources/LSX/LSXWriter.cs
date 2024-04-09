@@ -102,6 +102,11 @@ public class LSXWriter(Stream stream)
         writer.WriteStartElement("node");
         writer.WriteAttributeString("id", node.Name);
 
+        if (node.KeyAttribute != null)
+        {
+            writer.WriteAttributeString("key", node.KeyAttribute);
+        }
+
         foreach (var attribute in node.Attributes)
         {
             writer.WriteStartElement("attribute");

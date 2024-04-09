@@ -39,7 +39,7 @@ public class Package : IDisposable
     {
         var file = File.OpenRead(path);
         Parts[index] = MemoryMappedFile.CreateFromFile(file, null, file.Length, MemoryMappedFileAccess.Read, HandleInheritability.None, false);
-        Views[index] = MetadataFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+        Views[index] = Parts[index].CreateViewAccessor(0, file.Length, MemoryMappedFileAccess.Read);
     }
 
     public void OpenStreams(int numParts)

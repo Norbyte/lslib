@@ -85,8 +85,17 @@ internal struct LSFMetadataV5
     /// <summary>
     /// Extended node/attribute format indicator, 0 for V2, 0/1 for V3
     /// </summary>
-    public UInt32 HasSiblingData;
+    public LSFMetadataFormat MetadataFormat;
 }
+
+
+public enum LSFMetadataFormat : UInt32
+{
+    None = 0,
+    KeysAndAdjacency = 1,
+    None2 = 2 // Behaves same way as None
+};
+
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct LSFMetadataV6
@@ -99,7 +108,14 @@ internal struct LSFMetadataV6
     /// Compressed size of the string hash table
     /// </summary>
     public UInt32 StringsSizeOnDisk;
-    public UInt64 Unknown;
+    /// <summary>
+    /// Total uncompressed size of the node key attribute table
+    /// </summary>
+    public UInt32 KeysUncompressedSize;
+    /// <summary>
+    /// Compressed size of the node key attribute table
+    /// </summary>
+    public UInt32 KeysSizeOnDisk;
     /// <summary>
     /// Total uncompressed size of the node list
     /// </summary>
@@ -135,9 +151,9 @@ internal struct LSFMetadataV6
     public Byte Unknown2;
     public UInt16 Unknown3;
     /// <summary>
-    /// Extended node/attribute format indicator, 0 for V2, 0/1 for V3
+    /// Extended node/attribute format indicator
     /// </summary>
-    public UInt32 HasSiblingData;
+    public LSFMetadataFormat MetadataFormat;
 }
 
 /// <summary>
@@ -224,6 +240,39 @@ internal struct LSFNodeEntryV3
 };
 
 /// <summary>
+/// Key attribute name definition for a specific node in the LSF file
+/// </summary>
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+internal struct LSFKeyEntry
+{
+    /// <summary>
+    /// Index of the node
+    /// </summary>
+    public UInt32 NodeIndex;
+    /// <summary>
+    /// Name of key attribute
+    /// (16-bit MSB: index into name hash table, 16-bit LSB: offset in hash chain)
+    /// </summary>
+    public UInt32 KeyName;
+
+    /// <summary>
+    /// Index into name hash table
+    /// </summary>
+    public int KeyNameIndex
+    {
+        get { return (int)(KeyName >> 16); }
+    }
+
+    /// <summary>
+    /// Offset in hash chain
+    /// </summary>
+    public int KeyNameOffset
+    {
+        get { return (int)(KeyName & 0xffff); }
+    }
+};
+
+/// <summary>
 /// Processed node information for a node in the LSF file
 /// </summary>
 internal class LSFNodeInfo
@@ -246,6 +295,7 @@ internal class LSFNodeInfo
     /// (-1: node has no attributes)
     /// </summary>
     public int FirstAttributeIndex;
+    public string KeyAttribute = null;
 };
 
 /// <summary>
