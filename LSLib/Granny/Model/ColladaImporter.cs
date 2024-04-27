@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using LSLib.Granny.GR2;
+﻿using LSLib.Granny.GR2;
 using LSLib.LS;
 using OpenTK.Mathematics;
 
@@ -700,39 +699,49 @@ public class ColladaImporter
                 influenceSum += weights[weightIndex];
             }
 
-            byte totalEncoded = 0;
+            ushort totalEncoded = 0;
             for (var i = 0; i < influenceCount; i++)
             {
                 var weightIndex = influences[offset + i * stride + weightInputIndex];
                 var weight = weights[weightIndex] / influenceSum * 255.0f;
                 var encodedWeight = (byte)Math.Round(weight);
                 totalEncoded += encodedWeight;
-                vertErrors[i] = Math.Abs(encodedWeight - weight);
+                vertErrors[i] = encodedWeight - weight;
                 vertWeights[i] = encodedWeight;
             }
 
-            while (totalEncoded != 0 && totalEncoded < 255)
+            while (totalEncoded != 0 && totalEncoded != 255)
             {
-                float firstHighest = 0.0f;
-                int errorIndex = -1;
-                for (var i = 0; i < influenceCount; i++)
+                int errorIndex = 0;
+                if (totalEncoded < 255)
                 {
-                    if (vertErrors[i] > firstHighest)
+                    for (var i = 1; i < influenceCount; i++)
                     {
-                        firstHighest = vertErrors[i];
-                        errorIndex = i;
+                        if (vertErrors[i] < vertErrors[errorIndex])
+                        {
+                            errorIndex = i;
+                        }
                     }
+
+                    vertWeights[errorIndex]++;
+                    vertErrors[errorIndex]++;
+                    totalEncoded++;
                 }
+                else
+                {
+                    for (var i = 1; i < influenceCount; i++)
+                    {
+                        if (vertErrors[i] > vertErrors[errorIndex])
+                        {
+                            errorIndex = i;
+                        }
+                    }
 
-                var weightIndex = influences[offset + errorIndex * stride + weightInputIndex];
-                var weight = weights[weightIndex] / influenceSum * 255.0f;
-
-                vertWeights[errorIndex]++;
-                vertErrors[errorIndex] = Math.Abs(vertWeights[errorIndex] - weight);
-                totalEncoded++;
+                    vertWeights[errorIndex]--;
+                    vertErrors[errorIndex]--;
+                    totalEncoded--;
+                }
             }
-
-            Debug.Assert(totalEncoded == 0 || totalEncoded == 255);
 
             for (var i = 0; i < influenceCount; i++)
             {
