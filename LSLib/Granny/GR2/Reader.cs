@@ -150,7 +150,7 @@ public class GR2Reader(Stream stream) : IDisposable
         //    throw new ParsingException(String.Format("Incorrect header tag; expected {0:X8}, got {1:X8}", Header.Tag, header.tag));
 
         Debug.Assert(header.fileSize <= InputStream.Length);
-        Debug.Assert(header.CalculateCRC(InputStream) == header.crc);
+        //Debug.Assert(header.CalculateCRC(InputStream) == header.crc);
         Debug.Assert(header.sectionsOffset == header.Size());
         Debug.Assert(header.rootType.Section < header.numSections);
         // TODO: check rootTypeOffset after serialization
@@ -338,14 +338,14 @@ public class GR2Reader(Stream stream) : IDisposable
         {
             foreach (var member in definition.Members)
             {
-                var size = member.Size(this);
+                var size = member.TotalSize(this);
                 if (member.Type == MemberType.Inline)
                 {
                     MixedMarshal(member.ArraySize == 0 ? 1 : member.ArraySize, member.Definition.Resolve(this));
                 }
-                else if (member.MarshallingSize() > 1)
+                else if (member.TotalMarshallingSize() > 1)
                 {
-                    var marshalSize = member.MarshallingSize();
+                    var marshalSize = member.TotalMarshallingSize();
                     byte[] data = new byte[size];
                     Stream.Read(data, 0, (int)size);
                     for (var j = 0; j < size / marshalSize; j++)

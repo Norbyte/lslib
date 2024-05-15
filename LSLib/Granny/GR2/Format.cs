@@ -802,7 +802,7 @@ public class MemberDefinition
         get { return Type > MemberType.ReferenceToVariantArray; }
     }
 
-    public UInt32 Size(GR2Reader gr2)
+    public UInt32 ElementSize(GR2Reader gr2)
     {
         return Type switch
         {
@@ -820,8 +820,8 @@ public class MemberDefinition
             MemberType.Real16 => 2,
 
             MemberType.Reference => gr2.Magic.Is32Bit ? 4u : 8,
+            MemberType.String => gr2.Magic.Is32Bit ? 4u : 8,
 
-            MemberType.String => 4,
             MemberType.Real32 => 4,
             MemberType.Int32 => 4,
             MemberType.UInt32 => 4,
@@ -837,7 +837,12 @@ public class MemberDefinition
         };
     }
 
-    public UInt32 MarshallingSize()
+    public UInt32 TotalSize(GR2Reader gr2)
+    {
+        return (ArraySize == 0 ? 1 : ArraySize) * ElementSize(gr2);
+    }
+
+    public UInt32 ElementMarshallingSize()
     {
         switch (Type)
         {
@@ -860,7 +865,6 @@ public class MemberDefinition
             case MemberType.Real16:
                 return 2;
 
-            case MemberType.String:
             case MemberType.Transform:
             case MemberType.Real32:
             case MemberType.Int32:
@@ -873,6 +877,11 @@ public class MemberDefinition
             default:
                 throw new ParsingException(String.Format("Unhandled member type: {0}", Type.ToString()));
         }
+    }
+
+    public UInt32 TotalMarshallingSize()
+    {
+        return (ArraySize == 0 ? 1 : ArraySize) * ElementMarshallingSize();
     }
 
     public bool ShouldSerialize(UInt32 version)
@@ -1020,7 +1029,7 @@ public class StructDefinition
     {
         UInt32 size = 0;
         foreach (var member in Members)
-            size += member.Size(gr2);
+            size += member.TotalSize(gr2);
         return size;
     }
 
