@@ -10,7 +10,7 @@ public class ParsingException(string message) : Exception(message)
 {
 }
 
-public class GR2Reader(Stream stream)
+public class GR2Reader(Stream stream) : IDisposable
 {
     internal Stream InputStream = stream;
     internal BinaryReader InputReader;
@@ -32,6 +32,7 @@ public class GR2Reader(Stream stream)
 
     public void Dispose()
     {
+        Reader?.Dispose();
         Stream?.Dispose();
     }
 
@@ -56,29 +57,37 @@ public class GR2Reader(Stream stream)
 
             Debug.Assert(InputStream.Position == Magic.headersSize);
 
-            UncompressStream();
-
-            foreach (var section in Sections)
+            try
             {
-                ReadSectionRelocations(section);
-            }
+                UncompressStream();
 
-            if (Magic.IsLittleEndian != BitConverter.IsLittleEndian)
-            {
-                // TODO: This should be done before applying relocations?
                 foreach (var section in Sections)
                 {
-                    ReadSectionMixedMarshallingRelocations(section);
+                    ReadSectionRelocations(section);
                 }
+
+                if (Magic.IsLittleEndian != BitConverter.IsLittleEndian)
+                {
+                    // TODO: This should be done before applying relocations?
+                    foreach (var section in Sections)
+                    {
+                        ReadSectionMixedMarshallingRelocations(section);
+                    }
+                }
+
+                var rootStruct = new StructReference
+                {
+                    Offset = Sections[(int)Header.rootType.Section].Header.offsetInFile + Header.rootType.Offset
+                };
+
+                Seek(Header.rootNode);
+                ReadStruct(rootStruct.Resolve(this), MemberType.Inline, root, null);
             }
-
-            var rootStruct = new StructReference
+            finally
             {
-                Offset = Sections[(int)Header.rootType.Section].Header.offsetInFile + Header.rootType.Offset
-            };
-
-            Seek(Header.rootNode);
-            ReadStruct(rootStruct.Resolve(this), MemberType.Inline, root, null);
+                Reader?.Dispose();
+                Stream?.Dispose();
+            }
         }
     }
 
@@ -227,7 +236,11 @@ public class GR2Reader(Stream stream)
             var section = Sections[i];
             var hdr = section.Header;
             byte[] sectionContents = new byte[hdr.compressedSize];
-            InputStream.Position = hdr.offsetInFile;
+            if (InputStream.Position != hdr.offsetInFile)
+            {
+                InputStream.Position = hdr.offsetInFile;
+            }
+
             InputStream.Read(sectionContents, 0, (int)hdr.compressedSize);
 
             var originalOffset = hdr.offsetInFile;
@@ -290,7 +303,19 @@ public class GR2Reader(Stream stream)
     {
         if (section.Header.numRelocations == 0) return;
 
-        InputStream.Seek(section.Header.relocationsOffset, SeekOrigin.Begin);
+        if (InputStream.Position != section.Header.relocationsOffset)
+        {
+            if (InputStream.Position < section.Header.relocationsOffset)
+            {
+                var dummy = new byte[section.Header.relocationsOffset - InputStream.Position];
+                InputStream.Read(dummy);
+            }
+            else
+            {
+                InputStream.Seek(section.Header.relocationsOffset, SeekOrigin.Begin);
+            }
+        }
+        
         if (section.Header.compression == 4)
         {
             using var reader = new BinaryReader(InputStream, Encoding.Default, true);
