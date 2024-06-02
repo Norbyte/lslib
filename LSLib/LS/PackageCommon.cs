@@ -173,7 +173,8 @@ public class Packager
         UncompressPackage(package, outputPath, filter);
     }
 
-    private static void AddFilesFromPath(PackageBuildData build, string path)
+    // added excludeHidden variable to AddFilesFromPath and CreatePackage to let user have control
+    private static void AddFilesFromPath(PackageBuildData build, string path, bool excludeHidden)
     {
         if (!path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
         {
@@ -182,17 +183,30 @@ public class Packager
 
         foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
         {
-            var name = Path.GetRelativePath(path, file);
-            build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
+            string[] fileElements = file.Split(Path.DirectorySeparatorChar);
+
+            if (excludeHidden)
+            {
+                if (!Array.Exists(fileElements, element => element.StartsWith(".")))
+                {
+                    var name = Path.GetRelativePath(path, file);
+                    build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
+                }
+            }
+            else if (!excludeHidden)
+            {
+                var name = Path.GetRelativePath(path, file);
+                build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
+            }
         }
     }
 
-    public async Task CreatePackage(string packagePath, string inputPath, PackageBuildData build)
+    public async Task CreatePackage(string packagePath, string inputPath, PackageBuildData build, bool excludeHidden = true)
     {
         FileManager.TryToCreateDirectory(packagePath);
 
         ProgressUpdate("Enumerating files ...", 0, 1);
-        AddFilesFromPath(build, inputPath);
+        AddFilesFromPath(build, inputPath, excludeHidden);
 
         ProgressUpdate("Creating archive ...", 0, 1);
         using var writer = PackageWriterFactory.Create(build, packagePath);
