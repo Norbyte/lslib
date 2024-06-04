@@ -1,4 +1,6 @@
-﻿using System.IO.MemoryMappedFiles;
+using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Xml.Linq;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS;
@@ -114,10 +116,15 @@ public class PackageBuildData
     public CompressionMethod Compression = CompressionMethod.None;
     public LSCompressionLevel CompressionLevel = LSCompressionLevel.Default;
     public PackageFlags Flags = 0;
-    public byte Priority = 0;
     // Calculate full archive checksum?
     public bool Hash = false;
     public List<PackageBuildInputFile> Files = [];
+    
+    public bool ExcludeHidden
+    { get; set; } = true;
+    public byte Priority
+    { get; set; } = 0;
+
 }
 
 public class Packager
@@ -173,8 +180,28 @@ public class Packager
         UncompressPackage(package, outputPath, filter);
     }
 
-    // added excludeHidden variable to AddFilesFromPath and CreatePackage to let user have control
-    private static void AddFilesFromPath(PackageBuildData build, string path, bool excludeHidden)
+
+    public static bool ShouldInclude(string file, PackageBuildData build)
+    {
+        string[] fileElements = file.Split(Path.DirectorySeparatorChar);
+
+        if (build.ExcludeHidden) 
+        {
+            if (!Array.Exists(fileElements, element => element.StartsWith(".")))
+            {
+                return true;
+            }
+            return false;
+        }
+        else if (!build.ExcludeHidden)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+    private static void AddFilesFromPath(PackageBuildData build, string path)
     {
         if (!path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
         {
@@ -183,30 +210,21 @@ public class Packager
 
         foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
         {
-            string[] fileElements = file.Split(Path.DirectorySeparatorChar);
+            var name = Path.GetRelativePath(path, file);
 
-            if (excludeHidden)
+            if (ShouldInclude(file, build))
             {
-                if (!Array.Exists(fileElements, element => element.StartsWith(".")))
-                {
-                    var name = Path.GetRelativePath(path, file);
-                    build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
-                }
-            }
-            else if (!excludeHidden)
-            {
-                var name = Path.GetRelativePath(path, file);
                 build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
             }
         }
     }
 
-    public async Task CreatePackage(string packagePath, string inputPath, PackageBuildData build, bool excludeHidden = true)
+    public async Task CreatePackage(string packagePath, string inputPath, PackageBuildData build)
     {
         FileManager.TryToCreateDirectory(packagePath);
 
         ProgressUpdate("Enumerating files ...", 0, 1);
-        AddFilesFromPath(build, inputPath, excludeHidden);
+        AddFilesFromPath(build, inputPath);
 
         ProgressUpdate("Creating archive ...", 0, 1);
         using var writer = PackageWriterFactory.Create(build, packagePath);
