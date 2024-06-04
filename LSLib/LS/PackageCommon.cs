@@ -191,7 +191,6 @@ public class Packager
             {
                 return true;
             }
-            return false;
         }
         else if (!build.ExcludeHidden)
         {
