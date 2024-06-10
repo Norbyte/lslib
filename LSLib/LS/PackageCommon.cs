@@ -1,4 +1,6 @@
-﻿using System.IO.MemoryMappedFiles;
+using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Xml.Linq;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS;
@@ -114,10 +116,13 @@ public class PackageBuildData
     public CompressionMethod Compression = CompressionMethod.None;
     public LSCompressionLevel CompressionLevel = LSCompressionLevel.Default;
     public PackageFlags Flags = 0;
-    public byte Priority = 0;
     // Calculate full archive checksum?
     public bool Hash = false;
     public List<PackageBuildInputFile> Files = [];
+    
+    public bool ExcludeHidden { get; set; } = true;
+    public byte Priority { get; set; } = 0;
+
 }
 
 public class Packager
@@ -173,6 +178,17 @@ public class Packager
         UncompressPackage(package, outputPath, filter);
     }
 
+    public static bool ShouldInclude(string file, PackageBuildData build)
+    {
+        if (build.ExcludeHidden) 
+        {
+            var fileElements = file.Split(Path.DirectorySeparatorChar);
+
+            return Array.Exists(fileElements, element => element.StartsWith('.'));
+        }
+        return false;
+    }
+
     private static void AddFilesFromPath(PackageBuildData build, string path)
     {
         if (!path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
@@ -183,7 +199,11 @@ public class Packager
         foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
         {
             var name = Path.GetRelativePath(path, file);
-            build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
+
+            if (ShouldInclude(file, build))
+            {
+                build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
+            }
         }
     }
 
