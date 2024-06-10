@@ -120,10 +120,8 @@ public class PackageBuildData
     public bool Hash = false;
     public List<PackageBuildInputFile> Files = [];
     
-    public bool ExcludeHidden
-    { get; set; } = true;
-    public byte Priority
-    { get; set; } = 0;
+    public bool ExcludeHidden { get; set; } = true;
+    public byte Priority { get; set; } = 0;
 
 }
 
@@ -180,25 +178,16 @@ public class Packager
         UncompressPackage(package, outputPath, filter);
     }
 
-
     public static bool ShouldInclude(string file, PackageBuildData build)
     {
-        string[] fileElements = file.Split(Path.DirectorySeparatorChar);
-
         if (build.ExcludeHidden) 
         {
-            if (!Array.Exists(fileElements, element => element.StartsWith(".")))
-            {
-                return true;
-            }
-        }
-        else if (!build.ExcludeHidden)
-        {
-            return true;
+            var fileElements = file.Split(Path.DirectorySeparatorChar);
+
+            return Array.Exists(fileElements, element => element.StartsWith('.'));
         }
         return false;
     }
-
 
     private static void AddFilesFromPath(PackageBuildData build, string path)
     {
