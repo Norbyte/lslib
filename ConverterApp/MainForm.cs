@@ -16,6 +16,7 @@ namespace ConverterApp
         LocalizationPane localizationPane;
         OsirisPane osirisPane;
         DebugPane debugPane;
+        ClothPane clothPane;
 
         public ConverterAppSettings Settings { get; set; }
 
@@ -89,6 +90,14 @@ namespace ConverterApp
                 Size = debugTab.ClientSize
             };
             debugTab.Controls.Add(debugPane);
+
+            clothPane = new ClothPane(this)
+            {
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Size = clothTab.ClientSize,
+                Padding = new Padding(4),
+            };
+            clothTab.Controls.Add(clothPane);
 
             Text += $" (LSLib v{Common.LibraryVersion()})";
 
