@@ -1,4 +1,4 @@
-﻿namespace LSLib.LS;
+namespace LSLib.LS;
 
 public class FileManager
 {
@@ -12,24 +12,13 @@ public class FileManager
         }
 
         // throw exception if path is relative
-        Uri uri;
-        try
-        {
-            Uri.TryCreate(outputPath, UriKind.RelativeOrAbsolute, out uri);
-        }
-        catch (InvalidOperationException)
-        {
-            throw new ArgumentException("Cannot create directory without absolute path", nameof(path));
-        }
-
-        if (!Path.IsPathRooted(outputPath) || !uri.IsFile)
+        if (!Path.IsPathFullyQualified(outputPath))
         {
             throw new ArgumentException("Cannot create directory without absolute path", nameof(path));
         }
 
         // validate path
         outputPath = Path.GetFullPath(path);
-
         outputPath = Path.GetDirectoryName(outputPath);
 
         if (outputPath == null)
