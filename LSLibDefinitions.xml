@@ -377,7 +377,7 @@
 		<Arg Name="Template" Type="Guid" /> <!-- Root template GUID -->
 		<Arg Name="Duration" Type="SummonDurationOrInt" />
 		<Arg Name="AIHelper" Type="SpellId" />
-		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="Arg4" Type="Boolean" /> <!--Concentration?-->
 		<Arg Name="StackId" Type="String" />
 		<Arg Name="StatusToApply1" Type="StatusId" />
 		<Arg Name="StatusToApply2" Type="StatusId" />
@@ -389,8 +389,8 @@
 		<Arg Name="Distance" Type="Lua" />
 		<Arg Name="Origin" Type="ForceFunctorOrigin" />
 		<Arg Name="Aggression" Type="ForceFunctorAggression" />
-		<Arg Name="Arg4" Type="Boolean" />
-		<Arg Name="Arg5" Type="Boolean" />
+		<Arg Name="ControlArc" Type="Boolean" /> <!--Arc can be controlled with spell placement, AOE only?-J-->
+		<Arg Name="CanStand" Type="Boolean" /> <!--true:Entities will land in front of character if pulled (e.g. Target_ThornWhip), false:Entities can be flung over character-->
 	</Function>
 	<Function Type="Functor" Name="Douse" RequiredArgs="0">
 		<Arg Name="Arg1" Type="Float" />
@@ -430,10 +430,10 @@
 		<Arg Name="Nonlethal" Type="Nonlethal" />
 		<Arg Name="CoinMultiplier" Type="Int" />
 		<Arg Name="Tooltip" Type="Guid" />
-		<Arg Name="Arg7" Type="Boolean" />
-		<Arg Name="Arg8" Type="Boolean" />
-		<Arg Name="Arg9" Type="Boolean" />
-		<Arg Name="Arg10" Type="Boolean" />
+		<Arg Name="IgnoreDamageBonus" Type="Boolean" /> <!--No DamageBonus-->
+		<Arg Name="IgnoreOnDamage" Type="Boolean" /> <!--No OnDamage-->
+		<Arg Name="ConsumeCoin" Type="Boolean" /> <!--Consumes all coins, Luma-->
+		<Arg Name="IgnoreImmune" Type="Boolean" /> <!--Ignore Resistance, Immune and Damage reduction, Siaell-->
 	</Function>
 	<Function Type="Functor" Name="ExecuteWeaponFunctors" RequiredArgs="0">
 		<Arg Name="WeaponType" Type="ExecuteWeaponFunctorsType" />
@@ -462,7 +462,7 @@
 		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
 		<Arg Name="Amount" Type="String" /> <!-- Float or percentage -->
 		<Arg Name="Level" Type="Int" />
-		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="IgnoreResourceConsumeBoosts" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="UseAttack" RequiredArgs="0">
 		<Arg Name="IgnoreChecks" Type="Boolean" />
@@ -505,9 +505,9 @@
 	<Function Type="Functor" Name="SummonInInventory" RequiredArgs="1">
 		<Arg Name="TemplateId" Type="Guid" /> <!-- Root template Guid -->
 		<Arg Name="Duration" Type="SummonDurationOrInt" />
-		<Arg Name="Arg3" Type="Int" />
-		<Arg Name="Arg4" Type="Boolean" />
-		<Arg Name="Arg5" Type="Boolean" />
+		<Arg Name="Amount" Type="Int" />
+		<Arg Name="EquipItem" Type="Boolean" /> <!--Equip-->
+		<Arg Name="Arg5" Type="Boolean" /> <!--Arg5-7 Force eqiup, Prefer open slot (Main/off-hand)-->
 		<Arg Name="Arg6" Type="Boolean" />
 		<Arg Name="Arg7" Type="Boolean" />
 		<Arg Name="Arg8" Type="String" />
@@ -653,12 +653,12 @@
 	<Function Type="Boost" Name="Ability" RequiredArgs="2">
 		<Arg Name="Ability" Type="Ability" />
 		<Arg Name="Amount" Type="Int" />
-		<Arg Name="Arg3" Type="Int" />
+		<Arg Name="Arg3" Type="Int" /> <!--Valid up to this Amount-->
 	</Function>
 	<Function Type="Boost" Name="RollBonus" RequiredArgs="2">
 		<Arg Name="RollType" Type="StatsRollType" />
 		<Arg Name="Bonus" Type="Lua" />
-		<Arg Name="Arg3" Type="String" />
+		<Arg Name="Ability" Type="String" /> <!--Ability-->
 	</Function>
 	<Function Type="Boost" Name="Advantage" RequiredArgs="1">
 		<Arg Name="Type" Type="AdvantageType" />
@@ -725,7 +725,7 @@
 	<Function Type="Boost" Name="UnlockSpell" RequiredArgs="1">
 		<Arg Name="SpellId" Type="SpellId" />
 		<Arg Name="Type" Type="UnlockSpellType" />
-		<Arg Name="SpellGuid" Type="String" />  <!-- "None" or GUID or "" -->
+		<Arg Name="SpellGuid" Type="String" />  <!-- "None" or GUID or "" --><!--Resource GUID from a resource in ActionResourceGroupDefinitions, will use that resource before using others from that group-->
 		<Arg Name="Cooldown" Type="SpellCooldownType" />
 		<Arg Name="Ability" Type="Ability" />
 	</Function>
@@ -784,7 +784,7 @@
 		<Arg Name="Level" Type="Int" />
 	</Function>
 	<Function Type="Boost" Name="BlockRegainHP" RequiredArgs="0">
-		<Arg Name="Type" Type="ResurrectTypes" />
+		<Arg Name="Type" Type="ResurrectType" />
 	</Function>
 	<Function Type="Boost" Name="Initiative" RequiredArgs="1">
 		<Arg Name="Initiative" Type="Int" />
@@ -821,11 +821,11 @@
 	<Function Type="Boost" Name="Reroll" RequiredArgs="3">
 		<Arg Name="RollType" Type="StatsRollType" />
 		<Arg Name="RollBelow" Type="Int" />
-		<Arg Name="Arg3" Type="Boolean" />
+		<Arg Name="RollAlways" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="DownedStatus" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusId" />
-		<Arg Name="Arg2" Type="Int" />
+		<Arg Name="Priority" Type="Int" /> <!--Higher goes first-->
 	</Function>
 	<Function Type="Boost" Name="Invulnerable" RequiredArgs="0" />
 	<Function Type="Boost" Name="WeaponEnchantment" RequiredArgs="1">
@@ -839,10 +839,10 @@
 	</Function>
 	<Function Type="Boost" Name="IgnoreLeaveAttackRange" RequiredArgs="0" />
 	<Function Type="Boost" Name="GameplayLight" RequiredArgs="2">
-		<Arg Name="Arg1" Type="Float" />
+		<Arg Name="Distance" Type="Float" />
 		<Arg Name="Arg2" Type="Boolean" />
 		<Arg Name="Arg3" Type="Float" />
-		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="Sunlight" Type="Boolean" /> <!--for IsInSunlight-->
 	</Function>
 	<Function Type="Boost" Name="DialogueBlock" RequiredArgs="0" />
 	<Function Type="Boost" Name="DualWielding" RequiredArgs="1">
@@ -870,7 +870,7 @@
 	</Function>
 	<Function Type="Boost" Name="ACOverrideFormula" RequiredArgs="2">
 		<Arg Name="AC" Type="Int" />
-		<Arg Name="Arg2" Type="Boolean" />
+		<Arg Name="Arg2" Type="Boolean" /> <!--false not stacking with anything else-->
 		<Arg Name="Ability1" Type="Ability" />
 		<Arg Name="Ability2" Type="Ability" />
 		<Arg Name="Ability3" Type="Ability" />
@@ -974,7 +974,7 @@
 		<Arg Name="Skill" Type="SkillType" />
 	</Function>
 	<Function Type="Boost" Name="EntityThrowDamage" RequiredArgs="1">
-		<Arg Name="Die" Type="String" />
+		<Arg Name="Die" Type="String" /> <!--Int or Die-->
 		<Arg Name="DamageType" Type="Damage Type" />
 	</Function>
 	<Function Type="Boost" Name="WeaponDamageTypeOverride" RequiredArgs="1">
@@ -1006,10 +1006,10 @@
 		<Arg Name="DC" Type="Int" />
 	</Function>
 	<Function Type="Boost" Name="RedirectDamage" RequiredArgs="1">
-		<Arg Name="Arg1" Type="Float" />
-		<Arg Name="DamageType" Type="Damage Type" />
-		<Arg Name="DamageType2" Type="Damage Type" />
-		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="Multiplier" Type="Float" />
+		<Arg Name="DamageTypeOut" Type="Damage Type" />
+		<Arg Name="DamageTypeIn" Type="Damage Type" />
+		<Arg Name="RedirectToDamageSource" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="CanSeeThrough" RequiredArgs="1">
 		<Arg Name="CanSeeThrough" Type="Boolean" />
@@ -1043,7 +1043,7 @@
 		<Arg Name="Level" Type="Int" />
 	</Function>
 	<Function Type="Boost" Name="AttackSpellOverride" RequiredArgs="1">
-		<Arg Name="AttackSpell" Type="SpellId" />
+		<Arg Name="AttackSpell" Type="SpellId" /> <!--IsAttack SpellFlag Required-->
 		<Arg Name="OriginalSpell" Type="SpellId" />
 	</Function>
 	<Function Type="Boost" Name="Lock" RequiredArgs="0">
