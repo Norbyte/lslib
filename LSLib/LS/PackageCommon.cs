@@ -183,7 +183,7 @@ public class Packager
         {
             var fileElements = file.Split(Path.DirectorySeparatorChar);
 
-            return Array.Exists(fileElements, element => element.StartsWith('.'));
+            return !Array.Exists(fileElements, element => element.StartsWith('.'));
         }
         return false;
     }
