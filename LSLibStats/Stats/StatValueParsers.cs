@@ -336,6 +336,36 @@ public class LuaExpressionValidator(bool allowEmpty = false) : StatStringValidat
     }
 }
 
+public class RollConditionsValidator : StatStringValidator
+{
+    private LuaExpressionValidator LuaValidator = new();
+
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        if (value.Trim().Length == 0) return;
+
+        var valueBytes = Encoding.UTF8.GetBytes(value);
+        using var buf = new MemoryStream(valueBytes);
+        var scanner = new RollConditionScanner();
+        scanner.SetSource(buf);
+        var parser = new RollConditionParser(scanner, LuaValidator, ctx, errors);
+        var succeeded = parser.Parse();
+        if (!succeeded)
+        {
+            // FIXME pass location to error container
+            var location = scanner.LastLocation();
+            if (location.StartColumn != -1)
+            {
+                errors.Add($"Syntax error at or near character {location.StartColumn}");
+            }
+            else
+            {
+                errors.Add($"Syntax error");
+            }
+        }
+    }
+}
+
 public class UseCostsValidator(IStatReferenceValidator validator) : StatStringValidator
 {
     public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
@@ -624,9 +654,11 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
             "ConstantFloat" or "Float" => new FloatValidator(),
             "String" or "FixedString" or "TranslatedString" => new StringValidator(),
             "Guid" => new UUIDValidator(),
-            "Requirements" => new ExpressionValidator("Requirements", definitions, this, ExpressionType.Functor),
-            "StatsFunctors" => new ExpressionValidator("Properties", definitions, this, ExpressionType.Functor),
-            "Lua" or "RollConditions" or "TargetConditions" or "Conditions" => new LuaExpressionValidator(),
+            "Requirements" => new RequirementsValidator(),
+            "StatsFunctors" => new ExpressionValidator("Functors", definitions, this, ExpressionType.Functor),
+            "Lua" => new LuaExpressionValidator(),
+            "TargetConditions" or "Conditions" => new LuaExpressionValidator(true),
+            "RollConditions" => new RollConditionsValidator(),
             "UseCosts" => new UseCostsValidator(ReferenceValidator),
             "StatReference" => new StatReferenceValidator(ReferenceValidator, constraints!),
             "StatusId" => new AnyParser(new List<IStatValueValidator> {
