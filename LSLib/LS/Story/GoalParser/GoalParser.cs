@@ -85,7 +85,7 @@ public sealed partial class GoalScanner : GoalScanBase
 
     public CodeLocation LastLocation()
     {
-        return new CodeLocation(null, tokLin, tokCol, tokELin, tokECol);
+        return new CodeLocation(fileName, tokLin, tokCol, tokELin, tokECol);
     }
 }
 

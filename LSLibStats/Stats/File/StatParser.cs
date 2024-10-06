@@ -19,7 +19,7 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
 {
     protected string? fileName = null;
 
-    //public override CodeLocation yylloc { get; set; }
+    public override CodeLocation yylloc { get; set; }
     
     protected virtual bool yywrap() { return true; }
 
@@ -30,7 +30,7 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
         return MakeLiteral(Regex.Unescape(lit.Substring(1, lit.Length - 2)));
     }
 
-    protected StatProperty MakeDataProperty(int startLine, int startCol, int endLine, int endCol, string lit)
+    protected StatProperty MakeDataProperty(string fileName, int startLine, int startCol, int endLine, int endCol, string lit)
     {
         var re = new Regex(@"data\s+""([^""]+)""\s+""(.*)""\s*", RegexOptions.CultureInvariant);
         var matches = re.Match(lit);
@@ -42,8 +42,8 @@ public abstract class StatScanBase : AbstractScanner<object, CodeLocation>
         return new StatProperty(
             matches.Groups[1].Value,
             matches.Groups[2].Value,
-            new CodeLocation(null, startLine, startCol, endLine, endCol),
-            new CodeLocation(null, startLine, startCol + matches.Groups[2].Index, endLine, startCol + matches.Groups[2].Index + matches.Groups[2].Value.Length)
+            new CodeLocation(fileName, startLine, startCol, endLine, endCol),
+            new CodeLocation(fileName, startLine, startCol + matches.Groups[2].Index, endLine, startCol + matches.Groups[2].Index + matches.Groups[2].Value.Length)
         );
     }
 }
@@ -57,7 +57,7 @@ public partial class StatScanner
 
     public CodeLocation LastLocation()
     {
-        return new CodeLocation(null, tokLin, tokCol, tokELin, tokECol);
+        return new CodeLocation(fileName, tokLin, tokCol, tokELin, tokECol);
     }
 }
 
