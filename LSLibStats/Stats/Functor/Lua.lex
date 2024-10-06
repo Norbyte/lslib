@@ -7,7 +7,7 @@
 letter [a-zA-Z_]
 digit [0-9]
 namechar [a-zA-Z0-9_]
-nonseparator [^,;:()\[\]!+*/^&%~|><=.# ]
+nonseparator [^,;:()\[\]{}!+*/^&%~|><=.# ]
 
 %%
 
@@ -20,7 +20,9 @@ nonseparator [^,;:()\[\]!+*/^&%~|><=.# ]
 ","          return (int)',';
 ";"          return (int)';';
 "."          return (int)'.';
-[ ]          ;
+"{"          return (int)'{';
+"}"          return (int)'}';
+[ \t]        ;
 
 
 "nil"   return (int)StatLuaTokens.LUA_RESERVED_VAL;
