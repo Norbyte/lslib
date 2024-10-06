@@ -81,6 +81,7 @@ class StatChecker : IDisposable
         Definitions = new StatDefinitionRepository();
         Definitions.LoadEnumerations(FS.Open(resources.Mods["Shared"].ValueListsFile));
         Definitions.LoadDefinitions(FS.Open(resources.Mods["Shared"].ModifiersFile));
+        Definitions.LoadLSLibDefinitions(new FileStream("LSLibDefinitions.xml", FileMode.Open, FileAccess.Read));
     }
 
     private void CompilationDiagnostic(StatLoadingError message)
@@ -104,6 +105,16 @@ class StatChecker : IDisposable
 
         Console.WriteLine("[{0}] {1}", message.Code, message.Message);
         Console.ResetColor();
+
+        if (message.Contexts != null)
+        {
+            Console.ForegroundColor = ConsoleColor.Gray;
+            foreach (var ctx in message.Contexts)
+            {
+                Console.WriteLine($" at {ctx.Type} {ctx.Context}");
+            }
+            Console.ResetColor();
+        }
     }
 
     public void Check(List<string> mods, List<string> dependencies, List<string> packagePaths)

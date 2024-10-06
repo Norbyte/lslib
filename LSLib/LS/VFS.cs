@@ -69,6 +69,11 @@ public class VFS : IDisposable
         RootDir = path;
     }
 
+    public void DetachRoot()
+    {
+        RootDir = null;
+    }
+
     public void AttachGameDirectory(string gameDataPath, bool excludeAssets = true)
     {
         AttachRoot(gameDataPath);
