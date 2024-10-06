@@ -1,5 +1,6 @@
 ﻿using LSLib.Stats.Functors;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -67,7 +68,7 @@ public class StatFunctorType(string name, int requiredArgs, List<StatFunctorArgu
     public List<StatFunctorArgumentType> Args = args;
 }
 
-public class StatDefinitionRepository
+public partial class StatDefinitionRepository
 {
     public readonly Dictionary<string, StatEnumeration> Enumerations = [];
     public readonly Dictionary<string, StatEntryType> Types = [];
@@ -224,6 +225,7 @@ public class StatDefinitionRepository
 
     public void LoadEnumerations(Stream stream)
     {
+        var valueRe = EnumerationValueRegEx();
         StatEnumeration? curEnum = null;
         string? line;
 
@@ -239,12 +241,26 @@ public class StatDefinitionRepository
                     curEnum = new StatEnumeration(name);
                     Enumerations.Add(curEnum.Name, curEnum);
                 }
-                else if (trimmed.StartsWith("value "))
+                else
                 {
-                    var label = trimmed[7..^1];
-                    curEnum!.AddItem(label);
+                    var match = valueRe.Match(trimmed);
+                    if (match.Success)
+                    {
+                        var value = match.Groups["value"].Value;
+                        if (value != null)
+                        {
+                            curEnum!.AddItem(Int32.Parse(value), match.Groups["label"].Value);
+                        }
+                        else
+                        {
+                            curEnum!.AddItem(match.Groups["label"].Value);
+                        }
+                    }
                 }
             }
         }
     }
+
+    [GeneratedRegex("^value \"(?<label>[^\"]*)\"(\\s*:\\s*(?<value>[0-9]+))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    private static partial Regex EnumerationValueRegEx();
 }
