@@ -1,8 +1,10 @@
 ﻿using LSLib.Parser;
 using LSLib.Stats.Functors;
+using LSLib.Stats.RollConditions;
 using LSLib.Stats.StatParser;
 using System.Globalization;
 using System.Text;
+using System.Xml;
 
 namespace LSLib.Stats;
 
@@ -158,6 +160,17 @@ public class FloatValidator : StatStringValidator
     }
 }
 
+public class PercentageValidator : StatStringValidator
+{
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        value = value.Trim();
+        if (value != "" && (value[^1] != '%' || !Single.TryParse(value[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out float floatval))) {
+            errors.Add("expected a percentage value");
+        }
+    }
+}
+
 public class EnumValidator(StatEnumeration enumeration) : StatStringValidator
 {
     private readonly StatEnumeration Enumeration = enumeration ?? throw new ArgumentNullException();
@@ -247,6 +260,21 @@ public class MultiValueStatReferenceValidator(IStatReferenceValidator validator,
             if (trimmed.Length > 0)
             {
                 Validator.Validate(ctx, trimmed, errors);
+            }
+        }
+    }
+}
+
+public class MultiValueValidator(IStatValueValidator validator) : StatStringValidator
+{
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        foreach (var item in value.Split([';']))
+        {
+            var trimmed = item.Trim([' ']);
+            if (trimmed.Length > 0)
+            {
+                validator.Validate(ctx, null, trimmed, errors);
             }
         }
     }
@@ -520,13 +548,13 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
             case "DefaultBoosts":
             case "BoostsOnEquipMainHand":
             case "BoostsOnEquipOffHand":
-                return new ExpressionValidator("Properties", definitions, this, ExpressionType.Boost);
+                return new ExpressionValidator("Functors", definitions, this, ExpressionType.Boost);
 
             case "TooltipDamage":
             case "TooltipDamageList":
             case "TooltipStatusApply":
             case "TooltipConditionalDamage":
-                return new ExpressionValidator("Properties", definitions, this, ExpressionType.DescriptionParams);
+                return new ExpressionValidator("Functors", definitions, this, ExpressionType.DescriptionParams);
 
             case "DescriptionParams":
             case "ExtraDescriptionParams":
@@ -605,7 +633,8 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
                 return new UUIDValidator();
 
             case "AmountOfTargets":
-                return new LuaExpressionValidator();
+                // Allow empty, as base game sometimes uses "" for 'default'
+                return new LuaExpressionValidator(true);
         }
 
         return CreateValidator(field.Type, field.EnumType, field.ReferenceTypes, definitions);
@@ -631,13 +660,15 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
                 || type == "ProficiencyGroupFlags"
                 || type == "InterruptContext"
                 || type == "InterruptDefaultValue"
+                || type == "AbilityFlags"
                 || type == "AttributeFlags"
                 || type == "PassiveFlags"
                 || type == "ResistanceFlags"
                 || type == "LineOfSightFlags"
                 || type == "StatusPropertyFlags"
                 || type == "StatusGroupFlags"
-                || type == "StatsFunctorContext")
+                || type == "StatsFunctorContext"
+                || type == "ResurrectTypes")
             {
                 return new MultiValueEnumValidator(enumType);
             }
@@ -681,6 +712,14 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
                     new EnumValidator(definitions.Enumerations["SummonDuration"]),
                     new Int32Validator()
                 }),
+            "FloatOrPercentage" => new AnyParser(new List<IStatValueValidator> {
+                    new FloatValidator(),
+                    new PercentageValidator()
+                }, "Expected a float or percentage value"),
+            "LuaOrPercentage" => new AnyParser(new List<IStatValueValidator> {
+                    new PercentageValidator(),
+                    new LuaExpressionValidator(false)
+                }, "Expected a Lua expression or a percentage value"),
             "AllOrDamageType" => new AnyParser(new List<IStatValueValidator> {
                     new EnumValidator(definitions.Enumerations["AllEnum"]),
                     new EnumValidator(definitions.Enumerations["Damage Type"]),
@@ -692,6 +731,10 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
             "AbilityOrAttackRollAbility" => new AnyParser(new List<IStatValueValidator> {
                     new EnumValidator(definitions.Enumerations["Ability"]),
                     new EnumValidator(definitions.Enumerations["AttackRollAbility"]),
+                }),
+            "AbilityOrSkill" => new AnyParser(new List<IStatValueValidator> {
+                    new EnumValidator(definitions.Enumerations["Ability"]),
+                    new EnumValidator(definitions.Enumerations["SkillType"]),
                 }),
             "DamageTypeOrDealDamageWeaponDamageType" => new AnyParser(new List<IStatValueValidator> {
                     new EnumValidator(definitions.Enumerations["Damage Type"]),
@@ -709,10 +752,16 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
             "TreasureSubtableObject" => new ObjectListValidator(PropertyValidator, definitions.Types["TreasureSubtableObject"]),
             "TreasureDrop" => new TreasureDropValidator(ReferenceValidator),
             "StatusIDs" =>
-                new MultiValueStatReferenceValidator(ReferenceValidator,
-                [
-                    new StatReferenceConstraint { StatType = "StatusData" }
-                ]),
+                new MultiValueValidator(
+                    new AnyParser([
+                        new EnumValidator(definitions.Enumerations["StatusGroupFlags"]),
+                        new EnumValidator(definitions.Enumerations["EngineStatusType"]),
+                        new StatReferenceValidator(ReferenceValidator,
+                        [
+                            new StatReferenceConstraint { StatType = "StatusData" }
+                        ])
+                    ])
+                ),
         _ => throw new ArgumentException($"Could not create parser for type '{type}'"),
         };
     }

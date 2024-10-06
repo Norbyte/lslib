@@ -177,7 +177,7 @@
 		<Label>RangedUnarmedDamage</Label>
 	</Enumeration>
 
-	<Enumeration Name="AdvantageType">
+	<Enumeration Name="AdvantageContext">
 		<Label>AttackRoll</Label>
 		<Label>AttackTarget</Label>
 		<Label>SavingThrow</Label>
@@ -368,7 +368,7 @@
 	<Function Type="Functor" Name="Resurrect" RequiredArgs="0">
 		<Arg Name="Chance" Type="Float" />
 		<Arg Name="HealthPercentage" Type="Float" />
-		<Arg Name="Type" Type="ResurrectType" />
+		<Arg Name="Type" Type="ResurrectTypes" />
 	</Function>
 	<Function Type="Functor" Name="Sabotage" RequiredArgs="0">
 		<Arg Name="Amount" Type="Int" />
@@ -409,8 +409,6 @@
 		<Arg Name="Duration" Type="Float" />
 		<Arg Name="SurfaceType" Type="Surface Type" />
 		<Arg Name="IsControlledByConcentration" Type="Boolean" />
-		<Arg Name="Arg5" Type="Float" />
-		<Arg Name="Arg6" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="CreateConeSurface" RequiredArgs="3">
 		<Arg Name="Radius" Type="Float" />
@@ -457,15 +455,17 @@
 		<Arg Name="IgnoreChecks" Type="Boolean" />
 		<Arg Name="Arg4" Type="Boolean" />
 		<Arg Name="SpellCastGuid" Type="Guid" />
+    <Arg Name="Arg6" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="UseActionResource" RequiredArgs="1">
 		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
-		<Arg Name="Amount" Type="String" /> <!-- Float or percentage -->
+		<Arg Name="Amount" Type="FloatOrPercentage" />
 		<Arg Name="Level" Type="Int" />
 		<Arg Name="IgnoreResourceConsumeBoosts" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="UseAttack" RequiredArgs="0">
 		<Arg Name="IgnoreChecks" Type="Boolean" />
+    <Arg Name="Arg2" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="CreateExplosion" RequiredArgs="0">
 		<Arg Name="SpellId" Type="SpellId" />
@@ -484,7 +484,7 @@
 	</Function>
 	<Function Type="Functor" Name="RestoreResource" RequiredArgs="2">
 		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
-		<Arg Name="Amount" Type="Lua" /> <!-- or percentage? -->
+		<Arg Name="Amount" Type="LuaOrPercentage" />
 		<Arg Name="Level" Type="Int" />
 	</Function>
 	<Function Type="Functor" Name="Spawn" RequiredArgs="1">
@@ -653,22 +653,23 @@
 	<Function Type="Boost" Name="Ability" RequiredArgs="2">
 		<Arg Name="Ability" Type="Ability" />
 		<Arg Name="Amount" Type="Int" />
-		<Arg Name="Arg3" Type="Int" /> <!--Valid up to this Amount-->
+		<Arg Name="Cap" Type="Int" />
+		<Arg Name="Arg4" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="RollBonus" RequiredArgs="2">
 		<Arg Name="RollType" Type="StatsRollType" />
 		<Arg Name="Bonus" Type="Lua" />
-		<Arg Name="Ability" Type="String" /> <!--Ability-->
+		<Arg Name="AbilityOrSkill" Type="AbilityOrSkill" />
 	</Function>
 	<Function Type="Boost" Name="Advantage" RequiredArgs="1">
-		<Arg Name="Type" Type="AdvantageType" />
+		<Arg Name="Type" Type="AdvantageContext" />
 		<Arg Name="Arg2" Type="String" /> <!-- Depends on type -->
 		<Arg Name="Tag1" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag2" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag3" Type="String" /> <!-- TagManager resource -->
 	</Function>
 	<Function Type="Boost" Name="Disadvantage" RequiredArgs="1">
-		<Arg Name="Type" Type="AdvantageType" />
+		<Arg Name="Type" Type="AdvantageContext" />
 		<Arg Name="Arg2" Type="String" /> <!-- Depends on type -->
 		<Arg Name="Tag1" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag2" Type="String" /> <!-- TagManager resource -->
@@ -734,7 +735,7 @@
 	</Function>
 	<Function Type="Boost" Name="ProficiencyBonus" RequiredArgs="1">
 		<Arg Name="Type" Type="ProficiencyBonusBoostType" />
-		<Arg Name="Arg2" Type="String" />
+		<Arg Name="AbilityOrSkill" Type="AbilityOrSkill" />
 	</Function>
 	<Function Type="Boost" Name="BlockSpellCast" RequiredArgs="0">
 		<Arg Name="Arg1" Type="Float" />
@@ -784,7 +785,7 @@
 		<Arg Name="Level" Type="Int" />
 	</Function>
 	<Function Type="Boost" Name="BlockRegainHP" RequiredArgs="0">
-		<Arg Name="Type" Type="ResurrectType" />
+		<Arg Name="Type" Type="ResurrectTypes" />
 	</Function>
 	<Function Type="Boost" Name="Initiative" RequiredArgs="1">
 		<Arg Name="Initiative" Type="Int" />
@@ -867,6 +868,7 @@
 	<Function Type="Boost" Name="AbilityOverrideMinimum" RequiredArgs="2">
 		<Arg Name="Ability" Type="Ability" />
 		<Arg Name="Minimum" Type="Int" />
+		<Arg Name="Arg3" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="ACOverrideFormula" RequiredArgs="2">
 		<Arg Name="AC" Type="Int" />
@@ -936,6 +938,7 @@
 		<Arg Name="Modification13" Type="Lua" />
 		<Arg Name="Modification14" Type="Lua" />
 		<Arg Name="Modification15" Type="Lua" />
+		<Arg Name="Modification16" Type="Lua" />
 	</Function>
 	<Function Type="Boost" Name="DetectDisturbancesBlock" RequiredArgs="1">
 		<Arg Name="Arg1" Type="Boolean" />
@@ -1096,4 +1099,16 @@
 	</Function>
 	<Function Type="Boost" Name="EnableBasicItemInteractions" RequiredArgs="0" />
 	<Function Type="Boost" Name="SoundsBlocked" RequiredArgs="0" />
+  <Function Type="Boost" Name="ProficiencyBonusIncrease" RequiredArgs="1">
+    <Arg Name="Amount" Type="Int" />
+  </Function>
+  <Function Type="Boost" Name="NoDamageOnThrown" RequiredArgs="0" />
+  <Function Type="Boost" Name="DamageTakenBonus" RequiredArgs="1">
+    <Arg Name="Lua" Type="Amount" />
+    <Arg Name="DamageType" Type="Damage Type" />
+    <Arg Name="Arg3" Type="Boolean" />
+  </Function>
+  <Function Type="Boost" Name="ReceivingCriticalDamageOnHit" RequiredArgs="0">
+    <Arg Name="Arg1" Type="Float" />
+  </Function>
 </Definitions>
