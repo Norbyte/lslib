@@ -183,6 +183,18 @@ public partial class FunctorParser
         Action = action as FunctorAction
     };
 
+    private object MakeFunctorOrTextKeyFunctors(object context, object condition, object action)
+    {
+        if (action is FunctorAction)
+        {
+            return MakeFunctor(context, condition, action);
+        }
+        else
+        {
+            return action;
+        }
+    }
+
     private List<string> MakeArgumentList() => new();
 
     private List<string> AddArgument(object arguments, object arg)

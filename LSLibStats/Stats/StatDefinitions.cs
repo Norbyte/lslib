@@ -24,9 +24,9 @@ public class StatEnumeration(string name)
         ValueToIndexMap.TryAdd(value, index);
     }
 
-    public void AddItem(string value)
+    public void AddItem(string label)
     {
-        AddItem(Values.Count, value);
+        AddItem(Values.Count, label);
     }
 }
 

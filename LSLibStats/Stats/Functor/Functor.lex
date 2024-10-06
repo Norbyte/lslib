@@ -18,11 +18,6 @@ nonseparator [^,;:()\[\]! ]
 /* Reserved words */
 "IF"         return (int)FunctorTokens.IF;
 
-/* Text keys */
-"CastOffhand" return (int)FunctorTokens.TEXT_KEY;
-"Cast2" return (int)FunctorTokens.TEXT_KEY;
-"Cast3" return (int)FunctorTokens.TEXT_KEY;
-
 /* Stats contexts */
 "ABILITY_CHECK"     return (int)FunctorTokens.CONTEXT;
 "ACTION_RESOURCES_CHANGED"     return (int)FunctorTokens.CONTEXT;
@@ -78,7 +73,7 @@ nonseparator [^,;:()\[\]! ]
 "!"          return (int)'!';
 "-"          return (int)'-';
 "."          return (int)'.';
-[ ]          ;
+[ \t]        ;
 
 {letter}({namechar})+ { yylval = MakeLiteral(yytext); return (int)FunctorTokens.NAME; }
 (-)?{digit}({digit})* { yylval = MakeLiteral(yytext); return (int)FunctorTokens.INTEGER; }

@@ -18,8 +18,6 @@
 %token CONTEXT
 /* Status/Tag name */
 %token NAME
-/* Known text keys */
-%token TEXT_KEY
 /* Integer literal */
 %token INTEGER
 /* Text-like (unquoted) literal */
@@ -30,7 +28,7 @@
 %%
 
 /* A special "trigger word" is prepended to support parsing multiple types from the same lexer/parser */
-Root : EXPR_FUNCTORS Functors { $$ = $2; }
+Root : EXPR_FUNCTORS TopLevelFunctors { $$ = $2; }
      | EXPR_DESCRIPTION_PARAMS OptionalArgs { $$ = $2; }
      ;
 
@@ -40,17 +38,25 @@ Root : EXPR_FUNCTORS Functors { $$ = $2; }
  *
  ******************************************************************/
  
+TopLevelFunctors : /* empty */ { $$ = MakeFunctorList(); }
+                 | TopLevelFunctor { $$ = AddFunctor(MakeFunctorList(), $1); }
+                 | TopLevelFunctors ';'
+                 | TopLevelFunctors ';' TopLevelFunctor { $$ = AddFunctor($1, $3); }
+                 ;
+
+TopLevelFunctor : Contexts Condition CallOrTextKeyFunctor { $$ = MakeFunctorOrTextKeyFunctors($1, $2, $3); };
+
+CallOrTextKeyFunctor : NAME '[' Functors ']' { $$ = SetTextKey($3, $1); }
+                     | Call
+                     ;
+ 
 Functors : /* empty */ { $$ = MakeFunctorList(); }
          | Functor { $$ = AddFunctor(MakeFunctorList(), $1); }
          | Functors ';'
          | Functors ';' Functor { $$ = AddFunctor($1, $3); }
          ;
 
-TextKeyFunctors : TEXT_KEY '[' Functors ']' { $$ = SetTextKey($3, $1); };
-
-Functor : Contexts Condition Call { $$ = MakeFunctor($1, $2, $3); }
-        | TextKeyFunctors
-        ;
+Functor : Contexts Condition Call { $$ = MakeFunctor($1, $2, $3); };
 
 Contexts : /* empty */
          | ContextList { $$ = $1; }
