@@ -282,10 +282,38 @@ public class ExpressionValidator(String validatorType, StatDefinitionRepository 
     }
 }
 
-public class LuaExpressionValidator : StatStringValidator
+public class RequirementsValidator : StatStringValidator
 {
     public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
     {
+        var valueBytes = Encoding.UTF8.GetBytes(value);
+        using var buf = new MemoryStream(valueBytes);
+        var scanner = new Requirements.RequirementScanner();
+        scanner.SetSource(buf);
+        var parser = new Requirements.RequirementParser(scanner);
+        var succeeded = parser.Parse();
+        if (!succeeded)
+        {
+            // FIXME pass location to error container
+            var location = scanner.LastLocation();
+            if (location.StartColumn != -1)
+            {
+                errors.Add($"Syntax error at or near character {location.StartColumn}");
+            }
+            else
+            {
+                errors.Add($"Syntax error");
+            }
+        }
+    }
+}
+
+public class LuaExpressionValidator(bool allowEmpty = false) : StatStringValidator
+{
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        if (allowEmpty && value.Trim().Length == 0) return;
+
         var valueBytes = Encoding.UTF8.GetBytes(value);
         using var buf = new MemoryStream(valueBytes);
         var scanner = new Lua.StatLuaScanner();
