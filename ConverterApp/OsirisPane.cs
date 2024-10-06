@@ -16,11 +16,11 @@ namespace ConverterApp
     {
         private Story _story;
         public Game Game;
-        
+
         private ConverterAppSettings Settings { get; }
 
         private readonly List<KeyValuePair<uint, string>> _databaseItems = new List<KeyValuePair<uint, string>>();
-        
+
         public OsirisPane(ISettingsDataSource settingsDataSource)
         {
             InitializeComponent();
@@ -29,11 +29,12 @@ namespace ConverterApp
 
             storyFilePath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.InputPath", true, DataSourceUpdateMode.OnPropertyChanged);
             goalPath.DataBindings.Add("Text", settingsDataSource, "Settings.Story.OutputPath", true, DataSourceUpdateMode.OnPropertyChanged);
-            tbFilter.DataBindings.Add("Text", settingsDataSource, "Settings.Story.FilterText", true, DataSourceUpdateMode.OnPropertyChanged);
+            tbDbFilter.DataBindings.Add("Text", settingsDataSource, "Settings.Story.DbFilterText", true, DataSourceUpdateMode.OnPropertyChanged);
+            tbEntryFilter.DataBindings.Add("Text", settingsDataSource, "Settings.Story.EntryFilterText", true, DataSourceUpdateMode.OnPropertyChanged);
             btnFilterMatchCase.DataBindings.Add("Tag", settingsDataSource, "Settings.Story.FilterMatchCase", true, DataSourceUpdateMode.OnPropertyChanged);
-            
+
             btnFilterMatchCase.BackColor = Color.FromKnownColor(Settings.Story.FilterMatchCase ? KnownColor.MenuHighlight : KnownColor.Control);
-            
+
             databaseSelectorCb.DisplayMember = "Value";
             databaseSelectorCb.ValueMember = "Key";
         }
@@ -73,7 +74,7 @@ namespace ConverterApp
                 _databaseItems.Add(new KeyValuePair<uint, string>(index, name));
                 index += 1;
             }
-            
+
             databaseSelectorCb_FilterDropdownList();
             RefreshDataGrid();
         }
@@ -82,7 +83,7 @@ namespace ConverterApp
         {
             var packageReader = new PackageReader();
             using var package = packageReader.Read(path);
-            
+
             var abstractFileInfo = package.Files.FirstOrDefault(p => p.Name.ToLowerInvariant() == "globals.lsf");
             if (abstractFileInfo == null)
             {
@@ -105,33 +106,33 @@ namespace ConverterApp
             switch (extension)
             {
                 case ".lsv":
-                {
-                    using (var saveHelpers = new SavegameHelpers(storyFilePath.Text))
                     {
-                        _story = saveHelpers.LoadStory();
-                        LoadStory();
-                    }
+                        using (var saveHelpers = new SavegameHelpers(storyFilePath.Text))
+                        {
+                            _story = saveHelpers.LoadStory();
+                            LoadStory();
+                        }
 
-                    MessageBox.Show("Save game database loaded successfully.");
-                    break;
-                }
+                        MessageBox.Show("Save game database loaded successfully.");
+                        break;
+                    }
                 case ".osi":
-                {
-                    using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        var reader = new StoryReader();
-                        _story = reader.Read(file);
-                        LoadStory();
-                    }
+                        using (var file = new FileStream(storyFilePath.Text, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            var reader = new StoryReader();
+                            _story = reader.Read(file);
+                            LoadStory();
+                        }
 
-                    MessageBox.Show("Story file loaded successfully.");
-                    break;
-                }
+                        MessageBox.Show("Story file loaded successfully.");
+                        break;
+                    }
                 default:
-                {
-                    MessageBox.Show($"Unsupported file extension: {extension}", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    break;
-                }
+                    {
+                        MessageBox.Show($"Unsupported file extension: {extension}", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
             }
         }
 
@@ -184,22 +185,22 @@ namespace ConverterApp
             switch (extension)
             {
                 case ".lsv":
-                {
-                    SaveSavegameDatabase();
-                    MessageBox.Show("Save game database save successful.");
-                    break;
-                }
+                    {
+                        SaveSavegameDatabase();
+                        MessageBox.Show("Save game database save successful.");
+                        break;
+                    }
                 case ".osi":
-                {
-                    SaveStory();
-                    MessageBox.Show("Story file save successful.");
-                    break;
-                }
+                    {
+                        SaveStory();
+                        MessageBox.Show("Story file save successful.");
+                        break;
+                    }
                 default:
-                {
-                    MessageBox.Show($"Unsupported file extension: {extension}", "Story save failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    break;
-                }
+                    {
+                        MessageBox.Show($"Unsupported file extension: {extension}", "Story save failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
             }
         }
 
@@ -255,39 +256,104 @@ namespace ConverterApp
 
         private void databaseSelectorCb_FilterDropdownList()
         {
-            tbFilter.BackColor = Color.FromKnownColor(KnownColor.Window);
+            tbDbFilter.BackColor = Color.FromKnownColor(KnownColor.Window);
 
-            if (tbFilter.Text.Trim().Length == 0)
+            if (tbDbFilter.Text.Trim().Length == 0)
             {
-                tbFilter.Text = string.Empty;
+                tbDbFilter.Text = string.Empty;
                 databaseSelectorCb.DataSource = _databaseItems;
-                return;
-            }
-
-            List<KeyValuePair<uint, string>> queryResults;
-
-            if (Settings.Story.FilterMatchCase == false)
-            {
-                queryResults = _databaseItems
-                    .Where(s => s.Value.ToLowerInvariant().Contains(tbFilter.Text.ToLowerInvariant()))
-                    .ToList();
+                //return;
             }
             else
             {
-                queryResults = _databaseItems
-                    .Where(s => s.Value.Contains(tbFilter.Text))
-                    .ToList();
+                List<KeyValuePair<uint, string>> queryResults;
+
+                if (Settings.Story.FilterMatchCase == false)
+                {
+                    queryResults = _databaseItems
+                        .Where(s => s.Value.ToLowerInvariant().Contains(tbDbFilter.Text.ToLowerInvariant()))
+                        .ToList();
+                }
+                else
+                {
+                    queryResults = _databaseItems
+                        .Where(s => s.Value.Contains(tbDbFilter.Text))
+                        .ToList();
+                }
+
+                if (queryResults.Any())
+                {
+                    databaseSelectorCb.DataSource = queryResults;
+                    databaseSelectorCb.SelectedIndex = 0;
+                }
+                else
+                {
+                    tbDbFilter.BackColor = Color.LightCoral;
+                }
             }
 
-            if (queryResults.Any())
+            tbEntryFilter.BackColor = Color.FromKnownColor(KnownColor.Window);
+            if (tbEntryFilter.Text.Trim().Length == 0)
             {
-                databaseSelectorCb.DataSource = queryResults;
-                databaseSelectorCb.SelectedIndex = 0;
+                tbEntryFilter.Text = string.Empty;
+                //return;
             }
             else
             {
-                tbFilter.BackColor = Color.LightCoral;
+                List<object> queryResults;
+                queryResults = new List<object>();
+
+                if (Settings.Story.FilterMatchCase == false)
+                {
+                    databaseGrid.DataSource = null;
+                    databaseGrid.Columns.Clear();
+                    for (uint i = 0; i < databaseSelectorCb.Items.Count; i++)
+                    {
+                        uint index = ((KeyValuePair<uint, string>)databaseSelectorCb.Items[(int)i]).Key + 1;
+                        Database database = _story.Databases[index];
+
+                        bool queryResultsBool = _story.Databases[index].Facts.Any(FactList =>
+                            FactList.Columns.Any(ColumnList =>
+                            ColumnList.ToString() != null && ColumnList.ToString().ToLowerInvariant().Contains(tbEntryFilter.Text.ToLowerInvariant())));
+
+                        if (queryResultsBool)
+                        {
+                            queryResults.Add(databaseSelectorCb.Items[(int)i]);
+                        }
+                    }
+
+                }
+                else
+                {
+                    databaseGrid.DataSource = null;
+                    databaseGrid.Columns.Clear();
+                    for (uint i = 0; i < databaseSelectorCb.Items.Count; i++)
+                    {
+                        uint index = ((KeyValuePair<uint, string>)databaseSelectorCb.Items[(int)i]).Key + 1;
+                        Database database = _story.Databases[index];
+
+                        bool queryResultsBool = _story.Databases[index].Facts.Any(FactList =>
+                            FactList.Columns.Any(ColumnList =>
+                            ColumnList.ToString() != null && ColumnList.ToString().Contains(tbEntryFilter.Text)));
+
+                        if (queryResultsBool)
+                        {
+                            queryResults.Add(databaseSelectorCb.Items[(int)i]);
+                        }
+                    }
+                }
+
+                if (queryResults.Any())
+                {
+                    databaseSelectorCb.DataSource = queryResults;
+                    databaseSelectorCb.SelectedIndex = 0;
+                }
+                else
+                {
+                    tbEntryFilter.BackColor = Color.LightCoral;
+                }
             }
+
         }
 
         private void RefreshDataGrid()
@@ -335,7 +401,7 @@ namespace ConverterApp
 
             btnFilterMatchCase.BackColor = Color.FromKnownColor(Settings.Story.FilterMatchCase ? KnownColor.MenuHighlight : KnownColor.Control);
 
-            if (tbFilter.Text.Trim().Length > 0)
+            if (tbDbFilter.Text.Trim().Length > 0 || tbEntryFilter.Text.Trim().Length > 0)
                 databaseSelectorCb_FilterDropdownList();
         }
     }
