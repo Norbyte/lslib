@@ -31,6 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="lz4net" Version="1.0.15.93" />
+    <PackageReference Include="Supercluster.KDTree.Standard" Version="1.0.5" />
     <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
     <PackageReference Include="ZstdSharp.Port" Version="0.7.4" />
   </ItemGroup>

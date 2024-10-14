@@ -77,6 +77,8 @@ public class ConverterAppSettings : SettingsBase
         set { debugSettings = value; }
     }
 
+    public ClothPaneSettings Cloth { get; set; }
+
     private Game selectedGame = Game.BaldursGate3;
 
     public int SelectedGame
@@ -100,6 +102,7 @@ public class ConverterAppSettings : SettingsBase
         PAK.PropertyChanged += eventHandler;
         Resources.PropertyChanged += eventHandler;
         Story.PropertyChanged += eventHandler;
+        Cloth.PropertyChanged += eventHandler;
     }
 
     public ConverterAppSettings()
@@ -110,6 +113,7 @@ public class ConverterAppSettings : SettingsBase
         VirtualTextures = new VirtualTexturesPaneSettings();
         Story = new OsirisPaneSettings();
         Debugging = new DebugPaneSettings();
+        Cloth = new ClothPaneSettings();
     }
 }
 
@@ -340,6 +344,17 @@ public class DebugPaneSettings : SettingsBase
     {
         get { return savePath; }
         set { savePath = value; OnPropertyChanged(); }
+    }
+}
+
+public class ClothPaneSettings : SettingsBase
+{
+    private string inputPath = "";
+
+    public string InputPath
+    {
+        get => inputPath;
+        set { inputPath = value; OnPropertyChanged(); }
     }
 }
 
