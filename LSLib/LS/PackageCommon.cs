@@ -1,6 +1,4 @@
-using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Xml.Linq;
 using LSLib.LS.Enums;
 
 namespace LSLib.LS;
@@ -177,19 +175,27 @@ public class Packager
         UncompressPackage(package, outputPath, filter);
     }
 
-    public static bool ShouldInclude(string file, PackageBuildData build)
+    public static bool ShouldInclude(string file, string relPath, PackageBuildData build, PackIgnore ignore)
     {
+        if (ignore.IsIgnored(relPath))
+        {
+            return false;
+        }
+
         if (build.ExcludeHidden) 
         {
             var fileElements = file.Split(Path.DirectorySeparatorChar);
 
             return !Array.Exists(fileElements, element => element.StartsWith('.'));
         }
-        return false;
+
+        return true;
     }
 
     private static void AddFilesFromPath(PackageBuildData build, string path)
     {
+        var packIgnore = new PackIgnore(path);
+
         if (!path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.InvariantCultureIgnoreCase))
         {
             path += Path.DirectorySeparatorChar;
@@ -197,11 +203,11 @@ public class Packager
 
         foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories))
         {
-            var name = Path.GetRelativePath(path, file);
+            var relPath = Path.GetRelativePath(path, file);
 
-            if (ShouldInclude(file, build))
+            if (ShouldInclude(file, relPath, build, packIgnore))
             {
-                build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, name));
+                build.Files.Add(PackageBuildInputFile.CreateFromFilesystem(file, relPath));
             }
         }
     }
