@@ -58,6 +58,3 @@ public class PackIgnore
         return new Regex("^" + pattern + "$", RegexOptions.IgnoreCase);
     }    
 }
-
-
-
