@@ -32,7 +32,6 @@ public class PackIgnore
 
     public bool IsIgnored(string relativePath)
     {
-
         string normalizedPath = relativePath.Replace("\\", "/");
 
         foreach (var pattern in ignorePatterns)
@@ -57,7 +56,7 @@ public class PackIgnore
         }
 
         return new Regex("^" + pattern + "$", RegexOptions.IgnoreCase);
-    }
+    }    
 }
 
 
