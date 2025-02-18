@@ -2,6 +2,8 @@
 
 namespace LSLib.LS.Story;
 
+using System.Globalization;
+
 public class Fact : OsirisSerializable
 {
     public List<Value> Columns;
@@ -121,7 +123,7 @@ internal class FactPropertyDescriptor : PropertyDescriptor
 
             case Value.Type.Float:
                 {
-                    if (value is String) column.FloatValue = Single.Parse((String)value);
+                    if (value is String) column.FloatValue = Single.Parse((String)value, CultureInfo.InvariantCulture);
                     else if (value is Single) column.FloatValue = (Single)value;
                     else throw new ArgumentException("Invalid float value");
                     break;

@@ -37,6 +37,7 @@ using System.Text.RegularExpressions;
 
 namespace LSLib.LS;
 
+using System.Globalization;
 
 public class Matrix
 {
@@ -257,7 +258,7 @@ public class Matrix
             for (int i = 0; i < rows.Length; i++)
             {
                 nums = rows[i].Split(' ');
-                for (int j = 0; j < nums.Length; j++) matrix[i, j] = double.Parse(nums[j]);
+                for (int j = 0; j < nums.Length; j++) matrix[i, j] = double.Parse(nums[j], CultureInfo.InvariantCulture);
             }
         }
         catch (FormatException) { throw new MException("Wrong input format!"); }
