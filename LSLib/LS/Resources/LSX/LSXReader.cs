@@ -4,6 +4,8 @@ using System.Xml;
 
 namespace LSLib.LS;
 
+using System.Globalization;
+
 public class LSXReader(Stream stream) : IDisposable
 {
     private Stream stream = stream;
@@ -215,27 +217,27 @@ public class LSXReader(Stream stream) : IDisposable
             case "float2":
                 {
                     var val = (float[])LastAttribute.Value;
-                    val[ValueOffset++] = Single.Parse(reader["x"]);
-                    val[ValueOffset++] = Single.Parse(reader["y"]);
+                    val[ValueOffset++] = Single.Parse(reader["x"], CultureInfo.InvariantCulture);
+                    val[ValueOffset++] = Single.Parse(reader["y"], CultureInfo.InvariantCulture);
                     break;
                 }
 
             case "float3":
                 {
                     var val = (float[])LastAttribute.Value;
-                    val[ValueOffset++] = Single.Parse(reader["x"]);
-                    val[ValueOffset++] = Single.Parse(reader["y"]);
-                    val[ValueOffset++] = Single.Parse(reader["z"]);
+                    val[ValueOffset++] = Single.Parse(reader["x"], CultureInfo.InvariantCulture);
+                    val[ValueOffset++] = Single.Parse(reader["y"], CultureInfo.InvariantCulture);
+                    val[ValueOffset++] = Single.Parse(reader["z"], CultureInfo.InvariantCulture);
                     break;
                 }
 
             case "float4":
                 {
                     var val = (float[])LastAttribute.Value;
-                    val[ValueOffset++] = Single.Parse(reader["x"]);
-                    val[ValueOffset++] = Single.Parse(reader["y"]);
-                    val[ValueOffset++] = Single.Parse(reader["z"]);
-                    val[ValueOffset++] = Single.Parse(reader["w"]);
+                    val[ValueOffset++] = Single.Parse(reader["x"], CultureInfo.InvariantCulture);
+                    val[ValueOffset++] = Single.Parse(reader["y"], CultureInfo.InvariantCulture);
+                    val[ValueOffset++] = Single.Parse(reader["z"], CultureInfo.InvariantCulture);
+                    val[ValueOffset++] = Single.Parse(reader["w"], CultureInfo.InvariantCulture);
                     break;
                 }
 

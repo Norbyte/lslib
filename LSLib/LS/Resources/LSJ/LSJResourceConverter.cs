@@ -4,6 +4,8 @@ using System.Numerics;
 
 namespace LSLib.LS;
 
+using System.Globalization;
+
 public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConverter
 {
     private LSMetadata Metadata;
@@ -200,11 +202,11 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
                             break;
 
                         case AttributeType.Float:
-                            attribute.Value = Convert.ToSingle(reader.Value);
+                            attribute.Value = Convert.ToSingle(reader.Value, CultureInfo.InvariantCulture);
                             break;
 
                         case AttributeType.Double:
-                            attribute.Value = Convert.ToDouble(reader.Value);
+                            attribute.Value = Convert.ToDouble(reader.Value, CultureInfo.InvariantCulture);
                             break;
 
                         case AttributeType.Bool:
@@ -304,7 +306,7 @@ public class LSJResourceConverter(NodeSerializationSettings settings) : JsonConv
 
                                 float[] vec = new float[length];
                                 for (int i = 0; i < length; i++)
-                                    vec[i] = float.Parse(nums[i]);
+                                    vec[i] = float.Parse(nums[i], CultureInfo.InvariantCulture);
 
                                 attribute.Value = vec;
                                 break;

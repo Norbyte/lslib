@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace LSLib.LS;
 
+using System.Globalization;
+
 public class TranslatedString
 {
     public UInt16 Version = 0;
@@ -243,12 +245,12 @@ public class NodeAttribute(AttributeType type)
             case AttributeType.IVec2:
             case AttributeType.IVec3:
             case AttributeType.IVec4:
-                return String.Join(" ", new List<int>((int[])value).ConvertAll(i => i.ToString()).ToArray());
+                return String.Join(" ", new List<int>((int[])value).ConvertAll(i => i.ToString(CultureInfo.InvariantCulture)).ToArray());
 
             case AttributeType.Vec2:
             case AttributeType.Vec3:
             case AttributeType.Vec4:
-                return String.Join(" ", new List<float>((float[])value).ConvertAll(i => i.ToString()).ToArray());
+                return String.Join(" ", new List<float>((float[])value).ConvertAll(i => i.ToString(CultureInfo.InvariantCulture)).ToArray());
 
             case AttributeType.UUID:
                 if (settings.ByteSwapGuids)
@@ -259,6 +261,12 @@ public class NodeAttribute(AttributeType type)
                 {
                     return value.ToString();
                 }
+
+            case AttributeType.Float:
+                return ((float) value).ToString(CultureInfo.InvariantCulture);
+
+            case AttributeType.Double:
+                return ((double) value).ToString(CultureInfo.InvariantCulture);
 
             default:
                 return value.ToString();
