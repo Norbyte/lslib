@@ -41,7 +41,7 @@ public class GLTFExporter
     private void ExportMeshBinding(Model model, Skeleton skeleton, MeshBinding meshBinding, SceneBuilder scene)
     {
         var meshId = MeshIds[meshBinding.Mesh];
-        var exporter = new GLTFMeshExporter(meshBinding.Mesh, meshId, Options);
+        var exporter = new GLTFMeshExporter(meshBinding.Mesh, meshId);
         var mesh = exporter.Export();
 
         if (skeleton == null || !meshBinding.Mesh.VertexFormat.HasBoneWeights)

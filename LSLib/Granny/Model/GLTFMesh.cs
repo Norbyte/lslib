@@ -45,7 +45,7 @@ public class GLTFMesh
 
     private void ImportVertices(IPrimitiveReader<MaterialBuilder> primitives)
     {
-        BuildHelper = new GLTFVertexBuildHelper("", OutputVertexType, Options);
+        BuildHelper = new GLTFVertexBuildHelper("", OutputVertexType);
 
         Vertices = new List<Vertex>(primitives.Vertices.Count);
         foreach (var vert in primitives.Vertices)
@@ -193,7 +193,7 @@ public class GLTFMesh
         ImportTriangles(primitives);
         ImportVertices(primitives);
 
-        if (!HasNormals || Options.RecalculateNormals)
+        if (!HasNormals)
         {
             HasNormals = true;
             OutputVertexType.NormalType = NormalType.Float3;
@@ -202,7 +202,8 @@ public class GLTFMesh
 
         if ((InputVertexType.TangentType == NormalType.None
             || InputVertexType.BinormalType == NormalType.None)
-            && ((!HasTangents && InputVertexType.TextureCoordinates > 0) || Options.RecalculateTangents))
+            && !HasTangents 
+            && InputVertexType.TextureCoordinates > 0)
         {
             OutputVertexType.TangentType = NormalType.Float3;
             OutputVertexType.BinormalType = NormalType.Float3;

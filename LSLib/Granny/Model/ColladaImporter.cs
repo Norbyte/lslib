@@ -488,15 +488,8 @@ public class ColladaImporter
             OriginalToConsolidatedVertexIndexMap = collada.OriginalToConsolidatedVertexIndexMap
         };
 
-        if (!Options.StripMetadata)
-        {
-            var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
-            m.PrimaryVertexData.VertexComponentNames = components;
-        }
-        else
-        {
-            m.PrimaryVertexData.VertexComponentNames = null;
-        }
+        var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
+        m.PrimaryVertexData.VertexComponentNames = components;
 
         MakeExtendedData(mesh, m);
 
@@ -894,8 +887,8 @@ public class ColladaImporter
 
         var root = Root.CreateEmpty();
         root.ArtToolInfo = ImportArtToolInfo(collada);
-        root.ExporterInfo = Options.StripMetadata ? null : ImportExporterInfo(collada);
-        root.FromFileName = inputPath;
+        root.ExporterInfo = ImportExporterInfo(collada);
+        root.FromFileName = "";
 
         ColladaGeometries = [];
         SkinnedMeshes = [];

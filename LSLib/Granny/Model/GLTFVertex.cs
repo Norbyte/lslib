@@ -417,7 +417,6 @@ public class GLTFVertexBuildHelper
 {
     private readonly string ExportedId;
     private readonly VertexDescriptor VertexFormat;
-    private readonly ExporterOptions Options;
 
     private GLTFVertexBuilder GeometryBuilder;
     private GLTFVertexBuilder MaterialBuilder;
@@ -432,16 +431,15 @@ public class GLTFVertexBuildHelper
     private bool HasNormals;
     private bool HasTangents;
 
-    public GLTFVertexBuildHelper(string exportedId, VertexDescriptor vertexFormat, ExporterOptions options)
+    public GLTFVertexBuildHelper(string exportedId, VertexDescriptor vertexFormat)
     {
         ExportedId = exportedId;
         VertexFormat = vertexFormat;
-        Options = options;
 
-        HasNormals = Options.ExportNormals && VertexFormat.NormalType != NormalType.None;
-        HasTangents = Options.ExportTangents && VertexFormat.TangentType != NormalType.None;
-        UVs = Options.ExportUVs ? VertexFormat.TextureCoordinates : 0;
-        ColorMaps = Options.ExportColors ? VertexFormat.ColorMaps : 0;
+        HasNormals = VertexFormat.NormalType != NormalType.None;
+        HasTangents = VertexFormat.TangentType != NormalType.None;
+        UVs = VertexFormat.TextureCoordinates;
+        ColorMaps = VertexFormat.ColorMaps;
 
         SelectGeometryBuilder();
         SelectMaterialBuilder();
@@ -570,10 +568,10 @@ public class GLTFVertexBuildHelper
     }
 }
 
-public class GLTFMeshExporter(Mesh mesh, string exportedId, ExporterOptions options)
+public class GLTFMeshExporter(Mesh mesh, string exportedId)
 {
-    private Mesh ExportedMesh = mesh;
-    private GLTFVertexBuildHelper BuildHelper = new(exportedId, mesh.VertexFormat, options);
+    private readonly Mesh ExportedMesh = mesh;
+    private readonly GLTFVertexBuildHelper BuildHelper = new(exportedId, mesh.VertexFormat);
 
     public IMeshBuilder<MaterialBuilder> Export()
     {

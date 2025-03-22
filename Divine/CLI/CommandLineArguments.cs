@@ -329,15 +329,7 @@ public class CommandLineArguments
     {
         var results = new Dictionary<string, bool>
         {
-            { "export-normals", true },
-            { "export-tangents", true },
-            { "export-uvs", true },
-            { "export-colors", true },
             { "deduplicate-vertices", true },
-            { "deduplicate-uvs", true },
-            { "recalculate-normals", false },
-            { "recalculate-tangents", false },
-            { "recalculate-iwt", false },
             { "flip-uvs", true },
             { "ignore-uv-nan", true },
             { "disable-qtangents", false },
@@ -349,7 +341,17 @@ public class CommandLineArguments
             { "x-flip-skeletons", false },
             { "x-flip-meshes", false },
             { "conform", false },
-            { "conform-copy", false }
+            { "conform-copy", false },
+            
+            // Deprecated options, no longer in use
+            { "export-normals", true },
+            { "export-tangents", true },
+            { "export-uvs", true },
+            { "export-colors", true },
+            { "recalculate-normals", false },
+            { "recalculate-tangents", false },
+            { "recalculate-iwt", false },
+            { "deduplicate-uvs", true }
         };
 
         if (options == null)

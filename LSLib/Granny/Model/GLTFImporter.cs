@@ -11,18 +11,6 @@ public class GLTFImporter
     public ExporterOptions Options = new();
     public List<Mesh> ImportedMeshes;
 
-    private ExporterInfo MakeExporterInfo()
-    {
-        return new ExporterInfo
-        {
-            ExporterName = $"LSLib GR2 Exporter v{Common.LibraryVersion()}",
-            ExporterMajorRevision = Common.MajorVersion,
-            ExporterMinorRevision = Common.MinorVersion,
-            ExporterBuildNumber = 0,
-            ExporterCustomization = Common.PatchVersion
-        };
-    }
-
     private DivinityModelFlag DetermineSkeletonModelFlagsFromModels(Root root, Skeleton skeleton, DivinityModelFlag meshFlagOverrides)
     {
         DivinityModelFlag accumulatedFlags = 0;
@@ -191,15 +179,8 @@ public class GLTFImporter
             MaterialBindings = [new MaterialBinding()]
         };
 
-        if (!Options.StripMetadata)
-        {
-            var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
-            m.PrimaryVertexData.VertexComponentNames = components;
-        }
-        else
-        {
-            m.PrimaryVertexData.VertexComponentNames = null;
-        }
+        var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
+        m.PrimaryVertexData.VertexComponentNames = components;
 
         var ext = FindMeshExtension(modelRoot, name);
         MakeExtendedData(content, ext, m);
@@ -414,7 +395,7 @@ public class GLTFImporter
         var root = Root.CreateEmpty();
         root.ArtToolInfo = ArtToolInfo.CreateDefault();
         root.ArtToolInfo.SetYUp();
-        root.ExporterInfo = Options.StripMetadata ? null : MakeExporterInfo();
+        root.ExporterInfo = ExporterInfo.MakeCurrent();
         root.FromFileName = inputPath;
 
         ImportedMeshes = [];

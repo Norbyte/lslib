@@ -1,4 +1,5 @@
 ﻿using LSLib.Granny.GR2;
+using LSLib.LS;
 
 namespace LSLib.Granny.Model;
 
@@ -58,4 +59,16 @@ public class ExporterInfo
     public Int32 ExporterBuildNumber;
     [Serialization(Type = MemberType.VariantReference, MinVersion = 0x80000011)]
     public object ExtendedData;
+
+    public static ExporterInfo MakeCurrent()
+    {
+        return new ExporterInfo
+        {
+            ExporterName = $"LSLib GR2 Exporter v{Common.LibraryVersion()}",
+            ExporterMajorRevision = Common.MajorVersion,
+            ExporterMinorRevision = Common.MinorVersion,
+            ExporterBuildNumber = 0,
+            ExporterCustomization = Common.PatchVersion
+        };
+    }
 }

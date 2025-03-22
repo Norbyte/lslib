@@ -410,10 +410,9 @@ public class ColladaMesh
 
         // TODO: This should be done before deduplication!
         // TODO: Move this to somewhere else ... ?
-        if (!HasNormals || Options.RecalculateNormals)
+        if (!HasNormals)
         {
-            if (!HasNormals)
-                Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
+            Utils.Info(String.Format("Channel 'NORMAL' not found, will rebuild vertex normals after import."));
 
             HasNormals = true;
             OutputVertexType.NormalType = NormalType.Float3;
@@ -497,10 +496,10 @@ public class ColladaMesh
 
         if ((InputVertexType.TangentType == NormalType.None 
             || InputVertexType.BinormalType == NormalType.None)
-            && ((!HasTangents && UVs.Count > 0) || Options.RecalculateTangents))
+            && !HasTangents 
+            && UVs.Count > 0)
         {
-            if (!HasTangents)
-                Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
+            Utils.Info(String.Format("Channel 'TANGENT'/'BINROMAL' not found, will rebuild vertex tangents after import."));
 
             OutputVertexType.TangentType = NormalType.Float3;
             OutputVertexType.BinormalType = NormalType.Float3;
