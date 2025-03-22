@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using LSLib.Granny;
 using LSLib.Granny.GR2;
 using LSLib.Granny.Model;
 using LSLib.LS.Enums;
@@ -27,8 +28,8 @@ internal class CommandLineGR2Processor
         {
             InputPath = CommandLineActions.SourcePath,
             OutputPath = CommandLineActions.DestinationPath,
-            InputFormat = Program.argv.InputFormat != null ? CommandLineArguments.GetModelFormatByString(Program.argv.InputFormat) : CommandLineArguments.GetModelFormatByPath(CommandLineActions.SourcePath),
-            OutputFormat = Program.argv.OutputFormat != null ? CommandLineArguments.GetModelFormatByString(Program.argv.OutputFormat) : CommandLineArguments.GetModelFormatByPath(CommandLineActions.DestinationPath),
+            InputFormat = Program.argv.InputFormat != null ? GR2Utils.FileExtensionToModelFormat("." + Program.argv.InputFormat) : GR2Utils.PathExtensionToModelFormat(CommandLineActions.SourcePath),
+            OutputFormat = Program.argv.OutputFormat != null ? GR2Utils.FileExtensionToModelFormat("." + Program.argv.OutputFormat) : GR2Utils.PathExtensionToModelFormat(CommandLineActions.DestinationPath),
             ExportNormals = GR2Options["export-normals"],
             ExportTangents = GR2Options["export-tangents"],
             ExportUVs = GR2Options["export-uvs"],

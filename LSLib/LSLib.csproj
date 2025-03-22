@@ -26,13 +26,15 @@
     <ProjectReference Include="..\LSLibNative\LSLibNative.vcxproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="OpenTK.Mathematics" Version="4.8.2" />
+    <PackageReference Include="OpenTK.Mathematics" Version="4.9.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="lz4net" Version="1.0.15.93" />
-    <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
-    <PackageReference Include="ZstdSharp.Port" Version="0.7.4" />
+    <PackageReference Include="SharpGLTF.Core" Version="1.0.3" />
+    <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.3" />
+    <PackageReference Include="System.IO.Hashing" Version="9.0.2" />
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.5" />
   </ItemGroup>
   <PropertyGroup />
   <PropertyGroup>

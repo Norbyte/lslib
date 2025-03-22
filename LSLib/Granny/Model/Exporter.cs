@@ -11,7 +11,9 @@ public class ExportException(string message) : Exception(message)
 public enum ExportFormat
 {
     GR2,
-    DAE
+    DAE,
+    GLTF,
+    GLB
 };
 
 public enum DivinityModelInfoFormat
@@ -82,7 +84,6 @@ public class ExporterOptions
     public bool ConformAnimations = true;
     public bool ConformMeshBoneBindings = true;
     public bool ConformModels = true;
-    public Dictionary<string, VertexDescriptor> VertexFormats = [];
     // Extended model info format to use when exporting to D:OS
     public DivinityModelInfoFormat ModelInfoFormat = DivinityModelInfoFormat.None;
     // Model flags to use when exporting
@@ -176,6 +177,15 @@ public class Exporter
         return importer.Import(inPath);
     }
 
+    private Root LoadGLTF(string inPath)
+    {
+        var importer = new GLTFImporter
+        {
+            Options = Options
+        };
+        return importer.Import(inPath);
+    }
+
     private Root Load(string inPath, ExportFormat format)
     {
         switch (format)
@@ -185,6 +195,10 @@ public class Exporter
 
             case ExportFormat.DAE:
                 return LoadDAE(inPath);
+
+            case ExportFormat.GLTF:
+            case ExportFormat.GLB:
+                return LoadGLTF(inPath);
 
             default:
                 throw new NotImplementedException("Unsupported input format");
@@ -225,6 +239,15 @@ public class Exporter
         exporter.Export(root, options.OutputPath);
     }
 
+    private void SaveGLTF(Root root, ExporterOptions options)
+    {
+        var exporter = new GLTFExporter
+        {
+            Options = options
+        };
+        exporter.Export(root, options.OutputPath);
+    }
+
     private void Save(Root root, ExporterOptions options)
     {
         switch (options.OutputFormat)
@@ -236,6 +259,11 @@ public class Exporter
 
             case ExportFormat.DAE:
                 SaveDAE(root, options);
+                break;
+
+            case ExportFormat.GLTF:
+            case ExportFormat.GLB:
+                SaveGLTF(root, options);
                 break;
 
             default:

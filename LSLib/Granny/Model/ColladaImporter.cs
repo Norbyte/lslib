@@ -455,11 +455,11 @@ public class ColladaImporter
         }
     }
 
-    private Mesh ImportMesh(geometry geom, mesh mesh, VertexDescriptor vertexFormat)
+    private Mesh ImportMesh(geometry geom, mesh mesh)
     {
         var collada = new ColladaMesh();
         bool isSkinned = SkinnedMeshes.Contains(geom.id);
-        collada.ImportFromCollada(mesh, vertexFormat, isSkinned, Options);
+        collada.ImportFromCollada(mesh, isSkinned, Options);
 
         var m = new Mesh
         {
@@ -508,9 +508,9 @@ public class ColladaImporter
         return m;
     }
 
-    private Mesh ImportMesh(Root root, string name, geometry geom, mesh mesh, VertexDescriptor vertexFormat)
+    private Mesh ImportMesh(Root root, string name, geometry geom, mesh mesh)
     {
-        var m = ImportMesh(geom, mesh, vertexFormat);
+        var m = ImportMesh(geom, mesh);
         m.Name = name;
         root.VertexDatas.Add(m.PrimaryVertexData);
         root.TriTopologies.Add(m.PrimaryTopology);
@@ -790,71 +790,9 @@ public class ColladaImporter
 
         if (Options.RecalculateOBBs)
         {
-            UpdateOBBs(root.Skeletons.Single(), mesh);
+            VertexHelpers.UpdateOBBs(root.Skeletons.Single(), mesh);
         }
     }
-
-    class OBB
-    {
-        public Vector3 Min, Max;
-        public int NumVerts = 0;
-    }
-
-    private void UpdateOBBs(Skeleton skeleton, Mesh mesh)
-    {
-        if (mesh.BoneBindings == null || mesh.BoneBindings.Count == 0) return;
-        
-        var obbs = new List<OBB>(mesh.BoneBindings.Count);
-        for (var i = 0; i < mesh.BoneBindings.Count; i++)
-        {
-            obbs.Add(new OBB
-            {
-                Min = new Vector3(1000.0f, 1000.0f, 1000.0f),
-                Max = new Vector3(-1000.0f, -1000.0f, -1000.0f),
-            });
-        }
-        
-        foreach (var vert in mesh.PrimaryVertexData.Vertices)
-        {
-            for (var i = 0; i < Vertex.MaxBoneInfluences; i++)
-            {
-                if (vert.BoneWeights[i] > 0)
-                {
-                    var bi = vert.BoneIndices[i];
-                    var obb = obbs[bi];
-                    obb.NumVerts++;
-
-                    var bone = skeleton.GetBoneByName(mesh.BoneBindings[bi].BoneName);
-                    var invWorldTransform = ColladaHelpers.FloatsToMatrix(bone.InverseWorldTransform);
-                    var transformed = Vector3.TransformPosition(vert.Position, invWorldTransform);
-
-                    obb.Min.X = Math.Min(obb.Min.X, transformed.X);
-                    obb.Min.Y = Math.Min(obb.Min.Y, transformed.Y);
-                    obb.Min.Z = Math.Min(obb.Min.Z, transformed.Z);
-
-                    obb.Max.X = Math.Max(obb.Max.X, transformed.X);
-                    obb.Max.Y = Math.Max(obb.Max.Y, transformed.Y);
-                    obb.Max.Z = Math.Max(obb.Max.Z, transformed.Z);
-                }
-            }
-        }
-
-        for (var i = 0; i < obbs.Count; i++)
-        {
-            var obb = obbs[i];
-            if (obb.NumVerts > 0)
-            {
-                mesh.BoneBindings[i].OBBMin = [obb.Min.X, obb.Min.Y, obb.Min.Z];
-                mesh.BoneBindings[i].OBBMax = [obb.Max.X, obb.Max.Y, obb.Max.Z];
-            }
-            else
-            {
-                mesh.BoneBindings[i].OBBMin = [0.0f, 0.0f, 0.0f];
-                mesh.BoneBindings[i].OBBMax = [0.0f, 0.0f, 0.0f];
-            }
-        }
-    }
-
     private void LoadColladaLSLibProfileData(animation anim, TrackGroup loaded)
     {
         var technique = FindExporterExtraData(anim.extra);
@@ -954,21 +892,10 @@ public class ColladaImporter
 
         LoadColladaLSLibProfileData(collada);
 
-        var root = new Root
-        {
-            ArtToolInfo = ImportArtToolInfo(collada),
-            ExporterInfo = Options.StripMetadata ? null : ImportExporterInfo(collada),
-
-            FromFileName = inputPath,
-
-            Skeletons = [],
-            VertexDatas = [],
-            TriTopologies = [],
-            Meshes = [],
-            Models = [],
-            TrackGroups = [],
-            Animations = []
-        };
+        var root = Root.CreateEmpty();
+        root.ArtToolInfo = ImportArtToolInfo(collada);
+        root.ExporterInfo = Options.StripMetadata ? null : ImportExporterInfo(collada);
+        root.FromFileName = inputPath;
 
         ColladaGeometries = [];
         SkinnedMeshes = [];
@@ -1063,9 +990,7 @@ public class ColladaImporter
 
         foreach (var geometry in collGeometries)
         {
-            // Use the override vertex format, if one was specified
-            Options.VertexFormats.TryGetValue(geometry.name, out VertexDescriptor vertexFormat);
-            var mesh = ImportMesh(root, geometry.name, geometry, geometry.Item as mesh, vertexFormat);
+            var mesh = ImportMesh(root, geometry.name, geometry, geometry.Item as mesh);
             ColladaGeometries.Add(geometry.id, mesh);
         }
 

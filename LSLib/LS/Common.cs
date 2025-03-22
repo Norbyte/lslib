@@ -14,12 +14,15 @@ public static class Common
 {
 	public const int MajorVersion = 1;
 
-	public const int MinorVersion = 19;
+	public const int MinorVersion = 20;
 
-	public const int PatchVersion = 5;
+	public const int PatchVersion = 0;
 
 	// Version of LSTools profile data in generated DAE files
     public const int ColladaMetadataVersion = 3;
+
+	// Version of LSTools profile data in generated GLTF files
+    public const int GLTFMetadataVersion = 3;
 
     /// <summary>
     /// Returns the version number of the LSLib library

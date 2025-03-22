@@ -21,18 +21,31 @@ public class ArtToolInfo
     [Serialization(Type = MemberType.VariantReference, MinVersion = 0x80000011)]
     public object ExtendedData;
 
+    public static ArtToolInfo CreateDefault()
+    {
+        return new ArtToolInfo
+        {
+            FromArtToolName = "",
+            ArtToolMajorRevision = 1,
+            ArtToolMinorRevision = 0,
+            ArtToolPointerSize = 64,
+            UnitsPerMeter = 1,
+            Origin = [0, 0, 0]
+        };
+    }
+
     public void SetYUp()
     {
-        RightVector = new float[] { 1, 0, 0 };
-        UpVector = new float[] { 0, 1, 0 };
-        BackVector = new float[] { 0, 0, -1 };
+        RightVector = [1, 0, 0];
+        UpVector = [0, 1, 0];
+        BackVector = [0, 0, -1];
     }
 
     public void SetZUp()
     {
-        RightVector = new float[] { 1, 0, 0 };
-        UpVector = new float[] { 0, 0, 1 };
-        BackVector = new float[] { 0, 1, 0 };
+        RightVector = [1, 0, 0];
+        UpVector = [0, 0, 1];
+        BackVector = [0, 1, 0];
     }
 }
 

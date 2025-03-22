@@ -62,7 +62,7 @@ public class CommandLineArguments
     [EnumeratedValueArgument(typeof(string), 'i', "input-format",
         Description = "Set input format for batch operations",
         DefaultValue = null,
-        AllowedValues = "dae;gr2;lsv;pak;lsj;lsx;lsb;lsf",
+        AllowedValues = "dae;glb;gltf;gr2;lsv;pak;lsj;lsx;lsb;lsf",
         ValueOptional = false,
         Optional = true
     )]
@@ -72,7 +72,7 @@ public class CommandLineArguments
     [EnumeratedValueArgument(typeof(string), 'o', "output-format",
         Description = "Set output format for batch operations",
         DefaultValue = null,
-        AllowedValues = "dae;gr2;lsv;pak;lsj;lsx;lsb;lsf",
+        AllowedValues = "dae;glb;gltf;gr2;lsv;pak;lsj;lsx;lsb;lsf",
         ValueOptional = false,
         Optional = true
     )]
@@ -234,36 +234,6 @@ public class CommandLineArguments
                 throw new ArgumentException($"Unknown game: \"{game}\"");
             }
         }
-    }
-
-    public static ExportFormat GetModelFormatByString(string format)
-    {
-        switch (format.ToLower())
-        {
-            case "gr2":
-            {
-                return ExportFormat.GR2;
-            }
-            case "dae":
-            {
-                return ExportFormat.DAE;
-            }
-            default:
-            {
-                throw new ArgumentException($"Unknown model format: {format}");
-            }
-        }
-    }
-
-    public static ExportFormat GetModelFormatByPath(string path)
-    {
-        string extension = Path.GetExtension(path);
-        if (extension != null)
-        {
-            return GetModelFormatByString(extension.Substring(1));
-        }
-
-        throw new ArgumentException($"Could not determine model format from filename: {path}");
     }
 
     // ReSharper disable once RedundantCaseLabel

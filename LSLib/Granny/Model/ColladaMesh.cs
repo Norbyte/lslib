@@ -71,112 +71,6 @@ public class ColladaMesh
         }
     }
 
-    void computeTangents()
-    {
-        // Check if the vertex format has at least one UV set
-        if (ConsolidatedVertices.Count > 0)
-        {
-            var v = ConsolidatedVertices[0];
-            if (v.Format.TextureCoordinates == 0)
-            {
-                throw new InvalidOperationException("At least one UV set is required to recompute tangents");
-            }
-        }
-
-        foreach (var v in ConsolidatedVertices)
-        {
-            v.Tangent = Vector3.Zero;
-            v.Binormal = Vector3.Zero;
-        }
-
-        for (int i = 0; i < TriangleCount; i++)
-        {
-            var i1 = ConsolidatedIndices[i * 3 + 0];
-            var i2 = ConsolidatedIndices[i * 3 + 1];
-            var i3 = ConsolidatedIndices[i * 3 + 2];
-
-            var vert1 = ConsolidatedVertices[i1];
-            var vert2 = ConsolidatedVertices[i2];
-            var vert3 = ConsolidatedVertices[i3];
-
-            var v1 = vert1.Position;
-            var v2 = vert2.Position;
-            var v3 = vert3.Position;
-
-            var w1 = vert1.TextureCoordinates0;
-            var w2 = vert2.TextureCoordinates0;
-            var w3 = vert3.TextureCoordinates0;
-
-            float x1 = v2.X - v1.X;
-            float x2 = v3.X - v1.X;
-            float y1 = v2.Y - v1.Y;
-            float y2 = v3.Y - v1.Y;
-            float z1 = v2.Z - v1.Z;
-            float z2 = v3.Z - v1.Z;
-
-            float s1 = w2.X - w1.X;
-            float s2 = w3.X - w1.X;
-            float t1 = w2.Y - w1.Y;
-            float t2 = w3.Y - w1.Y;
-
-            float r = 1.0F / (s1 * t2 - s2 * t1);
-
-            if ((Single.IsNaN(r) || Single.IsInfinity(r)) && !Options.IgnoreUVNaN)
-            {
-                throw new Exception($"Couldn't calculate tangents; the mesh most likely contains non-manifold geometry.{Environment.NewLine}"
-                    + $"UV1: {w1}{Environment.NewLine}UV2: {w2}{Environment.NewLine}UV3: {w3}");
-            }
-
-            var sdir = new Vector3(
-                (t2 * x1 - t1 * x2) * r,
-                (t2 * y1 - t1 * y2) * r,
-                (t2 * z1 - t1 * z2) * r
-            );
-            var tdir = new Vector3(
-                (s1 * x2 - s2 * x1) * r,
-                (s1 * y2 - s2 * y1) * r,
-                (s1 * z2 - s2 * z1) * r
-            );
-
-            vert1.Tangent += sdir;
-            vert2.Tangent += sdir;
-            vert3.Tangent += sdir;
-
-            vert1.Binormal += tdir;
-            vert2.Binormal += tdir;
-            vert3.Binormal += tdir;
-        }
-
-        foreach (var v in ConsolidatedVertices)
-        {
-            var n = v.Normal;
-            var t = v.Tangent;
-            var b = v.Binormal;
-
-            // Gram-Schmidt orthogonalize
-            var tangent = (t - n * Vector3.Dot(n, t)).Normalized();
-
-            // Calculate handedness
-            var w = (Vector3.Dot(Vector3.Cross(n, t), b) < 0.0F) ? 1.0F : -1.0F;
-            var binormal = (Vector3.Cross(n, t) * w).Normalized();
-
-            v.Tangent = tangent;
-            v.Binormal = binormal;
-        }
-    }
-
-    private Vector3 triangleNormalFromVertex(int[] indices, int vertexIndex)
-    {
-        // This assumes that A->B->C is a counter-clockwise ordering
-        var a = Vertices[indices[vertexIndex]].Position;
-        var b = Vertices[indices[(vertexIndex + 1) % 3]].Position;
-        var c = Vertices[indices[(vertexIndex + 2) % 3]].Position;
-
-        var N = Vector3.Cross(b - a, c - a);
-        float sin_alpha = N.Length / ((b - a).Length * (c - a).Length);
-        return N.Normalized() * (float)Math.Asin(sin_alpha);
-    }
-
     private int VertexIndexCount()
     {
         return Indices.Count / InputOffsetCount;
@@ -203,7 +97,7 @@ public class ColladaMesh
                         VertexIndex(baseIdx + 1),
                         VertexIndex(baseIdx + 2)
                     };
-                    N += triangleNormalFromVertex(indices, triVertIdx - baseIdx);
+                    N += VertexHelpers.TriangleNormalFromVertex(Vertices, indices, triVertIdx - baseIdx);
                 }
             }
 
@@ -488,14 +382,14 @@ public class ColladaMesh
         return desc;
     }
 
-    public void ImportFromCollada(mesh mesh, VertexDescriptor vertexFormat, bool isSkinned, ExporterOptions options)
+    public void ImportFromCollada(mesh mesh, bool isSkinned, ExporterOptions options)
     {
         Options = options;
         Mesh = mesh;
         ImportSources();
         ImportFaces();
 
-        vertexFormat ??= FindVertexFormat(isSkinned);
+        var vertexFormat = FindVertexFormat(isSkinned);
 
         InputVertexType = vertexFormat;
         OutputVertexType = new VertexDescriptor
@@ -611,7 +505,7 @@ public class ColladaMesh
             OutputVertexType.TangentType = NormalType.Float3;
             OutputVertexType.BinormalType = NormalType.Float3;
             HasTangents = true;
-            computeTangents();
+            VertexHelpers.ComputeTangents(ConsolidatedVertices, ConsolidatedIndices, Options.IgnoreUVNaN);
         }
 
         // Use optimized tangent, texture map and color map format when exporting for D:OS 2

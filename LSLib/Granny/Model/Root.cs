@@ -34,6 +34,19 @@ public class Root
     [Serialization(Kind = SerializationKind.None)]
     public UInt32 GR2Tag;
 
+    public static Root CreateEmpty()
+    {
+        return new Root
+        {
+            Skeletons = [],
+            VertexDatas = [],
+            TriTopologies = [],
+            Meshes = [],
+            Models = [],
+            TrackGroups = [],
+            Animations = []
+        };
+    }
 
     public void TransformVertices(Matrix4 transformation)
     {

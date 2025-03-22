@@ -227,14 +227,10 @@ namespace ConverterApp
             UpdateCommonExporterSettings(settings);
 
             settings.InputPath = inputPath.Text;
-            var inputExtension = Path.GetExtension(settings.InputPath)?.ToLower();
-            bool inputIsGr2 = inputExtension == ".gr2" || inputExtension == ".lsm";
-            settings.InputFormat = inputIsGr2 ? ExportFormat.GR2 : ExportFormat.DAE;
+            settings.InputFormat = GR2Utils.PathExtensionToModelFormat(settings.InputPath);
 
             settings.OutputPath = outputPath.Text;
-            var outputExtension = Path.GetExtension(settings.OutputPath)?.ToLower();
-            bool outputIsGr2 = outputExtension == ".gr2" || outputExtension == ".lsm";
-            settings.OutputFormat = outputIsGr2 ? ExportFormat.GR2 : ExportFormat.DAE;
+            settings.OutputFormat = GR2Utils.PathExtensionToModelFormat(settings.OutputPath);
 
             foreach (ListViewItem item in exportableObjects.Items)
             {
@@ -315,11 +311,14 @@ namespace ConverterApp
 
         private void loadInputBtn_Click(object sender, EventArgs e)
         {
+#if !DEBUG
             string nl = Environment.NewLine;
 
             try
             {
-                LoadFile(inputPath.Text);
+#endif
+            LoadFile(inputPath.Text);
+#if !DEBUG
             }
             catch (ParsingException exc)
             {
@@ -329,6 +328,7 @@ namespace ConverterApp
             {
                 MessageBox.Show($"Internal error!{nl}{nl}{exc}", "Import Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+#endif
         }
 
         private void conformToSkeleton_CheckedChanged(object sender, EventArgs e)
@@ -420,14 +420,26 @@ namespace ConverterApp
             }
         }
 
+        private ExportFormat IndexToExportFormat(int index)
+        {
+            return index switch
+            {
+                0 => ExportFormat.GR2,
+                1 => ExportFormat.DAE,
+                2 => ExportFormat.GLTF,
+                3 => ExportFormat.GLB,
+                _ => throw new InvalidDataException()
+            };
+        }
+
         private void GR2BatchConvertBtn_Click(object sender, EventArgs e)
         {
             gr2BatchConvertBtn.Enabled = false;
             var exporter = new Exporter();
             UpdateCommonExporterSettings(exporter.Options);
 
-            exporter.Options.InputFormat = gr2BatchInputFormat.SelectedIndex == 0 ? ExportFormat.GR2 : ExportFormat.DAE;
-            exporter.Options.OutputFormat = gr2BatchOutputFormat.SelectedIndex == 0 ? ExportFormat.GR2 : ExportFormat.DAE;
+            exporter.Options.InputFormat = IndexToExportFormat(gr2BatchInputFormat.SelectedIndex);
+            exporter.Options.OutputFormat = IndexToExportFormat(gr2BatchOutputFormat.SelectedIndex);
 
             var batchConverter = new GR2Utils
             {

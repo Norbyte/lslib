@@ -185,6 +185,18 @@ public class Skeleton
     [Serialization(Kind = SerializationKind.None)]
     public bool IsDummy = false;
 
+    public static Skeleton CreateEmpty(string name)
+    {
+        return new Skeleton
+        {
+            Bones = [],
+            LODType = 1,
+            Name = name,
+            BonesBySID = [],
+            BonesByID = []
+        };
+    }
+
     public static Skeleton FromCollada(node root)
     {
         var skeleton = new Skeleton
