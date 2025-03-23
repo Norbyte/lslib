@@ -34,6 +34,7 @@ internal class Program
         catch (Exception e)
         {
             Console.WriteLine($"[FATAL] {e.Message}");
+            Environment.Exit(1);
         }
 #endif
 
