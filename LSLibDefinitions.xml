@@ -361,9 +361,9 @@
 	<Function Type="Functor" Name="SurfaceChange" RequiredArgs="1">
 		<Arg Name="SurfaceChange" Type="Surface Change" />
 		<Arg Name="Chance" Type="Float" />
-		<Arg Name="Arg3" Type="Float" />
+		<Arg Name="DetourMaxWaitTime" Type="Float" />
 		<Arg Name="Arg4" Type="Float" />
-		<Arg Name="Arg5" Type="Float" />
+		<Arg Name="Radius" Type="Float" />
 	</Function>
 	<Function Type="Functor" Name="Resurrect" RequiredArgs="0">
 		<Arg Name="Chance" Type="Float" />
@@ -376,14 +376,15 @@
 	<Function Type="Functor" Name="Summon" RequiredArgs="1">
 		<Arg Name="Template" Type="Guid" /> <!-- Root template GUID -->
 		<Arg Name="Duration" Type="SummonDurationOrInt" />
-		<Arg Name="AIHelper" Type="SpellId" />
-		<Arg Name="Arg4" Type="Boolean" /> <!--Concentration?-->
+		<Arg Name="AiSpellOverride" Type="SpellId" />
+		<Arg Name="ExtendExistingConcentration" Type="Boolean" />
 		<Arg Name="StackId" Type="String" />
 		<Arg Name="StatusToApply1" Type="StatusId" />
 		<Arg Name="StatusToApply2" Type="StatusId" />
 		<Arg Name="StatusToApply3" Type="StatusId" />
 		<Arg Name="StatusToApply4" Type="StatusId" />
-		<Arg Name="Arg10" Type="Boolean" />
+		<Arg Name="LateJoinPenalty" Type="Boolean" />
+		<Arg Name="UseOwnerPassives" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="Force" RequiredArgs="1">
 		<Arg Name="Distance" Type="Lua" />
@@ -393,7 +394,7 @@
 		<Arg Name="CanStand" Type="Boolean" /> <!--true:Entities will land in front of character if pulled (e.g. Target_ThornWhip), false:Entities can be flung over character-->
 	</Function>
 	<Function Type="Functor" Name="Douse" RequiredArgs="0">
-		<Arg Name="Arg1" Type="Float" />
+		<Arg Name="Radius" Type="Float" />
 		<Arg Name="Arg2" Type="Float" />
 	</Function>
 	<Function Type="Functor" Name="SwapPlaces" RequiredArgs="0">
@@ -402,7 +403,7 @@
 		<Arg Name="Arg3" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="Pickup" RequiredArgs="0">
-		<Arg Name="Arg1" Type="String" />
+		<Arg Name="Effect" Type="String" />
 	</Function>
 	<Function Type="Functor" Name="CreateSurface" RequiredArgs="3">
 		<Arg Name="Radius" Type="Float" />
@@ -415,8 +416,6 @@
 		<Arg Name="Duration" Type="Float" />
 		<Arg Name="SurfaceType" Type="Surface Type" />
 		<Arg Name="IsControlledByConcentration" Type="Boolean" />
-		<Arg Name="Arg5" Type="Float" />
-		<Arg Name="Arg6" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="RemoveStatus" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusIdOrGroup" />
@@ -441,8 +440,8 @@
 		<Arg Name="Type" Type="ResurrectType" />
 	</Function>
 	<Function Type="Functor" Name="TeleportSource" RequiredArgs="0">
-		<Arg Name="Arg1" Type="Boolean" />
-		<Arg Name="Arg2" Type="Boolean" />
+		<Arg Name="FindValidPosition" Type="Boolean" />
+		<Arg Name="RotateTowardsTarget" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="SetStatusDuration" RequiredArgs="2">
 		<Arg Name="StatusId" Type="StatusId" />
@@ -455,7 +454,7 @@
 		<Arg Name="IgnoreChecks" Type="Boolean" />
 		<Arg Name="Arg4" Type="Boolean" />
 		<Arg Name="SpellCastGuid" Type="Guid" />
-    <Arg Name="Arg6" Type="Boolean" />
+    <Arg Name="IgnoreBlindness" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="UseActionResource" RequiredArgs="1">
 		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
@@ -465,7 +464,7 @@
 	</Function>
 	<Function Type="Functor" Name="UseAttack" RequiredArgs="0">
 		<Arg Name="IgnoreChecks" Type="Boolean" />
-    <Arg Name="Arg2" Type="Boolean" />
+    <Arg Name="IgnoreBlindness" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="CreateExplosion" RequiredArgs="0">
 		<Arg Name="SpellId" Type="SpellId" />
@@ -494,7 +493,7 @@
 		<Arg Name="StatusToApply2" Type="StatusId" />
 		<Arg Name="StatusToApply3" Type="StatusId" />
 		<Arg Name="StatusToApply4" Type="StatusId" />
-		<Arg Name="Arg7" Type="Boolean" />
+		<Arg Name="ApplyLateJoinPenalty" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="Stabilize" RequiredArgs="0" />
 	<Function Type="Functor" Name="Unlock" RequiredArgs="0" />
@@ -506,24 +505,28 @@
 		<Arg Name="TemplateId" Type="Guid" /> <!-- Root template Guid -->
 		<Arg Name="Duration" Type="SummonDurationOrInt" />
 		<Arg Name="Amount" Type="Int" />
-		<Arg Name="EquipItem" Type="Boolean" /> <!--Equip-->
-		<Arg Name="Arg5" Type="Boolean" /> <!--Arg5-7 Force eqiup, Prefer open slot (Main/off-hand)-->
-		<Arg Name="Arg6" Type="Boolean" />
-		<Arg Name="Arg7" Type="Boolean" />
-		<Arg Name="Arg8" Type="String" />
-		<Arg Name="Arg9" Type="String" />
-		<Arg Name="Arg10" Type="String" />
-		<Arg Name="Arg11" Type="String" /> <!-- etc. -->
+		<Arg Name="EquipItem" Type="Boolean" />
+		<Arg Name="Equip" Type="Boolean" />
+		<Arg Name="AllowOffHand" Type="Boolean" />
+		<Arg Name="ExtendExistingConcentration" Type="Boolean" />
+		<Arg Name="AiSpellOverride" Type="String" />
+		<Arg Name="SpellContainer" Type="String" />
+		<Arg Name="StatusToApply1" Type="String" />
+		<Arg Name="StatusToApply2" Type="String" />
+		<Arg Name="StatusToApply3" Type="String" />
+		<Arg Name="StatusToApply4" Type="String" />
 	</Function>
 	<Function Type="Functor" Name="SpawnInInventory" RequiredArgs="1">
 		<Arg Name="TemplateId" Type="Guid" /> <!-- Root template Guid -->
-		<Arg Name="Arg2" Type="Int" />
-		<Arg Name="Arg3" Type="Boolean" />
-		<Arg Name="Arg4" Type="Boolean" />
-		<Arg Name="Arg5" Type="Boolean" />
-		<Arg Name="Arg6" Type="String" />
-		<Arg Name="Arg7" Type="String" />
-		<Arg Name="Arg8" Type="String" /> <!-- etc. -->
+		<Arg Name="Amount" Type="Int" />
+		<Arg Name="PlaceInInventory" Type="Boolean" />
+		<Arg Name="Equip" Type="Boolean" />
+		<Arg Name="AllowOffHand" Type="Boolean" />
+		<Arg Name="AiSpellOverride" Type="String" />
+    <Arg Name="StatusToApply1" Type="String" />
+    <Arg Name="StatusToApply2" Type="String" />
+    <Arg Name="StatusToApply3" Type="String" />
+    <Arg Name="StatusToApply4" Type="String" />
 	</Function>
 	<Function Type="Functor" Name="RemoveUniqueStatus" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusId" />
@@ -534,18 +537,18 @@
 		<Arg Name="DeathType" Type="Death Type" />
 	</Function>
 	<Function Type="Functor" Name="TriggerRandomCast" RequiredArgs="2">
-		<Arg Name="Arg1" Type="Int" />
-		<Arg Name="Arg2" Type="Float" />
-		<Arg Name="Arg3" Type="String" /> <!-- RandomCastOutcomesID resource -->
-		<Arg Name="Arg4" Type="String" /> <!-- RandomCastOutcomesID resource -->
-		<Arg Name="Arg5" Type="String" /> <!-- RandomCastOutcomesID resource -->
-		<Arg Name="Arg6" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="DC" Type="Int" />
+		<Arg Name="Delay" Type="Float" />
+		<Arg Name="RandomCastOutcome1" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="RandomCastOutcome2" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="RandomCastOutcome3" Type="String" /> <!-- RandomCastOutcomesID resource -->
+		<Arg Name="RandomCastOutcome4" Type="String" /> <!-- RandomCastOutcomesID resource -->
 	</Function>
 	<Function Type="Functor" Name="GainTemporaryHitPoints" RequiredArgs="1">
 		<Arg Name="Amount" Type="Lua" />
 	</Function>
 	<Function Type="Functor" Name="FireProjectile" RequiredArgs="1">
-		<Arg Name="Arg1" Type="String" />
+		<Arg Name="ProjectileTemplate" Type="String" />
 	</Function>
 	<Function Type="Functor" Name="ShortRest" RequiredArgs="0" />
 	<Function Type="Functor" Name="CreateZone" RequiredArgs="0">
@@ -563,8 +566,8 @@
 	</Function>
 	<Function Type="Functor" Name="RemoveStatusByLevel" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusIdOrGroup" />
-		<Arg Name="Arg2" Type="Int" />
-		<Arg Name="Arg3" Type="Ability" />
+		<Arg Name="Level" Type="Int" />
+		<Arg Name="Ability" Type="Ability" />
 	</Function>
 	<Function Type="Functor" Name="SurfaceClearLayer" RequiredArgs="0">
 		<Arg Name="Layer1" Type="SurfaceLayer" />
@@ -579,14 +582,14 @@
 		<Arg Name="DamageType" Type="Damage Type" />
 	</Function>
 	<Function Type="Functor" Name="SpawnExtraProjectiles" RequiredArgs="0">
-		<Arg Name="Arg1" Type="String" /> <!-- ProjectileTypeId -->
+		<Arg Name="ProjectileSpell" Type="String" /> <!-- ProjectileTypeId -->
 	</Function>
 	<Function Type="Functor" Name="Kill" RequiredArgs="0" />
 	<Function Type="Functor" Name="TutorialEvent" RequiredArgs="0">
 		<Arg Name="Event" Type="Guid" />
 	</Function>
 	<Function Type="Functor" Name="Drop" RequiredArgs="0">
-		<Arg Name="Arg1" Type="String" />
+		<Arg Name="Effect" Type="String" />
 	</Function>
 	<Function Type="Functor" Name="ResetCooldowns" RequiredArgs="1">
 		<Arg Name="Type" Type="SpellCooldownType" />
@@ -600,7 +603,7 @@
 	</Function>
 	<Function Type="Functor" Name="SetReroll" RequiredArgs="0">
 		<Arg Name="Roll" Type="Int" />
-		<Arg Name="Arg2" Type="Boolean" />
+		<Arg Name="KeepNew" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="SetAdvantage" RequiredArgs="0" />
 	<Function Type="Functor" Name="SetDisadvantage" RequiredArgs="0" />
@@ -618,7 +621,7 @@
 		<Arg Name="DamageType" Type="DamageTypeOrDealDamageWeaponDamageType" />
 		<Arg Name="Magical" Type="Magical" />
 		<Arg Name="Nonlethal" Type="Nonlethal" />
-		<Arg Name="Arg5" Type="Int" />
+		<Arg Name="CoinMultiplier" Type="Int" />
 		<Arg Name="Tooltip" Type="Guid" />
 	</Function>
 	<Function Type="DescriptionParams" Name="RegainHitPoints" RequiredArgs="1">
@@ -762,10 +765,10 @@
 		<Arg Name="Tag5" Type="String" /> <!-- Tag resource name -->
 	</Function>
 	<Function Type="Boost" Name="UseBoosts" RequiredArgs="1">
-		<Arg Name="Arg1" Type="StatsFunctors" />
+		<Arg Name="Boosts" Type="StatsFunctors" />
 	</Function>
 	<Function Type="Boost" Name="CannotHarmCauseEntity" RequiredArgs="1">
-		<Arg Name="Arg1" Type="String" />
+		<Arg Name="Type" Type="String" />
 	</Function>
 	<Function Type="Boost" Name="TemporaryHP" RequiredArgs="1">
 		<Arg Name="Amount" Type="Lua" />
@@ -800,7 +803,7 @@
 		<Arg Name="Range" Type="Float" />
 	</Function>
 	<Function Type="Boost" Name="Tag" RequiredArgs="1">
-		<Arg Name="Arg1" Type="String" /> <!-- Tag resource name -->
+		<Arg Name="Tag" Type="String" /> <!-- Tag resource name -->
 	</Function>
 	<Function Type="Boost" Name="IgnoreDamageThreshold" RequiredArgs="2">
 		<Arg Name="DamageType" Type="AllOrDamageType" />
