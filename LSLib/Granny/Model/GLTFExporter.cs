@@ -8,13 +8,20 @@ using SharpGLTF.Schema2;
 
 namespace LSLib.Granny.Model;
 
+internal class GLTFSkeletonExportData
+{
+    public NodeBuilder Root;
+    public List<(NodeBuilder, Matrix4x4)> Joints;
+    public bool UsedForSkinning;
+}
+
 public class GLTFExporter
 {
     [Serialization(Kind = SerializationKind.None)]
     public ExporterOptions Options = new();
 
     private Dictionary<Mesh, string> MeshIds = new();
-    private Dictionary<Skeleton, List<NodeBuilder>> Skeletons = new();
+    private Dictionary<Skeleton, GLTFSkeletonExportData> Skeletons = new();
 
     private void GenerateUniqueMeshIds(List<Mesh> meshes)
     {
@@ -50,13 +57,14 @@ public class GLTFExporter
         }
         else
         {
-            scene.AddSkinnedMesh(mesh, Matrix4x4.Identity, Skeletons[skeleton].ToArray());
+            Skeletons[skeleton].UsedForSkinning = true;
+            scene.AddSkinnedMesh(mesh, Skeletons[skeleton].Joints.ToArray());
         }
     }
 
-    private List<NodeBuilder> ExportSkeleton(NodeBuilder root, Skeleton skeleton)
+    private GLTFSkeletonExportData ExportSkeleton(NodeBuilder root, Skeleton skeleton)
     {
-        var joints = new List<NodeBuilder>();
+        var joints = new List<(NodeBuilder, Matrix4x4)>();
         foreach (var joint in skeleton.Bones)
         {
             NodeBuilder node;
@@ -68,14 +76,25 @@ public class GLTFExporter
             }
             else
             {
-                node = joints[joint.ParentIndex].CreateNode(joint.Name);
+                node = joints[joint.ParentIndex].Item1.CreateNode(joint.Name);
             }
 
             node.LocalTransform = ToGLTFTransform(joint.Transform);
-            joints.Add(node);
+            var t = joint.InverseWorldTransform;
+            var iwt = new Matrix4x4(
+                t[0], t[1], t[2], t[3],
+                t[4], t[5], t[6], t[7],
+                t[8], t[9], t[10], t[11],
+                t[12], t[13], t[14], t[15]
+            );
+            joints.Add((node, iwt));
         }
 
-        return joints;
+        return new GLTFSkeletonExportData { 
+            Joints = joints,
+            Root = joints[0].Item1,
+            UsedForSkinning = false
+        };
     }
 
     private void ExportSceneExtensions(Root root, GLTFSceneExtensions ext)
@@ -170,10 +189,6 @@ public class GLTFExporter
 
         foreach (var skeleton in root.Skeletons ?? [])
         {
-            //var skelRoot = new NodeBuilder();
-            //skelRoot.Name = skeleton.Name;
-            //scene.AddNode(skelRoot);
-
             var joints = ExportSkeleton(null, skeleton);
             Skeletons.Add(skeleton, joints);
         }
@@ -183,7 +198,61 @@ public class GLTFExporter
             ExportModel(root, model, scene);
         }
 
+        foreach (var skeleton in Skeletons)
+        {
+            if (!skeleton.Value.UsedForSkinning)
+            {
+                scene.AddNode(skeleton.Value.Root);
+            }
+        }
+
         return scene;
+    }
+
+    private SharpGLTF.Schema2.Node FindRoot(ModelRoot root, NodeBuilder node)
+    {
+        foreach (var n in root.LogicalNodes)
+        {
+            if (node.Name == n.Name && n.VisualParent == null)
+            {
+                return n;
+            }
+        }
+
+        return null;
+    }
+
+    private SharpGLTF.Schema2.Node FindNode(ModelRoot root, NodeBuilder node)
+    {
+        foreach (var n in root.LogicalNodes)
+        {
+            if (node.Name == n.Name && n.VisualParent?.Name == node.Parent?.Name)
+            {
+                return n;
+            }
+        }
+
+        return null;
+    }
+
+    private void ExportSkin(ModelRoot root, GLTFSkeletonExportData skeleton)
+    {
+        var skelRoot = FindRoot(root, skeleton.Root);
+
+        List<(SharpGLTF.Schema2.Node Joint, Matrix4x4 InverseBindMatrix)> joints = [];
+        foreach (var (joint, bindMat) in skeleton.Joints)
+        {
+            var mapped = FindNode(root, joint);
+            if (mapped == null)
+            {
+                throw new ParsingException($"Unable to find bone {joint.Name} in gltf node tree");
+            }
+
+            joints.Add((mapped, bindMat));
+        }
+
+        var skin = skelRoot.LogicalParent.CreateSkin();
+        skin.BindJoints(joints);
     }
 
 
@@ -192,6 +261,15 @@ public class GLTFExporter
         GLTFExtensions.RegisterExtensions();
         var scene = ExportScene(root);
         var modelRoot = scene.ToGltf2();
+
+        // Add skins for skeletons that were not used for skinning any mesh
+        foreach (var skeleton in Skeletons)
+        {
+            if (!skeleton.Value.UsedForSkinning)
+            {
+                ExportSkin(modelRoot, skeleton.Value);
+            }
+        }
 
         ExportExtensions(root, modelRoot);
 

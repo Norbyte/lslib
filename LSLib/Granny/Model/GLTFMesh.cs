@@ -30,7 +30,8 @@ public class GLTFMesh
             primitives.Lines.Count > 0 ||
             primitives.VerticesPerPrimitive != 3)
         {
-            throw new ParsingException("Non-triangle"); // FIXME
+            throw new ParsingException($"glTF mesh needs to be triangulated; "
+                + $"got {primitives.Points.Count} points, {primitives.Lines.Count} lines, {primitives.VerticesPerPrimitive} verts per primitive");
         }
 
         TriangleCount = primitives.Triangles.Count;
