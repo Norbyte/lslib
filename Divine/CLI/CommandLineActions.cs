@@ -106,9 +106,13 @@ internal class CommandLineActions
 
             }
 
-            if (GR2Options["conform"])
+            if (args.ConformPath != null && args.ConformPath != "")
             {
                 ConformPath = TryToValidatePath(args.ConformPath);
+                if (!Path.Exists(ConformPath))
+                {
+                    CommandLineLogger.LogFatal($"Skeleton source GR2 does not exist: {args.ConformPath}", 1);
+                }
             }
         }
 

@@ -5,6 +5,7 @@ using System.Numerics;
 using SharpGLTF.Scenes;
 using LSLib.LS;
 using SharpGLTF.Schema2;
+using SharpGLTF.Animations;
 
 namespace LSLib.Granny.Model;
 
@@ -12,6 +13,7 @@ internal class GLTFSkeletonExportData
 {
     public NodeBuilder Root;
     public List<(NodeBuilder, Matrix4x4)> Joints;
+    public Dictionary<string, NodeBuilder> Names;
     public bool UsedForSkinning;
 }
 
@@ -65,6 +67,7 @@ public class GLTFExporter
     private GLTFSkeletonExportData ExportSkeleton(NodeBuilder root, Skeleton skeleton)
     {
         var joints = new List<(NodeBuilder, Matrix4x4)>();
+        var names = new Dictionary<string, NodeBuilder>();
         foreach (var joint in skeleton.Bones)
         {
             NodeBuilder node;
@@ -88,10 +91,12 @@ public class GLTFExporter
                 t[12], t[13], t[14], t[15]
             );
             joints.Add((node, iwt));
+            names.Add(joint.Name, node);
         }
 
         return new GLTFSkeletonExportData { 
             Joints = joints,
+            Names = names,
             Root = joints[0].Item1,
             UsedForSkinning = false
         };
@@ -181,6 +186,56 @@ public class GLTFExporter
         }
     }
 
+    private void ExportAnimationTrack(TransformTrack track, NodeBuilder joint, string animName)
+    {
+        var keyframes = track.ToKeyframes();
+
+        var translate = joint.UseTranslation().UseTrackBuilder(animName);
+        var rotation = joint.UseRotation().UseTrackBuilder(animName);
+        var scale = joint.UseScale().UseTrackBuilder(animName);
+
+        foreach (var (time, frame) in keyframes.Keyframes)
+        {
+            if (frame.HasTranslation)
+            {
+                var v = frame.Translation;
+                translate.SetPoint(time, new Vector3(v.X, v.Y, v.Z), true);
+            }
+
+            if (frame.HasRotation)
+            {
+                var q = frame.Rotation;
+                rotation.SetPoint(time, new Quaternion(q.X, q.Y, q.Z, q.W), true);
+            }
+
+            if (frame.HasScaleShear)
+            {
+                var m = frame.ScaleShear;
+                scale.SetPoint(time, new Vector3(m[0,0], m[1,1], m[2,2]), true);
+            }
+        }
+    }
+
+    private void ExportAnimation(Animation anim)
+    {
+        if (Skeletons.Count != 1)
+        {
+            throw new ParsingException("Exporting .GR2 animations without skeleton data is not supported");
+        }
+
+        if (anim.TrackGroups.Count != 1)
+        {
+            throw new ParsingException("Exporting .GR2 animations with multiple track groups is not supported");
+        }
+
+        var group = anim.TrackGroups[0];
+        foreach (var track in group.TransformTracks)
+        {
+            var joint = Skeletons.First().Value.Names[track.Name];
+            ExportAnimationTrack(track, joint, anim.Name);
+        }
+    }
+
 
     private SceneBuilder ExportScene(Root root)
     {
@@ -199,6 +254,16 @@ public class GLTFExporter
         foreach (var model in root.Models ?? [])
         {
             ExportModel(root, model, scene);
+        }
+
+        if (root.Animations != null && root.Animations.Count > 1)
+        {
+            throw new ParsingException("Exporting .GR2 files with multiple animations is not supported");
+        }
+
+        foreach (var animation in root.Animations ?? [])
+        {
+            ExportAnimation(animation);
         }
 
         foreach (var skeleton in Skeletons)
