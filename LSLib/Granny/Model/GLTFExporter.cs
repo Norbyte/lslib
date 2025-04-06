@@ -189,8 +189,11 @@ public class GLTFExporter
 
         foreach (var skeleton in root.Skeletons ?? [])
         {
-            var joints = ExportSkeleton(null, skeleton);
-            Skeletons.Add(skeleton, joints);
+            if (!skeleton.IsDummy)
+            {
+                var joints = ExportSkeleton(null, skeleton);
+                Skeletons.Add(skeleton, joints);
+            }
         }
 
         foreach (var model in root.Models ?? [])

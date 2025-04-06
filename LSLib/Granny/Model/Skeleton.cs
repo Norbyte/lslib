@@ -270,10 +270,56 @@ public class Skeleton
         }
     }
 
+    private bool CheckIsDummy(Root root)
+    {
+        // If we have any skinned meshes, the skeleton cannot be dummy
+        var hasSkinnedMeshes = root.Models != null 
+            && root.Models.Any((model) => model.Skeleton == this) // We have a binding for this skeleton
+            && root.Meshes != null
+            && root.Meshes.Any((mesh) => mesh.IsSkinned()); // ... and the mesh has bone weights
+        if (hasSkinnedMeshes) return false;
+
+        // If we have animations (that have skeleton bindings), the skeleton cannot be dummy
+        if (root.Animations != null && root.Animations.Count > 0) return false;
+
+        // If we don't have any meshes (i.e. only exporting the skeleton resource), always include
+        // the skeleton even if it's a dummy skel
+        if (root.Meshes == null || root.Meshes.Count == 0) return false;
+
+        // Check if the skeleton conforms to one of the dummy patterns:
+        //  1) A single dummy root bone
+        if (Bones.Count == 1) return true;
+
+        //  2) A bone for each mesh parented to a dummy root bone
+        if (Bones.Count == 1 + root.Meshes.Count)
+        {
+            foreach (var bone in Bones)
+            {
+                if (!bone.IsRoot && bone.ParentIndex != 0) return false;
+            }
+
+            HashSet<string> marked = [];
+            foreach (var mesh in root.Meshes)
+            {
+                if (mesh.BoneBindings == null
+                    || mesh.BoneBindings.Count != 1)
+                {
+                    return false;
+                }
+
+                if (marked.Contains(mesh.BoneBindings[0].BoneName)) return false;
+                marked.Add(mesh.BoneBindings[0].BoneName);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     public void PostLoad(Root root)
     {
-        var hasSkinnedMeshes = root.Models.Any((model) => model.Skeleton == this);
-        if (!hasSkinnedMeshes || Bones.Count == 1)
+        if (CheckIsDummy(root))
         {
             IsDummy = true;
             Utils.Info(String.Format("Skeleton '{0}' marked as dummy", this.Name));
