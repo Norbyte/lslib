@@ -14,6 +14,7 @@ partial class GLTFSceneExtensions : ExtraProperties
     public Int32 LSLibPatch = 0;
 
     public Dictionary<string, Int32> BoneOrder = [];
+    public string SkeletonResourceID;
 
     protected override void SerializeProperties(Utf8JsonWriter writer)
     {
@@ -25,6 +26,7 @@ partial class GLTFSceneExtensions : ExtraProperties
         SerializeProperty(writer, "LSLibPatch", LSLibPatch);
 
         SerializeProperty(writer, "BoneOrder", BoneOrder);
+        SerializeProperty(writer, "SkeletonResourceID", SkeletonResourceID);
     }
 
     protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
@@ -37,6 +39,7 @@ partial class GLTFSceneExtensions : ExtraProperties
             case "LSLibPatch": LSLibPatch = DeserializePropertyValue<Int32>(ref reader); break;
 
             case "BoneOrder": DeserializePropertyDictionary(ref reader, BoneOrder); break;
+            case "SkeletonResourceID": SkeletonResourceID = DeserializePropertyValue<string>(ref reader); break;
 
             default: base.DeserializeProperty(jsonPropertyName, ref reader); break;
         }

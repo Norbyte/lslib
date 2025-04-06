@@ -1,15 +1,23 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.LS;
-using OpenTK.Mathematics;
+using SharpGLTF.Animations;
 using SharpGLTF.Scenes;
 using SharpGLTF.Schema2;
+using System.Numerics;
 
 namespace LSLib.Granny.Model;
+
+class GLTFImportedSkeleton
+{
+    public Dictionary<string, NodeBuilder> Joints = [];
+}
 
 public class GLTFImporter
 {
     public ExporterOptions Options = new();
     public List<Mesh> ImportedMeshes;
+    private HashSet<string> AnimationNames = [];
+    private Dictionary<Skeleton, GLTFImportedSkeleton> Skeletons = [];
 
     private DivinityModelFlag DetermineSkeletonModelFlagsFromModels(Root root, Skeleton skeleton, DivinityModelFlag meshFlagOverrides)
     {
@@ -97,22 +105,6 @@ public class GLTFImporter
                 parents.RemoveAt(parents.Count - 1);
             }
         }
-    }
-
-    public static technique FindExporterExtraData(extra[] extras)
-    {
-        foreach (var extra in extras ?? Enumerable.Empty<extra>())
-        {
-            foreach (var technique in extra.technique ?? Enumerable.Empty<technique>())
-            {
-                if (technique.profile == "LSTools")
-                {
-                    return technique;
-                }
-            }
-        }
-
-        return null;
     }
 
     private void MakeExtendedData(ContentTransformer content, GLTFMeshExtensions ext, Mesh loaded)
@@ -204,96 +196,118 @@ public class GLTFImporter
         });
     }
 
-    private void LoadColladaLSLibProfileData(animation anim, TrackGroup loaded)
-    {
-        var technique = FindExporterExtraData(anim.extra);
-        if (technique == null || technique.Any == null) return;
-
-        foreach (var setting in technique.Any)
-        {
-            switch (setting.LocalName)
-            {
-                case "SkeletonResourceID":
-                    loaded.ExtendedData = new BG3TrackGroupExtendedData
-                    {
-                        SkeletonResourceID = setting.InnerText.Trim()
-                    };
-                    break;
-
-                default:
-                    Utils.Warn($"Unrecognized LSLib animation profile attribute: {setting.LocalName}");
-                    break;
-            }
-        }
-    }
-
-    public void ImportAnimations(IEnumerable<animation> anims, Root root, Skeleton skeleton)
+    private TrackGroup ImportTrackGroup(Animation anim, GLTFImportedSkeleton skeleton, string name, GLTFSceneExtensions ext)
     {
         var trackGroup = new TrackGroup
         {
-            Name = (skeleton != null) ? skeleton.Name : "Dummy_Root",
+            Name = name,
             TransformTracks = [],
             InitialPlacement = new Transform(),
             AccumulationFlags = 2,
-            LoopTranslation = [0, 0, 0]
+            LoopTranslation = [0, 0, 0],
+            ExtendedData = new BG3TrackGroupExtendedData
+            {
+                SkeletonResourceID = ext?.SkeletonResourceID ?? ""
+            }
         };
+
+        foreach (var (jointName, joint) in skeleton.Joints)
+        {
+            var track = ImportTrack(anim, joint, name);
+            if (track != null)
+            {
+                track.Name = jointName;
+                trackGroup.TransformTracks.Add(track);
+            }
+        }
+
+        // Reorder transform tracks in lexicographic order
+        // This is needed by Granny; otherwise it'll fail to find animation tracks
+        trackGroup.TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
+
+        return trackGroup;
+    }
+
+    private void ImportAnimations(Root root, Skeleton skeleton, GLTFSceneExtensions ext)
+    {
+        var gltfSkel = Skeletons[skeleton];
 
         var animation = new Animation
         {
-            Name = "Default",
+            Name = skeleton.Name,
             TimeStep = 0.016667f, // 60 FPS
             Oversampling = 1,
             DefaultLoopCount = 1,
             Flags = 1,
             Duration = .0f,
-            TrackGroups = [trackGroup]
+            TrackGroups = []
         };
 
-        foreach (var colladaTrack in anims)
+        foreach (var animName in AnimationNames)
         {
-            ImportAnimation(colladaTrack, animation, trackGroup, skeleton);
-        }
-
-        if (trackGroup.TransformTracks.Count > 0)
-        {
-            // Reorder transform tracks in lexicographic order
-            // This is needed by Granny; otherwise it'll fail to find animation tracks
-            trackGroup.TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
-            
+            var trackGroup = ImportTrackGroup(animation, gltfSkel, animName, ext);
+            animation.TrackGroups.Add(trackGroup);
             root.TrackGroups.Add(trackGroup);
-            root.Animations.Add(animation);
         }
+
+        root.Animations.Add(animation);
     }
 
-    public void ImportAnimation(animation colladaAnim, Animation animation, TrackGroup trackGroup, Skeleton skeleton)
+    private TransformTrack ImportTrack(Animation anim, NodeBuilder joint, string animName)
     {
-        var childAnims = 0;
-        foreach (var item in colladaAnim.Items)
+        if (!joint.HasAnimations) return null;
+
+        var translate = joint.Translation?.Tracks.GetValueOrDefault(animName);
+        var rotate = joint.Rotation?.Tracks.GetValueOrDefault(animName);
+        var scale = joint.Scale?.Tracks.GetValueOrDefault(animName);
+
+        if (translate == null && rotate == null && scale == null) return null;
+
+        var keyframes = new KeyframeTrack();
+
+        if (translate != null)
         {
-            if (item is animation)
+            var curve = (CurveBuilder<Vector3>)translate;
+            foreach (var key in curve.Keys)
             {
-                ImportAnimation(item as animation, animation, trackGroup, skeleton);
-                childAnims++;
+                var t = curve.GetPoint(key);
+                keyframes.AddTranslation(key, new OpenTK.Mathematics.Vector3(t.X, t.Y, t.Z));
             }
         }
 
-        var duration = .0f;
-        if (childAnims < colladaAnim.Items.Length)
+        if (rotate != null)
         {
-            ColladaAnimation importAnim = new();
-            if (importAnim.ImportFromCollada(colladaAnim, skeleton))
+            var curve = (CurveBuilder<Quaternion>)rotate;
+            foreach (var key in curve.Keys)
             {
-                duration = Math.Max(duration, importAnim.Duration);
-                var track = importAnim.MakeTrack(Options.RemoveTrivialAnimationKeys);
-                trackGroup.TransformTracks.Add(track);
-                LoadColladaLSLibProfileData(colladaAnim, trackGroup);
+                var q = curve.GetPoint(key);
+                keyframes.AddRotation(key, new OpenTK.Mathematics.Quaternion(q.X, q.Y, q.Z, q.W));
             }
         }
 
-        animation.Duration = Math.Max(animation.Duration, duration);
+        if (scale != null)
+        {
+            var curve = (CurveBuilder<Vector3>)scale;
+            foreach (var key in curve.Keys)
+            {
+                var s = curve.GetPoint(key);
+                var m = new OpenTK.Mathematics.Matrix3(
+                    s.X, 0.0f, 0.0f,
+                    0.0f, s.Y, 0.0f,
+                    0.0f, 0.0f, s.Z
+                );
+                keyframes.AddScaleShear(key, m);
+            }
+        }
+
+        var track = TransformTrack.FromKeyframes(keyframes);
+        track.Flags = 0;
+        anim.Duration = Math.Max(anim.Duration, keyframes.Keyframes.Last().Key);
+
+        return track;
     }
 
-    private int ImportBone(Skeleton skeleton, int parentIndex, NodeBuilder node, GLTFSceneExtensions ext)
+    private int ImportBone(Skeleton skeleton, int parentIndex, NodeBuilder node, GLTFSceneExtensions ext, GLTFImportedSkeleton imported)
     {
         var transform = node.LocalTransform;
         var tm = transform.Matrix;
@@ -304,7 +318,7 @@ public class GLTFImporter
             ParentIndex = parentIndex,
             Name = node.Name,
             LODError = 0, // TODO
-            OriginalTransform = new Matrix4(
+            OriginalTransform = new OpenTK.Mathematics.Matrix4(
                 tm.M11, tm.M12, tm.M13, tm.M14,
                 tm.M21, tm.M22, tm.M23, tm.M24,
                 tm.M31, tm.M32, tm.M33, tm.M34,
@@ -322,24 +336,34 @@ public class GLTFImporter
             bone.ExportIndex = order - 1;
         }
 
+        if (node.HasAnimations)
+        {
+            foreach (var anim in node.AnimationTracksNames)
+            {
+                AnimationNames.Add(anim);
+            }
+        }
+
+        imported.Joints.Add(node.Name, node);
         return myIndex;
     }
 
-    private void ImportBoneTree(Skeleton skeleton, int parentIndex, NodeBuilder node, GLTFSceneExtensions ext)
+    private void ImportBoneTree(Skeleton skeleton, int parentIndex, NodeBuilder node, GLTFSceneExtensions ext, GLTFImportedSkeleton imported)
     {
         if (ext != null && !ext.BoneOrder.ContainsKey(node.Name)) return;
 
-        var boneIndex = ImportBone(skeleton, parentIndex, node, ext);
+        var boneIndex = ImportBone(skeleton, parentIndex, node, ext, imported);
 
         foreach (var child in node.VisualChildren)
         {
-            ImportBoneTree(skeleton, boneIndex, child, ext);
+            ImportBoneTree(skeleton, boneIndex, child, ext, imported);
         }
     }
 
     private Skeleton ImportSkeleton(string name, NodeBuilder root, GLTFSceneExtensions ext)
     {
         var skeleton = Skeleton.CreateEmpty(name);
+        var imported = new GLTFImportedSkeleton();
 
         if (ext != null && ext.BoneOrder.Count > 0)
         {
@@ -350,7 +374,7 @@ public class GLTFImporter
                 var roots = root.VisualChildren.Where(n => ext.BoneOrder.ContainsKey(n.Name)).ToList();
                 if (roots.Count == 1)
                 {
-                    ImportBoneTree(skeleton, -1, roots[0], ext);
+                    ImportBoneTree(skeleton, -1, roots[0], ext, imported);
                     return skeleton;
                 }
                 else
@@ -360,7 +384,9 @@ public class GLTFImporter
             }
         }
 
-        ImportBoneTree(skeleton, -1, root, ext);
+        ImportBoneTree(skeleton, -1, root, ext, imported);
+
+        Skeletons[skeleton] = imported;
         return skeleton;
     }
 
@@ -468,6 +494,16 @@ public class GLTFImporter
         foreach (var mesh in ImportedMeshes)
         {
             AddMeshToRoot(root, mesh);
+        }
+
+        if (AnimationNames.Count > 0)
+        {
+            if (root.Skeletons.Count != 1)
+            {
+                throw new ParsingException("GLTF file must contain exactly one skeleton for animation import");
+            }
+
+            ImportAnimations(root, root.Skeletons.FirstOrDefault(), sceneExt);
         }
 
         // TODO: make this an option!

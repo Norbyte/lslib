@@ -108,6 +108,14 @@ public class GLTFExporter
         ext.LSLibMajor = Common.MajorVersion;
         ext.LSLibMinor = Common.MinorVersion;
         ext.LSLibPatch = Common.PatchVersion;
+
+        foreach (var group in root.TrackGroups ?? [])
+        {
+            if (group.ExtendedData != null)
+            {
+                ext.SkeletonResourceID = group.ExtendedData.SkeletonResourceID;
+            }
+        }
     }
 
     private void ExportSkeletonExtensions(Skeleton skeleton, GLTFSceneExtensions ext)
