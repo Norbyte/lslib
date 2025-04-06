@@ -5,10 +5,54 @@ using System.Numerics;
 using TKVec2 = OpenTK.Mathematics.Vector2;
 using TKVec3 = OpenTK.Mathematics.Vector3;
 using TKVec4 = OpenTK.Mathematics.Vector4;
+using TKQuat = OpenTK.Mathematics.Quaternion;
 using System.Reflection;
+using OpenTK.Mathematics;
 
 namespace LSLib.Granny.Model;
 
+static class GLTFConversionHelpers
+{
+    public static TKVec2 ToOpenTK(this System.Numerics.Vector2 v)
+    {
+        return new TKVec2(v.X, v.Y);
+    }
+    
+    public static TKVec3 ToOpenTK(this System.Numerics.Vector3 v)
+    {
+        return new TKVec3(v.X, v.Y, v.Z);
+    }
+    
+    public static TKVec4 ToOpenTK(this System.Numerics.Vector4 v)
+    {
+        return new TKVec4(v.X, v.Y, v.Z, v.W);
+    }
+    
+    public static TKQuat ToOpenTK(this System.Numerics.Quaternion v)
+    {
+        return new TKQuat(v.X, v.Y, v.Z, v.W);
+    }
+
+    public static System.Numerics.Vector2 ToNumerics(this TKVec2 v)
+    {
+        return new System.Numerics.Vector2(v.X, v.Y);
+    }
+    
+    public static System.Numerics.Vector3 ToNumerics(this TKVec3 v)
+    {
+        return new System.Numerics.Vector3(v.X, v.Y, v.Z);
+    }
+    
+    public static System.Numerics.Vector4 ToNumerics(this TKVec4 v)
+    {
+        return new System.Numerics.Vector4(v.X, v.Y, v.Z, v.W);
+    }
+    
+    public static System.Numerics.Quaternion ToNumerics(this TKQuat v)
+    {
+        return new System.Numerics.Quaternion(v.X, v.Y, v.Z, v.W);
+    }
+}
 public interface GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert);
@@ -77,9 +121,9 @@ public class GLTFVertexGeometryBuilderPositionNormalTangent : GLTFVertexBuilder
         var w = (TKVec3.Dot(TKVec3.Cross(n, t), b) < 0.0F) ? -1.0F : 1.0F;
 
         var v = new VertexPositionNormalTangent(
-            new Vector3(pos.X, pos.Y, pos.Z),
-            new Vector3(n.X, n.Y, n.Z),
-            new Vector4(t.X, t.Y, t.Z, w)
+            pos.ToNumerics(),
+            n.ToNumerics(),
+            new System.Numerics.Vector4(t.X, t.Y, t.Z, w)
         );
         gltfVert.SetGeometry(v);
     }
@@ -87,11 +131,9 @@ public class GLTFVertexGeometryBuilderPositionNormalTangent : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexPositionNormalTangent)gltfVert.GetGeometry();
-        var pos = geom.Position;
-        var n = geom.Normal;
         var t = geom.Tangent;
-        gr2Vert.Position = new TKVec3(pos.X, pos.Y, pos.Z);
-        gr2Vert.Normal = new TKVec3(n.X, n.Y, n.Z);
+        gr2Vert.Position = geom.Position.ToOpenTK();
+        gr2Vert.Normal = geom.Normal.ToOpenTK();
         gr2Vert.Tangent = new TKVec3(t.X, t.Y, t.Z);
         gr2Vert.Binormal = (TKVec3.Cross(gr2Vert.Normal, gr2Vert.Tangent) * t.W).Normalized();
     }
@@ -114,9 +156,8 @@ public class GLTFVertexMaterialBuilderTexture1 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var uv0 = gr2Vert.TextureCoordinates0;
         var v = new VertexTexture1(
-            new Vector2(uv0.X, uv0.Y)
+            gr2Vert.TextureCoordinates0.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -124,8 +165,7 @@ public class GLTFVertexMaterialBuilderTexture1 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexTexture1)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord.ToOpenTK();
     }
 }
 
@@ -133,11 +173,9 @@ public class GLTFVertexMaterialBuilderTexture2 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var uv0 = gr2Vert.TextureCoordinates0;
-        var uv1 = gr2Vert.TextureCoordinates1;
         var v = new VertexTexture2(
-            new Vector2(uv0.X, uv0.Y),
-            new Vector2(uv1.X, uv1.Y)
+            gr2Vert.TextureCoordinates0.ToNumerics(),
+            gr2Vert.TextureCoordinates1.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -145,10 +183,8 @@ public class GLTFVertexMaterialBuilderTexture2 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexTexture2)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord0;
-        var uv1 = geom.TexCoord1;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.TextureCoordinates1 = new TKVec2(uv1.X, uv1.Y);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord0.ToOpenTK();
+        gr2Vert.TextureCoordinates1 = geom.TexCoord1.ToOpenTK();
     }
 }
 
@@ -156,13 +192,10 @@ public class GLTFVertexMaterialBuilderTexture3 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var uv0 = gr2Vert.TextureCoordinates0;
-        var uv1 = gr2Vert.TextureCoordinates1;
-        var uv2 = gr2Vert.TextureCoordinates2;
         var v = new VertexTexture3(
-            new Vector2(uv0.X, uv0.Y),
-            new Vector2(uv1.X, uv1.Y),
-            new Vector2(uv2.X, uv2.Y)
+            gr2Vert.TextureCoordinates0.ToNumerics(),
+            gr2Vert.TextureCoordinates1.ToNumerics(),
+            gr2Vert.TextureCoordinates2.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -170,12 +203,9 @@ public class GLTFVertexMaterialBuilderTexture3 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexTexture3)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord0;
-        var uv1 = geom.TexCoord1;
-        var uv2 = geom.TexCoord2;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.TextureCoordinates1 = new TKVec2(uv1.X, uv1.Y);
-        gr2Vert.TextureCoordinates2 = new TKVec2(uv2.X, uv2.Y);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord0.ToOpenTK();
+        gr2Vert.TextureCoordinates1 = geom.TexCoord1.ToOpenTK();
+        gr2Vert.TextureCoordinates2 = geom.TexCoord2.ToOpenTK();
     }
 }
 
@@ -183,15 +213,11 @@ public class GLTFVertexMaterialBuilderTexture4 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var uv0 = gr2Vert.TextureCoordinates0;
-        var uv1 = gr2Vert.TextureCoordinates1;
-        var uv2 = gr2Vert.TextureCoordinates2;
-        var uv3 = gr2Vert.TextureCoordinates3;
         var v = new VertexTexture4(
-            new Vector2(uv0.X, uv0.Y),
-            new Vector2(uv1.X, uv1.Y),
-            new Vector2(uv2.X, uv2.Y),
-            new Vector2(uv3.X, uv3.Y)
+            gr2Vert.TextureCoordinates0.ToNumerics(),
+            gr2Vert.TextureCoordinates1.ToNumerics(),
+            gr2Vert.TextureCoordinates2.ToNumerics(),
+            gr2Vert.TextureCoordinates3.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -199,14 +225,10 @@ public class GLTFVertexMaterialBuilderTexture4 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexTexture4)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord0;
-        var uv1 = geom.TexCoord1;
-        var uv2 = geom.TexCoord2;
-        var uv3 = geom.TexCoord3;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.TextureCoordinates1 = new TKVec2(uv1.X, uv1.Y);
-        gr2Vert.TextureCoordinates2 = new TKVec2(uv2.X, uv2.Y);
-        gr2Vert.TextureCoordinates3 = new TKVec2(uv3.X, uv3.Y);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord0.ToOpenTK();
+        gr2Vert.TextureCoordinates1 = geom.TexCoord1.ToOpenTK();
+        gr2Vert.TextureCoordinates2 = geom.TexCoord2.ToOpenTK();
+        gr2Vert.TextureCoordinates3 = geom.TexCoord3.ToOpenTK();
     }
 }
 
@@ -214,11 +236,9 @@ public class GLTFVertexMaterialBuilderColor1Texture1 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var c0 = gr2Vert.Color0;
-        var uv0 = gr2Vert.TextureCoordinates0;
         var v = new VertexColor1Texture1(
-            new Vector4(c0.X, c0.Y, c0.Z, c0.W),
-            new Vector2(uv0.X, uv0.Y)
+            gr2Vert.Color0.ToNumerics(),
+            gr2Vert.TextureCoordinates0.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -226,10 +246,8 @@ public class GLTFVertexMaterialBuilderColor1Texture1 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexColor1Texture1)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord;
-        var c0 = geom.Color;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.Color0 = new TKVec4(c0.X, c0.Y, c0.Z, c0.W);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord.ToOpenTK();
+        gr2Vert.Color0 = geom.Color.ToOpenTK();
     }
 }
 
@@ -237,13 +255,10 @@ public class GLTFVertexMaterialBuilderColor1Texture2 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var c0 = gr2Vert.Color0;
-        var uv0 = gr2Vert.TextureCoordinates0;
-        var uv1 = gr2Vert.TextureCoordinates1;
         var v = new VertexColor1Texture2(
-            new Vector4(c0.X, c0.Y, c0.Z, c0.W),
-            new Vector2(uv0.X, uv0.Y),
-            new Vector2(uv1.X, uv1.Y)
+            gr2Vert.Color0.ToNumerics(),
+            gr2Vert.TextureCoordinates0.ToNumerics(),
+            gr2Vert.TextureCoordinates1.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -251,12 +266,9 @@ public class GLTFVertexMaterialBuilderColor1Texture2 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexColor1Texture2)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord0;
-        var uv1 = geom.TexCoord1;
-        var c0 = geom.Color;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.TextureCoordinates1 = new TKVec2(uv1.X, uv1.Y);
-        gr2Vert.Color0 = new TKVec4(c0.X, c0.Y, c0.Z, c0.W);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord0.ToOpenTK();
+        gr2Vert.TextureCoordinates1 = geom.TexCoord1.ToOpenTK();
+        gr2Vert.Color0 = geom.Color.ToOpenTK();
     }
 }
 
@@ -264,13 +276,10 @@ public class GLTFVertexMaterialBuilderColor2Texture1 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var c0 = gr2Vert.Color0;
-        var c1 = gr2Vert.Color1;
-        var uv0 = gr2Vert.TextureCoordinates0;
         var v = new VertexColor2Texture1(
-            new Vector4(c0.X, c0.Y, c0.Z, c0.W),
-            new Vector4(c1.X, c1.Y, c1.Z, c1.W),
-            new Vector2(uv0.X, uv0.Y)
+            gr2Vert.Color0.ToNumerics(),
+            gr2Vert.Color1.ToNumerics(),
+            gr2Vert.TextureCoordinates0.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -278,12 +287,9 @@ public class GLTFVertexMaterialBuilderColor2Texture1 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexColor2Texture1)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord;
-        var c0 = geom.Color0;
-        var c1 = geom.Color1;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.Color0 = new TKVec4(c0.X, c0.Y, c0.Z, c0.W);
-        gr2Vert.Color1 = new TKVec4(c1.X, c1.Y, c1.Z, c1.W);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord.ToOpenTK();
+        gr2Vert.Color0 = geom.Color0.ToOpenTK();
+        gr2Vert.Color1 = geom.Color1.ToOpenTK();
     }
 }
 
@@ -291,15 +297,11 @@ public class GLTFVertexMaterialBuilderColor2Texture2 : GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
-        var c0 = gr2Vert.Color0;
-        var c1 = gr2Vert.Color1;
-        var uv0 = gr2Vert.TextureCoordinates0;
-        var uv1 = gr2Vert.TextureCoordinates1;
         var v = new VertexColor2Texture2(
-            new Vector4(c0.X, c0.Y, c0.Z, c0.W),
-            new Vector4(c1.X, c1.Y, c1.Z, c1.W),
-            new Vector2(uv0.X, uv0.Y),
-            new Vector2(uv1.X, uv1.Y)
+            gr2Vert.Color0.ToNumerics(),
+            gr2Vert.Color1.ToNumerics(),
+            gr2Vert.TextureCoordinates0.ToNumerics(),
+            gr2Vert.TextureCoordinates1.ToNumerics()
         );
         gltfVert.SetMaterial(v);
     }
@@ -307,14 +309,10 @@ public class GLTFVertexMaterialBuilderColor2Texture2 : GLTFVertexBuilder
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
     {
         var geom = (VertexColor2Texture2)gltfVert.GetMaterial();
-        var uv0 = geom.TexCoord0;
-        var uv1 = geom.TexCoord1;
-        var c0 = geom.Color0;
-        var c1 = geom.Color1;
-        gr2Vert.TextureCoordinates0 = new TKVec2(uv0.X, uv0.Y);
-        gr2Vert.TextureCoordinates1 = new TKVec2(uv1.X, uv1.Y);
-        gr2Vert.Color0 = new TKVec4(c0.X, c0.Y, c0.Z, c0.W);
-        gr2Vert.Color1 = new TKVec4(c1.X, c1.Y, c1.Z, c1.W);
+        gr2Vert.TextureCoordinates0 = geom.TexCoord0.ToOpenTK();
+        gr2Vert.TextureCoordinates1 = geom.TexCoord1.ToOpenTK();
+        gr2Vert.Color0 = geom.Color0.ToOpenTK();
+        gr2Vert.Color1 = geom.Color1.ToOpenTK();
     }
 }
 

@@ -175,8 +175,8 @@ public class GLTFExporter
     {
         return new AffineTransform(
             new Vector3(t.ScaleShear[0,0], t.ScaleShear[1,1], t.ScaleShear[2,2]),
-            new Quaternion(t.Rotation.X, t.Rotation.Y, t.Rotation.Z, t.Rotation.W),
-            new Vector3(t.Translation.X, t.Translation.Y, t.Translation.Z)
+            t.Rotation.ToNumerics(),
+            t.Translation.ToNumerics()
         );
     }
 
@@ -207,13 +207,13 @@ public class GLTFExporter
             if (frame.HasTranslation)
             {
                 var v = frame.Translation;
-                translate.SetPoint(time, new Vector3(v.X, v.Y, v.Z), true);
+                translate.SetPoint(time, v.ToNumerics(), true);
             }
 
             if (frame.HasRotation)
             {
                 var q = frame.Rotation;
-                rotation.SetPoint(time, new Quaternion(q.X, q.Y, q.Z, q.W), true);
+                rotation.SetPoint(time, q.ToNumerics(), true);
             }
 
             if (frame.HasScaleShear)

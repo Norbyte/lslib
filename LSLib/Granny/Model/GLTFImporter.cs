@@ -271,7 +271,7 @@ public class GLTFImporter
             foreach (var key in curve.Keys)
             {
                 var t = curve.GetPoint(key);
-                keyframes.AddTranslation(key, new OpenTK.Mathematics.Vector3(t.X, t.Y, t.Z));
+                keyframes.AddTranslation(key, t.ToOpenTK());
             }
         }
 
@@ -281,7 +281,7 @@ public class GLTFImporter
             foreach (var key in curve.Keys)
             {
                 var q = curve.GetPoint(key);
-                keyframes.AddRotation(key, new OpenTK.Mathematics.Quaternion(q.X, q.Y, q.Z, q.W));
+                keyframes.AddRotation(key, q.ToOpenTK());
             }
         }
 
