@@ -14,6 +14,6 @@ Requirements
 
 To build the tools you'll need to get the following dependencies:
 
- - Download GPLex 1.2.2 [from here](https://s3.eu-central-1.amazonaws.com/nb-stor/dos/ExportTool/gplex-distro-1_2_2.zip) and extract it to the `External\gplex\` directory
- - Download GPPG 1.5.2 [from here](https://s3.eu-central-1.amazonaws.com/nb-stor/dos/ExportTool/gppg-distro-1_5_2.zip) and extract it to the `External\gppg\` directory
+ - Download GPLex 1.2.2 [from here](https://s3.eu-central-1.amazonaws.com/nb-stor/dos-legacy/ExportTool/gplex-distro-1_2_2.zip) and extract it to the `External\gplex\` directory
+ - Download GPPG 1.5.2 [from here](https://s3.eu-central-1.amazonaws.com/nb-stor/dos-legacy/ExportTool/gppg-distro-1_5_2.zip) and extract it to the `External\gppg\` directory
  - Protocol Buffers 3.6.1 compiler [from here](https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protoc-3.6.1-win32.zip) and extract it to the `External\protoc\` directory
