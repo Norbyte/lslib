@@ -20,11 +20,18 @@ public class Call : OsirisSerializable
                 while (numParams-- > 0)
                 {
                     TypedValue param;
-                    var type = reader.ReadByte();
-                    if (type == 1)
+                    if (reader.Ver >= OsiVersion.VerValueFlags)
+                    {
                         param = new Variable();
+                    }
                     else
-                        param = new TypedValue();
+                    {
+                        var type = reader.ReadByte();
+                        if (type == 1)
+                            param = new Variable();
+                        else
+                            param = new TypedValue();
+                    }
                     param.Read(reader);
                     Parameters.Add(param);
                 }
@@ -47,7 +54,10 @@ public class Call : OsirisSerializable
                 writer.Write((byte)Parameters.Count);
                 foreach (var param in Parameters)
                 {
-                    writer.Write(param is Variable);
+                    if (writer.Ver < OsiVersion.VerValueFlags)
+                    {
+                        writer.Write(param is Variable);
+                    }
                     param.Write(writer);
                 }
             }

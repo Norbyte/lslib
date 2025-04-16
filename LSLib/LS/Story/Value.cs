@@ -22,11 +22,36 @@ public class Value : OsirisSerializable
         String = 3
     }
 
+    // Format of flags after v1.14
+    [Flags]
+    protected enum ValueFlags : byte
+    {
+        NoneType = 0,
+        SimpleValue = 0x01,
+        TypedValue = 0x02,
+        Variable = 0x03,
+        IsValid = 0x08,
+        OutParam = 0x10,
+        IsAType = 0x20,
+        Unused = 0x40,
+        Adapted = 0x80,
+    }
+
     public UInt32 TypeId;
     public Int32 IntValue;
     public Int64 Int64Value;
     public Single FloatValue;
     public String StringValue;
+
+    // for TypedVal
+    public bool IsValid;
+    public bool OutParam;
+    public bool IsAType;
+
+    // for Value
+    public sbyte Index;
+    public bool Unused;
+    public bool Adapted;
 
     public override string ToString()
     {
@@ -104,6 +129,20 @@ public class Value : OsirisSerializable
 
     public virtual void Read(OsiReader reader)
     {
+        if (reader.Ver >= OsiVersion.VerValueFlags)
+        {
+            Index = reader.ReadSByte();
+
+            var flags = (ValueFlags)reader.ReadByte();
+            if ((flags & ValueFlags.IsValid) == ValueFlags.IsValid) IsValid = true;
+            if ((flags & ValueFlags.OutParam) == ValueFlags.OutParam) OutParam = true;
+            if ((flags & ValueFlags.IsAType) == ValueFlags.IsAType) IsAType = true;
+            if ((flags & ValueFlags.Unused) == ValueFlags.Unused) Unused = true;
+            if ((flags & ValueFlags.Adapted) == ValueFlags.Adapted) Adapted = true;
+
+            if ((flags & ValueFlags.IsValid) != ValueFlags.IsValid) return;
+        }
+
         // possibly isReference?
         var wtf = reader.ReadByte();
         if (wtf == '1')
@@ -207,8 +246,29 @@ public class Value : OsirisSerializable
         }
     }
 
+    protected virtual ValueFlags GetTypeFlags()
+    {
+        return ValueFlags.SimpleValue;
+    }
+
     public virtual void Write(OsiWriter writer)
     {
+        if (writer.Ver >= OsiVersion.VerValueFlags)
+        {
+            writer.Write(Index);
+
+            var flags = GetTypeFlags();
+
+            if (IsValid) flags |= ValueFlags.IsValid;
+            if (OutParam) flags |= ValueFlags.OutParam;
+            if (IsAType) flags |= ValueFlags.IsAType;
+            if (Unused) flags |= ValueFlags.Unused;
+            if (Adapted) flags |= ValueFlags.Adapted;
+            writer.Write((byte)flags);
+
+            if (!IsValid) return;
+        }
+
         if (writer.Enums.ContainsKey(TypeId))
         {
             writer.Write((byte)'e');
@@ -360,24 +420,32 @@ public class Value : OsirisSerializable
 
 public class TypedValue : Value
 {
-    public bool IsValid;
-    public bool OutParam;
-    public bool IsAType;
 
     public override void Read(OsiReader reader)
     {
         base.Read(reader);
-        IsValid = reader.ReadBoolean();
-        OutParam = reader.ReadBoolean();
-        IsAType = reader.ReadBoolean();
+        if (reader.Ver < OsiVersion.VerValueFlags)
+        {
+            IsValid = reader.ReadBoolean();
+            OutParam = reader.ReadBoolean();
+            IsAType = reader.ReadBoolean();
+        }
     }
 
     public override void Write(OsiWriter writer)
     {
         base.Write(writer);
-        writer.Write(IsValid);
-        writer.Write(OutParam);
-        writer.Write(IsAType);
+        if (writer.Ver < OsiVersion.VerValueFlags)
+        {
+            writer.Write(IsValid);
+            writer.Write(OutParam);
+            writer.Write(IsAType);
+        }
+    }
+
+    protected override ValueFlags GetTypeFlags()
+    {
+        return ValueFlags.TypedValue;
     }
 
     public override void DebugDump(TextWriter writer, Story story)
@@ -399,25 +467,33 @@ public class TypedValue : Value
 
 public class Variable : TypedValue
 {
-    public sbyte Index;
-    public bool Unused;
-    public bool Adapted;
     public string VariableName;
 
     public override void Read(OsiReader reader)
     {
         base.Read(reader);
-        Index = reader.ReadSByte();
-        Unused = reader.ReadBoolean();
-        Adapted = reader.ReadBoolean();
+        if (reader.Ver < OsiVersion.VerValueFlags)
+        {
+            Index = reader.ReadSByte();
+            Unused = reader.ReadBoolean();
+            Adapted = reader.ReadBoolean();
+        }
     }
 
     public override void Write(OsiWriter writer)
     {
         base.Write(writer);
-        writer.Write(Index);
-        writer.Write(Unused);
-        writer.Write(Adapted);
+        if (writer.Ver < OsiVersion.VerValueFlags)
+        {
+            writer.Write(Index);
+            writer.Write(Unused);
+            writer.Write(Adapted);
+        }
+    }
+
+    protected override ValueFlags GetTypeFlags()
+    {
+        return ValueFlags.Variable;
     }
 
     public override void DebugDump(TextWriter writer, Story story)
@@ -476,12 +552,23 @@ public class Tuple : OsirisSerializable
         var count = reader.ReadByte();
         while (count-- > 0)
         {
-            var index = reader.ReadByte();
-            var value = new Value();
-            value.Read(reader);
+            if (reader.Ver >= OsiVersion.VerValueFlags)
+            {
+                var value = new Value();
+                value.Read(reader);
 
-            Physical.Add(value);
-            Logical.Add(index, value);
+                Physical.Add(value);
+                Logical.Add(value.Index, value);
+            }
+            else
+            {
+                var index = reader.ReadByte();
+                var value = new Value();
+                value.Read(reader);
+
+                Physical.Add(value);
+                Logical.Add(index, value);
+            }
         }
     }
 
@@ -490,7 +577,10 @@ public class Tuple : OsirisSerializable
         writer.Write((byte)Logical.Count);
         foreach (var logical in Logical)
         {
-            writer.Write((byte)logical.Key);
+            if (writer.Ver < OsiVersion.VerValueFlags)
+            {
+                writer.Write((byte)logical.Key);
+            }
             logical.Value.Write(writer);
         }
     }

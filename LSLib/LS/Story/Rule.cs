@@ -24,8 +24,11 @@ public class RuleNode : RelNode
         var variables = reader.ReadByte();
         while (variables-- > 0)
         {
-            var type = reader.ReadByte();
-            if (type != 1) throw new InvalidDataException("Illegal value type in rule variable list");
+            if (reader.Ver < OsiVersion.VerValueFlags)
+            {
+                var type = reader.ReadByte();
+                if (type != 1) throw new InvalidDataException("Illegal value type in rule variable list");
+            }
             var variable = new Variable();
             variable.Read(reader);
             if (variable.Adapted)
@@ -52,7 +55,10 @@ public class RuleNode : RelNode
         writer.Write((byte)Variables.Count);
         foreach (var variable in Variables)
         {
-            writer.Write((byte)1);
+            if (writer.Ver < OsiVersion.VerValueFlags)
+            {
+                writer.Write((byte)1);
+            }
             variable.Write(writer);
         }
 

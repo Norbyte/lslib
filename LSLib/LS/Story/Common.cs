@@ -72,9 +72,14 @@ public static class OsiVersion
     public const uint VerEnums = 0x010d;
 
     /// <summary>
+    /// Changed values to store flags/indices in a more compact way
+    /// </summary>
+    public const uint VerValueFlags = 0x010e;
+
+    /// <summary>
     /// Last supported Osi version
     /// </summary>
-    public const uint VerLastSupported = VerEnums;
+    public const uint VerLastSupported = VerValueFlags;
 }
 
 public class OsiReader : BinaryReader

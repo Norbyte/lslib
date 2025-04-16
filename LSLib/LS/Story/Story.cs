@@ -301,7 +301,7 @@ public class StoryReader
             if (reader.Ver > OsiVersion.VerLastSupported)
             {
                 var msg = String.Format(
-                    "Osiris version v{0}.{1} unsupported; this tool supports loading up to version 1.12.",
+                    "Osiris version v{0}.{1} unsupported; this tool supports loading up to version 1.14.",
                     reader.MajorVersion, reader.MinorVersion
                 );
                 throw new InvalidDataException(msg);
