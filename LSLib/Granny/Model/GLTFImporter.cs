@@ -470,9 +470,10 @@ public class GLTFImporter
             }
         }
 
+        bool hasNameOverride = sceneExt != null && sceneExt.ModelName != "";
         var rootModel = new Model
         {
-            Name = "Unnamed", // TODO
+            Name = hasNameOverride ? sceneExt.ModelName : Path.GetFileNameWithoutExtension(inputPath),
             InitialPlacement = new Transform(),
             MeshBindings = new List<MeshBinding>()
         };
@@ -480,7 +481,10 @@ public class GLTFImporter
         if (root.Skeletons.Count > 0)
         {
             rootModel.Skeleton = root.Skeletons[0];
-            rootModel.Name = rootModel.Skeleton.Bones[0].Name;
+            if (!hasNameOverride)
+            {
+                rootModel.Name = rootModel.Skeleton.Bones[0].Name;
+            }
         }
 
         root.Models.Add(rootModel);

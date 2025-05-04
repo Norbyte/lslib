@@ -5,7 +5,6 @@ using System.Numerics;
 using SharpGLTF.Scenes;
 using LSLib.LS;
 using SharpGLTF.Schema2;
-using SharpGLTF.Animations;
 
 namespace LSLib.Granny.Model;
 
@@ -109,9 +108,28 @@ public class GLTFExporter
         ext.LSLibMinor = Common.MinorVersion;
         ext.LSLibPatch = Common.PatchVersion;
 
+        foreach (var model in root.Models ?? [])
+        {
+            if (model.Name != "")
+            {
+                ext.ModelName = model.Name;
+            }
+        }
+
+        if (ext.ModelName == "")
+        {
+            foreach (var skeleton in root.Skeletons ?? [])
+            {
+                if (skeleton.Name != "")
+                {
+                    ext.ModelName = skeleton.Name;
+                }
+            }
+        }
+
         foreach (var group in root.TrackGroups ?? [])
         {
-            if (group.ExtendedData != null)
+            if (group.ExtendedData != null && group.ExtendedData.SkeletonResourceID != "")
             {
                 ext.SkeletonResourceID = group.ExtendedData.SkeletonResourceID;
             }

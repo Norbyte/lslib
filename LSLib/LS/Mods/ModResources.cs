@@ -264,10 +264,10 @@ public class GameDataContext
     public VFS FS;
     public ModResources Resources;
 
-    public GameDataContext(string path, TargetGame game = TargetGame.BG3, bool excludeAssets = true)
+    public GameDataContext(string path, TargetGame game = TargetGame.BG3, bool excludeAssets = true, bool loadUnpackedFiles = true)
     {
         FS = new VFS();
-        FS.AttachGameDirectory(path, excludeAssets);
+        FS.AttachGameDirectory(path, excludeAssets, loadUnpackedFiles);
         FS.FinishBuild();
 
         Resources = new ModResources();
