@@ -74,9 +74,12 @@ public class VFS : IDisposable
         RootDir = null;
     }
 
-    public void AttachGameDirectory(string gameDataPath, bool excludeAssets = true)
+    public void AttachGameDirectory(string gameDataPath, bool excludeAssets = true, bool loadUnpackedFiles = true)
     {
-        AttachRoot(gameDataPath);
+        if (loadUnpackedFiles)
+        {
+            AttachRoot(gameDataPath);
+        }
 
         // List of packages we won't ever load
         // These packages don't contain any mod resources, but have a large
