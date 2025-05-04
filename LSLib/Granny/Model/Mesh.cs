@@ -741,4 +741,27 @@ public class Mesh
 
         return hasWeights && hasIndices;
     }
+
+    public Tuple<Vector3, Vector3> CalculateOBB()
+    {
+        if (PrimaryVertexData.Vertices.Count == 0)
+        {
+            throw new ParsingException("Cannot calculate OBB for mesh with no vertices!");
+        }
+        
+        var min = new Vector3(9999999.0f, 9999999.0f, 9999999.0f);
+        var max = new Vector3(-9999999.0f, -9999999.0f, -9999999.0f);
+
+        foreach (var vert in PrimaryVertexData.Vertices)
+        {
+            min.X = Math.Min(vert.Position.X, min.X);
+            max.X = Math.Max(vert.Position.X, max.X);
+            min.Y = Math.Min(vert.Position.Y, min.Y);
+            max.Y = Math.Max(vert.Position.Y, max.Y);
+            min.Z = Math.Min(vert.Position.Z, min.Z);
+            max.Z = Math.Max(vert.Position.Z, max.Z);
+        }
+
+        return new Tuple<Vector3, Vector3>(min, max);
+    }
 }
