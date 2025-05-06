@@ -322,7 +322,6 @@ public class Skeleton
         if (CheckIsDummy(root))
         {
             IsDummy = true;
-            Utils.Info(String.Format("Skeleton '{0}' marked as dummy", this.Name));
         }
 
         for (var i = 0; i < Bones.Count; i++)

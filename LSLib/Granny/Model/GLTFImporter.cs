@@ -485,6 +485,18 @@ public class GLTFImporter
             {
                 rootModel.Name = rootModel.Skeleton.Bones[0].Name;
             }
+
+
+            if (Options.RecalculateOBBs)
+            {
+                foreach (var mesh in ImportedMeshes)
+                {
+                    if (mesh.BoneBindings != null && mesh.BoneBindings.Count > 0)
+                    {
+                        VertexHelpers.UpdateOBBs(rootModel.Skeleton, mesh);
+                    }
+                }
+            }
         }
 
         root.Models.Add(rootModel);

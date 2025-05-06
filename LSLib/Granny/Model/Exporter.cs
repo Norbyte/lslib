@@ -84,7 +84,7 @@ public class ExporterOptions
     // Disabled by default, as D:OS doesn't support sparse knot values in anim curves.
     public bool RemoveTrivialAnimationKeys = false;
     // Recalculate mesh bone binding OBBs
-    public bool RecalculateOBBs = false;
+    public bool RecalculateOBBs = true;
     // Allow encoding tangents/binormals as QTangents
     // See: Spherical Skinning with Dual-Quaternions and QTangents, Crytek R&D
     public bool EnableQTangents = true;
