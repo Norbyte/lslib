@@ -705,6 +705,30 @@ public class Exporter
         }
     }
 
+
+    private void UpdateSkeletonLODType(Skeleton skeleton)
+    {
+        bool hasSkinnedVerts = false;
+
+        foreach (var mesh in Root.Meshes ?? [])
+        {
+            if (mesh.IsSkinned())
+            {
+                hasSkinnedVerts = true;
+            }
+        }
+
+        foreach (var track in Root.TrackGroups ?? [])
+        {
+            if (track.TransformTracks.Count > 0)
+            {
+                hasSkinnedVerts = true;
+            }
+        }
+
+        skeleton.LODType = hasSkinnedVerts ? 1 : 0;
+    }
+
     public void Export()
     {
         if (Options.InputPath != null)
@@ -774,6 +798,11 @@ public class Exporter
         if (Options.FlipMesh || Options.FlipSkeleton)
         {
             Root.Flip(Options.FlipMesh, Options.FlipSkeleton);
+        }
+
+        foreach (var skeleton in Root.Skeletons ?? [])
+        {
+            UpdateSkeletonLODType(skeleton);
         }
 
         // This option should be handled after everything else, as it converts Indices
