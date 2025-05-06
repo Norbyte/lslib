@@ -470,6 +470,22 @@ public class GLTFImporter
         }
     }
 
+    private void ImportRigidSkinBinding(Mesh mesh, InfluencingJoints influences, Skeleton skeleton)
+    {
+        mesh.BoneBindings = [];
+        foreach (var jointIndex in influences.SkeletonJoints)
+        {
+            var bone = skeleton.Bones[jointIndex];
+            var binding = new BoneBinding
+            {
+                BoneName = bone.Name,
+                OBBMin = [-0.1f, -0.1f, -0.1f],
+                OBBMax = [0.1f, 0.1f, 0.1f]
+            };
+            mesh.BoneBindings.Add(binding);
+        }
+    }
+
     private void ImportGeometry(ModelRoot modelRoot, Skeleton skeleton, InstanceBuilder geometry)
     {
         var content = geometry.Content;
@@ -480,6 +496,10 @@ public class GLTFImporter
         if (content is SkinnedTransformer skin)
         {
             ImportSkinBinding(mesh, gltfMesh.InfluencingJoints, skin);
+        }
+        else if (gltfMesh.InfluencingJoints != null)
+        {
+            ImportRigidSkinBinding(mesh, gltfMesh.InfluencingJoints, skeleton);
         }
     }
 

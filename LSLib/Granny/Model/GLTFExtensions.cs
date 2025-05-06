@@ -67,6 +67,7 @@ partial class GLTFMeshExtensions : ExtraProperties
     public Int32 ExportOrder = 0;
     public Int32 LOD = 0;
     public Single LODDistance = 0;
+    public String ParentBone = "";
 
     protected override void SerializeProperties(Utf8JsonWriter writer)
     {
@@ -85,6 +86,7 @@ partial class GLTFMeshExtensions : ExtraProperties
         SerializeProperty(writer, "ExportOrder", ExportOrder);
         SerializeProperty(writer, "LOD", LOD);
         SerializeProperty(writer, "LODDistance", LODDistance);
+        SerializeProperty(writer, "ParentBone", ParentBone);
     }
 
     protected override void DeserializeProperty(string jsonPropertyName, ref Utf8JsonReader reader)
@@ -105,6 +107,7 @@ partial class GLTFMeshExtensions : ExtraProperties
             case "ExportOrder": ExportOrder = DeserializePropertyValue<Int32>(ref reader); break;
             case "LOD": LOD = DeserializePropertyValue<Int32>(ref reader); break;
             case "LODDistance": LODDistance = DeserializePropertyValue<Single>(ref reader); break;
+            case "ParentBone": ParentBone = DeserializePropertyValue<String>(ref reader); break;
             default: base.DeserializeProperty(jsonPropertyName, ref reader); break;
         }
     }

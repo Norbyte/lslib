@@ -175,6 +175,10 @@ public class GLTFExporter
         ext.ExportOrder = mesh.ExportOrder;
         ext.LOD = (user.Lod[0] >= 0) ? user.Lod[0] : 0;
         ext.LODDistance = (user.LodDistance[0] < 100000000.0f) ? user.LodDistance[0] : 0.0f;
+        if (!mesh.IsSkinned() && mesh.BoneBindings != null && mesh.BoneBindings.Count == 1)
+        {
+            ext.ParentBone = mesh.BoneBindings[0].BoneName;
+        }
     }
 
     private void ExportExtensions(Root root, ModelRoot modelRoot)
