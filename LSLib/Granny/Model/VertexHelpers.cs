@@ -185,7 +185,7 @@ public class VertexHelpers
         }
     }
 
-    struct OBB
+    class OBB
     {
         public Vector3 Min, Max;
         public int NumVerts;
