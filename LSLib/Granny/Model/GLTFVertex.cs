@@ -53,10 +53,17 @@ static class GLTFConversionHelpers
         return new System.Numerics.Quaternion(v.X, v.Y, v.Z, v.W);
     }
 }
+
 public interface GLTFVertexBuilder
 {
     public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert);
     public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert);
+}
+
+public interface GLTFVertexSkinBuilder
+{
+    public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert, int[] remaps);
+    public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert, int[] remaps);
 }
 
 public class GLTFVertexNoneBuilder : GLTFVertexBuilder
@@ -316,29 +323,40 @@ public class GLTFVertexMaterialBuilderColor2Texture2 : GLTFVertexBuilder
     }
 }
 
-public class GLTFVertexSkinningBuilder : GLTFVertexBuilder
+public class GLTFVertexNoneSkinBuilder : GLTFVertexSkinBuilder
 {
-    public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
+    public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert, int[] remaps)
+    {
+    }
+
+    public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert, int[] remaps)
+    {
+    }
+}
+
+public class GLTFVertexSkinningBuilder : GLTFVertexSkinBuilder
+{
+    public void ToGLTF(IVertexBuilder gltfVert, Vertex gr2Vert, int[] remaps)
     {
         var v = new VertexJoints4(
-            (gr2Vert.BoneIndices.A, gr2Vert.BoneWeights.A / 255.0f),
-            (gr2Vert.BoneIndices.B, gr2Vert.BoneWeights.B / 255.0f),
-            (gr2Vert.BoneIndices.C, gr2Vert.BoneWeights.C / 255.0f),
-            (gr2Vert.BoneIndices.D, gr2Vert.BoneWeights.D / 255.0f)
+            (remaps[gr2Vert.BoneIndices.A], gr2Vert.BoneWeights.A / 255.0f),
+            (remaps[gr2Vert.BoneIndices.B], gr2Vert.BoneWeights.B / 255.0f),
+            (remaps[gr2Vert.BoneIndices.C], gr2Vert.BoneWeights.C / 255.0f),
+            (remaps[gr2Vert.BoneIndices.D], gr2Vert.BoneWeights.D / 255.0f)
         );
         gltfVert.SetSkinning(v);
     }
 
-    public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert)
+    public void FromGLTF(IVertexBuilder gltfVert, Vertex gr2Vert, int[] remaps)
     {
         var skin = (VertexJoints4)gltfVert.GetSkinning();
         Span<byte> weights = stackalloc byte[4];
         VertexHelpers.CompressBoneWeights([skin.Weights.X, skin.Weights.Y, skin.Weights.Z, skin.Weights.W], weights);
 
-        gr2Vert.BoneIndices.A = (byte)skin.Joints[0];
-        gr2Vert.BoneIndices.B = (byte)skin.Joints[1];
-        gr2Vert.BoneIndices.C = (byte)skin.Joints[2];
-        gr2Vert.BoneIndices.D = (byte)skin.Joints[3];
+        gr2Vert.BoneIndices.A = (byte)remaps[(byte)skin.Joints[0]];
+        gr2Vert.BoneIndices.B = (byte)remaps[(byte)skin.Joints[1]];
+        gr2Vert.BoneIndices.C = (byte)remaps[(byte)skin.Joints[2]];
+        gr2Vert.BoneIndices.D = (byte)remaps[(byte)skin.Joints[3]];
 
         gr2Vert.BoneWeights.A = weights[0];
         gr2Vert.BoneWeights.B = weights[1];
@@ -415,10 +433,11 @@ public class GLTFVertexBuildHelper
 {
     private readonly string ExportedId;
     private readonly VertexDescriptor VertexFormat;
+    private readonly int[] JointRemaps;
 
     private GLTFVertexBuilder GeometryBuilder;
     private GLTFVertexBuilder MaterialBuilder;
-    private GLTFVertexBuilder SkinningBuilder;
+    private GLTFVertexSkinBuilder SkinningBuilder;
 
     private Type GeometryDataType;
     private Type MaterialDataType;
@@ -429,10 +448,11 @@ public class GLTFVertexBuildHelper
     private bool HasNormals;
     private bool HasTangents;
 
-    public GLTFVertexBuildHelper(string exportedId, VertexDescriptor vertexFormat)
+    public GLTFVertexBuildHelper(string exportedId, VertexDescriptor vertexFormat, int[] jointRemaps)
     {
         ExportedId = exportedId;
         VertexFormat = vertexFormat;
+        JointRemaps = jointRemaps;
 
         HasNormals = VertexFormat.NormalType != NormalType.None;
         HasTangents = VertexFormat.TangentType != NormalType.None;
@@ -529,7 +549,7 @@ public class GLTFVertexBuildHelper
         else
         {
             SkinningDataType = typeof(VertexEmpty);
-            SkinningBuilder = new GLTFVertexNoneBuilder();
+            SkinningBuilder = new GLTFVertexNoneSkinBuilder();
         }
     }
 
@@ -553,7 +573,7 @@ public class GLTFVertexBuildHelper
     {
         GeometryBuilder.ToGLTF(gltf, gr);
         MaterialBuilder.ToGLTF(gltf, gr);
-        SkinningBuilder.ToGLTF(gltf, gr);
+        SkinningBuilder.ToGLTF(gltf, gr, JointRemaps);
     }
 
     public Vertex FromGLTF(IVertexBuilder gltf)
@@ -561,15 +581,15 @@ public class GLTFVertexBuildHelper
         var gr = VertexFormat.CreateInstance();
         GeometryBuilder.FromGLTF(gltf, gr);
         MaterialBuilder.FromGLTF(gltf, gr);
-        SkinningBuilder.FromGLTF(gltf, gr);
+        SkinningBuilder.FromGLTF(gltf, gr, JointRemaps);
         return gr;
     }
 }
 
-public class GLTFMeshExporter(Mesh mesh, string exportedId)
+public class GLTFMeshExporter(Mesh mesh, string exportedId, int[] jointRemaps)
 {
     private readonly Mesh ExportedMesh = mesh;
-    private readonly GLTFVertexBuildHelper BuildHelper = new(exportedId, mesh.VertexFormat);
+    private readonly GLTFVertexBuildHelper BuildHelper = new(exportedId, mesh.VertexFormat, jointRemaps);
 
     public IMeshBuilder<MaterialBuilder> Export()
     {

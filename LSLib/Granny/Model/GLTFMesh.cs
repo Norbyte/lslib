@@ -14,6 +14,7 @@ public class GLTFMesh
     private bool HasNormals = false;
     private bool HasTangents = false;
 
+    public InfluencingJoints InfluencingJoints;
     public int TriangleCount;
     public List<Vertex> Vertices;
     public List<int> Indices;
@@ -44,9 +45,9 @@ public class GLTFMesh
         }
     }
 
-    private void ImportVertices(IPrimitiveReader<MaterialBuilder> primitives)
+    private void ImportVertices(IPrimitiveReader<MaterialBuilder> primitives, int[] jointRemaps)
     {
-        BuildHelper = new GLTFVertexBuildHelper("", OutputVertexType);
+        BuildHelper = new GLTFVertexBuildHelper("", OutputVertexType, jointRemaps);
 
         Vertices = new List<Vertex>(primitives.Vertices.Count);
         foreach (var vert in primitives.Vertices)
@@ -168,12 +169,13 @@ public class GLTFMesh
         return desc;
     }
 
-    public void ImportFromGLTF(ContentTransformer content, ExporterOptions options)
+    public void ImportFromGLTF(ContentTransformer content, InfluencingJoints influencingJoints, ExporterOptions options)
     {
         var geometry = content.GetGeometryAsset();
         var primitives = geometry.Primitives.First();
         
         Options = options;
+        InfluencingJoints = influencingJoints;
 
         var vertexFormat = FindVertexFormat(primitives.VertexType);
         InputVertexType = vertexFormat;
@@ -192,7 +194,7 @@ public class GLTFMesh
         };
 
         ImportTriangles(primitives);
-        ImportVertices(primitives);
+        ImportVertices(primitives, influencingJoints?.BindRemaps);
 
         if (!HasNormals)
         {

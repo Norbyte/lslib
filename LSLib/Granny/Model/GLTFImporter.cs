@@ -1,6 +1,7 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.LS;
 using SharpGLTF.Animations;
+using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Scenes;
 using SharpGLTF.Schema2;
 using System.Numerics;
@@ -140,30 +141,93 @@ public class GLTFImporter
         return null;
     }
 
-    private Mesh ImportMesh(ModelRoot modelRoot, ContentTransformer content, string name)
+    private static InfluencingJoints GetInfluencingJoints(SkinnedTransformer skin, Skeleton skeleton)
     {
-        var collada = new GLTFMesh();
-        collada.ImportFromGLTF(content, Options);
+        var joints = new HashSet<int>();
+        var verts = skin.GetGeometryAsset().Primitives.First().Vertices;
+        foreach (var vert in verts)
+        {
+            var s = (VertexJoints4)vert.GetSkinning();
+            if (s.Weights[0] > 0) joints.Add((int)s.Joints[0]);
+            if (s.Weights[1] > 0) joints.Add((int)s.Joints[1]);
+            if (s.Weights[2] > 0) joints.Add((int)s.Joints[2]);
+            if (s.Weights[3] > 0) joints.Add((int)s.Joints[3]);
+        }
+
+        var ij = new InfluencingJoints();
+        ij.BindJoints = joints.Order().ToList();
+        ij.SkeletonJoints = [];
+
+        var bindJoints = skin.GetJointBindings();
+        foreach (var bindIndex in ij.BindJoints)
+        {
+            var binding = bindJoints[bindIndex].Joint.Name;
+            var jointIndex = skeleton.Bones.FindIndex((bone) => bone.Name == binding);
+            if (jointIndex == -1)
+            {
+                throw new ParsingException($"Couldn't find bind bone {binding} in parent skeleton.");
+            }
+
+            ij.SkeletonJoints.Add(jointIndex);
+        }
+
+        ij.BindRemaps = InfluencingJoints.BindJointsToRemaps(ij.BindJoints);
+        return ij;
+    }
+
+    private (Mesh, GLTFMesh) ImportMesh(ModelRoot modelRoot, Skeleton skeleton, ContentTransformer content, string name)
+    {
+        var ext = FindMeshExtension(modelRoot, name);
+
+        InfluencingJoints influencingJoints = null;
+        if (content is SkinnedTransformer skin)
+        {
+            if (skeleton == null)
+            {
+                throw new ParsingException($"Trying to export skinned mesh '{name}', but the glTF file contains no skeleton");
+            }
+
+            influencingJoints = GetInfluencingJoints(skin, skeleton);
+        }
+        else if (ext != null && ext.ParentBone != "")
+        {
+            if (skeleton == null)
+            {
+                throw new ParsingException($"Mesh '{name}' has a parent bone set ({ext.ParentBone}) but the glTF file contains no skeleton");
+            }
+
+            var parentBone = skeleton.Bones.FindIndex((bone) => bone.Name == ext.ParentBone);
+            if (parentBone == -1)
+            {
+                throw new ParsingException($"Mesh '{name}' has a parent bone ({ext.ParentBone}) that does not exist in the skeleton");
+            }
+
+            influencingJoints = new();
+            influencingJoints.SkeletonJoints = [parentBone];
+        }
+
+        var converted = new GLTFMesh();
+        converted.ImportFromGLTF(content, influencingJoints, Options);
 
         var m = new Mesh
         {
-            VertexFormat = collada.InternalVertexType,
+            VertexFormat = converted.InternalVertexType,
             Name = name,
 
             PrimaryVertexData = new VertexData
             {
-                Vertices = collada.Vertices
+                Vertices = converted.Vertices
             },
 
             PrimaryTopology = new TriTopology
             {
-                Indices = collada.Indices,
+                Indices = converted.Indices,
                 Groups = [
                     new TriTopologyGroup
                     {
                         MaterialIndex = 0,
                         TriFirst = 0,
-                        TriCount = collada.TriangleCount
+                        TriCount = converted.TriangleCount
                     }
                 ]
             },
@@ -174,15 +238,14 @@ public class GLTFImporter
         var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
         m.PrimaryVertexData.VertexComponentNames = components;
 
-        var ext = FindMeshExtension(modelRoot, name);
         MakeExtendedData(content, ext, m);
 
         Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
             (m.VertexFormat.HasBoneWeights ? "skinned" : "rigid"), 
-            m.PrimaryTopology.Groups.Count, 
-            collada.TriangleCount));
+            m.PrimaryTopology.Groups.Count,
+            converted.TriangleCount));
 
-        return m;
+        return (m, converted);
     }
 
     private void AddMeshToRoot(Root root, Mesh mesh)
@@ -390,19 +453,59 @@ public class GLTFImporter
         return skeleton;
     }
 
+    private void ImportSkinBinding(Mesh mesh, InfluencingJoints influences, SkinnedTransformer skin)
+    {
+        var joints = skin.GetJointBindings();
+        mesh.BoneBindings = [];
+        foreach (var jointIndex in influences.BindJoints)
+        {
+            var (joint, _) = joints[jointIndex];
+            var binding = new BoneBinding
+            {
+                BoneName = joint.Name,
+                OBBMin = [-0.1f, -0.1f, -0.1f],
+                OBBMax = [0.1f, 0.1f, 0.1f]
+            };
+            mesh.BoneBindings.Add(binding);
+        }
+    }
+
+    private void ImportGeometry(ModelRoot modelRoot, Skeleton skeleton, InstanceBuilder geometry)
+    {
+        var content = geometry.Content;
+        var name = geometry.Name ?? content.Name ?? content.GetGeometryAsset().Name;
+        var (mesh, gltfMesh) = ImportMesh(modelRoot, skeleton, content, name);
+        ImportedMeshes.Add(mesh);
+
+        if (content is SkinnedTransformer skin)
+        {
+            ImportSkinBinding(mesh, gltfMesh.InfluencingJoints, skin);
+        }
+    }
+
+    private Skeleton TryImportSkin(Root root, InstanceBuilder geometry, GLTFSceneExtensions sceneExt)
+    {
+        var skeletonRoot = geometry.Content?.GetArmatureRoot();
+        if (skeletonRoot != null && skeletonRoot == ((RigidTransformer)geometry.Content).Transform)
+        {
+            var skel = ImportSkeleton(geometry.Name, skeletonRoot, sceneExt);
+            root.Skeletons.Add(skel);
+            return skel;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     public Root Import(string inputPath)
     {
         GLTFExtensions.RegisterExtensions();
-        ModelRoot modelRoot = ModelRoot.Load(inputPath);
+        var modelRoot = ModelRoot.Load(inputPath);
 
         if (modelRoot.LogicalScenes.Count != 1)
         {
             throw new ParsingException($"GLTF file is expected to have a single scene, got {modelRoot.LogicalScenes.Count}");
-        }
-
-        if (modelRoot.LogicalSkins.Count > 1)
-        {
-            throw new ParsingException("GLTF files containing multiple skeletons are not supported");
         }
 
         var sceneExt = modelRoot.DefaultScene.GetExtension<GLTFSceneExtensions>();
@@ -425,48 +528,32 @@ public class GLTFImporter
         root.FromFileName = inputPath;
 
         ImportedMeshes = [];
+        Skeleton skeleton = null;
 
+        // Import skins needed for geometry processing
+        foreach (var geometry in scene.Instances)
+        {
+            if (geometry.Content?.HasRenderableContent != true)
+            {
+                var skel = TryImportSkin(root, geometry, sceneExt);
+                if (skel != null)
+                {
+                    if (skeleton != null)
+                    {
+                        throw new ParsingException("GLTF files containing multiple skins are not supported");
+                    }
+
+                    skeleton = skel;
+                }
+            }
+        }
+
+        // Import non-skin geometries
         foreach (var geometry in scene.Instances)
         {
             if (geometry.Content?.HasRenderableContent == true)
             {
-                var content = geometry.Content;
-                var name = geometry.Name ?? content.Name ?? content.GetGeometryAsset().Name;
-                var mesh = ImportMesh(modelRoot, content, name);
-                ImportedMeshes.Add(mesh);
-
-                if (content is SkinnedTransformer skin)
-                {
-                    var joints = skin.GetJointBindings();
-                    mesh.BoneBindings = [];
-                    if (joints.Length > 0)
-                    {
-                        foreach (var (joint, inverseBindMatrix) in joints)
-                        {
-                            var binding = new BoneBinding
-                            {
-                                BoneName = joint.Name,
-                                OBBMin = [-0.1f, -0.1f, -0.1f],
-                                OBBMax = [0.1f, 0.1f, 0.1f]
-                            };
-                            mesh.BoneBindings.Add(binding);
-                        }
-                    }
-
-                    if (Options.RecalculateOBBs)
-                    {
-                        // FIXME! VertexHelpers.UpdateOBBs(root.Skeletons.Single(), mesh);
-                    }
-                }
-            }
-            else
-            {
-                var skeletonRoot = geometry.Content?.GetArmatureRoot();
-                if (skeletonRoot != null && skeletonRoot == ((RigidTransformer)geometry.Content).Transform)
-                {
-                    var skel = ImportSkeleton(geometry.Name, skeletonRoot, sceneExt);
-                    root.Skeletons.Add(skel);
-                }
+                ImportGeometry(modelRoot, skeleton, geometry);
             }
         }
 

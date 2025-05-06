@@ -49,17 +49,29 @@ public class GLTFExporter
     private void ExportMeshBinding(Model model, Skeleton skeleton, MeshBinding meshBinding, SceneBuilder scene)
     {
         var meshId = MeshIds[meshBinding.Mesh];
-        var exporter = new GLTFMeshExporter(meshBinding.Mesh, meshId);
-        var mesh = exporter.Export();
 
-        if (skeleton == null || !meshBinding.Mesh.VertexFormat.HasBoneWeights)
+        if (skeleton != null && meshBinding.Mesh.VertexFormat.HasBoneWeights)
         {
-            scene.AddRigidMesh(mesh, new AffineTransform(Matrix4x4.Identity));
+            var joints = meshBinding.Mesh.GetInfluencingJoints(skeleton);
+
+            var exporter = new GLTFMeshExporter(meshBinding.Mesh, meshId, joints.BindRemaps);
+            var mesh = exporter.Export();
+
+            Skeletons[skeleton].UsedForSkinning = true;
+
+            List<(NodeBuilder, Matrix4x4)> bindings = [];
+            foreach (var jointIndex in joints.SkeletonJoints)
+            {
+                bindings.Add(Skeletons[skeleton].Joints[jointIndex]);
+            }
+
+            scene.AddSkinnedMesh(mesh, bindings.ToArray());
         }
         else
         {
-            Skeletons[skeleton].UsedForSkinning = true;
-            scene.AddSkinnedMesh(mesh, Skeletons[skeleton].Joints.ToArray());
+            var exporter = new GLTFMeshExporter(meshBinding.Mesh, meshId, null);
+            var mesh = exporter.Export();
+            scene.AddRigidMesh(mesh, new AffineTransform(Matrix4x4.Identity));
         }
     }
 
