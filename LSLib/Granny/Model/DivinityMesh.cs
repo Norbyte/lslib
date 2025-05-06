@@ -236,6 +236,8 @@ public class DivinityMeshProperties
     public float[] LodDistance;
     [Serialization(ArraySize = 1)]
     public Int32[] IsImpostor;
+    [Serialization(Kind = SerializationKind.None)]
+    public bool NewlyAdded = false;
 
     public DivinityModelFlag MeshFlags
     {
@@ -281,7 +283,8 @@ public class DivinityMeshExtendedData
                 FormatDescs = null,
                 ExtendedData = null,
                 LodDistance = [3.40282347E+38f],
-                IsImpostor = [0]
+                IsImpostor = [0],
+                NewlyAdded = true
             },
             LSMVersion = CurrentLSMVersion
         };

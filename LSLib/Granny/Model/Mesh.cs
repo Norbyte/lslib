@@ -659,7 +659,10 @@ public class Mesh
             VertexFormat = PrimaryVertexData.Vertices[0].Format;
         }
 
-        if (ExtendedData != null && ExtendedData.UserMeshProperties.MeshFlags == 0)
+        if (ExtendedData != null
+            && ExtendedData.UserMeshProperties != null
+            && ExtendedData.UserMeshProperties.Flags[0] == 0
+            && ExtendedData.UserMeshProperties.NewlyAdded)
         {
             ExtendedData.UserMeshProperties.MeshFlags = AutodetectMeshFlags();
         }
