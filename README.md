@@ -52,7 +52,7 @@ Once you've downloaded and extracted the latest source code, here's how to build
    
    <img width="500" height="961" alt="Image" src="https://github.com/user-attachments/assets/34f4874c-0ea3-4108-a42e-e2be1b11d9f7" />
 
-6. The last step is to get granny2. Releases now include it, but the latest source code doesn't, so to make the latest source code work you can either grab granny2.dll from the latest release package, or from an older source version. Copy granny2.dll it into these three folders: `Release\Packed\`, `ConverterApp\`, and `ConverterApp\bin\Release\net8.0-windows\`
+6. The last step is to get granny2. Releases now include it, but the latest source code doesn't, so to make the latest source code work you can either grab granny2.dll from the latest release package, or from an older source version. Copy granny2.dll into these three folders: `Release\Packed\`, `ConverterApp\`, and `ConverterApp\bin\Release\net8.0-windows\`
    
    <img width="500" height="1846" alt="Image" src="https://github.com/user-attachments/assets/0053e17e-d6ad-4804-a40f-d49a6701391d" />
 
