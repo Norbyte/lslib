@@ -427,6 +427,7 @@ public class GLTFImporter
     {
         var skeleton = Skeleton.CreateEmpty(name);
         var imported = new GLTFImportedSkeleton();
+        Skeletons[skeleton] = imported;
 
         if (ext != null && ext.BoneOrder.Count > 0)
         {
@@ -449,7 +450,6 @@ public class GLTFImporter
 
         ImportBoneTree(skeleton, -1, root, ext, imported);
 
-        Skeletons[skeleton] = imported;
         return skeleton;
     }
 
