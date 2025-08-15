@@ -77,9 +77,14 @@ public static class OsiVersion
     public const uint VerValueFlags = 0x010e;
 
     /// <summary>
+    /// Version bump in P8H2
+    /// </summary>
+    public const uint VerPatch8Hotfix2 = 0x010f;
+
+    /// <summary>
     /// Last supported Osi version
     /// </summary>
-    public const uint VerLastSupported = VerValueFlags;
+    public const uint VerLastSupported = VerPatch8Hotfix2;
 }
 
 public class OsiReader : BinaryReader
