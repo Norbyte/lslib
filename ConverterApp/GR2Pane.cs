@@ -276,7 +276,7 @@ namespace ConverterApp
             settings.BuildDummySkeleton = buildDummySkeleton.Checked;
             settings.ApplyBasisTransforms = applyBasisTransforms.Checked;
             settings.FlipMesh = flipMeshes.Checked;
-            settings.FlipSkeleton = flipSkeletons.Checked;
+            settings.MirrorSkeleton = mirrorSkeletons.Checked;
 
             settings.LoadGameSettings(game);
 

@@ -55,7 +55,7 @@
             gr2BatchOutputDir = new System.Windows.Forms.TextBox();
             groupBox2 = new System.Windows.Forms.GroupBox();
             flipMeshes = new System.Windows.Forms.CheckBox();
-            flipSkeletons = new System.Windows.Forms.CheckBox();
+            mirrorSkeletons = new System.Windows.Forms.CheckBox();
             flipUVs = new System.Windows.Forms.CheckBox();
             label2 = new System.Windows.Forms.Label();
             exportableObjects = new System.Windows.Forms.ListView();
@@ -377,7 +377,7 @@
             // 
             groupBox2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             groupBox2.Controls.Add(flipMeshes);
-            groupBox2.Controls.Add(flipSkeletons);
+            groupBox2.Controls.Add(mirrorSkeletons);
             groupBox2.Controls.Add(flipUVs);
             groupBox2.Controls.Add(label2);
             groupBox2.Controls.Add(exportableObjects);
@@ -399,21 +399,23 @@
             flipMeshes.Location = new System.Drawing.Point(252, 69);
             flipMeshes.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             flipMeshes.Name = "flipMeshes";
-            flipMeshes.Size = new System.Drawing.Size(180, 24);
+            flipMeshes.Size = new System.Drawing.Size(125, 24);
             flipMeshes.TabIndex = 26;
-            flipMeshes.Text = "X-flip meshes (D:OS 2)";
+            flipMeshes.Text = "Mirror meshes";
             flipMeshes.UseVisualStyleBackColor = true;
             // 
-            // flipSkeletons
+            // mirrorSkeletons
             // 
-            flipSkeletons.AutoSize = true;
-            flipSkeletons.Location = new System.Drawing.Point(252, 34);
-            flipSkeletons.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            flipSkeletons.Name = "flipSkeletons";
-            flipSkeletons.Size = new System.Drawing.Size(192, 24);
-            flipSkeletons.TabIndex = 25;
-            flipSkeletons.Text = "X-flip skeletons (D:OS 2)";
-            flipSkeletons.UseVisualStyleBackColor = true;
+            mirrorSkeletons.AutoSize = true;
+            mirrorSkeletons.Checked = true;
+            mirrorSkeletons.CheckState = System.Windows.Forms.CheckState.Checked;
+            mirrorSkeletons.Location = new System.Drawing.Point(252, 34);
+            mirrorSkeletons.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            mirrorSkeletons.Name = "mirrorSkeletons";
+            mirrorSkeletons.Size = new System.Drawing.Size(137, 24);
+            mirrorSkeletons.TabIndex = 25;
+            mirrorSkeletons.Text = "Mirror skeletons";
+            mirrorSkeletons.UseVisualStyleBackColor = true;
             // 
             // flipUVs
             // 
@@ -703,7 +705,7 @@
         private System.Windows.Forms.OpenFileDialog inputFileDlg;
         private System.Windows.Forms.CheckBox flipUVs;
         internal System.Windows.Forms.CheckBox flipMeshes;
-        internal System.Windows.Forms.CheckBox flipSkeletons;
+        internal System.Windows.Forms.CheckBox mirrorSkeletons;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ListView exportableObjects;
         private System.Windows.Forms.ColumnHeader exportableName;

@@ -102,7 +102,7 @@ public class CommandLineArguments
     [EnumeratedValueArgument(typeof(string), 'e', "gr2-options",
         Description = "Set extra options for GR2/DAE conversion",
         AllowMultiple = true,
-        AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;ignore-uv-nan;disable-qtangents;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;x-flip-skeletons;x-flip-meshes;conform;conform-copy",
+        AllowedValues = "export-normals;export-tangents;export-uvs;export-colors;deduplicate-vertices;deduplicate-uvs;recalculate-normals;recalculate-tangents;recalculate-iwt;flip-uvs;ignore-uv-nan;disable-qtangents;y-up-skeletons;force-legacy-version;compact-tris;build-dummy-skeleton;apply-basis-transforms;mirror-skeletons;x-flip-meshes;conform;conform-copy",
         ValueOptional = false,
         Optional = true
     )]
@@ -338,7 +338,7 @@ public class CommandLineArguments
             { "compact-tris", true },
             { "build-dummy-skeleton", true },
             { "apply-basis-transforms", true },
-            { "x-flip-skeletons", false },
+            { "mirror-skeletons", false },
             { "x-flip-meshes", false },
             { "conform", false },
             { "conform-copy", false },

@@ -230,14 +230,31 @@ public class Skeleton
         UpdateWorldTransforms();
     }
 
-    public void Flip()
+    public void Mirror()
     {
-        foreach (var bone in Bones) if (bone.IsRoot)
+        var leftBones = new Dictionary<string, Bone>();
+        foreach (var bone in Bones)
         {
-           bone.Transform.SetScale(new Vector3(-1, 1, 1));
+            if (bone.Name.EndsWith("_l") || bone.Name.EndsWith("_L"))
+            {
+                leftBones.Add(bone.Name, bone);
+            }
         }
 
-        UpdateWorldTransforms();
+        foreach (var rightBone in Bones)
+        {
+            if (rightBone.Name.EndsWith("_r") || rightBone.Name.EndsWith("_R"))
+            {
+                var leftBone = leftBones.GetValueOrDefault(rightBone.Name[..^2]);
+                if (leftBone != null)
+                {
+                    leftBones.Remove(leftBone.Name);
+                    var leftName = leftBone.Name;
+                    leftBone.Name = rightBone.Name;
+                    rightBone.Name = leftName;
+                }
+            }
+        }
     }
 
     public void UpdateWorldTransforms()

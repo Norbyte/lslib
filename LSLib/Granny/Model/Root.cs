@@ -86,7 +86,7 @@ public class Root
         ZUp = false;
     }
 
-    public void Flip(bool flipMesh, bool flipSkeleton)
+    public void Flip(bool flipMesh, bool mirrorSkeleton)
     {
         if (flipMesh && VertexDatas != null)
         {
@@ -96,11 +96,11 @@ public class Root
             }
         }
 
-        if (flipSkeleton && Skeletons != null)
+        if (mirrorSkeleton && Skeletons != null)
         {
             foreach (var skeleton in Skeletons)
             {
-                skeleton.Flip();
+                skeleton.Mirror();
             }
         }
 
