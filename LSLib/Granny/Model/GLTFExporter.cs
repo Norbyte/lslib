@@ -52,17 +52,29 @@ public class GLTFExporter
 
         if (skeleton != null && meshBinding.Mesh.VertexFormat.HasBoneWeights)
         {
+            var gltfSkel = Skeletons[skeleton];
             var joints = meshBinding.Mesh.GetInfluencingJoints(skeleton);
+            var boundJoints = joints.SkeletonJoints.ToHashSet();
 
             var exporter = new GLTFMeshExporter(meshBinding.Mesh, meshId, joints.BindRemaps);
             var mesh = exporter.Export();
 
-            Skeletons[skeleton].UsedForSkinning = true;
+            gltfSkel.UsedForSkinning = true;
 
             List<(NodeBuilder, Matrix4x4)> bindings = [];
             foreach (var jointIndex in joints.SkeletonJoints)
             {
-                bindings.Add(Skeletons[skeleton].Joints[jointIndex]);
+                bindings.Add(gltfSkel.Joints[jointIndex]);
+            }
+            
+            // Blender excludes bones from the armature that don't have a mesh binding
+            // if the GLTF is not a skeleton-only export.
+            for (var i = 0; i < gltfSkel.Joints.Count; i++)
+            {
+                if (!boundJoints.Contains(i))
+                {
+                    bindings.Add(gltfSkel.Joints[i]);
+                }
             }
 
             scene.AddSkinnedMesh(mesh, bindings.ToArray());
