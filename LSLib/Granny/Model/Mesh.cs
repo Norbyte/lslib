@@ -637,8 +637,8 @@ public class InfluencingJoints
 
     public static int[] BindJointsToRemaps(List<int> joints)
     {
-        var maxJoint = joints.Max();
-        var remaps = new int[maxJoint + 1];
+        var maxJoint = joints.Count > 0 ? joints.Max() + 1 : 0;
+        var remaps = new int[maxJoint];
         var i = 0;
 
         foreach (var joint in joints)
