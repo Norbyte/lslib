@@ -31,7 +31,7 @@ public class Bone
     public int ExportIndex = -1;
 
     public bool IsRoot { get { return ParentIndex == -1; } }
-    
+
     public void UpdateWorldTransforms(List<Bone> bones)
     {
         var localTransform = Transform.ToMatrix4Composite();
@@ -166,6 +166,35 @@ public class Bone
             ]
         };
     }
+
+    private bool Mirror(string from, string to)
+    {
+        int pos = 0;
+        while (true)
+        {
+            pos = Name.IndexOf(from, pos);
+            if (pos == -1)
+            {
+                return false;
+            }
+
+            if (pos + 2 == Name.Length || Name[pos+2] == '_')
+            {
+                Name = Name[..pos] + to + Name.Substring(pos+2);
+                return true;
+            }
+
+            pos += 2;
+        }
+    }
+
+    public bool Mirror()
+    {
+        return Mirror("_l", "_r")
+            || Mirror("_L", "_R")
+            || Mirror("_r", "_l")
+            || Mirror("_R", "_L");
+    }
 }
 
 public class Skeleton
@@ -232,28 +261,9 @@ public class Skeleton
 
     public void Mirror()
     {
-        var leftBones = new Dictionary<string, Bone>();
         foreach (var bone in Bones)
         {
-            if (bone.Name.EndsWith("_l") || bone.Name.EndsWith("_L"))
-            {
-                leftBones.Add(bone.Name, bone);
-            }
-        }
-
-        foreach (var rightBone in Bones)
-        {
-            if (rightBone.Name.EndsWith("_r") || rightBone.Name.EndsWith("_R"))
-            {
-                var leftBone = leftBones.GetValueOrDefault(rightBone.Name[..^2]);
-                if (leftBone != null)
-                {
-                    leftBones.Remove(leftBone.Name);
-                    var leftName = leftBone.Name;
-                    leftBone.Name = rightBone.Name;
-                    rightBone.Name = leftName;
-                }
-            }
+            bone.Mirror();
         }
     }
 
