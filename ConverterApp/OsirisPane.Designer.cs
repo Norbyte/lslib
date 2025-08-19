@@ -121,6 +121,8 @@
             this.databaseGrid.Name = "databaseGrid";
             this.databaseGrid.Size = new System.Drawing.Size(829, 380);
             this.databaseGrid.TabIndex = 2;
+            this.databaseGrid.CellContextMenuStripNeeded += databaseGrid_CellContextMenuStripNeeded;
+            this.databaseGrid.MouseClick += databaseGrid_MouseClick;
             // 
             // databaseSelectorCb
             // 
