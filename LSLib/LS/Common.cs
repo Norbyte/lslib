@@ -16,7 +16,7 @@ public static class Common
 
 	public const int MinorVersion = 20;
 
-	public const int PatchVersion = 0;
+	public const int PatchVersion = 1;
 
 	// Version of LSTools profile data in generated DAE files
     public const int ColladaMetadataVersion = 3;

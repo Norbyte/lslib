@@ -2,7 +2,6 @@
 using System.IO.Hashing;
 using System.Security.Cryptography;
 using LSLib.LS.Enums;
-using LZ4;
 
 namespace LSLib.LS;
 
@@ -183,7 +182,7 @@ abstract public class PackageWriter : IDisposable
             fileListBuf = fileList.ToArray();
         }
 
-        byte[] compressedFileList = LZ4Codec.EncodeHC(fileListBuf, 0, fileListBuf.Length);
+        byte[] compressedFileList = CompressionHelpers.Compress(fileListBuf, CompressionMethod.LZ4, LSCompressionLevel.Default);
 
         metadataWriter.Write((UInt32)files.Count);
 

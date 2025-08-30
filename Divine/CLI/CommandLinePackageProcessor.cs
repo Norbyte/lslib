@@ -164,8 +164,10 @@ internal class CommandLinePackageProcessor
             CommandLineLogger.LogDebug($"Using source path: {file}");
         }
 
+#if !DEBUG
         try
         {
+#endif
             var packager = new Packager();
 
             string extractionPath = GetExtractionPath(folder, CommandLineActions.DestinationPath);
@@ -175,6 +177,7 @@ internal class CommandLinePackageProcessor
             packager.UncompressPackage(file, extractionPath, filter);
 
             CommandLineLogger.LogInfo($"Extracted package to: {extractionPath}");
+#if !DEBUG
         }
         catch (NotAPackageException)
         {
@@ -185,5 +188,6 @@ internal class CommandLinePackageProcessor
             CommandLineLogger.LogFatal($"Failed to extract package: {e.Message}", 2);
             CommandLineLogger.LogTrace($"{e.StackTrace}");
         }
+#endif
     }
 }

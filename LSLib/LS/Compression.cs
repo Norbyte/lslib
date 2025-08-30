@@ -1,4 +1,7 @@
-﻿using LZ4;
+﻿using K4os.Compression.LZ4;
+using K4os.Compression.LZ4.Streams;
+using SharpGLTF.Runtime;
+using System.Buffers;
 using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 
@@ -27,7 +30,11 @@ public class LZ4DecompressionStream : Stream
         View.ReadArray(Offset, compressed, 0, Size);
 
         var decompressed = new byte[DecompressedSize];
-        LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, DecompressedSize, true);
+        int length = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, DecompressedSize);
+        if (length != DecompressedSize)
+        {
+            throw new Exception("Failed to decompress LZ4 stream");
+        }
         Decompressed = new MemoryStream(decompressed);
     }
 
@@ -83,25 +90,40 @@ public static class CompressionHelpers
 
             case CompressionMethod.Zlib:
                 {
-                    using (var compressedStream = new MemoryStream(compressed))
-                    using (var decompressedStream = new MemoryStream())
-                    using (var stream = new ZLibStream(compressedStream, CompressionMode.Decompress))
-                    {
-                        stream.CopyTo(decompressedStream);
-                        return decompressedStream.ToArray();
-                    }
+                    using var compressedStream = new MemoryStream(compressed);
+                    using var decompressedStream = new MemoryStream();
+                    using var stream = new ZLibStream(compressedStream, CompressionMode.Decompress);
+                    stream.CopyTo(decompressedStream);
+                    return decompressedStream.ToArray();
                 }
 
             case CompressionMethod.LZ4:
                 if (chunked)
                 {
-                    var decompressed = Native.LZ4FrameCompressor.Decompress(compressed);
-                    return decompressed;
+                    using var input = new MemoryStream(compressed);
+                    using var output = new MemoryStream();
+                    using var decompressor = LZ4Stream.Decode(input);
+                    var temp = ArrayPool<byte>.Shared.Rent(0x10000);
+
+                    try
+                    {
+                        while (decompressedSize > 0)
+                        {
+                            int count = decompressor.Read(temp, 0, Math.Min(decompressedSize, temp.Length));
+                            output.Write(temp, 0, count);
+                            decompressedSize -= count;
+                        }
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(temp);
+                    }
+                    return output.ToArray();
                 }
                 else
                 {
                     var decompressed = new byte[decompressedSize];
-                    var resultSize = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize, true);
+                    var resultSize = LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, decompressedSize);
                     if (resultSize != decompressedSize)
                     {
                         string msg = $"LZ4 compressor disagrees about the size of compressed buffer; expected {decompressedSize}, got {resultSize}";
@@ -112,13 +134,11 @@ public static class CompressionHelpers
 
             case CompressionMethod.Zstd:
                 {
-                    using (var compressedStream = new MemoryStream(compressed))
-                    using (var decompressedStream = new MemoryStream())
-                    using (var stream = new ZstdSharp.DecompressionStream(compressedStream))
-                    {
-                        stream.CopyTo(decompressedStream);
-                        return decompressedStream.ToArray();
-                    }
+                    using var compressedStream = new MemoryStream(compressed);
+                    using var decompressedStream = new MemoryStream();
+                    using var stream = new ZstdSharp.DecompressionStream(compressedStream);
+                    stream.CopyTo(decompressedStream);
+                    return decompressedStream.ToArray();
                 }
 
             default:
@@ -195,17 +215,39 @@ public static class CompressionHelpers
 
     public static byte[] CompressLZ4(byte[] uncompressed, LSCompressionLevel compressionLevel, bool chunked = false)
     {
+        var level = compressionLevel switch
+        {
+            LSCompressionLevel.Fast => LZ4Level.L00_FAST,
+            LSCompressionLevel.Default => LZ4Level.L10_OPT,
+            LSCompressionLevel.Max => LZ4Level.L12_MAX,
+            _ => throw new ArgumentException("compressionLevel")
+        };
+
         if (chunked)
         {
-            return Native.LZ4FrameCompressor.Compress(uncompressed);
+            var settings = new LZ4EncoderSettings
+            {
+                CompressionLevel = level
+            };
+
+            using var input = new MemoryStream(uncompressed);
+            using var output = new MemoryStream(uncompressed);
+            using var compressor = LZ4Stream.Encode(input, settings);
+            compressor.CopyTo(output);
+            return output.ToArray();
         }
-        else if (compressionLevel == LSCompressionLevel.Fast)
+        else 
         {
-            return LZ4Codec.Encode(uncompressed, 0, uncompressed.Length);
-        }
-        else
-        {
-            return LZ4Codec.EncodeHC(uncompressed, 0, uncompressed.Length);
+            var compressed = new byte[LZ4Codec.MaximumOutputSize(uncompressed.Length)];
+            var length = LZ4Codec.Encode(uncompressed, compressed, level);
+            if (length < 0)
+            {
+                throw new Exception($"LZ4 compression failed: {length}");
+            }
+
+            var final = new byte[length];
+            Array.Copy(compressed, final, length);
+            return final;
         }
     }
 

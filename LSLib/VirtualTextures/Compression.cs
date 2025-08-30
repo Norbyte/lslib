@@ -1,4 +1,4 @@
-﻿using LZ4;
+﻿using LSLib.LS;
 
 namespace LSLib.VirtualTextures;
 
@@ -46,7 +46,7 @@ public class TileCompressor
 
     public static byte[] CompressLZ4(byte[] raw)
     {
-        return LZ4Codec.EncodeHC(raw, 0, raw.Length);
+        return CompressionHelpers.CompressLZ4(raw, LSCompressionLevel.Max);
     }
 
     public static byte[] CompressLZ77(byte[] raw)
@@ -139,9 +139,7 @@ public class TileCompressor
             case TileCompressionMethod.Raw:
                 return compressed;
             case TileCompressionMethod.LZ4:
-                var decompressed = new byte[outputSize];
-                LZ4Codec.Decode(compressed, 0, compressed.Length, decompressed, 0, outputSize, true);
-                return decompressed;
+                return CompressionHelpers.Decompress(compressed, outputSize, CompressionFlags.MethodLZ4);
             case TileCompressionMethod.LZ77:
                 return Native.FastLZCompressor.Decompress(compressed, outputSize);
             default:

@@ -1,5 +1,4 @@
-﻿using LZ4;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 
 namespace LSLib.LS;
