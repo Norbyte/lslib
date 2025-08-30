@@ -373,6 +373,12 @@ public class GLTFImporter
     private int ImportBone(Skeleton skeleton, int parentIndex, NodeBuilder node, GLTFSceneExtensions ext, GLTFImportedSkeleton imported)
     {
         var transform = node.LocalTransform;
+
+        if (ext.BoneScale.TryGetValue(node.Name, out var scale))
+        {
+            transform = transform.WithScale(new Vector3(scale));
+        }
+
         var tm = transform.Matrix;
         var myIndex = skeleton.Bones.Count;
 

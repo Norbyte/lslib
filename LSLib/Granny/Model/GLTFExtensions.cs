@@ -14,6 +14,7 @@ partial class GLTFSceneExtensions : ExtraProperties
     public Int32 LSLibPatch = 0;
 
     public Dictionary<string, Int32> BoneOrder = [];
+    public Dictionary<string, float> BoneScale = [];
     public string SkeletonResourceID;
     public string ModelName;
 
@@ -27,6 +28,7 @@ partial class GLTFSceneExtensions : ExtraProperties
         SerializeProperty(writer, "LSLibPatch", LSLibPatch);
 
         SerializeProperty(writer, "BoneOrder", BoneOrder);
+        SerializeProperty(writer, "BoneScale", BoneScale);
         SerializeProperty(writer, "SkeletonResourceID", SkeletonResourceID);
         SerializeProperty(writer, "ModelName", ModelName);
     }
@@ -41,6 +43,7 @@ partial class GLTFSceneExtensions : ExtraProperties
             case "LSLibPatch": LSLibPatch = DeserializePropertyValue<Int32>(ref reader); break;
 
             case "BoneOrder": DeserializePropertyDictionary(ref reader, BoneOrder); break;
+            case "BoneScale": DeserializePropertyDictionary(ref reader, BoneScale); break;
             case "SkeletonResourceID": SkeletonResourceID = DeserializePropertyValue<string>(ref reader); break;
             case "ModelName": ModelName = DeserializePropertyValue<string>(ref reader); break;
 

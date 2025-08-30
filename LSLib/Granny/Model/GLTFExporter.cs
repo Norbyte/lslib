@@ -219,6 +219,15 @@ public class GLTFExporter
         {
             ext.BoneOrder[joint.Name] = joint.ExportIndex + 1;
         }
+
+        ext.BoneScale = [];
+        foreach (var joint in skeleton.Bones)
+        {
+            if (joint.Transform.HasScaleShear)
+            {
+                ext.BoneScale[joint.Name] = joint.Transform.ScaleShear[0, 0];
+            }
+        }
     }
 
     private void ExportMeshExtensions(Mesh mesh, GLTFMeshExtensions ext)
