@@ -32,7 +32,7 @@
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.databaseGrid = new System.Windows.Forms.DataGridView();
             this.databaseSelectorCb = new System.Windows.Forms.ComboBox();
-            this.label18 = new System.Windows.Forms.Label();
+            this.lblDatabase = new System.Windows.Forms.Label();
             this.loadStoryBtn = new System.Windows.Forms.Button();
             this.decompileStoryBtn = new System.Windows.Forms.Button();
             this.storyFilePath = new System.Windows.Forms.TextBox();
@@ -44,8 +44,10 @@
             this.storyPathDlg = new System.Windows.Forms.OpenFileDialog();
             this.goalPathDlg = new System.Windows.Forms.FolderBrowserDialog();
             this.btnDebugExport = new System.Windows.Forms.Button();
-            this.lblFilter = new System.Windows.Forms.Label();
-            this.tbFilter = new System.Windows.Forms.TextBox();
+            this.lblDbFilter = new System.Windows.Forms.Label();
+            this.tbDbFilter = new System.Windows.Forms.TextBox();
+            this.lblEntryFilter = new System.Windows.Forms.Label();
+            this.tbEntryFilter = new System.Windows.Forms.TextBox();
             this.btnFilterMatchCase = new System.Windows.Forms.Button();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.databaseGrid)).BeginInit();
@@ -67,9 +69,11 @@
             this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.Controls.Add(this.databaseGrid);
             this.groupBox3.Controls.Add(this.databaseSelectorCb);
-            this.groupBox3.Controls.Add(this.label18);
-            this.groupBox3.Controls.Add(this.lblFilter);
-            this.groupBox3.Controls.Add(this.tbFilter);
+            this.groupBox3.Controls.Add(this.lblDatabase);
+            this.groupBox3.Controls.Add(this.lblDbFilter);
+            this.groupBox3.Controls.Add(this.tbDbFilter);
+            this.groupBox3.Controls.Add(this.lblEntryFilter);
+            this.groupBox3.Controls.Add(this.tbEntryFilter);
             this.groupBox3.Controls.Add(this.btnFilterMatchCase);
             this.groupBox3.Location = new System.Drawing.Point(5, 147);
             this.groupBox3.Name = "groupBox3";
@@ -78,25 +82,45 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Database Editor";
             // 
-            // lblFilter
+            // lblDbFilter
             // 
-            this.lblFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblFilter.AutoSize = true;
-            this.lblFilter.Location = new System.Drawing.Point(554, 22);
-            this.lblFilter.Name = "lblFilter";
-            this.lblFilter.Size = new System.Drawing.Size(32, 13);
-            this.lblFilter.TabIndex = 4;
-            this.lblFilter.Text = "Filter:";
+            this.lblDbFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblDbFilter.AutoSize = true;
+            this.lblDbFilter.Location = new System.Drawing.Point(370, 22);
+            this.lblDbFilter.Name = "lblDbFilter";
+            this.lblDbFilter.Size = new System.Drawing.Size(48, 13);
+            this.lblDbFilter.TabIndex = 4;
+            this.lblDbFilter.Text = "DB Filter:";
             // 
-            // tbFilter
+            // tbDbFilter
             // 
-            this.tbFilter.AcceptsReturn = true;
-            this.tbFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbFilter.Location = new System.Drawing.Point(594, 18);
-            this.tbFilter.Name = "tbFilter";
-            this.tbFilter.Size = new System.Drawing.Size(197, 20);
-            this.tbFilter.TabIndex = 3;
-            this.tbFilter.KeyUp += new System.Windows.Forms.KeyEventHandler(this.databaseFilter_KeyUp);
+            this.tbDbFilter.AcceptsReturn = true;
+            this.tbDbFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbDbFilter.Location = new System.Drawing.Point(420, 18);
+            this.tbDbFilter.Name = "tbDbFilter";
+            this.tbDbFilter.Size = new System.Drawing.Size(150, 20);
+            this.tbDbFilter.TabIndex = 3;
+            this.tbDbFilter.KeyUp += new System.Windows.Forms.KeyEventHandler(this.databaseFilter_KeyUp);
+            // 
+            // lblEntryFilter
+            // 
+            this.lblEntryFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblEntryFilter.AutoSize = true;
+            this.lblEntryFilter.Location = new System.Drawing.Point(575, 22);
+            this.lblEntryFilter.Name = "lblEntryFilter";
+            this.lblEntryFilter.Size = new System.Drawing.Size(54, 13);
+            this.lblEntryFilter.TabIndex = 6;
+            this.lblEntryFilter.Text = "Entry Filter:";
+            // 
+            // tbEntryFilter
+            // 
+            this.tbEntryFilter.AcceptsReturn = true;
+            this.tbEntryFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.tbEntryFilter.Location = new System.Drawing.Point(635, 18);
+            this.tbEntryFilter.Name = "tbEntryFilter";
+            this.tbEntryFilter.Size = new System.Drawing.Size(150, 20);
+            this.tbEntryFilter.TabIndex = 5;
+            this.tbEntryFilter.KeyUp += new System.Windows.Forms.KeyEventHandler(this.databaseFilter_KeyUp);
             // 
             // btnFilterMatchCase
             // 
@@ -105,15 +129,15 @@
             this.btnFilterMatchCase.Location = new System.Drawing.Point(797, 17);
             this.btnFilterMatchCase.Name = "btnFilterMatchCase";
             this.btnFilterMatchCase.Size = new System.Drawing.Size(41, 22);
-            this.btnFilterMatchCase.TabIndex = 5;
+            this.btnFilterMatchCase.TabIndex = 7;
             this.btnFilterMatchCase.Text = "Aa";
             this.btnFilterMatchCase.UseVisualStyleBackColor = true;
             this.btnFilterMatchCase.Click += new System.EventHandler(this.btnDatabaseFilterMatchCase_Click);
-            // 
+            //
             // databaseGrid
             // 
-            this.databaseGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.databaseGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.databaseGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.databaseGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -124,22 +148,23 @@
             // 
             // databaseSelectorCb
             // 
+            this.databaseSelectorCb.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right))));
             this.databaseSelectorCb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.databaseSelectorCb.FormattingEnabled = true;
             this.databaseSelectorCb.Location = new System.Drawing.Point(67, 18);
             this.databaseSelectorCb.Name = "databaseSelectorCb";
-            this.databaseSelectorCb.Size = new System.Drawing.Size(471, 21);
+            this.databaseSelectorCb.Size = new System.Drawing.Size(300, 21);
             this.databaseSelectorCb.TabIndex = 1;
             this.databaseSelectorCb.SelectedIndexChanged += new System.EventHandler(this.databaseSelectorCb_SelectedIndexChanged);
             // 
-            // label18
+            // lblDatabase
             // 
-            this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(6, 22);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(56, 13);
-            this.label18.TabIndex = 0;
-            this.label18.Text = "Database:";
+            this.lblDatabase.AutoSize = true;
+            this.lblDatabase.Location = new System.Drawing.Point(6, 22);
+            this.lblDatabase.Name = "lblDatabase";
+            this.lblDatabase.Size = new System.Drawing.Size(56, 13);
+            this.lblDatabase.TabIndex = 0;
+            this.lblDatabase.Text = "Database:";
             // 
             // loadStoryBtn
             // 
@@ -165,7 +190,7 @@
             // 
             // storyFilePath
             // 
-            this.storyFilePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.storyFilePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.storyFilePath.Location = new System.Drawing.Point(7, 22);
             this.storyFilePath.Name = "storyFilePath";
@@ -194,7 +219,7 @@
             // 
             // goalPath
             // 
-            this.goalPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.goalPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.goalPath.Location = new System.Drawing.Point(7, 93);
             this.goalPath.Name = "goalPath";
@@ -268,7 +293,7 @@
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.DataGridView databaseGrid;
         private System.Windows.Forms.ComboBox databaseSelectorCb;
-        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.Label lblDatabase;
         private System.Windows.Forms.Button loadStoryBtn;
         private System.Windows.Forms.Button decompileStoryBtn;
         private System.Windows.Forms.TextBox storyFilePath;
@@ -280,8 +305,10 @@
         private System.Windows.Forms.OpenFileDialog storyPathDlg;
         private System.Windows.Forms.FolderBrowserDialog goalPathDlg;
         private System.Windows.Forms.Button btnDebugExport;
-        private System.Windows.Forms.Label lblFilter;
-        private System.Windows.Forms.TextBox tbFilter;
+        private System.Windows.Forms.Label lblDbFilter;
+        private System.Windows.Forms.TextBox tbDbFilter;
+        private System.Windows.Forms.Label lblEntryFilter;
+        private System.Windows.Forms.TextBox tbEntryFilter;
         private System.Windows.Forms.Button btnFilterMatchCase;
     }
 }

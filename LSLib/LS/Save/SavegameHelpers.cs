@@ -121,7 +121,7 @@ public class SavegameHelpers : IDisposable
             var storyRepacked = PackageBuildInputFile.CreateFromBlob(storyStream.ToArray(), "StorySave.bin");
             build.Files.Add(storyRepacked);
 
-            foreach (var file in Package.Files.Where(x => x.Name.ToLowerInvariant() != "StorySave.bin"))
+            foreach (var file in Package.Files.Where(x => x.Name.ToLowerInvariant() != ("StorySave.bin").ToLowerInvariant()))
             {
                 using var stream = file.CreateContentReader();
                 using var unpacked = new MemoryStream();
