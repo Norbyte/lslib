@@ -167,20 +167,20 @@ public class Bone
         };
     }
 
-    private bool Mirror(string from, string to)
+    private static bool MirrorBoneName(ref string name, string from, string to)
     {
         int pos = 0;
         while (true)
         {
-            pos = Name.IndexOf(from, pos);
+            pos = name.IndexOf(from, pos);
             if (pos == -1)
             {
                 return false;
             }
 
-            if (pos + 2 == Name.Length || Name[pos+2] == '_')
+            if (pos + 2 == name.Length || name[pos+2] == '_')
             {
-                Name = Name[..pos] + to + Name.Substring(pos+2);
+                name = name[..pos] + to + name.Substring(pos+2);
                 return true;
             }
 
@@ -188,12 +188,25 @@ public class Bone
         }
     }
 
-    public bool Mirror()
+    public static string MirrorBoneName(string name)
     {
-        return Mirror("_l", "_r")
-            || Mirror("_L", "_R")
-            || Mirror("_r", "_l")
-            || Mirror("_R", "_L");
+        string mirrored = name;
+        if (MirrorBoneName(ref mirrored, "_l", "_r")
+            || MirrorBoneName(ref mirrored, "_L", "_R")
+            || MirrorBoneName(ref mirrored, "_r", "_l")
+            || MirrorBoneName(ref mirrored, "_R", "_L"))
+        {
+            return mirrored;
+        }
+        else
+        {
+            return name;
+        }
+    }
+
+    public void Mirror()
+    {
+        Name = MirrorBoneName(Name);
     }
 }
 

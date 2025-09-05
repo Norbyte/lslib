@@ -104,6 +104,14 @@ public class Root
             }
         }
 
+        if (mirrorSkeleton && TrackGroups != null)
+        {
+            foreach (var trackGroup in TrackGroups)
+            {
+                trackGroup.Mirror();
+            }
+        }
+
         if (flipMesh && TriTopologies != null)
         {
             foreach (var topology in TriTopologies)

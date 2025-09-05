@@ -673,6 +673,23 @@ public class TrackGroup
     public PeriodicLoop PeriodicLoop;
     [Serialization(Type = MemberType.VariantReference)]
     public BG3TrackGroupExtendedData ExtendedData;
+
+    public void Mirror()
+    {
+        foreach (var track in TransformTracks)
+        {
+            track.Mirror();
+        }
+
+        FixTrackOrder();
+    }
+
+    public void FixTrackOrder()
+    {
+        // Reorder transform tracks in lexicographic order
+        // This is needed by Granny; otherwise it'll fail to find animation tracks
+        TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
+    }
 }
 
 public class Animation
