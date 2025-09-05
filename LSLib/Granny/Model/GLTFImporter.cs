@@ -263,7 +263,7 @@ public class GLTFImporter
     {
         var trackGroup = new TrackGroup
         {
-            Name = name,
+            Name = "Dummy_Root", // skeletonName,
             TransformTracks = [],
             InitialPlacement = new Transform(),
             AccumulationFlags = 2,
@@ -552,7 +552,7 @@ public class GLTFImporter
         root.ArtToolInfo = ArtToolInfo.CreateDefault();
         root.ArtToolInfo.SetYUp();
         root.ExporterInfo = ExporterInfo.MakeCurrent();
-        root.FromFileName = inputPath;
+        root.FromFileName = "";
 
         ImportedMeshes = [];
         Skeleton skeleton = null;
@@ -642,6 +642,24 @@ public class GLTFImporter
         root.PostLoad(GR2.Header.DefaultTag);
 
         BuildExtendedData(root);
+
+        if (root.Animations != null && root.Animations.Count > 0)
+        {
+            // Remove dummy models
+            if (root.Models != null
+                && root.Models.Count > 0
+                && root.Models[0].MeshBindings.Count == 0)
+            {
+                root.Models = null;
+            }
+
+            // Remove skeleton if we're only exporting animation data
+            if ((root.Models == null || root.Models.Count == 0)
+                && root.Skeletons != null && root.Skeletons.Count == 1)
+            {
+                root.Skeletons = null;
+            }
+        }
 
         return root;
     }
