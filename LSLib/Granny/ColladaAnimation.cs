@@ -160,7 +160,7 @@ public class ColladaAnimation
             keyframes.RemoveTrivialFrames();
         }
 
-        var track = TransformTrack.FromKeyframes(keyframes);
+        var track = TransformTrack.FromKeyframes(keyframes, null);
         track.Flags = 0;
         track.Name = BoneName;
 

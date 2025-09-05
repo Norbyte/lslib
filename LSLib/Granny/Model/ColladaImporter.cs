@@ -838,10 +838,7 @@ public class ColladaImporter
 
         if (trackGroup.TransformTracks.Count > 0)
         {
-            // Reorder transform tracks in lexicographic order
-            // This is needed by Granny; otherwise it'll fail to find animation tracks
-            trackGroup.TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
-            
+            trackGroup.FixTrackOrder();
             root.TrackGroups.Add(trackGroup);
             root.Animations.Add(animation);
         }

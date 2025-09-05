@@ -78,6 +78,36 @@ public class AnimationCurve
         }
     }
 }
+static class VectorHelpers
+{
+    public static bool CloseEnough(this Vector3 v, Vector3 o)
+    {
+        return Math.Abs(v.X - o.X) < 0.0001f
+            && Math.Abs(v.Y - o.Y) < 0.0001f
+            && Math.Abs(v.Z - o.Z) < 0.0001f;
+    }
+    public static bool CloseEnough(this Quaternion v, Quaternion o)
+    {
+        return Math.Abs(v.X - o.X) < 0.0001f
+            && Math.Abs(v.Y - o.Y) < 0.0001f
+            && Math.Abs(v.Z - o.Z) < 0.0001f
+            && Math.Abs(v.W - o.W) < 0.0001f;
+    }
+    public static bool CloseEnough(this Matrix3 v, Matrix3 o)
+    {
+        return Math.Abs(v.M11 - o.M11) < 0.0001f
+            && Math.Abs(v.M12 - o.M12) < 0.0001f
+            && Math.Abs(v.M13 - o.M13) < 0.0001f
+
+            && Math.Abs(v.M21 - o.M21) < 0.0001f
+            && Math.Abs(v.M22 - o.M22) < 0.0001f
+            && Math.Abs(v.M23 - o.M23) < 0.0001f
+
+            && Math.Abs(v.M31 - o.M31) < 0.0001f
+            && Math.Abs(v.M32 - o.M32) < 0.0001f
+            && Math.Abs(v.M33 - o.M33) < 0.0001f;
+    }
+}
 
 public class Keyframe
 {
@@ -534,8 +564,12 @@ public class TransformTrack
     [Serialization(Kind = SerializationKind.None)]
     public Animation ParentAnimation;
 
-    public static TransformTrack FromKeyframes(KeyframeTrack keyframes)
+    public static TransformTrack FromKeyframes(KeyframeTrack keyframes, Transform bindPose)
     {
+        bool noTranslation = false,
+            noRotation = false,
+            noScale = false;
+
         var track = new TransformTrack
         {
             Flags = 0
@@ -543,14 +577,38 @@ public class TransformTrack
 
         var translateTimes = keyframes.Keyframes.Where(f => f.Value.HasTranslation).Select(f => f.Key).ToList();
         var translations = keyframes.Keyframes.Where(f => f.Value.HasTranslation).Select(f => f.Value.Translation).ToList();
+
+        if (translateTimes.Count == 2 && translations[0].CloseEnough(translations[1]))
+        {
+            translateTimes.RemoveAt(1);
+            translations.RemoveAt(1);
+        }
+
         if (translateTimes.Count == 1)
         {
-            var posCurve = new D3Constant32f
+            if (bindPose != null && translations[0].CloseEnough(bindPose.Translation))
             {
-                CurveDataHeader_D3Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D3Constant32f, Degree = 2 },
-                Controls = new float[3] { translations[0].X, translations[0].Y, translations[0].Z }
-            };
-            track.PositionCurve = new AnimationCurve { CurveData = posCurve };
+                noTranslation = true;
+            }
+
+            if (translations[0].CloseEnough(Vector3.Zero))
+            {
+                var posCurve = new DaIdentity
+                {
+                    CurveDataHeader_DaIdentity = new CurveDataHeader { Format = (int)CurveFormat.DaIdentity, Degree = 0 },
+                    Dimension = 3
+                };
+                track.PositionCurve = new AnimationCurve { CurveData = posCurve };
+            }
+            else
+            {
+                var posCurve = new D3Constant32f
+                {
+                    CurveDataHeader_D3Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D3Constant32f, Degree = 0 },
+                    Controls = [translations[0].X, translations[0].Y, translations[0].Z]
+                };
+                track.PositionCurve = new AnimationCurve { CurveData = posCurve };
+            }
         }
         else
         {
@@ -563,14 +621,38 @@ public class TransformTrack
 
         var rotationTimes = keyframes.Keyframes.Where(f => f.Value.HasRotation).Select(f => f.Key).ToList();
         var rotations = keyframes.Keyframes.Where(f => f.Value.HasRotation).Select(f => f.Value.Rotation).ToList();
+
+        if (rotationTimes.Count == 2 && rotations[0].CloseEnough(rotations[1]))
+        {
+            rotationTimes.RemoveAt(1);
+            rotations.RemoveAt(1);
+        }
+
         if (rotationTimes.Count == 1)
         {
-            var rotCurve = new D4Constant32f
+            if (bindPose != null && rotations[0].CloseEnough(bindPose.Rotation))
             {
-                CurveDataHeader_D4Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D4Constant32f, Degree = 2 },
-                Controls = new float[4] { rotations[0].X, rotations[0].Y, rotations[0].Z, rotations[0].W }
-            };
-            track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
+                noRotation = true;
+            }
+
+            if (rotations[0].CloseEnough(Quaternion.Identity))
+            {
+                var rotCurve = new DaIdentity
+                {
+                    CurveDataHeader_DaIdentity = new CurveDataHeader { Format = (int)CurveFormat.DaIdentity, Degree = 0 },
+                    Dimension = 4
+                };
+                track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
+            }
+            else
+            {
+                var rotCurve = new D4Constant32f
+                {
+                    CurveDataHeader_D4Constant32f = new CurveDataHeader { Format = (int)CurveFormat.D4Constant32f, Degree = 0 },
+                    Controls = [rotations[0].X, rotations[0].Y, rotations[0].Z, rotations[0].W]
+                };
+                track.OrientationCurve = new AnimationCurve { CurveData = rotCurve };
+            }
         }
         else
         {
@@ -583,18 +665,41 @@ public class TransformTrack
 
         var scaleTimes = keyframes.Keyframes.Where(f => f.Value.HasScaleShear).Select(f => f.Key).ToList();
         var scales = keyframes.Keyframes.Where(f => f.Value.HasScaleShear).Select(f => f.Value.ScaleShear).ToList();
+
+        if (scaleTimes.Count == 2 && scales[0].CloseEnough(scales[1]))
+        {
+            scaleTimes.RemoveAt(1);
+            scales.RemoveAt(1);
+        }
+
         if (scaleTimes.Count == 1)
         {
-            var scaleCurve = new DaConstant32f();
-            scaleCurve.CurveDataHeader_DaConstant32f = new CurveDataHeader { Format = (int)CurveFormat.DaConstant32f, Degree = 2 };
-            var m = scales[0];
-            scaleCurve.Controls =
-            [
-                m[0, 0], m[0, 1], m[0, 2],
-                m[1, 0], m[1, 1], m[1, 2],
-                m[2, 0], m[2, 1], m[2, 2]
-            ];
-            track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+            if (bindPose != null && scales[0].CloseEnough(bindPose.ScaleShear))
+            {
+                noScale = true;
+            }
+
+            if (scales[0].CloseEnough(Matrix3.Identity))
+            {
+                var scaleCurve = new DaIdentity
+                {
+                    CurveDataHeader_DaIdentity = new CurveDataHeader { Format = (int)CurveFormat.DaIdentity, Degree = 0 },
+                    Dimension = 9
+                };
+                track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+            }
+            else
+            {
+                var scaleCurve = new DaConstant32f();
+                scaleCurve.CurveDataHeader_DaConstant32f = new CurveDataHeader { Format = (int)CurveFormat.DaConstant32f, Degree = 0 };
+                var m = scales[0];
+                scaleCurve.Controls = [
+                    m[0, 0], m[0, 1], m[0, 2],
+                    m[1, 0], m[1, 1], m[1, 2],
+                    m[2, 0], m[2, 1], m[2, 2]
+                ];
+                track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+            }
         }
         else
         {
@@ -603,6 +708,11 @@ public class TransformTrack
             scaleCurve.SetKnots(scaleTimes);
             scaleCurve.SetMatrices(scales);
             track.ScaleShearCurve = new AnimationCurve { CurveData = scaleCurve };
+        }
+
+        if (noTranslation && noRotation && noScale)
+        {
+            return null;
         }
 
         return track;
@@ -617,6 +727,11 @@ public class TransformTrack
         ScaleShearCurve.CurveData.ExportKeyframes(track, AnimationCurveData.ExportType.ScaleShear);
         
         return track;
+    }
+
+    public void Mirror()
+    {
+        Name = Bone.MirrorBoneName(Name);
     }
 }
 

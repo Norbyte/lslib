@@ -259,7 +259,7 @@ public class GLTFImporter
         });
     }
 
-    private TrackGroup ImportTrackGroup(Animation anim, GLTFImportedSkeleton skeleton, string name, GLTFSceneExtensions ext)
+    private TrackGroup ImportTrackGroup(Animation anim, GLTFImportedSkeleton skeleton, string animName, string skeletonName, GLTFSceneExtensions ext)
     {
         var trackGroup = new TrackGroup
         {
@@ -276,7 +276,7 @@ public class GLTFImporter
 
         foreach (var (jointName, joint) in skeleton.Joints)
         {
-            var track = ImportTrack(anim, joint, name);
+            var track = ImportTrack(anim, joint, animName);
             if (track != null)
             {
                 track.Name = jointName;
@@ -284,10 +284,7 @@ public class GLTFImporter
             }
         }
 
-        // Reorder transform tracks in lexicographic order
-        // This is needed by Granny; otherwise it'll fail to find animation tracks
-        trackGroup.TransformTracks.Sort((t1, t2) => String.Compare(t1.Name, t2.Name, StringComparison.Ordinal));
-
+        trackGroup.FixTrackOrder();
         return trackGroup;
     }
 
@@ -308,7 +305,7 @@ public class GLTFImporter
 
         foreach (var animName in AnimationNames)
         {
-            var trackGroup = ImportTrackGroup(animation, gltfSkel, animName, ext);
+            var trackGroup = ImportTrackGroup(animation, gltfSkel, animName, skeleton.Name, ext);
             animation.TrackGroups.Add(trackGroup);
             root.TrackGroups.Add(trackGroup);
         }
@@ -363,9 +360,13 @@ public class GLTFImporter
             }
         }
 
-        var track = TransformTrack.FromKeyframes(keyframes);
-        track.Flags = 0;
-        anim.Duration = Math.Max(anim.Duration, keyframes.Keyframes.Last().Key);
+        var bindPose = Transform.FromGLTF(joint.LocalTransform);
+        var track = TransformTrack.FromKeyframes(keyframes, bindPose);
+        if (track != null)
+        {
+            track.Flags = 0;
+            anim.Duration = Math.Max(anim.Duration, keyframes.Keyframes.Last().Key);
+        }
 
         return track;
     }

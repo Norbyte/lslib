@@ -336,7 +336,7 @@ public class Exporter
 
                 var keyframes = track.ToKeyframes();
                 keyframes.SwapBindPose(bone.OriginalTransform, conformingBone.Transform.ToMatrix4());
-                var newTrack = TransformTrack.FromKeyframes(keyframes);
+                var newTrack = TransformTrack.FromKeyframes(keyframes, null);
                 newTrack.Flags = track.Flags;
                 newTrack.Name = track.Name;
                 newTrack.ParentAnimation = track.ParentAnimation;
@@ -347,6 +347,8 @@ public class Exporter
 
     private void ConformSkeleton(Skeleton skeleton, Skeleton conformToSkeleton)
     {
+        // Need to copy skeleton name, as animation track groups are bound by name
+        skeleton.Name = conformToSkeleton.Name;
         skeleton.LODType = conformToSkeleton.LODType;
 
         // TODO: Tolerate missing bones?
