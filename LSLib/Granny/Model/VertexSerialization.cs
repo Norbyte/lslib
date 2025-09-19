@@ -267,14 +267,14 @@ public static class VertexSerializationHelpers
         section.Writer.Write((Int16)(v.X * 32767));
         section.Writer.Write((Int16)(v.Y * 32767));
         section.Writer.Write((Int16)(v.Z * 32767));
-        section.Writer.Write(0);
+        section.Writer.Write((Int16)0);
     }
     public static void WriteNormalSByteVector3As4(WritableSection section, Vector3 v)
     {
         section.Writer.Write((sbyte)(v.X * 127));
         section.Writer.Write((sbyte)(v.Y * 127));
         section.Writer.Write((sbyte)(v.Z * 127));
-        section.Writer.Write(0);
+        section.Writer.Write((sbyte)0);
     }
 
     public static void WriteInfluences2(WritableSection section, BoneWeight v)
