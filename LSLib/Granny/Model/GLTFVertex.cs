@@ -1,13 +1,13 @@
-﻿using SharpGLTF.Geometry;
-using SharpGLTF.Materials;
+﻿using OpenTK.Mathematics;
+using SharpGLTF.Geometry;
 using SharpGLTF.Geometry.VertexTypes;
+using SharpGLTF.Materials;
 using System.Numerics;
+using System.Reflection;
+using TKQuat = OpenTK.Mathematics.Quaternion;
 using TKVec2 = OpenTK.Mathematics.Vector2;
 using TKVec3 = OpenTK.Mathematics.Vector3;
 using TKVec4 = OpenTK.Mathematics.Vector4;
-using TKQuat = OpenTK.Mathematics.Quaternion;
-using System.Reflection;
-using OpenTK.Mathematics;
 
 namespace LSLib.Granny.Model;
 
@@ -367,9 +367,33 @@ public class GLTFVertexSkinningBuilder : GLTFVertexSkinBuilder
     }
 }
 
+public interface IMorphedMeshBuilder<MaterialBuilder> : IMeshBuilder<MaterialBuilder>
+{
+    float[] GetMorphWeights();
+}
+
+public class MorphedMeshBuilder<MaterialBuilder, TvG, TvM, TvS> : MeshBuilder<MaterialBuilder, TvG, TvM, TvS>, 
+    IMorphedMeshBuilder<MaterialBuilder>
+    where TvG : struct, IVertexGeometry
+    where TvM : struct, IVertexMaterial
+    where TvS : struct, IVertexSkinning
+{
+    internal float[] MorphWeights;
+
+    public float[] GetMorphWeights()
+    {
+        return MorphWeights;
+    }
+
+    public MorphedMeshBuilder(string name)
+        : base(name)
+    {
+    }
+}
+
 public interface IGLTFMeshBuildWrapper
 {
-    public IMeshBuilder<MaterialBuilder> Build(Mesh m);
+    public IMorphedMeshBuilder<MaterialBuilder> Build(Mesh m);
 }
 
 public class GLTFMeshBuildWrapper<TvG, TvM, TvS> : IGLTFMeshBuildWrapper
@@ -378,15 +402,16 @@ public class GLTFMeshBuildWrapper<TvG, TvM, TvS> : IGLTFMeshBuildWrapper
     where TvS : struct, IVertexSkinning
 {
     private GLTFVertexBuildHelper BuildHelper;
-    private MeshBuilder<MaterialBuilder, TvG, TvM, TvS> Builder;
+    private MorphedMeshBuilder<MaterialBuilder, TvG, TvM, TvS> Builder;
     private PrimitiveBuilder<MaterialBuilder, TvG, TvM, TvS> Primitives;
+    private List<MorphTargetBuilder<MaterialBuilder, TvG, TvS, TvM>> MorphTargets = [];
     private List<IVertexBuilder> Vertices;
     private List<(int A, int B, int C)> TriIndices;
 
     public GLTFMeshBuildWrapper(GLTFVertexBuildHelper helper, string exportedId)
     {
         BuildHelper = helper;
-        Builder = new MeshBuilder<MaterialBuilder, TvG, TvM, TvS>(exportedId);
+        Builder = new MorphedMeshBuilder<MaterialBuilder, TvG, TvM, TvS>(exportedId);
         var material = new MaterialBuilder("Dummy");
         Primitives = Builder.UsePrimitive(material);
 
@@ -406,7 +431,52 @@ public class GLTFMeshBuildWrapper<TvG, TvM, TvS> : IGLTFMeshBuildWrapper
         }
     }
 
-    public IMeshBuilder<MaterialBuilder> Build(Mesh m)
+    private float BuildMorphTarget(Mesh m, MorphTarget target, MorphTargetBuilder<MaterialBuilder, TvG, TvS, TvM> gltf)
+    {
+        if (target.DataIsDeltas != 1)
+        {
+            throw new InvalidDataException("Only delta morph targets are supported");
+        }
+
+        var annotations = target.VertexData.VertexAnnotationSets;
+        if (annotations.Count != 2
+            || annotations[0].Name != "MaxVertDisplacement"
+            || annotations[1].Name != "BlendShapeIndexMapping")
+        {
+            throw new InvalidDataException("Unsupported morph annotation layout");
+        }
+
+        if (annotations[0].VertexAnnotations is not List<Single>
+            || annotations[1].VertexAnnotations is not List<UInt16>)
+        {
+            throw new InvalidDataException("Unsupported morph target data format");
+        }
+
+        var maxDisplacement = (List<Single>)annotations[0].VertexAnnotations;
+        var indexMapping = (List<UInt16>)annotations[1].VertexAnnotations;
+
+        if (indexMapping.Count != m.PrimaryVertexData.Vertices.Count)
+        {
+            throw new InvalidDataException("Morph target vertex count mismatch");
+        }
+
+        for (var i = 0; i < indexMapping.Count; ++i)
+        {
+            var index = indexMapping[i];
+            var vertex = m.PrimaryVertexData.Vertices[i];
+            var displacement = target.VertexData.Vertices[index];
+
+            gltf.SetVertexDelta(vertex.Position.ToNumerics(), new VertexGeometryDelta(
+                displacement.Position.ToNumerics(),
+                displacement.Normal.ToNumerics(),
+                displacement.Tangent.ToNumerics()
+            ));
+        }
+
+        return maxDisplacement[0];
+    }
+
+    public IMorphedMeshBuilder<MaterialBuilder> Build(Mesh m)
     {
         BuildVertices(m);
 
@@ -423,6 +493,21 @@ public class GLTFMeshBuildWrapper<TvG, TvM, TvS> : IGLTFMeshBuildWrapper
         {
             // Primitives.AddTriangle(Vertices[inds[i]], Vertices[inds[i + 1]], Vertices[inds[i + 2]]);
             TriIndices.Add((inds[i], inds[i+1], inds[i+2]));
+        }
+
+        if (m.MorphTargets != null && m.PrimaryVertexData.Vertices.Count > 0)
+        {
+            MorphTargets = [];
+            var weights = new float[m.MorphTargets.Count];
+            for (var i = 0; i < m.MorphTargets.Count; i++)
+            {
+                var target = Builder.UseMorphTarget(i);
+                MorphTargets.Add(target);
+                var maxDisplacement = BuildMorphTarget(m, m.MorphTargets[i], target);
+                weights[i] = maxDisplacement;
+            }
+
+            Builder.MorphWeights = weights;
         }
 
         return Builder;
@@ -591,7 +676,7 @@ public class GLTFMeshExporter(Mesh mesh, string exportedId, int[] jointRemaps)
     private readonly Mesh ExportedMesh = mesh;
     private readonly GLTFVertexBuildHelper BuildHelper = new(exportedId, mesh.VertexFormat, jointRemaps);
 
-    public IMeshBuilder<MaterialBuilder> Export()
+    public IMorphedMeshBuilder<MaterialBuilder> Export()
     {
         var builder = BuildHelper.CreateBuilder();
         return builder.Build(ExportedMesh);

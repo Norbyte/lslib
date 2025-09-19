@@ -1,16 +1,37 @@
 ﻿using LSLib.Granny.GR2;
 using LSLib.LS;
 using SharpGLTF.Animations;
+using SharpGLTF.Geometry;
 using SharpGLTF.Geometry.VertexTypes;
 using SharpGLTF.Scenes;
 using SharpGLTF.Schema2;
+using System.Diagnostics;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using TKVec3 = OpenTK.Mathematics.Vector3;
 
 namespace LSLib.Granny.Model;
 
 class GLTFImportedSkeleton
 {
     public Dictionary<string, NodeBuilder> Joints = [];
+}
+
+public struct MorphKey : IEquatable<MorphKey>
+{
+    public Vector3 Position;
+    public Vector3 Normal;
+
+    public readonly bool Equals(MorphKey o)
+    {
+        return Position == o.Position && Normal == o.Normal;
+    }
+
+    public override int GetHashCode()
+    {
+        return Position.GetHashCode() ^ Normal.GetHashCode();
+    }
 }
 
 public class GLTFImporter
@@ -141,6 +162,19 @@ public class GLTFImporter
         return null;
     }
 
+    private static JsonNode FindMeshExtra(ModelRoot root, string name)
+    {
+        foreach (var mesh in root.LogicalMeshes)
+        {
+            if (mesh.Name == name)
+            {
+                return mesh.Extras;
+            }
+        }
+
+        return null;
+    }
+
     private static InfluencingJoints GetInfluencingJoints(SkinnedTransformer skin, Skeleton skeleton)
     {
         var joints = new HashSet<int>();
@@ -175,9 +209,150 @@ public class GLTFImporter
         return ij;
     }
 
+    private MorphTarget ImportMorphTarget(Mesh m, IPrimitiveMorphTargetReader morphData, string name, float weight)
+    {
+        var descriptor = new VertexDescriptor
+        {
+            PositionType = PositionType.Word4,
+            NormalType = NormalType.QTangent
+        };
+
+        var weightAnnotation = new VertexAnnotationSet
+        {
+            Name = "MaxVertDisplacement",
+            VertexAnnotations = new List<float> { weight }
+        };
+
+        var blendShapeIndexMap = Enumerable.Repeat((UInt16)0xffffu, m.PrimaryVertexData.Vertices.Count).ToList();
+        var indexAnnotation = new VertexAnnotationSet
+        {
+            Name = "BlendShapeIndexMapping",
+            VertexAnnotations = blendShapeIndexMap
+        };
+
+        var vertices = new VertexData
+        {
+            Vertices = [],
+            VertexAnnotationSets = [weightAnnotation, indexAnnotation]
+        };
+
+        Dictionary<MorphKey, int> displacements = [];
+
+        foreach (var vertexIdx in morphData.GetTargetIndices())
+        {
+            var delta = morphData.GetVertexDelta(vertexIdx).Geometry;
+            if (delta.PositionDelta.Length() < 0.00001f
+                && Math.Abs(delta.NormalDelta.X) < 0.0001f
+                && Math.Abs(delta.NormalDelta.Y) < 0.0001f
+                && Math.Abs(delta.NormalDelta.Z - 1.0f) < 0.0001f)
+            {
+                continue;
+            }
+
+            if (!delta.TryGetNormal(out Vector3 deltaNormal)
+                || !delta.TryGetTangent(out Vector4 t))
+            {
+                throw new ParsingException("Morph delta needs to have normals!");
+            }
+
+            var displacementKey = new MorphKey
+            {
+                Position = delta.GetPosition(),
+                Normal = deltaNormal
+            };
+
+            if (displacements.TryGetValue(displacementKey, out int displacementIndex))
+            {
+                blendShapeIndexMap[vertexIdx] = (UInt16)displacementIndex;
+            }
+            else
+            {
+                if (displacements.Count >= 0xffff)
+                {
+                    throw new ParsingException("Too many morph deltas (maximum is 65536)");
+                }
+
+                displacements[displacementKey] = (UInt16)vertices.Vertices.Count;
+                blendShapeIndexMap[vertexIdx] = (UInt16)vertices.Vertices.Count;
+
+                var vert = descriptor.CreateInstance();
+                vert.Position = delta.GetPosition().ToOpenTK();
+                vert.Normal = deltaNormal.ToOpenTK();
+                vert.Tangent = new TKVec3(t.X, t.Y, t.Z);
+                vert.Binormal = (TKVec3.Cross(vert.Normal, vert.Tangent) * (t.W == 0 ? 1 : t.W)).Normalized();
+                vertices.Vertices.Add(vert);
+            }
+        }
+
+        // Add "null" (empty) delta
+        var nullKey = new MorphKey
+        {
+            Position = new Vector3(),
+            Normal = new Vector3(0, 0, 1)
+        };
+
+        if (!displacements.TryGetValue(nullKey, out int nullIndex))
+        {
+            nullIndex = vertices.Vertices.Count;
+
+            var vert = descriptor.CreateInstance();
+            vert.Position = new TKVec3();
+            vert.Normal = new TKVec3(0, 0, 1);
+            vert.Tangent = new TKVec3(0, 1, 0);
+            vert.Binormal = new TKVec3(-1, 0, 0);
+            vertices.Vertices.Add(vert);
+        }
+
+        for (var i = 0; i < blendShapeIndexMap.Count; i++)
+        {
+            if (blendShapeIndexMap[i] == 0xffffu)
+            {
+                blendShapeIndexMap[i] = (UInt16)nullIndex;
+            }
+        }
+
+        return new MorphTarget
+        {
+            ScalarName = name,
+            VertexData = vertices,
+            DataIsDeltas = 1
+        };
+    }
+
+    private List<string> ExtractMorphTargetNames(JsonNode extras)
+    {
+        if (extras.GetValueKind() != JsonValueKind.Object
+            || !extras.AsObject().TryGetPropertyValue("targetNames", out var targetNames)
+            || targetNames.GetValueKind() != JsonValueKind.Array)
+        {
+            throw new ParsingException($"Unable to export morph targets: morph target names missing from extra data");
+        }
+
+        var names = new List<string>();
+        foreach (var name in targetNames.AsArray())
+        {
+            names.Add((string)name);
+        }
+        return names;
+    }
+
+    private void ImportMorphTargets(Mesh m, ContentTransformer content, List<string> names)
+    {
+        m.MorphTargets = [];
+        var primitives = content.GetGeometryAsset().Primitives.First();
+
+        var weights = content.Morphings.Value;
+        for (var i = 0; i < weights.Count; i++)
+        {
+            var morph = ImportMorphTarget(m, primitives.MorphTargets[i], names[i], weights[i]);
+            m.MorphTargets.Add(morph);
+        }
+    }
+
     private (Mesh, GLTFMesh) ImportMesh(ModelRoot modelRoot, Skeleton skeleton, ContentTransformer content, string name)
     {
         var ext = FindMeshExtension(modelRoot, name);
+        var extra = FindMeshExtra(modelRoot, name);
 
         InfluencingJoints influencingJoints = null;
         if (content is SkinnedTransformer skin)
@@ -238,6 +413,12 @@ public class GLTFImporter
         var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
         m.PrimaryVertexData.VertexComponentNames = components;
 
+        if (content.Morphings != null)
+        {
+            var morphTargetNames = ExtractMorphTargetNames(extra);
+            ImportMorphTargets(m, content, morphTargetNames);
+        }
+
         MakeExtendedData(content, ext, m);
 
         Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
@@ -251,6 +432,11 @@ public class GLTFImporter
     private void AddMeshToRoot(Root root, Mesh mesh)
     {
         root.VertexDatas.Add(mesh.PrimaryVertexData);
+        foreach (var morphTarget in mesh.MorphTargets ?? [])
+        {
+            root.VertexDatas.Add(morphTarget.VertexData);
+        }
+
         root.TriTopologies.Add(mesh.PrimaryTopology);
         root.Meshes.Add(mesh);
         root.Models[0].MeshBindings.Add(new MeshBinding

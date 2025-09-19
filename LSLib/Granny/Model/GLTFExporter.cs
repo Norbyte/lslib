@@ -1,10 +1,11 @@
 ﻿using LSLib.Granny.GR2;
-using System.Text.RegularExpressions;
+using LSLib.LS;
+using SharpGLTF.Scenes;
+using SharpGLTF.Schema2;
 using SharpGLTF.Transforms;
 using System.Numerics;
-using SharpGLTF.Scenes;
-using LSLib.LS;
-using SharpGLTF.Schema2;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace LSLib.Granny.Model;
 
@@ -73,7 +74,11 @@ public class GLTFExporter
             }
         }
 
-        scene.AddSkinnedMesh(gltfMesh, bindings.ToArray());
+        var inst = scene.AddSkinnedMesh(gltfMesh, bindings.ToArray());
+        if (mesh.MorphTargets != null && mesh.MorphTargets.Count > 0)
+        {
+            inst.Content.UseMorphing().SetValue(gltfMesh.GetMorphWeights());
+        }
     }
 
     private void ExportRigidMeshBinding(Model model, Skeleton skeleton, Mesh mesh, SceneBuilder scene, string meshId)
@@ -254,6 +259,21 @@ public class GLTFExporter
         }
     }
 
+    private void ExportMorphTargetExtras(Mesh grMesh, SharpGLTF.Schema2.Mesh mesh)
+    {
+        var targetNames = new JsonArray();
+        foreach (var target in grMesh.MorphTargets)
+        {
+            targetNames.Add(target.ScalarName);
+        }
+
+        var extras = new JsonObject
+        {
+            ["targetNames"] = targetNames
+        };
+        mesh.Extras = extras;
+    }
+
     private void ExportExtensions(Root root, ModelRoot modelRoot)
     {
         var sceneExt = modelRoot.LogicalScenes.First().UseExtension<GLTFSceneExtensions>();
@@ -267,6 +287,12 @@ public class GLTFExporter
                 {
                     var meshExt = mesh.UseExtension<GLTFMeshExtensions>();
                     ExportMeshExtensions(grMesh, meshExt);
+
+                    if (grMesh.MorphTargets != null && grMesh.MorphTargets.Count > 0)
+                    {
+                        ExportMorphTargetExtras(grMesh, mesh);
+                    }
+
                     break;
                 }
             }

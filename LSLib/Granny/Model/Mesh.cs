@@ -155,8 +155,10 @@ public class VertexDeduplicator
 public class VertexAnnotationSet
 {
     public string Name;
-    [Serialization(Type = MemberType.ReferenceToVariantArray)]
-    public List<object> VertexAnnotations;
+    [Serialization(Type = MemberType.ReferenceToVariantArray,
+        TypeSelector = typeof(VertexAnnotationSetSerializer), Serializer = typeof(VertexAnnotationSetSerializer),
+        Kind = SerializationKind.UserMember)]
+    public object VertexAnnotations;
     public Int32 IndicesMapFromVertexToAnnotation;
     public List<TriIndex> VertexAnnotationIndices;
 }
