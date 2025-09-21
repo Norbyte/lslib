@@ -169,7 +169,7 @@ public class GLTFMesh
         return desc;
     }
 
-    public void ImportFromGLTF(ContentTransformer content, InfluencingJoints influencingJoints, ExporterOptions options)
+    public void ImportFromGLTF(ContentTransformer content, InfluencingJoints influencingJoints, ExporterOptions options, GLTFMeshExtensions extensions)
     {
         var geometry = content.GetGeometryAsset();
         var primitives = geometry.Primitives.First();
@@ -179,19 +179,31 @@ public class GLTFMesh
 
         var vertexFormat = FindVertexFormat(primitives.VertexType);
         InputVertexType = vertexFormat;
-        OutputVertexType = new VertexDescriptor
+
+        if (extensions.Occluder || extensions.MeshProxy)
         {
-            HasBoneWeights = InputVertexType.HasBoneWeights,
-            NumBoneInfluences = InputVertexType.NumBoneInfluences,
-            PositionType = InputVertexType.PositionType,
-            NormalType = InputVertexType.NormalType,
-            TangentType = InputVertexType.TangentType,
-            BinormalType = InputVertexType.BinormalType,
-            ColorMapType = InputVertexType.ColorMapType,
-            ColorMaps = InputVertexType.ColorMaps,
-            TextureCoordinateType = InputVertexType.TextureCoordinateType,
-            TextureCoordinates = InputVertexType.TextureCoordinates
-        };
+            // Proxies only have a position attribute, and no other vertex data
+            OutputVertexType = new VertexDescriptor
+            {
+                PositionType = PositionType.Float3
+            };
+        }
+        else
+        {
+            OutputVertexType = new VertexDescriptor
+            {
+                HasBoneWeights = InputVertexType.HasBoneWeights,
+                NumBoneInfluences = InputVertexType.NumBoneInfluences,
+                PositionType = InputVertexType.PositionType,
+                NormalType = InputVertexType.NormalType,
+                TangentType = InputVertexType.TangentType,
+                BinormalType = InputVertexType.BinormalType,
+                ColorMapType = InputVertexType.ColorMapType,
+                ColorMaps = InputVertexType.ColorMaps,
+                TextureCoordinateType = InputVertexType.TextureCoordinateType,
+                TextureCoordinates = InputVertexType.TextureCoordinates
+            };
+        }
 
         ImportTriangles(primitives);
         ImportVertices(primitives, influencingJoints?.BindRemaps);
@@ -219,17 +231,19 @@ public class GLTFMesh
             throw new InvalidDataException($"Import needs geometry with normal and tangent data");
         }
 
-        // Use optimized tangent, texture map and color map format when exporting for D:OS 2
+        // Use optimized tangent, texture map and color map format when exporting for D:OS 2+
         if ((Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv0
             || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv1
-            || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
-            && Options.EnableQTangents
-            && HasNormals 
-            && HasTangents)
+            || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3))
         {
-            OutputVertexType.NormalType = NormalType.QTangent;
-            OutputVertexType.TangentType = NormalType.QTangent;
-            OutputVertexType.BinormalType = NormalType.QTangent;
+            if (Options.EnableQTangents
+                && HasNormals
+                && HasTangents)
+            {
+                OutputVertexType.NormalType = NormalType.QTangent;
+                OutputVertexType.TangentType = NormalType.QTangent;
+                OutputVertexType.BinormalType = NormalType.QTangent;
+            }
 
             if (OutputVertexType.TextureCoordinateType == TextureCoordinateType.Float2)
             {

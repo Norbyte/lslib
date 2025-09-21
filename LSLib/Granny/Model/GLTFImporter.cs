@@ -143,10 +143,7 @@ public class GLTFImporter
         loaded.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
         loaded.ExtendedData.UpdateFromModelInfo(loaded, Options.ModelInfoFormat);
 
-        if (ext != null)
-        {
-            ext.Apply(loaded, loaded.ExtendedData);
-        }
+        ext.Apply(loaded, loaded.ExtendedData);
     }
 
     private static GLTFMeshExtensions FindMeshExtension(ModelRoot root, string name)
@@ -351,7 +348,7 @@ public class GLTFImporter
 
     private (Mesh, GLTFMesh) ImportMesh(ModelRoot modelRoot, Skeleton skeleton, ContentTransformer content, string name)
     {
-        var ext = FindMeshExtension(modelRoot, name);
+        var ext = FindMeshExtension(modelRoot, name) ?? new GLTFMeshExtensions();
         var extra = FindMeshExtra(modelRoot, name);
 
         InfluencingJoints influencingJoints = null;
@@ -364,7 +361,7 @@ public class GLTFImporter
 
             influencingJoints = GetInfluencingJoints(skin, skeleton);
         }
-        else if (ext != null && ext.ParentBone != "")
+        else if (ext.ParentBone != "")
         {
             if (skeleton == null)
             {
@@ -382,7 +379,7 @@ public class GLTFImporter
         }
 
         var converted = new GLTFMesh();
-        converted.ImportFromGLTF(content, influencingJoints, Options);
+        converted.ImportFromGLTF(content, influencingJoints, Options, ext);
 
         var m = new Mesh
         {

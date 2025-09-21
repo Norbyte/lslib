@@ -52,7 +52,7 @@ partial class GLTFSceneExtensions : ExtraProperties
     }
 }
 
-partial class GLTFMeshExtensions : ExtraProperties
+public partial class GLTFMeshExtensions : ExtraProperties
 {
     internal GLTFMeshExtensions() { }
 
@@ -67,7 +67,7 @@ partial class GLTFMeshExtensions : ExtraProperties
     public bool Cloth02 = false;
     public bool Cloth04 = false;
     public bool Impostor = false;
-    public Int32 ExportOrder = 0;
+    public Int32 ExportOrder = -1;
     public Int32 LOD = 0;
     public Single LODDistance = 0;
     public String ParentBone = "";
