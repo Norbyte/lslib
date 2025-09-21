@@ -12,6 +12,7 @@ namespace LSLib {
 		public:
 			static array<byte> ^ Decompress(Int32 format, array<byte> ^ compressed, Int32 decompressedSize, Int32 stop0, Int32 stop1, Int32 stop2);
 			static array<byte> ^ Decompress4(array<byte> ^ compressed, Int32 decompressedSize);
+			static void LoadGranny();
 		};
 	}
 }

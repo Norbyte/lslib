@@ -10,6 +10,19 @@ namespace LSLib {
 		typedef bool(__stdcall * GrannyDecompressIncrementalProc)(void *State, int CompressedBytesSize, void *CompressedBytes);
 		typedef bool(__stdcall * GrannyEndFileDecompressionProc)(void *State);
 
+		static HMODULE shGranny = NULL;
+
+		void Granny2Compressor::LoadGranny()
+		{
+			if (!shGranny) {
+				shGranny = LoadLibraryA("granny2.dll");
+			}
+
+			if (!shGranny) {
+				throw gcnew System::IO::InvalidDataException("Granny2.dll is required for compressed GR2 files.");
+			}
+		}
+
 		array<byte> ^ Granny2Compressor::Decompress(Int32 format, array<byte> ^ compressed, Int32 decompressedSize, Int32 stop0, Int32 stop1, Int32 stop2)
 		{
 			pin_ptr<byte> inputPin(&compressed[compressed->GetLowerBound(0)]);
@@ -19,14 +32,9 @@ namespace LSLib {
 			pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
 			byte * decomp = decompPtr;
 
-			// Load Granny2 library
-			HMODULE hGranny = LoadLibraryA("granny2.dll");
-			if (!hGranny)
-			{
-				throw gcnew System::IO::InvalidDataException("Granny2.dll is required for compressed GR2 files.");
-			}
+			LoadGranny();
 
-			auto decompressProc = (GrannyDecompressDataProc)GetProcAddress(hGranny, "GrannyDecompressData");
+			auto decompressProc = (GrannyDecompressDataProc)GetProcAddress(shGranny, "GrannyDecompressData");
 			if (!decompressProc)
 			{
 				throw gcnew System::IO::InvalidDataException("GrannyDecompressData export not found in Granny2.dll.");
@@ -38,7 +46,6 @@ namespace LSLib {
 				throw gcnew System::IO::InvalidDataException("Failed to decompress Oodle compressed section.");
 			}
 
-			FreeModule(hGranny);
 			return decompressed;
 		}
 
@@ -51,26 +58,21 @@ namespace LSLib {
 			pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);
 			byte * decomp = decompPtr;
 
-			// Load Granny2 library
-			HMODULE hGranny = LoadLibraryA("granny2.dll");
-			if (!hGranny)
-			{
-				throw gcnew System::IO::InvalidDataException("Granny2.dll is required for compressed GR2 files.");
-			}
+			LoadGranny();
 
-			auto beginDecompressProc = (GrannyBeginFileDecompressionProc)GetProcAddress(hGranny, "GrannyBeginFileDecompression");
+			auto beginDecompressProc = (GrannyBeginFileDecompressionProc)GetProcAddress(shGranny, "GrannyBeginFileDecompression");
 			if (!beginDecompressProc)
 			{
 				throw gcnew System::IO::InvalidDataException("GrannyBeginFileDecompression export not found in Granny2.dll.");
 			}
 
-			auto decompressProc = (GrannyDecompressIncrementalProc)GetProcAddress(hGranny, "GrannyDecompressIncremental");
+			auto decompressProc = (GrannyDecompressIncrementalProc)GetProcAddress(shGranny, "GrannyDecompressIncremental");
 			if (!decompressProc)
 			{
 				throw gcnew System::IO::InvalidDataException("GrannyDecompressIncremental export not found in Granny2.dll.");
 			}
 
-			auto endDecompressProc = (GrannyEndFileDecompressionProc)GetProcAddress(hGranny, "GrannyEndFileDecompression");
+			auto endDecompressProc = (GrannyEndFileDecompressionProc)GetProcAddress(shGranny, "GrannyEndFileDecompression");
 			if (!endDecompressProc)
 			{
 				throw gcnew System::IO::InvalidDataException("GrannyEndFileDecompression export not found in Granny2.dll.");
@@ -99,7 +101,6 @@ namespace LSLib {
 
 			free(workMem);
 
-			FreeModule(hGranny);
 			return decompressed;
 		}
 	}
