@@ -53,6 +53,17 @@ public struct DDSHeader
     }
 };
 
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct DDSHeaderDX10
+{
+    public UInt32 dxgiFormat;
+    public UInt32 resourceDimension;
+    public UInt32 miscFlag;
+    public UInt32 arraySize;
+    public UInt32 miscFlags2;
+};
+
 public enum GTSDataType : UInt32
 {
     R8G8B8_SRGB = 0,

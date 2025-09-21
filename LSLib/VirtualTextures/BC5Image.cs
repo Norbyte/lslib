@@ -121,7 +121,7 @@ public class BC5Mips
 
         if (header.dwDepth != 0 && header.dwDepth != 1)
         {
-            throw new InvalidDataException($"{path}: Only single-layer textures are supported");
+            throw new InvalidDataException($"{path}: Only single-layer textures are supported; got depth {header.dwDepth}");
         }
 
         if ((header.dwPFFlags & 4) != 4)
@@ -129,7 +129,26 @@ public class BC5Mips
             throw new InvalidDataException($"{path}: DDS does not have a valid FourCC code");
         }
 
-        if (header.FourCCName != "DXT5")
+        if (header.FourCCName == "DX10")
+        {
+            var dx10 = BinUtils.ReadStruct<DDSHeaderDX10>(reader);
+
+            if (dx10.dxgiFormat != 77 && dx10.dxgiFormat != 78)
+            {
+                throw new InvalidDataException($"{path}: Expected BC3_UNORM or BC3_UNORM_SRGB texture; got DXGI format {dx10.dxgiFormat}");
+            }
+
+            if (dx10.resourceDimension != 3)
+            {
+                throw new InvalidDataException($"{path}: Expected a 2D texture; got dimension {dx10.arraySize}");
+            }
+
+            if (dx10.arraySize != 1)
+            {
+                throw new InvalidDataException($"{path}: Unsupported number of textures in file ({dx10.arraySize})");
+            }
+        }
+        else if (header.FourCCName != "DXT5")
         {
             throw new InvalidDataException($"{path}: Expected a DXT5 encoded texture, got: " + header.FourCCName);
         }
