@@ -219,7 +219,7 @@ public class ColladaImporter
 
             mesh.ExtendedData ??= DivinityMeshExtendedData.Make();
             mesh.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
-            mesh.ExtendedData.UpdateFromModelInfo(mesh, Options.ModelInfoFormat);
+            mesh.ExtendedData.UpdateFromModelInfo(mesh, Options.ModelInfoFormat, root.Skeletons?.FirstOrDefault());
         }
 
         foreach (var skeleton in root.Skeletons ?? Enumerable.Empty<Skeleton>())
@@ -363,7 +363,7 @@ public class ColladaImporter
         }
     }
 
-    private void MakeExtendedData(mesh mesh, Mesh loaded)
+    private void MakeExtendedData(mesh mesh, Mesh loaded, Skeleton skeleton)
     {
         var modelFlagOverrides = Options.ModelType;
 
@@ -375,7 +375,7 @@ public class ColladaImporter
 
         loaded.ExtendedData = DivinityMeshExtendedData.Make();
         loaded.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
-        loaded.ExtendedData.UpdateFromModelInfo(loaded, Options.ModelInfoFormat);
+        loaded.ExtendedData.UpdateFromModelInfo(loaded, Options.ModelInfoFormat, skeleton);
         LoadColladaLSLibProfileData(mesh, loaded);
     }
 
@@ -455,7 +455,7 @@ public class ColladaImporter
         }
     }
 
-    private Mesh ImportMesh(geometry geom, mesh mesh)
+    private Mesh ImportMesh(geometry geom, mesh mesh, Skeleton skeleton)
     {
         var collada = new ColladaMesh();
         bool isSkinned = SkinnedMeshes.Contains(geom.id);
@@ -491,7 +491,7 @@ public class ColladaImporter
         var components = m.VertexFormat.ComponentNames().Select(s => new GrannyString(s)).ToList();
         m.PrimaryVertexData.VertexComponentNames = components;
 
-        MakeExtendedData(mesh, m);
+        MakeExtendedData(mesh, m, skeleton);
 
         Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
             (m.VertexFormat.HasBoneWeights ? "skinned" : "rigid"), 
@@ -503,7 +503,7 @@ public class ColladaImporter
 
     private Mesh ImportMesh(Root root, string name, geometry geom, mesh mesh)
     {
-        var m = ImportMesh(geom, mesh);
+        var m = ImportMesh(geom, mesh, root.Skeletons?.FirstOrDefault());
         m.Name = name;
         root.VertexDatas.Add(m.PrimaryVertexData);
         root.TriTopologies.Add(m.PrimaryTopology);

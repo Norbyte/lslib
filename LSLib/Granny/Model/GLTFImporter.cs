@@ -67,19 +67,6 @@ public class GLTFImporter
 
         var modelFlagOverrides = Options.ModelType;
 
-        foreach (var mesh in root.Meshes ?? Enumerable.Empty<Mesh>())
-        {
-            DivinityModelFlag modelFlags = modelFlagOverrides;
-            if (modelFlags == 0 && mesh.ExtendedData != null)
-            {
-                modelFlags = mesh.ExtendedData.UserMeshProperties.MeshFlags;
-            }
-
-            mesh.ExtendedData ??= DivinityMeshExtendedData.Make();
-            mesh.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
-            mesh.ExtendedData.UpdateFromModelInfo(mesh, Options.ModelInfoFormat);
-        }
-
         foreach (var skeleton in root.Skeletons ?? Enumerable.Empty<Skeleton>())
         {
             if (Options.ModelInfoFormat == DivinityModelInfoFormat.None || Options.ModelInfoFormat == DivinityModelInfoFormat.LSMv3)
@@ -129,7 +116,7 @@ public class GLTFImporter
         }
     }
 
-    private void MakeExtendedData(ContentTransformer content, GLTFMeshExtensions ext, Mesh loaded)
+    private void MakeExtendedData(ContentTransformer content, GLTFMeshExtensions ext, Mesh loaded, Skeleton skeleton)
     {
         var modelFlagOverrides = Options.ModelType;
 
@@ -141,7 +128,7 @@ public class GLTFImporter
 
         loaded.ExtendedData = DivinityMeshExtendedData.Make();
         loaded.ExtendedData.UserMeshProperties.MeshFlags = modelFlags;
-        loaded.ExtendedData.UpdateFromModelInfo(loaded, Options.ModelInfoFormat);
+        loaded.ExtendedData.UpdateFromModelInfo(loaded, Options.ModelInfoFormat, skeleton);
 
         ext.Apply(loaded, loaded.ExtendedData);
     }
@@ -416,7 +403,7 @@ public class GLTFImporter
             ImportMorphTargets(m, content, morphTargetNames);
         }
 
-        MakeExtendedData(content, ext, m);
+        MakeExtendedData(content, ext, m, skeleton);
 
         Utils.Info(String.Format("Imported {0} mesh ({1} tri groups, {2} tris)", 
             (m.VertexFormat.HasBoneWeights ? "skinned" : "rigid"), 

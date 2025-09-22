@@ -205,6 +205,12 @@ public class GLTFMesh
             };
         }
 
+        // Objects with a single binding are attached to the skeleton, but are not skinned
+        if (InfluencingJoints.SkeletonJoints.Count == 1)
+        {
+            OutputVertexType.HasBoneWeights = false;
+        }
+
         ImportTriangles(primitives);
         ImportVertices(primitives, influencingJoints?.BindRemaps);
 
