@@ -50,6 +50,7 @@ abstract public class PackageWriter : IDisposable
             && extension != ".gtp"
             && extension != ".wem"
             && extension != ".bnk"
+            && extension != ".bk2"
             && inputStream.Length > 0;
     }
 
