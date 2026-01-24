@@ -73,6 +73,11 @@
 		<Label>BothHands</Label>
 	</Enumeration>
 
+	<Enumeration Name="ProjectileDeflectType">
+		<Label>Physical</Label>
+		<Label>Magical</Label>
+	</Enumeration>
+
 	<Enumeration Name="SpellCooldownType">
 		<Label>Default</Label>
 		<Label>OncePerTurn</Label>
@@ -271,7 +276,7 @@
 		<Label>VulnerableToNonMagical</Label>
 	</Enumeration>
 
-	<Enumeration Name="UnlockSpellType">
+	<Enumeration Name="SpellLearningStrategy">
 		<Label>Singular</Label> 
 		<Label>AddChildren</Label> 
 		<Label>MostPowerful</Label>
@@ -310,6 +315,14 @@
 		<Label>RangedSpellAttack</Label>
 		<Label>MeleeUnarmedAttack</Label>
 		<Label>RangedUnarmedAttack</Label>
+	</Enumeration>
+
+	<Enumeration Name="AttackSpellType">
+		<Label>Target_MainHandAttack</Label>
+		<Label>Target_OffhandAttack</Label>
+		<Label>Target_UnarmedAttack</Label>
+		<Label>Projectile_MainHandAttack</Label>
+		<Label>Projectile_OffhandAttack</Label>
 	</Enumeration>
 
 	<Enumeration Name="DealDamageWeaponDamageType">
@@ -657,7 +670,7 @@
 		<Arg Name="Ability" Type="Ability" />
 		<Arg Name="Amount" Type="Int" />
 		<Arg Name="Cap" Type="Int" />
-		<Arg Name="Arg4" Type="Boolean" />
+		<Arg Name="DontAdjustHealth" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="RollBonus" RequiredArgs="2">
 		<Arg Name="RollType" Type="StatsRollType" />
@@ -666,14 +679,14 @@
 	</Function>
 	<Function Type="Boost" Name="Advantage" RequiredArgs="1">
 		<Arg Name="Type" Type="AdvantageContext" />
-		<Arg Name="Arg2" Type="String" /> <!-- Depends on type -->
+		<Arg Name="Arg2" Type="String" /> <!-- Depends on type, ability/skill -->
 		<Arg Name="Tag1" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag2" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag3" Type="String" /> <!-- TagManager resource -->
 	</Function>
 	<Function Type="Boost" Name="Disadvantage" RequiredArgs="1">
 		<Arg Name="Type" Type="AdvantageContext" />
-		<Arg Name="Arg2" Type="String" /> <!-- Depends on type -->
+		<Arg Name="Arg2" Type="String" /> <!-- Depends on type, ability/skill -->
 		<Arg Name="Tag1" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag2" Type="String" /> <!-- TagManager resource -->
 		<Arg Name="Tag3" Type="String" /> <!-- TagManager resource -->
@@ -688,7 +701,7 @@
 		<Arg Name="Type" Type="CriticalHitType" />
 		<Arg Name="Result" Type="CriticalHitResult" />
 		<Arg Name="When" Type="CriticalHitWhen" />
-		<Arg Name="Arg4" Type="Float" />
+		<Arg Name="Value" Type="Float" />
 	</Function>
 	<Function Type="Boost" Name="AbilityFailedSavingThrow" RequiredArgs="1">
 		<Arg Name="Ability" Type="Ability" />
@@ -728,25 +741,23 @@
 	</Function>
 	<Function Type="Boost" Name="UnlockSpell" RequiredArgs="1">
 		<Arg Name="SpellId" Type="SpellId" />
-		<Arg Name="Type" Type="UnlockSpellType" />
-		<Arg Name="SpellGuid" Type="String" />  <!-- "None" or GUID or "" --><!--Resource GUID from a resource in ActionResourceGroupDefinitions, will use that resource before using others from that group-->
+		<Arg Name="Type" Type="SpellLearningStrategy" />
+		<Arg Name="CastResource" Type="Guid" /> <!--Resource GUID from a resource in ActionResourceGroupDefinitions, will use that resource before using others from that group-->
 		<Arg Name="Cooldown" Type="SpellCooldownType" />
 		<Arg Name="Ability" Type="Ability" />
 	</Function>
 	<Function Type="Boost" Name="SourceAdvantageOnAttack" RequiredArgs="0">
-		<Arg Name="Arg1" Type="Float" />
 	</Function>
 	<Function Type="Boost" Name="ProficiencyBonus" RequiredArgs="1">
 		<Arg Name="Type" Type="ProficiencyBonusBoostType" />
 		<Arg Name="AbilityOrSkill" Type="AbilityOrSkill" />
 	</Function>
 	<Function Type="Boost" Name="BlockSpellCast" RequiredArgs="0">
-		<Arg Name="Arg1" Type="Float" />
 	</Function>
 	<Function Type="Boost" Name="Proficiency" RequiredArgs="1">
-		<Arg Name="Arg1" Type="ProficiencyGroupFlags" />
-		<Arg Name="Arg2" Type="ProficiencyGroupFlags" />
-		<Arg Name="Arg3" Type="ProficiencyGroupFlags" />
+		<Arg Name="Proficiency1" Type="ProficiencyGroupFlags" />
+		<Arg Name="Proficiency2" Type="ProficiencyGroupFlags" />
+		<Arg Name="Proficiency3" Type="ProficiencyGroupFlags" />
 	</Function>
 	<Function Type="Boost" Name="SourceAllyAdvantageOnAttack" RequiredArgs="0" />
 	<Function Type="Boost" Name="IncreaseMaxHP" RequiredArgs="1">
@@ -786,6 +797,7 @@
 		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
 		<Arg Name="Multiplier" Type="Int" />
 		<Arg Name="Level" Type="Int" />
+		<Arg Name="Dice" Type="String" /> <!-- i.e. "d20" -->
 	</Function>
 	<Function Type="Boost" Name="BlockRegainHP" RequiredArgs="0">
 		<Arg Name="Type" Type="ResurrectTypes" />
@@ -844,8 +856,8 @@
 	<Function Type="Boost" Name="IgnoreLeaveAttackRange" RequiredArgs="0" />
 	<Function Type="Boost" Name="GameplayLight" RequiredArgs="2">
 		<Arg Name="Distance" Type="Float" />
-		<Arg Name="Arg2" Type="Boolean" />
-		<Arg Name="Arg3" Type="Float" />
+		<Arg Name="LOS" Type="Boolean" />
+		<Arg Name="Sharpening" Type="Float" />
 		<Arg Name="Sunlight" Type="Boolean" /> <!--for IsInSunlight-->
 	</Function>
 	<Function Type="Boost" Name="DialogueBlock" RequiredArgs="0" />
@@ -865,8 +877,8 @@
 		<Arg Name="DamageType" Type="Damage Type" />
 	</Function>
 	<Function Type="Boost" Name="ProjectileDeflect" RequiredArgs="0">
-		<Arg Name="Type1" Type="String" />
-		<Arg Name="Type2" Type="String" />
+		<Arg Name="Type1" Type="ProjectileDeflectType" />
+		<Arg Name="Type2" Type="ProjectileDeflectType" />
 	</Function>
 	<Function Type="Boost" Name="AbilityOverrideMinimum" RequiredArgs="2">
 		<Arg Name="Ability" Type="Ability" />
@@ -949,7 +961,7 @@
 	<Function Type="Boost" Name="BlockAbilityModifierFromAC" RequiredArgs="1">
 		<Arg Name="Ability" Type="Ability" />
 	</Function>
-	<Function Type="Boost" Name="ScaleMultiplier" RequiredArgs="0">
+	<Function Type="Boost" Name="ScaleMultiplier" RequiredArgs="1">
 		<Arg Name="Multiplier" Type="Float" />
 	</Function>
 	<Function Type="Boost" Name="CriticalDamageOnHit" RequiredArgs="0" />
@@ -963,7 +975,7 @@
 		<Arg Name="StatusId" Type="StatusIdOrGroup" />
 	</Function>
 	<Function Type="Boost" Name="PhysicalForceRangeBonus" RequiredArgs="1">
-		<Arg Name="Arg1" Type="String" />
+		<Arg Name="Formula" Type="String" /> <!-- Possible expressions: "*20", "/20", "+20", "-20" -->
 	</Function>
 	<Function Type="Boost" Name="ObjectSize" RequiredArgs="1">
 		<Arg Name="Size" Type="Int" />
@@ -1050,7 +1062,7 @@
 	</Function>
 	<Function Type="Boost" Name="AttackSpellOverride" RequiredArgs="1">
 		<Arg Name="AttackSpell" Type="SpellId" /> <!--IsAttack SpellFlag Required-->
-		<Arg Name="OriginalSpell" Type="SpellId" />
+		<Arg Name="OriginalSpell" Type="AttackSpellType" />
 	</Function>
 	<Function Type="Boost" Name="Lock" RequiredArgs="0">
 		<Arg Name="DC" Type="Guid" />
@@ -1059,7 +1071,7 @@
 	<Function Type="Boost" Name="IgnorePointBlankDisadvantage" RequiredArgs="1">
 		<Arg Name="Flags" Type="WeaponFlags" />
 	</Function>
-	<Function Type="Boost" Name="CriticalHitExtraDice" RequiredArgs="1">
+	<Function Type="Boost" Name="CriticalHitExtraDice" RequiredArgs="0">
 		<Arg Name="ExtraDice" Type="Int" />
 		<Arg Name="AttackType" Type="AttackType" />
 	</Function>
@@ -1070,6 +1082,7 @@
 	</Function>
 	<Function Type="Boost" Name="GameplayObscurity" RequiredArgs="1">
 		<Arg Name="Obscurity" Type="Float" />
+		<Arg Name="Unused" Type="String" /> <!-- Argument not used by boost parser code -->
 	</Function>
 	<Function Type="Boost" Name="MaximumRollResult" RequiredArgs="2">
 		<Arg Name="RollType" Type="StatsRollType" />
@@ -1102,16 +1115,16 @@
 	</Function>
 	<Function Type="Boost" Name="EnableBasicItemInteractions" RequiredArgs="0" />
 	<Function Type="Boost" Name="SoundsBlocked" RequiredArgs="0" />
-  <Function Type="Boost" Name="ProficiencyBonusIncrease" RequiredArgs="1">
-    <Arg Name="Amount" Type="Int" />
-  </Function>
-  <Function Type="Boost" Name="NoDamageOnThrown" RequiredArgs="0" />
-  <Function Type="Boost" Name="DamageTakenBonus" RequiredArgs="1">
-    <Arg Name="Lua" Type="Amount" />
-    <Arg Name="DamageType" Type="Damage Type" />
-    <Arg Name="CanCriticallyHit" Type="Boolean" />
-  </Function>
-  <Function Type="Boost" Name="ReceivingCriticalDamageOnHit" RequiredArgs="0">
-    <Arg Name="Arg1" Type="Float" />
-  </Function>
+	<Function Type="Boost" Name="ProficiencyBonusIncrease" RequiredArgs="1">
+		<Arg Name="Amount" Type="Int" />
+	</Function>
+	<Function Type="Boost" Name="NoDamageOnThrown" RequiredArgs="0" />
+	<Function Type="Boost" Name="DamageTakenBonus" RequiredArgs="1">
+		<Arg Name="Lua" Type="Amount" />
+		<Arg Name="DamageType" Type="Damage Type" />
+		<Arg Name="CanCriticallyHit" Type="Boolean" />
+	</Function>
+	<Function Type="Boost" Name="ReceivingCriticalDamageOnHit" RequiredArgs="0">
+		<Arg Name="Arg1" Type="Float" />
+	</Function>
 </Definitions>
