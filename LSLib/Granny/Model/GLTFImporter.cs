@@ -615,7 +615,7 @@ public class GLTFImporter
 
     private void ImportBoneTree(Skeleton skeleton, int parentIndex, NodeBuilder node, GLTFSceneExtensions ext, GLTFImportedSkeleton imported)
     {
-        if (ext != null && !ext.BoneOrder.ContainsKey(node.Name)) return;
+        if (ext != null && ext.BoneOrder.Count > 0 && !ext.BoneOrder.ContainsKey(node.Name)) return;
 
         var boneIndex = ImportBone(skeleton, parentIndex, node, ext, imported);
 
