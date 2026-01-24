@@ -400,7 +400,7 @@ public:
     PxGeometry* LoadBox(TiXmlElement& ele)
     {
         return new PxBoxGeometry(
-            P(HalExtents, PxVec3)
+            P(HalfExtents, PxVec3)
         );
     }
 
