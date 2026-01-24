@@ -6,12 +6,121 @@
     <Nullable>annotations</Nullable>
   </PropertyGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\File\Stat.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\File\Stat.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\File\Stat.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\File\Stat.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.yy&quot;&#xD;&#xA;" />
-  </Target>
-
   <ItemGroup>
-    <ProjectReference Include="..\LSLib\LSLib.csproj" />
+	<ProjectReference Include="..\LSLib\LSLib.csproj" />
+	<PackageReference Include="YaccLexTools" Version="1.2.3" />
   </ItemGroup>
 
+	<ItemGroup Label="YaccLexBuild">
+		<YaccFile Include="Stats\File\Stat.yy">
+			<OutputFile>Stats\File\Stat.yy.cs</OutputFile>
+			<Arguments>/gplex /nolines</Arguments>
+		</YaccFile>
+		<LexFile Include="Stats\File\Stat.lex">
+			<OutputFile>Stats\File\Stat.lex.cs</OutputFile>
+			<Arguments>/noEmbedBuffers</Arguments>
+		</LexFile>
+		
+		<YaccFile Include="Stats\Functor\Functor.yy">
+			<OutputFile>Stats\Functor\Functor.yy.cs</OutputFile>
+			<Arguments>/gplex /nolines</Arguments>
+		</YaccFile>
+		<LexFile Include="Stats\Functor\Functor.lex">
+			<OutputFile>Stats\Functor\Functor.lex.cs</OutputFile>
+			<Arguments>/noEmbedBuffers</Arguments>
+		</LexFile>
+		
+		<YaccFile Include="Stats\Functor\Lua.yy">
+			<OutputFile>Stats\Functor\Lua.yy.cs</OutputFile>
+			<Arguments>/gplex /nolines</Arguments>
+		</YaccFile>
+		<LexFile Include="Stats\Functor\Lua.lex">
+			<OutputFile>Stats\Functor\Lua.lex.cs</OutputFile>
+			<Arguments>/noEmbedBuffers</Arguments>
+		</LexFile>
+
+		<YaccFile Include="Stats\Functor\Requirement.yy">
+			<OutputFile>Stats\Functor\Requirement.yy.cs</OutputFile>
+			<Arguments>/gplex /nolines</Arguments>
+		</YaccFile>
+		<LexFile Include="Stats\Functor\Requirement.lex">
+			<OutputFile>Stats\Functor\Requirement.lex.cs</OutputFile>
+			<Arguments>/noEmbedBuffers</Arguments>
+		</LexFile>
+
+		<YaccFile Include="Stats\Functor\RollConditions.yy">
+			<OutputFile>Stats\Functor\RollConditions.yy.cs</OutputFile>
+			<Arguments>/gplex /nolines</Arguments>
+		</YaccFile>
+		<LexFile Include="Stats\Functor\RollConditions.lex">
+			<OutputFile>Stats\Functor\RollConditions.lex.cs</OutputFile>
+			<Arguments>/noEmbedBuffers</Arguments>
+		</LexFile>
+	</ItemGroup>
+	<ItemGroup Label="YaccLexPack">
+		<!--Not technically neccisarry, just a qol change to nest generated .cs files in solution explorer-->
+		<Compile Update="Stats\File\Stat.yy.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\File\Stat.yy</DependentUpon>
+		</Compile>
+		<Compile Update="Stats\File\Stat.lex.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\File\Stat.lex</DependentUpon>
+		</Compile>
+
+		<Compile Update="Stats\Functor\Functor.yy.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\Functor.yy</DependentUpon>
+		</Compile>
+		<Compile Update="Stats\Functor\Functor.lex.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\Functor.lex</DependentUpon>
+		</Compile>
+
+		<Compile Update="Stats\Functor\Lua.yy.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\Lua.yy</DependentUpon>
+		</Compile>
+		<Compile Update="Stats\Functor\Lua.lex.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\Lua.lex</DependentUpon>
+		</Compile>
+
+		<Compile Update="Stats\Functor\Requirement.yy.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\Requirement.yy</DependentUpon>
+		</Compile>
+			<Compile Update="Stats\Functor\Requirement.lex.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\Requirement.lex</DependentUpon>
+		</Compile>
+
+			<Compile Update="Stats\Functor\RollConditions.yy.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\RollConditions.yy</DependentUpon>
+		</Compile>
+			<Compile Update="Stats\Functor\RollConditions.lex.cs">
+			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
+			<DependentUpon>Stats\Functor\RollConditions.lex</DependentUpon>
+		</Compile>
+		
+		<!--Remove autogenerated files to prevent conflicts with imported files from LSLib-->
+		<Compile Remove="GplexBuffers.cs"/>
+		<Compile Remove="ShiftReduceParserCode.cs"/>
+	
+
+
+
+
+</ItemGroup>
 </Project>

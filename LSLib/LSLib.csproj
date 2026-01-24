@@ -35,17 +35,67 @@
     <PackageReference Include="SharpGLTF.Core" Version="1.0.3" />
     <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.3" />
     <PackageReference Include="System.IO.Hashing" Version="9.0.2" />
+    <PackageReference Include="YaccLexTools" Version="1.2.3" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.5" />
   </ItemGroup>
-  <PropertyGroup />
+  <ItemGroup Label="YaccLexBuild">
+    <YaccFile Include="LS\Story\GoalParser\Goal.yy">
+      <OutputFile>LS\Story\GoalParser\Goal.yy.cs</OutputFile>
+      <Arguments>/gplex /nolines</Arguments>
+    </YaccFile>
+    <LexFile Include="LS\Story\GoalParser\Goal.lex">
+      <OutputFile>LS\Story\GoalParser\Goal.lex.cs</OutputFile>
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="LS\Story\HeaderParser\StoryHeader.yy">
+      <OutputFile>LS\Story\HeaderParser\StoryHeader.yy.cs</OutputFile>
+      <Arguments>/gplex /nolines</Arguments>
+    </YaccFile>
+    <LexFile Include="LS\Story\HeaderParser\StoryHeader.lex">
+      <OutputFile>LS\Story\HeaderParser\StoryHeader.lex.cs</OutputFile>
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+  </ItemGroup>
+  <ItemGroup Label="YaccLexPack"><!--Not technically neccisarry, just a qol change to nest generated .cs files in solution explorer-->
+	<Compile Update="LS\Story\GoalParser\Goal.yy.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>LS\Story\GoalParser\Goal.yy</DependentUpon>
+    </Compile>
+	<Compile Update="LS\Story\GoalParser\Goal.lex.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>LS\Story\GoalParser\Goal.lex</DependentUpon>
+    </Compile>
+	<Compile Update="LS\Story\HeaderParser\StoryHeader.yy.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>LS\Story\HeaderParser\StoryHeader.yy</DependentUpon>
+    </Compile>
+	<Compile Update="LS\Story\HeaderParser\StoryHeader.lex.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>LS\Story\HeaderParser\StoryHeader.lex</DependentUpon>
+    </Compile>
+    <Compile Update="GplexBuffers.cs"><!--Not sure these last two statements are doing anything-->
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Update="ShiftReduceParserCode.cs">
+       <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+    <PropertyGroup>
+      <BuffFile>GplexBuffers.cs</BuffFile>
+    </PropertyGroup>
+    <!-- Patches https://github.com/ernstc/YaccLexTools/issues/8 -->
+    <Target Name="PatchYaccLexBuild" AfterTargets="YaccLexToolsGplexSingleTarget" BeforeTargets="CoreCompile">
+      <CallTarget Targets="YaccLexToolsGplexSingleTarget"/>
+      <Message Text="Diagnostic Message: $(BuffFile) not found" Importance="high" Condition="!Exists('$(BuffFile)')"/>
+      <Message Text="Patching $(BuffFile) visibility mismatch. Remove once https://github.com/ernstc/YaccLexTools/issues/8 has been resolved." Importance="high" Condition="Exists('$(BuffFile)')"/>
+      <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;(Get-Content -Path '$(BuffFile)' -Raw) -replace 'internal abstract class ScanBuff', 'public abstract class ScanBuff' | Set-Content -Path '$(BuffFile)'&quot;" Condition="Exists('$(BuffFile)')"/>
+      <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;(Get-Content -Path '$(BuffFile)' -Raw) -replace 'internal class BufferException', 'public class BufferException' | Set-Content -Path '$(BuffFile)'&quot;" Condition="Exists('$(BuffFile)')"/>
+    </Target>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.yy.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.yy"
-
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.yy"
-
-</PreBuildEvent>
     <AssemblyTitle>LSLib</AssemblyTitle>
     <Product>LSLib</Product>
     <Copyright>Copyright © Norbyte 2012-2023</Copyright>
