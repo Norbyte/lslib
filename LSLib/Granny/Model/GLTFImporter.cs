@@ -526,10 +526,35 @@ public class GLTFImporter
         if (rotate != null)
         {
             var curve = rotate;
+            List<Tuple<float, OpenTK.Mathematics.Quaternion>> rotKeys = new();
             foreach (var key in curve.Keys)
             {
                 var q = curve.GetPoint(key);
-                keyframes.AddRotation(key, q.ToOpenTK());
+                rotKeys.Add(new Tuple<float, OpenTK.Mathematics.Quaternion>(key, q.ToOpenTK()));
+            }
+
+            // Quaternion sign fixup
+            // The same rotation can be represented by both q and -q. However the Slerp path
+            // will be different; one will go the long away around, the other the short away around.
+            // Replace quaterions to ensure that Slerp will take the short path.
+            float flip = 1.0f;
+            for (var i = 0; i < rotKeys.Count - 1; i++)
+            {
+                var r0 = rotKeys[i];
+                var r1 = rotKeys[i + 1];
+                var dot = QuatHelpers.Dot(r0.Item2, r1.Item2 * flip);
+
+                if (dot < 0.0f)
+                {
+                    flip = -flip;
+                }
+
+                rotKeys[i + 1] = new Tuple<float, OpenTK.Mathematics.Quaternion>(r1.Item1, r1.Item2 * flip);
+            }
+
+            foreach (var key in rotKeys)
+            {
+                keyframes.AddRotation(key.Item1, key.Item2);
             }
         }
 
