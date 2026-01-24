@@ -1109,7 +1109,7 @@
   <Function Type="Boost" Name="DamageTakenBonus" RequiredArgs="1">
     <Arg Name="Lua" Type="Amount" />
     <Arg Name="DamageType" Type="Damage Type" />
-    <Arg Name="Arg3" Type="Boolean" />
+    <Arg Name="CanCriticallyHit" Type="Boolean" />
   </Function>
   <Function Type="Boost" Name="ReceivingCriticalDamageOnHit" RequiredArgs="0">
     <Arg Name="Arg1" Type="Float" />
