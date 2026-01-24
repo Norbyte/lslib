@@ -828,7 +828,7 @@
 	<Function Type="Boost" Name="WeaponDamage" RequiredArgs="2">
 		<Arg Name="Amount" Type="Lua" />
 		<Arg Name="DamageType" Type="Damage Type" />
-		<Arg Name="Arg3" Type="Boolean" />
+		<Arg Name="Unused3" Type="Boolean" /> <!-- Ignored -->
 	</Function>
 	<Function Type="Boost" Name="NullifyAbilityScore" RequiredArgs="1">
 		<Arg Name="Ability" Type="Ability" />
@@ -847,9 +847,7 @@
 	<Function Type="Boost" Name="WeaponEnchantment" RequiredArgs="1">
 		<Arg Name="Enchantment" Type="Int" />
 	</Function>
-	<Function Type="Boost" Name="GuaranteedChanceRollOutcome" RequiredArgs="1">
-		<Arg Name="Arg1" Type="Boolean" />
-	</Function>
+	<!-- GuaranteedChanceRollOutcome removed - not handled in game code -->
 	<Function Type="Boost" Name="Attribute" RequiredArgs="1">
 		<Arg Name="Flags" Type="AttributeFlags" />
 	</Function>
@@ -883,11 +881,11 @@
 	<Function Type="Boost" Name="AbilityOverrideMinimum" RequiredArgs="2">
 		<Arg Name="Ability" Type="Ability" />
 		<Arg Name="Minimum" Type="Int" />
-		<Arg Name="Arg3" Type="Boolean" />
+		<Arg Name="AdjustMaxHealth" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="ACOverrideFormula" RequiredArgs="2">
 		<Arg Name="AC" Type="Int" />
-		<Arg Name="Arg2" Type="Boolean" /> <!--false not stacking with anything else-->
+		<Arg Name="AddEquipmentAndBoostAC" Type="Boolean" /> <!--false not stacking with anything else-->
 		<Arg Name="Ability1" Type="Ability" />
 		<Arg Name="Ability2" Type="Ability" />
 		<Arg Name="Ability3" Type="Ability" />
@@ -1006,7 +1004,7 @@
 	<Function Type="Boost" Name="DamageBonus" RequiredArgs="1">
 		<Arg Name="Amount" Type="Lua" />
 		<Arg Name="DamageType" Type="Damage Type" />
-		<Arg Name="Arg3" Type="Boolean" />
+		<Arg Name="CanCriticallyHit" Type="Boolean" />
 	</Function>
 	<Function Type="Boost" Name="Detach" RequiredArgs="0" />
 	<Function Type="Boost" Name="ConsumeItemBlock" RequiredArgs="0" />
@@ -1075,11 +1073,7 @@
 		<Arg Name="ExtraDice" Type="Int" />
 		<Arg Name="AttackType" Type="AttackType" />
 	</Function>
-	<Function Type="Boost" Name="DodgeAttackRoll" RequiredArgs="2">
-		<Arg Name="Arg1" Type="Int" />
-		<Arg Name="Arg2" Type="Int" />
-		<Arg Name="Status" Type="StatusIdOrGroup" />
-	</Function>
+	<!-- DodgeAttackRoll removed - not handled in game code -->
 	<Function Type="Boost" Name="GameplayObscurity" RequiredArgs="1">
 		<Arg Name="Obscurity" Type="Float" />
 		<Arg Name="Unused" Type="String" /> <!-- Argument not used by boost parser code -->
