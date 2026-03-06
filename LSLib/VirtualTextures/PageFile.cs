@@ -1,4 +1,6 @@
 ﻿using LSLib.LS;
+using System.Diagnostics;
+using BCnEncoder.Shared;
 
 namespace LSLib.VirtualTextures;
 
@@ -45,13 +47,38 @@ public class PageFile : IDisposable
         return compressor.Decompress(compressed, outputSize, parameterBlock.CompressionName1, parameterBlock.CompressionName2);
     }
 
+    private byte[] BuildUniformBC3Tile(ColorRgba32 color)
+    {
+        var block = BC3Image.BuildUniformBC3Block(color);
+
+        var tileSize = TileSet.Header.TileWidth * TileSet.Header.TileHeight;
+        byte[] img = new byte[tileSize];
+
+        for (var i = 0; i < tileSize/16; i++)
+        {
+            Array.Copy(block, 0, img, i*16, 16);
+        }
+
+        return img;
+    }
+
     private byte[] DoUnpackTileUniform(GTPChunkHeader header)
     {
         var parameterBlock = (GTSUniformParameterBlock)TileSet.ParameterBlocks[header.ParameterBlockID];
 
-        byte[] img = new byte[TileSet.Header.TileWidth * TileSet.Header.TileHeight];
-        Array.Clear(img, 0, img.Length);
-        return img;
+        Debug.Assert(header.Size == 4);
+        Debug.Assert(parameterBlock.Version == 0x42);
+        Debug.Assert(parameterBlock.Width == 4);
+        Debug.Assert(parameterBlock.Height == 1);
+        Debug.Assert(parameterBlock.DataType == GTSDataType.X8Y8Z8W8 || parameterBlock.DataType == GTSDataType.R8G8B8A8_SRGB);
+
+        var r = Reader.ReadByte();
+        var g = Reader.ReadByte();
+        var b = Reader.ReadByte();
+        var a = Reader.ReadByte();
+        var color = new ColorRgba32(r, g, b, a);
+
+        return BuildUniformBC3Tile(color);
     }
 
     public byte[] UnpackTile(int pageIndex, int chunkIndex, int outputSize, TileCompressor compressor)

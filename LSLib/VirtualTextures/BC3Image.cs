@@ -1,4 +1,7 @@
-﻿using LSLib.LS;
+﻿using BCnEncoder.Decoder;
+using BCnEncoder.Encoder;
+using BCnEncoder.Shared;
+using LSLib.LS;
 
 namespace LSLib.VirtualTextures;
 
@@ -64,6 +67,16 @@ public class BC3Image
             wrY += 4;
             wrX = dstX;
         }
+    }
+
+    public static byte[] BuildUniformBC3Block(ColorRgba32 color)
+    {
+        // 4x4 source block
+        var src = new ColorRgba32[16];
+        Array.Fill(src, color);
+
+        var encoder = new BcEncoder(CompressionFormat.Bc3);
+        return encoder.EncodeBlock(src);
     }
 
     public void SaveDDS(string path)
