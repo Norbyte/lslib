@@ -61,7 +61,7 @@ public partial class VirtualTexturesPane : UserControl
 
                 for (var layer = 0; layer < tileSet.TileSetLayers.Length; layer++)
                 {
-                    BC5Image tex = null;
+                    BC3Image tex = null;
                     var level = 0;
                     do
                     {

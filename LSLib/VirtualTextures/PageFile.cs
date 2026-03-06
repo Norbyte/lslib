@@ -66,11 +66,11 @@ public class PageFile : IDisposable
         };
     }
 
-    public BC5Image UnpackTileBC5(int pageIndex, int chunkIndex, TileCompressor compressor)
+    public BC3Image UnpackTileBC3(int pageIndex, int chunkIndex, TileCompressor compressor)
     {
         var compressedSize = 16 * ((TileSet.Header.TileWidth + 3) / 4) * ((TileSet.Header.TileHeight + 3) / 4)
             + 16 * ((TileSet.Header.TileWidth/2 + 3) / 4) * ((TileSet.Header.TileHeight/2 + 3) / 4);
         var chunk = UnpackTile(pageIndex, chunkIndex, compressedSize, compressor);
-        return new BC5Image(chunk, TileSet.Header.TileWidth, TileSet.Header.TileHeight);
+        return new BC3Image(chunk, TileSet.Header.TileWidth, TileSet.Header.TileHeight);
     }
 }

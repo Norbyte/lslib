@@ -586,7 +586,7 @@ public class VirtualTileSet : IDisposable
         return file;
     }
 
-    public void StitchTexture(int level, int layer, int minX, int minY, int maxX, int maxY, BC5Image output)
+    public void StitchTexture(int level, int layer, int minX, int minY, int maxX, int maxY, BC3Image output)
     {
         var tileWidth = Header.TileWidth - Header.TileBorder * 2;
         var tileHeight = Header.TileHeight - Header.TileBorder * 2;
@@ -598,18 +598,18 @@ public class VirtualTileSet : IDisposable
                 if (GetTileInfo(level, layer, x, y, ref tileInfo))
                 {
                     var pageFile = GetOrLoadPageFile(tileInfo.PageFileIndex);
-                    var tile = pageFile.UnpackTileBC5(tileInfo.PageIndex, tileInfo.ChunkIndex, Compressor);
+                    var tile = pageFile.UnpackTileBC3(tileInfo.PageIndex, tileInfo.ChunkIndex, Compressor);
                     tile.CopyTo(output, 8, 8, (x - minX) * tileWidth, (y - minY) * tileHeight, tileWidth, tileHeight);
                 }
             }
         }
     }
 
-    public BC5Image ExtractTexture(int level, int layer, int minX, int minY, int maxX, int maxY)
+    public BC3Image ExtractTexture(int level, int layer, int minX, int minY, int maxX, int maxY)
     {
         var width = (maxX - minX + 1) * (Header.TileWidth - Header.TileBorder * 2);
         var height = (maxY - minY + 1) * (Header.TileHeight - Header.TileBorder * 2);
-        var stitched = new BC5Image(width, height);
+        var stitched = new BC3Image(width, height);
         StitchTexture(level, layer, minX, minY, maxX, maxY, stitched);
         return stitched;
     }
@@ -632,7 +632,7 @@ public class VirtualTileSet : IDisposable
         this.PageFiles.Clear();
     }
 
-    public BC5Image ExtractTexture(int level, int layer, FourCCTextureMeta tex)
+    public BC3Image ExtractTexture(int level, int layer, FourCCTextureMeta tex)
     {
         var tlW = Header.TileWidth - Header.TileBorder * 2;
         var tlH = Header.TileHeight - Header.TileBorder * 2;
@@ -650,7 +650,7 @@ public class VirtualTileSet : IDisposable
          return ExtractTextureIfExists(level, layer, minX, minY, maxX, maxY);
     }
 
-    public BC5Image ExtractTextureIfExists(int levelIndex, int layer, int minX, int minY, int maxX, int maxY)
+    public BC3Image ExtractTextureIfExists(int levelIndex, int layer, int minX, int minY, int maxX, int maxY)
     {
         GTSFlatTileInfo tile = new();
         for (var x = minX; x <= maxX; x++)

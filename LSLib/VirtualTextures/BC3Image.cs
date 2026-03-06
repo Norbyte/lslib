@@ -2,20 +2,20 @@
 
 namespace LSLib.VirtualTextures;
 
-public class BC5Image
+public class BC3Image
 {
     public byte[] Data;
     public int Width;
     public int Height;
 
-    public BC5Image(byte[] data, int width, int height)
+    public BC3Image(byte[] data, int width, int height)
     {
         Data = data;
         Width = width;
         Height = height;
     }
 
-    public BC5Image(int width, int height)
+    public BC3Image(int width, int height)
     {
         Data = new byte[width * height];
         Array.Clear(Data);
@@ -33,7 +33,7 @@ public class BC5Image
         return ((x >> 2) + (y >> 2) * (Width >> 2)) << 4;
     }
 
-    public void CopyTo(BC5Image destination, int srcX, int srcY, int dstX, int dstY, int width, int height)
+    public void CopyTo(BC3Image destination, int srcX, int srcY, int dstX, int dstY, int width, int height)
     {
         if ((srcX % 4) != 0 || (srcY % 4) != 0 || (dstX % 4) != 0 || (dstY % 4) != 0 || (width % 4) != 0 || (height % 4) != 0)
         {
@@ -93,9 +93,9 @@ public class BC5Image
     }
 }
 
-public class BC5Mips
+public class BC3Mips
 {
-    public List<BC5Image> Mips;
+    public List<BC3Image> Mips;
 
     public void LoadDDS(string path)
     {
@@ -159,14 +159,14 @@ public class BC5Mips
             mips = (Int32)header.dwMipMapCount;
         }
 
-        Mips = new List<BC5Image>(mips);
+        Mips = new List<BC3Image>(mips);
         for (var i = 0; i < mips; i++)
         {
             var width = Math.Max((int)header.dwWidth >> i, 1);
             var height = Math.Max((int)header.dwHeight >> i, 1);
             var bytes = Math.Max(width / 4, 1) * Math.Max(height / 4, 1) * 16;
             var blob = reader.ReadBytes(bytes);
-            Mips.Add(new BC5Image(blob, width, height));
+            Mips.Add(new BC3Image(blob, width, height));
         }
     }
 }

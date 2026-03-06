@@ -130,8 +130,8 @@ public class TileSetDescriptor
 
 public class BuildTile
 {
-    public BC5Image Image;
-    public BC5Image EmbeddedMip;
+    public BC3Image Image;
+    public BC3Image EmbeddedMip;
     public CompressedTile Compressed;
 
     // Set during initialization
@@ -183,7 +183,7 @@ public class BuildLayerTexture
 {
     public string Path;
     public int FirstMip;
-    public BC5Mips Mips;
+    public BC3Mips Mips;
 }
 
 public class BuildLevel
@@ -220,7 +220,7 @@ public class BuildLevel
         {
             Tiles[off] = new BuildTile
             {
-                Image = new BC5Image(PaddedTileWidth, PaddedTileHeight),
+                Image = new BC3Image(PaddedTileWidth, PaddedTileHeight),
                 Layer = layer,
                 Codec = codec,
                 DataType = dataType
@@ -358,7 +358,7 @@ public class TileSetBuilder
         {
             if (path != null)
             {
-                var mips = new BC5Mips();
+                var mips = new BC3Mips();
                 mips.LoadDDS(path);
                 if (mips.Mips.Count <= 1)
                 {
@@ -608,7 +608,7 @@ public class TileSetBuilder
         return Math.Min(max, Math.Max(x, min));
     }
 
-    private void StitchPartialTile(BuildTile tile, BC5Image source, int tileX, int tileY, int sourceX, int sourceY, int width, int height)
+    private void StitchPartialTile(BuildTile tile, BC3Image source, int tileX, int tileY, int sourceX, int sourceY, int width, int height)
     {
         source.CopyTo(
             tile.Image,
@@ -619,7 +619,7 @@ public class TileSetBuilder
         );
     }
 
-    private void StitchTiles(BuildLevel level, int layer, int x, int y, BC5Image mip)
+    private void StitchTiles(BuildLevel level, int layer, int x, int y, BC3Image mip)
     {
         var layerInfo = BuildData.Layers[layer];
         var firstTileX = x / BuildData.RawTileWidth;
@@ -669,7 +669,7 @@ public class TileSetBuilder
         }
     }
 
-    private void BuildTextureTiles(BuildTexture texture, int level, int layerIndex, BuildLayer layer, BC5Image mip)
+    private void BuildTextureTiles(BuildTexture texture, int level, int layerIndex, BuildLayer layer, BC3Image mip)
     {
         var x = texture.X >> level;
         var y = texture.Y >> level;
@@ -794,7 +794,7 @@ public class TileSetBuilder
                         var nextLevelTile = layer.Levels[level.Level + 1].Get(x / 2, y / 2);
                         if (nextLevelTile != null)
                         {
-                            var nextMip = new BC5Image(BuildData.PaddedTileWidth / 2, BuildData.PaddedTileHeight / 2);
+                            var nextMip = new BC3Image(BuildData.PaddedTileWidth / 2, BuildData.PaddedTileHeight / 2);
                             var mipX = (x & 1) * (BuildData.RawTileWidth / 2) + BuildData.TileBorder / 2;
                             var mipY = (y & 1) * (BuildData.RawTileHeight / 2) + BuildData.TileBorder / 2;
                             nextLevelTile.Image.CopyTo(nextMip, mipX, mipY, 0, 0, BuildData.PaddedTileWidth / 2, BuildData.PaddedTileHeight / 2);
