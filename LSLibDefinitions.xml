@@ -336,6 +336,19 @@
 		<Label>ThrownWeaponDamageType</Label>
 	</Enumeration>
 
+	<Enumeration Name="DealDamageDamageRollValue">
+		<Label>MainWeapon</Label>
+		<Label>OffhandWeapon</Label>
+		<Label>MainMeleeWeapon</Label>
+		<Label>OffhandMeleeWeapon</Label>
+		<Label>MainRangedWeapon</Label>
+		<Label>OffhandRangedWeapon</Label>
+		<Label>SourceWeapon</Label>
+		<Label>UnarmedDamage</Label>
+		<Label>ThrownWeapon</Label>
+		<Label>ImprovisedWeapon</Label>
+	</Enumeration>
+
 	<Enumeration Name="EngineStatusType">
 		<Label>DYING</Label>
 		<Label>HEAL</Label>
@@ -444,6 +457,7 @@
 		<Arg Name="IgnoreOnDamage" Type="Boolean" /> <!--No OnDamage-->
 		<Arg Name="ConsumeCoin" Type="Boolean" /> <!--Consumes all coins, Luma-->
 		<Arg Name="IgnoreImmune" Type="Boolean" /> <!--Ignore Resistance, Immune and Damage reduction, Siaell-->
+		<Arg Name="RollValue" Type="DealDamageDamageRollValue" />
 	</Function>
 	<Function Type="Functor" Name="ExecuteWeaponFunctors" RequiredArgs="0">
 		<Arg Name="WeaponType" Type="ExecuteWeaponFunctorsType" />
@@ -778,8 +792,8 @@
 	<Function Type="Boost" Name="UseBoosts" RequiredArgs="1">
 		<Arg Name="Boosts" Type="StatsFunctors" />
 	</Function>
-	<Function Type="Boost" Name="CannotHarmCauseEntity" RequiredArgs="1">
-		<Arg Name="Type" Type="String" />
+	<Function Type="Boost" Name="CannotHarmCauseEntity" RequiredArgs="0">
+		<Arg Name="ErrorDescription" Type="String" />
 	</Function>
 	<Function Type="Boost" Name="TemporaryHP" RequiredArgs="1">
 		<Arg Name="Amount" Type="Lua" />
