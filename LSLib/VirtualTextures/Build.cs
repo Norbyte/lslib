@@ -223,7 +223,10 @@ public class BuildLevel
                 Image = new BC3Image(PaddedTileWidth, PaddedTileHeight),
                 Layer = layer,
                 Codec = codec,
-                DataType = dataType
+                DataType = dataType,
+                Level = Level,
+                X = x,
+                Y = y
             };
         }
 
@@ -525,6 +528,17 @@ public class TileSetBuilder
         var textures = FourCCElement.Make("TXTS");
         atlas.Children.Add(textures);
 
+        var thumbGuids = new byte[16 * Config.Layers.Count];
+        Array.Fill(thumbGuids, (byte)0);
+
+        var texSrgb = new byte[4 * Config.Layers.Count];
+        for (var i = 0; i < Config.Layers.Count; i++)
+        {
+            var srgb = Config.Layers[i].DataType == GTSDataType.R8G8B8_SRGB
+                || Config.Layers[i].DataType == GTSDataType.R8G8B8A8_SRGB;
+            texSrgb[0] = (byte)(srgb ? 1 : 0);
+        }
+
         foreach (var texture in Textures)
         {
             var tex = FourCCElement.Make("TXTR");
@@ -535,19 +549,8 @@ public class TileSetBuilder
             tex.Children.Add(FourCCElement.Make("XXXX", (uint)texture.X));
             tex.Children.Add(FourCCElement.Make("YYYY", (uint)texture.Y));
             tex.Children.Add(FourCCElement.Make("ADDR", "None"));
-            tex.Children.Add(FourCCElement.Make("SRGB", FourCCElementType.BinaryInt, [ 
-                0x01, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 
-                0x00, 0x00, 0x00, 0x00
-            ]));
-            tex.Children.Add(FourCCElement.Make("THMB", FourCCElementType.BinaryGuid, [ 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            ]));
+            tex.Children.Add(FourCCElement.Make("SRGB", FourCCElementType.BinaryInt, texSrgb));
+            tex.Children.Add(FourCCElement.Make("THMB", FourCCElementType.BinaryGuid, thumbGuids));
         }
 
         var project = FourCCElement.Make("PROJ", "");
@@ -895,7 +898,7 @@ public class TileSetBuilder
             var layer = BuildData.Layers[i];
             ref var gtsLayer = ref TileSet.TileSetLayers[i];
             gtsLayer.DataType = layer.DataType;
-            gtsLayer.B = -1;
+            gtsLayer.DefaultColor = 0xffffffffu;
         }
 
         var levels = BuildData.Layers[0].Levels;

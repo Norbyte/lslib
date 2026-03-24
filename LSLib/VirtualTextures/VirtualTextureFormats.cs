@@ -167,7 +167,7 @@ public struct GTSHeader
 public struct GTSTileSetLayer
 {
     public GTSDataType DataType;
-    public Int32 B; // -1
+    public UInt32 DefaultColor;
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
