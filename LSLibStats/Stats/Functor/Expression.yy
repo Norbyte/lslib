@@ -49,10 +49,6 @@ LVar : VARIABLE_REF
      | NAME '.' STATUS_PROPERTY
      ;
 
-LOptionalExpList : /* empty */
-                 | LExpList
-                 ;
-
 LExpList : LExp 
          | LExpList ',' LExp
          ;
@@ -63,7 +59,6 @@ LExp : LExpNoUnOp
 
 LExpNoUnOp : INTEGER
      | DICE_ROLL
-     | LVar
      | LPrefixExp
      | LExpNoUnOp LBinOp LExp 
      ;
