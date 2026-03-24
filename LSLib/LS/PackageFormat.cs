@@ -295,12 +295,16 @@ internal interface ILSPKFile
     public UInt16 ArchivePartNumber();
 }
 
+[System.Runtime.CompilerServices.InlineArray(256)]
+public struct FileNameBlittable
+{
+    private byte C;
+}
+
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct FileEntry7 : ILSPKFile
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-    public byte[] Name;
-
+    public FileNameBlittable Name;
     public UInt32 OffsetInFile;
     public UInt32 SizeOnDisk;
     public UInt32 UncompressedSize;
@@ -321,7 +325,7 @@ internal struct FileEntry7 : ILSPKFile
     {
         return new FileEntry7
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
+            Name = BinUtils.StringToNullTerminatedBlittableBytes(info.Name),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
             UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
@@ -335,9 +339,7 @@ internal struct FileEntry7 : ILSPKFile
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct FileEntry10 : ILSPKFile
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-    public byte[] Name;
-
+    public FileNameBlittable Name;
     public UInt32 OffsetInFile;
     public UInt32 SizeOnDisk;
     public UInt32 UncompressedSize;
@@ -360,7 +362,7 @@ internal struct FileEntry10 : ILSPKFile
     {
         return new FileEntry10
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
+            Name = BinUtils.StringToNullTerminatedBlittableBytes(info.Name),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
             UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
@@ -376,9 +378,7 @@ internal struct FileEntry10 : ILSPKFile
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct FileEntry15 : ILSPKFile
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-    public byte[] Name;
-
+    public FileNameBlittable Name;
     public UInt64 OffsetInFile;
     public UInt64 SizeOnDisk;
     public UInt64 UncompressedSize;
@@ -402,7 +402,7 @@ internal struct FileEntry15 : ILSPKFile
     {
         return new FileEntry15
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
+            Name = BinUtils.StringToNullTerminatedBlittableBytes(info.Name),
             OffsetInFile = (uint)info.OffsetInFile,
             SizeOnDisk = (uint)info.SizeOnDisk,
             UncompressedSize = info.Flags.Method() == CompressionMethod.None ? 0 : (uint)info.UncompressedSize,
@@ -419,9 +419,7 @@ internal struct FileEntry15 : ILSPKFile
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct FileEntry18 : ILSPKFile
 {
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-    public byte[] Name;
-
+    public FileNameBlittable Name;
     public UInt32 OffsetInFile1;
     public UInt16 OffsetInFile2;
     public Byte ArchivePart;
@@ -444,7 +442,7 @@ internal struct FileEntry18 : ILSPKFile
     {
         return new FileEntry18
         {
-            Name = BinUtils.StringToNullTerminatedBytes(info.Name, 256),
+            Name = BinUtils.StringToNullTerminatedBlittableBytes(info.Name),
             OffsetInFile1 = (uint)(info.OffsetInFile & 0xffffffff),
             OffsetInFile2 = (ushort)((info.OffsetInFile >> 32) & 0xffff),
             ArchivePart = (byte)info.ArchivePart,

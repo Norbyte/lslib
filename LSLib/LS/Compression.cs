@@ -1,6 +1,5 @@
 ﻿using K4os.Compression.LZ4;
 using K4os.Compression.LZ4.Streams;
-using SharpGLTF.Runtime;
 using System.Buffers;
 using System.IO.Compression;
 using System.IO.MemoryMappedFiles;

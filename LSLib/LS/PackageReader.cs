@@ -120,7 +120,7 @@ public class PackageReader
         using var msr = new BinaryReader(ms);
 
         var entries = new TFile[numFiles];
-        BinUtils.ReadStructs(msr, entries);
+        BinUtils.ReadStructsBlitted(msr, entries);
 
         foreach (var entry in entries)
         {

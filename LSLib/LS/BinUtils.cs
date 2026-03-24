@@ -1,5 +1,6 @@
 ﻿using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace LSLib.LS;
 
@@ -89,6 +90,18 @@ public static class BinUtils
         handle.Free();
     }
 
+    public static void ReadStructsBlitted<T>(BinaryReader reader, T[] elements)
+    {
+        int elementSize = Marshal.SizeOf(typeof(T));
+        int bytes = elementSize * elements.Length;
+        byte[] readBuffer = reader.ReadBytes(bytes);
+
+        GCHandle handle = GCHandle.Alloc(elements, GCHandleType.Pinned);
+        var addr = handle.AddrOfPinnedObject();
+        Marshal.Copy(readBuffer, 0, addr, bytes);
+        handle.Free();
+    }
+
     public static void ReadStructs<T>(MemoryMappedViewAccessor view, long offset, T[] elements)
     {
         int elementSize = Marshal.SizeOf(typeof(T));
@@ -131,11 +144,17 @@ public static class BinUtils
         writer.Write(writeBuffer);
     }
 
-    public static String NullTerminatedBytesToString(byte[] b)
+    public static unsafe String NullTerminatedBytesToString(byte[] b)
     {
-        int len;
-        for (len = 0; len < b.Length && b[len] != 0; len++) {}
-        return Encoding.UTF8.GetString(b, 0, len);
+        fixed (byte* ptr = b)
+        {
+            return Utf8StringMarshaller.ConvertToManaged(ptr);
+        }
+    }
+
+    public static unsafe String NullTerminatedBytesToString(FileNameBlittable b)
+    {
+        return Utf8StringMarshaller.ConvertToManaged(&b[0]);
     }
 
     public static byte[] StringToNullTerminatedBytes(string s, int length)
@@ -143,6 +162,15 @@ public static class BinUtils
         var b = new byte[length];
         int len = Encoding.UTF8.GetBytes(s, b);
         Array.Clear(b, len, b.Length - len);
+        return b;
+    }
+
+    public static FileNameBlittable StringToNullTerminatedBlittableBytes(string s)
+    {
+        var b = new FileNameBlittable();
+        Span<byte> bs = b;
+        int len = Encoding.UTF8.GetBytes(s, bs);
+        bs.Slice(len, 256 - len).Clear();
         return b;
     }
 
