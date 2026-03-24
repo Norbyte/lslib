@@ -377,7 +377,7 @@
 	<Function Type="Functor" Name="ApplyStatus" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusId" />
 		<Arg Name="Chance" Type="Int" />
-		<Arg Name="Duration" Type="Lua" />
+		<Arg Name="Duration" Type="StatsExpression" />
 		<Arg Name="StatusSpecificParam1" Type="String" />
 		<Arg Name="StatusSpecificParam2" Type="Int" />
 		<Arg Name="StatusSpecificParam3" Type="Int" />
@@ -413,7 +413,7 @@
 		<Arg Name="UseOwnerPassives" Type="Boolean" />
 	</Function>
 	<Function Type="Functor" Name="Force" RequiredArgs="1">
-		<Arg Name="Distance" Type="Lua" />
+		<Arg Name="Distance" Type="ForceDistance" />
 		<Arg Name="Origin" Type="ForceFunctorOrigin" />
 		<Arg Name="Aggression" Type="ForceFunctorAggression" />
 		<Arg Name="ControlArc" Type="Boolean" /> <!--Arc can be controlled with spell placement, AOE only?-J-->
@@ -447,7 +447,7 @@
 		<Arg Name="StatusId" Type="StatusIdOrGroup" />
 	</Function>
 	<Function Type="Functor" Name="DealDamage" RequiredArgs="1">
-		<Arg Name="Damage" Type="Lua" />
+		<Arg Name="Damage" Type="DealDamageAmount" />
 		<Arg Name="DamageType" Type="DamageTypeOrDealDamageWeaponDamageType" />
 		<Arg Name="Magical" Type="Magical" />
 		<Arg Name="Nonlethal" Type="Nonlethal" />
@@ -463,7 +463,7 @@
 		<Arg Name="WeaponType" Type="ExecuteWeaponFunctorsType" />
 	</Function>
 	<Function Type="Functor" Name="RegainHitPoints" RequiredArgs="1">
-		<Arg Name="HitPoints" Type="Lua" />
+		<Arg Name="HitPoints" Type="StatsExpression" />
 		<Arg Name="Type" Type="ResurrectType" />
 	</Function>
 	<Function Type="Functor" Name="TeleportSource" RequiredArgs="0">
@@ -501,7 +501,7 @@
 		<Arg Name="ItemSlot" Type="StatItemSlot" />
 		<Arg Name="StatusId" Type="StatusId" />
 		<Arg Name="Chance" Type="Int" />
-		<Arg Name="Duration" Type="Lua" />
+		<Arg Name="Duration" Type="StatsExpression" />
 		<Arg Name="StatusSpecificParam1" Type="String" />
 		<Arg Name="StatusSpecificParam2" Type="Int" />
 		<Arg Name="StatusSpecificParam3" Type="Int" />
@@ -510,7 +510,7 @@
 	</Function>
 	<Function Type="Functor" Name="RestoreResource" RequiredArgs="2">
 		<Arg Name="ActionResource" Type="String" /> <!-- Action resource name -->
-		<Arg Name="Amount" Type="LuaOrPercentage" />
+		<Arg Name="Amount" Type="StatsExpressionOrPercentage" />
 		<Arg Name="Level" Type="Int" />
 	</Function>
 	<Function Type="Functor" Name="Spawn" RequiredArgs="1">
@@ -572,7 +572,7 @@
 		<Arg Name="RandomCastOutcome4" Type="String" /> <!-- RandomCastOutcomesID resource -->
 	</Function>
 	<Function Type="Functor" Name="GainTemporaryHitPoints" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 	</Function>
 	<Function Type="Functor" Name="FireProjectile" RequiredArgs="1">
 		<Arg Name="ProjectileTemplate" Type="String" />
@@ -589,7 +589,7 @@
 		<Arg Name="Arg1" Type="Float" />
 	</Function>
 	<Function Type="Functor" Name="RegainTemporaryHitPoints" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 	</Function>
 	<Function Type="Functor" Name="RemoveStatusByLevel" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusIdOrGroup" />
@@ -604,7 +604,7 @@
 	<Function Type="Functor" Name="CreateWall" RequiredArgs="0" />
 	<Function Type="Functor" Name="Counterspell" RequiredArgs="0" />
 	<Function Type="Functor" Name="AdjustRoll" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 		<Arg Name="Type" Type="RollAdjustmentType" />
 		<Arg Name="DamageType" Type="Damage Type" />
 	</Function>
@@ -644,7 +644,7 @@
 
 
 	<Function Type="DescriptionParams" Name="DealDamage" RequiredArgs="1">
-		<Arg Name="Damage" Type="Lua" />
+		<Arg Name="Damage" Type="DealDamageAmount" />
 		<Arg Name="DamageType" Type="DamageTypeOrDealDamageWeaponDamageType" />
 		<Arg Name="Magical" Type="Magical" />
 		<Arg Name="Nonlethal" Type="Nonlethal" />
@@ -652,14 +652,14 @@
 		<Arg Name="Tooltip" Type="Guid" />
 	</Function>
 	<Function Type="DescriptionParams" Name="RegainHitPoints" RequiredArgs="1">
-		<Arg Name="HitPoints" Type="Lua" />
+		<Arg Name="HitPoints" Type="StatsExpression" />
 		<Arg Name="Tooltip" Type="Guid" />
 	</Function>
 	<Function Type="DescriptionParams" Name="Distance" RequiredArgs="1">
 		<Arg Name="Distance" Type="Float" />
 	</Function>
 	<Function Type="DescriptionParams" Name="GainTemporaryHitPoints" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 	</Function>
 	<Function Type="DescriptionParams" Name="LevelMapValue" RequiredArgs="1">
 		<Arg Name="LevelMap" Type="String" />
@@ -667,7 +667,7 @@
 	<Function Type="DescriptionParams" Name="ApplyStatus" RequiredArgs="1">
 		<Arg Name="StatusId" Type="StatusId" />
 		<Arg Name="Chance" Type="Int" />
-		<Arg Name="Duration" Type="Lua" />
+		<Arg Name="Duration" Type="StatsExpression" />
 		<Arg Name="StatusSpecificParam1" Type="String" />
 		<Arg Name="StatusSpecificParam2" Type="Int" />
 		<Arg Name="StatusSpecificParam3" Type="Int" />
@@ -688,7 +688,7 @@
 	</Function>
 	<Function Type="Boost" Name="RollBonus" RequiredArgs="2">
 		<Arg Name="RollType" Type="StatsRollType" />
-		<Arg Name="Bonus" Type="Lua" />
+		<Arg Name="Bonus" Type="StatsExpression" />
 		<Arg Name="AbilityOrSkill" Type="AbilityOrSkill" />
 	</Function>
 	<Function Type="Boost" Name="Advantage" RequiredArgs="1">
@@ -730,7 +730,7 @@
 		<Arg Name="DamageType3" Type="Damage Type" />
 	</Function>
 	<Function Type="Boost" Name="ProficiencyBonusOverride" RequiredArgs="1">
-		<Arg Name="Bonus" Type="Lua" />
+		<Arg Name="Bonus" Type="StatsExpression" />
 	</Function>
 	<Function Type="Boost" Name="ActionResourceOverride" RequiredArgs="2">
 		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
@@ -775,7 +775,7 @@
 	</Function>
 	<Function Type="Boost" Name="SourceAllyAdvantageOnAttack" RequiredArgs="0" />
 	<Function Type="Boost" Name="IncreaseMaxHP" RequiredArgs="1">
-		<Arg Name="Amount" Type="String" /> <!-- Lua or % -->
+		<Arg Name="Amount" Type="StatsExpressionOrPercentage" /> <!-- Lua or % -->
 	</Function>
 	<Function Type="Boost" Name="ActionResourceBlock" RequiredArgs="1">
 		<Arg Name="Resource" Type="String" /> <!-- Action resource name -->
@@ -796,7 +796,7 @@
 		<Arg Name="ErrorDescription" Type="String" />
 	</Function>
 	<Function Type="Boost" Name="TemporaryHP" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 	</Function>
 	<Function Type="Boost" Name="Weight" RequiredArgs="1">
 		<Arg Name="Weight" Type="Float" />
@@ -837,10 +837,10 @@
 	</Function>
 	<Function Type="Boost" Name="Skill" RequiredArgs="2">
 		<Arg Name="Skill" Type="SkillType" />
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 	</Function>
 	<Function Type="Boost" Name="WeaponDamage" RequiredArgs="2">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 		<Arg Name="DamageType" Type="Damage Type" />
 		<Arg Name="Unused3" Type="Boolean" /> <!-- Ignored -->
 	</Function>
@@ -885,7 +885,7 @@
 	</Function>
 	<Function Type="Boost" Name="Lootable" RequiredArgs="0" />
 	<Function Type="Boost" Name="CharacterWeaponDamage" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 		<Arg Name="DamageType" Type="Damage Type" />
 	</Function>
 	<Function Type="Boost" Name="ProjectileDeflect" RequiredArgs="0">
@@ -980,7 +980,7 @@
 	<Function Type="Boost" Name="DamageReduction" RequiredArgs="2">
 		<Arg Name="DamageType" Type="AllOrDamageType" />
 		<Arg Name="ReductionType" Type="DamageReductionType" />
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpressionOrPercentage" />
 	</Function>
 	<Function Type="Boost" Name="ReduceCriticalAttackThreshold" RequiredArgs="1">
 		<Arg Name="Threshold" Type="Int" />
@@ -1016,7 +1016,7 @@
 	</Function>
 	<Function Type="Boost" Name="IgnoreEnterAttackRange" RequiredArgs="0" />
 	<Function Type="Boost" Name="DamageBonus" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 		<Arg Name="DamageType" Type="Damage Type" />
 		<Arg Name="CanCriticallyHit" Type="Boolean" />
 	</Function>
@@ -1030,7 +1030,7 @@
 		<Arg Name="Resistance" Type="ResistanceBoostFlags" />
 	</Function>
 	<Function Type="Boost" Name="WeaponAttackRollBonus" RequiredArgs="1">
-		<Arg Name="Amount" Type="Lua" />
+		<Arg Name="Amount" Type="StatsExpression" />
 	</Function>
 	<Function Type="Boost" Name="SpellSaveDC" RequiredArgs="1">
 		<Arg Name="DC" Type="Int" />
@@ -1052,14 +1052,14 @@
 	</Function>
 	<Function Type="Boost" Name="MonkWeaponAttackOverride" RequiredArgs="0" />
 	<Function Type="Boost" Name="MonkWeaponDamageDiceOverride" RequiredArgs="1">
-		<Arg Name="Arg1" Type="Lua" />
+		<Arg Name="Arg1" Type="StatsExpression" />
 	</Function>
 	<Function Type="Boost" Name="IntrinsicSummonerProficiency" RequiredArgs="0" />
 	<Function Type="Boost" Name="HorizontalFOVOverride" RequiredArgs="1">
 		<Arg Name="FOV" Type="Float" />
 	</Function>
 	<Function Type="Boost" Name="CharacterUnarmedDamage" RequiredArgs="1">
-		<Arg Name="Damage" Type="Lua" />
+		<Arg Name="Damage" Type="StatsExpression" />
 		<Arg Name="DamageType" Type="Damage Type" />
 	</Function>
 	<Function Type="Boost" Name="UnarmedMagicalProperty" RequiredArgs="0" />
@@ -1128,7 +1128,7 @@
 	</Function>
 	<Function Type="Boost" Name="NoDamageOnThrown" RequiredArgs="0" />
 	<Function Type="Boost" Name="DamageTakenBonus" RequiredArgs="1">
-		<Arg Name="Lua" Type="Amount" />
+		<Arg Name="Amount" Type="StatsExpression" />
 		<Arg Name="DamageType" Type="Damage Type" />
 		<Arg Name="CanCriticallyHit" Type="Boolean" />
 	</Function>

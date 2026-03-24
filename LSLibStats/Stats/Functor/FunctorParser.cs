@@ -109,7 +109,7 @@ public class FunctorActionValidator
                 validator.Validate(Context, null, args[i], argErrors);
                 if (!argErrors.Empty)
                 {
-                    argErrors.AddContext(PropertyDiagnosticContextType.Argument, $"argument {i + 1} ({arg.Name})");
+                    argErrors.AddContext(PropertyDiagnosticContextType.Argument, $"{i + 1} ({arg.Name})");
                     argErrors.MergeInto(errors);
                     argErrors.Clear();
                 }

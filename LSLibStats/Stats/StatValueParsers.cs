@@ -370,6 +370,71 @@ public class LuaExpressionValidator(bool allowEmpty = false) : StatStringValidat
     }
 }
 
+public class StatsExpressionValidator(bool allowEmpty = false) : StatStringValidator
+{
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        if (allowEmpty && value.Trim().Length == 0) return;
+
+        var valueBytes = Encoding.UTF8.GetBytes(value);
+        using var buf = new MemoryStream(valueBytes);
+        var scanner = new Expression.ExpressionScanner();
+        scanner.SetSource(buf);
+        var parser = new Expression.ExpressionParser(scanner);
+        var succeeded = parser.Parse();
+        if (!succeeded)
+        {
+            // FIXME pass location to error container
+            var location = scanner.LastLocation();
+            if (location.StartColumn != -1)
+            {
+                errors.Add($"Syntax error at or near character {location.StartColumn}");
+            }
+            else
+            {
+                errors.Add($"Syntax error");
+            }
+        }
+    }
+}
+
+public class DealDamageAmountValidator() : StatsExpressionValidator(false)
+{
+    private static List<string> DamageTypes = [
+        "MainWeapon",
+        "OffhandWeapon",
+        "MainMeleeWeapon",
+        "OffhandMeleeWeapon",
+        "MainRangedWeapon",
+        "OffhandRangedWeapon",
+        "SourceWeapon",
+        "UnarmedDamage",
+        "ThrownWeapon",
+        "ImprovisedWeapon"
+    ];
+
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        var v = value;
+        foreach (var damageType in DamageTypes)
+        {
+            v = v.Replace(damageType, "Placeholder0");
+        }
+
+        base.Validate(ctx, v, errors);
+    }
+}
+
+public class ForceDistanceValidator() : StatsExpressionValidator(false)
+{
+    public override void Validate(DiagnosticContext ctx, string value, PropertyDiagnosticContainer errors)
+    {
+        if (value == "ShoveDistance") return;
+
+        base.Validate(ctx, value, errors);
+    }
+}
+
 public class RollConditionsValidator : StatStringValidator
 {
     private LuaExpressionValidator LuaValidator = new();
@@ -722,10 +787,13 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
                     new FloatValidator(),
                     new PercentageValidator()
                 }, "Expected a float or percentage value"),
-            "LuaOrPercentage" => new AnyParser(new List<IStatValueValidator> {
+            "StatsExpressionOrPercentage" => new AnyParser(new List<IStatValueValidator> {
                     new PercentageValidator(),
-                    new LuaExpressionValidator(false)
+                    new StatsExpressionValidator(false)
                 }, "Expected a Lua expression or a percentage value"),
+            "StatsExpression" => new StatsExpressionValidator(false),
+            "DealDamageAmount" => new DealDamageAmountValidator(),
+            "ForceDistance" => new ForceDistanceValidator(),
             "AllOrDamageType" => new AnyParser(new List<IStatValueValidator> {
                     new EnumValidator(definitions.Enumerations["AllEnum"]),
                     new EnumValidator(definitions.Enumerations["Damage Type"]),
