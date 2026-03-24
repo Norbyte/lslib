@@ -1111,7 +1111,7 @@
 		<Arg Name="DamageType" Type="Damage Type" />
 		<Arg Name="Flags" Type="ResistanceBoostFlags" />
 	</Function>
-	<Function Type="Boost" Name="ConcentrationIgnoreDamage" RequiredArgs="1">
+	<Function Type="Boost" Name="ConcentrationIgnoreDamage" RequiredArgs="0">
 		<Arg Name="SpellSchool" Type="SpellSchool" />
 	</Function>
 	<Function Type="Boost" Name="LeaveTriggers" RequiredArgs="0" />
