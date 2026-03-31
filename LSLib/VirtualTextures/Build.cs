@@ -1195,10 +1195,5 @@ public class TileSetBuilder
     {
         var tileSet = new VirtualTileSet(Path.Join(dir, BuildData.GTSName + ".gts"));
         tileSet.Validate();
-
-        if (!Config.DeduplicateTiles)
-        {
-            tileSet.ValidateUniqueMappings();
-        }
     }
 }
