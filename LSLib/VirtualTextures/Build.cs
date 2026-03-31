@@ -1020,24 +1020,33 @@ public class TileSetBuilder
                         var tile = BuildData.Layers[layer].Levels[level].Get(x, y);
                         if (tile != null)
                         {
-                            uint flatTileIdx;
                             var packedTileIdx = (uint)packedTileIds.Count;
 
                             var packedTile = new GTSPackedTileID((uint)layer, (uint)level, (uint)x, (uint)y);
                             packedTileIds.Add(packedTile);
+
+                            uint flatTileIdx = (uint)flatTileInfos.Count;
+                            GTSFlatTileInfo tileInfo;
 
                             var tileKey = (long)tile.PageFileIndex
                                 | ((long)tile.PageIndex << 16)
                                 | ((long)tile.ChunkIndex << 32);
                             if (flatTileMap.TryGetValue(tileKey, out uint dupTileIdx))
                             {
-                                flatTileIdx = dupTileIdx;
+                                var duplicate = flatTileInfos[(int)dupTileIdx];
+                                tileInfo = new GTSFlatTileInfo
+                                {
+                                    PageFileIndex = (UInt16)duplicate.PageFileIndex,
+                                    PageIndex = (UInt16)duplicate.PageIndex,
+                                    ChunkIndex = (UInt16)duplicate.ChunkIndex,
+                                    D = 1,
+                                    PackedTileIndex = packedTileIdx
+                                };
                             }
                             else
                             {
-                                flatTileIdx = (uint)flatTileInfos.Count;
                                 flatTileMap[tileKey] = flatTileIdx;
-                                var tileInfo = new GTSFlatTileInfo
+                                tileInfo = new GTSFlatTileInfo
                                 {
                                     PageFileIndex = (UInt16)tile.PageFileIndex,
                                     PageIndex = (UInt16)tile.PageIndex,
@@ -1045,9 +1054,9 @@ public class TileSetBuilder
                                     D = 1,
                                     PackedTileIndex = packedTileIdx
                                 };
-                                flatTileInfos.Add(tileInfo);
                             }
 
+                            flatTileInfos.Add(tileInfo);
                             flatTileIndices[tileIdx] = flatTileIdx;
                             flatTiles[tileIdx] = tile;
                         }
