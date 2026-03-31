@@ -790,7 +790,7 @@ public class StatValueValidatorFactory(IStatReferenceValidator ReferenceValidato
             "StatsExpressionOrPercentage" => new AnyParser(new List<IStatValueValidator> {
                     new PercentageValidator(),
                     new StatsExpressionValidator(false)
-                }, "Expected a Lua expression or a percentage value"),
+                }, "Expected a stats expression or a percentage value"),
             "StatsExpression" => new StatsExpressionValidator(false),
             "DealDamageAmount" => new DealDamageAmountValidator(),
             "ForceDistance" => new ForceDistanceValidator(),
