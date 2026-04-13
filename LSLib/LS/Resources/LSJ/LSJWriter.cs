@@ -2,6 +2,8 @@
 
 namespace LSLib.LS;
 
+using System.Globalization;
+
 public class LSJWriter(Stream stream)
 {
     private readonly Stream stream = stream;
@@ -21,6 +23,7 @@ public class LSJWriter(Stream stream)
         using var writer = new JsonTextWriter(streamWriter);
         writer.IndentChar = '\t';
         writer.Indentation = 1;
+        writer.Culture = CultureInfo.InvariantCulture;
         serializer.Serialize(writer, rsrc);
     }
 }
