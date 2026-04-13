@@ -315,12 +315,19 @@ public class OsirisPaneSettings : SettingsBase
         set { outputPath = value; OnPropertyChanged(); }
     }
 
-    private string filterText = "";
+    private string dbFilterText = "";
 
-    public string FilterText
+    public string DbFilterText
     {
-        get { return filterText; }
-        set { filterText = value; OnPropertyChanged(); }
+        get { return dbFilterText; }
+        set { dbFilterText = value; OnPropertyChanged(); }
+    }
+    private string entryFilterText = "";
+
+    public string EntryFilterText
+    {
+        get { return entryFilterText; }
+        set { entryFilterText = value; OnPropertyChanged(); }
     }
 
     private bool filterMatchCase = false;
