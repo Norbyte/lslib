@@ -2,6 +2,9 @@
 
 #include "lz4wrapper.h"
 
+struct LZ4F_cctx_s {};
+struct LZ4F_dctx_s {};
+
 namespace LSLib {
 	namespace Native {
 		array<byte> ^ LZ4FrameCompressor::Compress(array<byte> ^ input)
@@ -17,7 +20,7 @@ namespace LSLib {
 			std::vector<byte> output(0x10000);
 			size_t inputOffset = 0, outputOffset = 0;
 
-			LZ4F_preferences_t preferences;
+			LZ4F_preferences_t preferences{};
 			preferences.frameInfo.blockSizeID = max64KB;
 			preferences.frameInfo.blockMode = blockLinked;
 			preferences.frameInfo.contentChecksumFlag = noContentChecksum;
@@ -27,7 +30,7 @@ namespace LSLib {
 			preferences.compressionLevel = 9;
 			preferences.autoFlush = 1;
 
-			LZ4F_compressOptions_t options;
+			LZ4F_compressOptions_t options{};
 			options.stableSrc = 1;
 
 			auto headerSize = LZ4F_compressBegin(cctx, output.data(), output.size(), &preferences);
@@ -91,7 +94,11 @@ namespace LSLib {
 
 			// Copy the output to a managed array
 			LZ4F_freeCompressionContext(cctx);
-			array<byte> ^ compressed = gcnew array<byte>(outputOffset);
+			if (outputOffset > (size_t)Int32::MaxValue) {
+
+				throw gcnew System::OverflowException("Compressed size exceeds maximum .NET array length.");
+			}
+			array<byte>^ compressed = gcnew array<byte>((int)outputOffset);
 			pin_ptr<byte> compPtr(&compressed[compressed->GetLowerBound(0)]);
 			byte * comp = compPtr;
 			memcpy(comp, output.data(), outputOffset);
@@ -146,7 +153,10 @@ namespace LSLib {
 			
 			// Copy the output to a managed array
 			LZ4F_freeDecompressionContext(dctx);
-			array<byte> ^ decompressed = gcnew array<byte>(outputOffset);
+			if (outputOffset > (size_t)Int32::MaxValue) {
+				throw gcnew System::OverflowException("Decompressed size exceeds maximum .NET array length.");
+			}
+			array<byte> ^ decompressed = gcnew array<byte>((int)outputOffset);
 			if (outputOffset > 0)
 			{
 				pin_ptr<byte> decompPtr(&decompressed[decompressed->GetLowerBound(0)]);

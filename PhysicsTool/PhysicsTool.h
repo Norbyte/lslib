@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <span>
+#include <unordered_map>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -24,6 +25,7 @@ public:
 
     PxCollection* LoadCollectionFromXml(std::span<uint8_t> const& xml);
     PxCollection* LoadCollectionFromBinary(std::span<uint8_t> const& bin);
+    void ReleaseCollection(physx::PxCollection* collection);
 
     std::vector<uint8_t> SaveCollectionToXml(PxCollection& collection);
     std::vector<uint8_t> SaveCollectionToBinary(PxCollection& collection);
@@ -33,5 +35,6 @@ private:
     PxPhysics* physics_{ nullptr };
     PxCooking* cooking_{ nullptr };
     PxSerializationRegistry* registry_{ nullptr };
+    std::unordered_map<PxCollection*, uint8_t*> binaryBuffers_;
 };
 

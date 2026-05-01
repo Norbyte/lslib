@@ -8,9 +8,14 @@ public:
     void* allocate(size_t size, const char*, const char*, int)
     {
         void* ptr = _aligned_malloc(size, 16);
-        memset(ptr, 0, size);
+        if (ptr != nullptr)
+        {
+            memset(ptr, 0, size);
+        }
+
         return ptr;
     }
+
 
     void deallocate(void* ptr)
     {
@@ -64,13 +69,35 @@ void PhysXConverter::ShutdownPhysX()
 PxCollection* PhysXConverter::LoadCollectionFromBinary(std::span<uint8_t> const& bin)
 {
     auto binSize = bin.size();
-    auto binInput = new uint8_t[binSize + PX_SERIAL_FILE_ALIGN];
-    // TODO - release memory block after use
+    uint8_t* binInput = new uint8_t[binSize + PX_SERIAL_FILE_ALIGN];
     void* memory128 = (void*)((uintptr_t(binInput) + PX_SERIAL_FILE_ALIGN) & ~(PX_SERIAL_FILE_ALIGN - 1));
     memcpy(memory128, bin.data(), binSize);
-
-    return PxSerialization::createCollectionFromBinary(memory128, *registry_);
+    PxCollection* collection = PxSerialization::createCollectionFromBinary(memory128, *registry_);
+    if (collection) {
+        binaryBuffers_[collection] = binInput;
+    }
+    else {
+        delete[] binInput;
+    }
+    return collection;
 }
+
+void PhysXConverter::ReleaseCollection(PxCollection* collection) {
+    if (!collection) return;
+    auto it = binaryBuffers_.find(collection);
+    if (it != binaryBuffers_.end()) {
+        uint8_t* rawBuffer = it->second;
+        collection->release();
+        delete[] rawBuffer; // Memory leak fixed
+        binaryBuffers_.erase(it);
+    }
+    else {
+        collection->release();
+    }
+}
+
+
+
 
 
 class KazMemoryOutputStream : public PxOutputStream

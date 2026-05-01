@@ -5,6 +5,7 @@
     <RootNamespace>LSTools.DebuggerFrontend</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PlatformTarget>x64</PlatformTarget>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="debuginfo.proto" />
@@ -14,8 +15,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineArgumentsParser" Version="3.0.23" />
-    <PackageReference Include="Google.Protobuf" Version="3.34.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.78.0">
+    <PackageReference Include="Google.Protobuf" Version="3.34.1" />
+    <PackageReference Include="Grpc.Tools" Version="2.80.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

@@ -215,7 +215,6 @@ public:
     {
         ExportProperty(ele, "Type", "ConvexMesh");
         ExportProperty(ele, "Scale", o.scale);
-        // s << "\t" "MeshFlags: " << (uint32_t)o.meshFlags << std::endl; - Always 0
 
         Export(ele, *o.convexMesh);
     }
@@ -224,7 +223,6 @@ public:
     {
         ExportProperty(ele, "Type", "TriangleMesh");
         ExportProperty(ele, "Scale", o.scale);
-        // s << "\t" "MeshFlags: " << (uint32_t)o.meshFlags << std::endl; - Always 0
 
         Export(ele, *o.triangleMesh);
     }
@@ -290,18 +288,6 @@ public:
                 Export(shapesEle, *shape);
             }
         }
-
-        // These should be handled by the joint, not the rigidbody
-        /*
-        if (o.getNbConstraints() > 0) {
-            s << "\t" "Constraints: ";
-            PxConstraint* constraints[128];
-            o.getConstraints(constraints, o.getNbConstraints(), 0);
-            for (uint32_t i = 0; i < o.getNbConstraints(); i++) {
-                s << constraints[i]->getConcreteTypeName() << " ";
-            }
-            s << std::endl;
-        }*/
     }
 
     void Export(TiXmlNode& parent, PxRigidStatic& o)
@@ -316,9 +302,7 @@ public:
 
         PR(CMassLocalPose, o.getCMassLocalPose(), PxTransform());
         PR(Mass, o.getMass(), 1.0f);
-        // PR(InvMass, o.getInvMass(), 1.0f); - Calculated by px
         PR(MassSpaceInertiaTensor, o.getMassSpaceInertiaTensor(), PxVec3(1.0f, 1.0f, 1.0f));
-        // PR(MassSpaceInvInertiaTensor, o.getMassSpaceInvInertiaTensor(), PxVec3(1.0f, 1.0f, 1.0f)); - Calculated by px
         PR(LinearDamping, o.getLinearDamping(), 0.0f);
         PR(AngularDamping, o.getAngularDamping(), 0.05f);
         P_BOUNDED(MaxLinearVelocity, o.getMaxLinearVelocity(), 1e+15f); // 1e+16f
@@ -526,23 +510,22 @@ public:
             auto& polyEle = *ele.InsertEndChild(TiXmlElement("Polygon"));
 
             for (PxU32 v = 0; v < poly.mNbVerts; v++) {
-                auto vert = verts[inds[poly.mIndexBase + v]];
+                const auto& vert = verts[inds[poly.mIndexBase + v]];
                 ExportProperty(polyEle, "Vertex", vert);
             }
         }
     }
 
-    void Export(TiXmlNode& parent, PxTriangleMesh& o)
-    {
+    void Export(TiXmlNode& parent, PxTriangleMesh& o) {
         auto& ele = *parent.InsertEndChild(TiXmlElement("TriangleMesh"));
-
         auto verts = o.getVertices();
-        auto inds = (PxU16*)o.getTriangles();
         auto tris = o.getNbTriangles();
+        auto has16BitIndices = o.getTriangleMeshFlags() & PxTriangleMeshFlag::e16_BIT_INDICES;
+        void* inds = (void*)o.getTriangles();
 
-        for (PxU32 i = 0; i < tris*3; i++) {
-            auto vert = verts[inds[i]];
-            ExportProperty(ele, "Vertex", vert);
+        for (PxU32 i = 0; i < tris * 3; i++) {
+            PxU32 index = has16BitIndices ? ((PxU16*)inds)[i] : ((PxU32*)inds)[i];
+            ExportProperty(ele, "Vertex", verts[index]);
         }
     }
 
@@ -555,7 +538,6 @@ public:
         case PxTypeInfo<PxD6Joint>::eFastTypeId: Export(parent, static_cast<PxD6Joint&>(obj)); break;
         case PxTypeInfo<PxArticulation>::eFastTypeId: Export(parent, static_cast<PxArticulation&>(obj)); break;
 
-        // These are child nodes of other types and will be exported alongside them
         case PxTypeInfo<PxShape>::eFastTypeId:
         case PxTypeInfo<PxConstraint>::eFastTypeId:
         case PxTypeInfo<PxArticulationJoint>::eFastTypeId:

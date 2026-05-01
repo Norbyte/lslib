@@ -39,7 +39,8 @@ public class AsyncProtobufClient
             }
             catch (SocketException e)
             {
-                throw e;
+                Console.WriteLine($"Socket Error [{e.SocketErrorCode}]: {e.Message}");
+                throw;
             }
 
             while (BufferPos >= 4)
@@ -75,20 +76,18 @@ public class AsyncProtobufClient
 
     public void Send(DebuggerToBackend message)
     {
-        using (var ms = new MemoryStream())
-        {
-            message.WriteTo(ms);
+        using var ms = new MemoryStream();
+        message.WriteTo(ms);
 
-            var length = ms.Position + 4;
-            var lengthBuf = new byte[4];
-            lengthBuf[0] = (byte)(length & 0xff);
-            lengthBuf[1] = (byte)((length >> 8) & 0xff);
-            lengthBuf[2] = (byte)((length >> 16) & 0xff);
-            lengthBuf[3] = (byte)((length >> 24) & 0xff);
-            Socket.Client.Send(lengthBuf);
-            var payload = ms.ToArray();
-            Socket.Client.Send(payload);
-        }
+        var length = ms.Position + 4;
+        var lengthBuf = new byte[4];
+        lengthBuf[0] = (byte)(length & 0xff);
+        lengthBuf[1] = (byte)((length >> 8) & 0xff);
+        lengthBuf[2] = (byte)((length >> 16) & 0xff);
+        lengthBuf[3] = (byte)((length >> 24) & 0xff);
+        Socket.Client.Send(lengthBuf);
+        var payload = ms.ToArray();
+        Socket.Client.Send(payload);
     }
 }
 
@@ -155,14 +154,12 @@ public class DebuggerClient
     {
         if (LogStream != null)
         {
-            using (var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true))
-            {
-                writer.Write(" DBG >>> ");
-                var settings = new JsonFormatter.Settings(true);
-                var formatter = new JsonFormatter(settings);
-                formatter.Format(message, writer);
-                writer.Write("\r\n");
-            }
+            using var writer = new StreamWriter(LogStream, Encoding.UTF8, 0x1000, true);
+            writer.Write(" DBG >>> ");
+            var settings = new JsonFormatter.Settings(true);
+            var formatter = new JsonFormatter(settings);
+            formatter.Format(message, writer);
+            writer.Write("\r\n");
         }
     }
 
