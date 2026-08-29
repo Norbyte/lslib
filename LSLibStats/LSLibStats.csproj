@@ -6,12 +6,49 @@
     <Nullable>annotations</Nullable>
   </PropertyGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\File\Stat.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\File\Stat.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\File\Stat.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\File\Stat.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Functor.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Lua.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Expression.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Expression.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Expression.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Expression.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\Requirement.yy&quot;&#xD;&#xA;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\GpLex&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.lex.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.lex&quot;&#xD;&#xA;&quot;$(SolutionDir)\external\gppg\binaries\Gppg&quot; /out:&quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.yy.cs&quot; &quot;$(MSBuildProjectDirectory)\Stats\Functor\RollConditions.yy&quot;&#xD;&#xA;" />
-  </Target>
-
   <ItemGroup>
     <ProjectReference Include="..\LSLib\LSLib.csproj" />
+    <PackageReference Include="YaccLexTools.Gppg" Version="1.5.3.1" />
+    <PackageReference Include="YaccLexTools.Gplex" Version="1.2.3.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <YaccFile Include="Stats\File\Stat.yy" />
+    <LexFile Include="Stats\File\Stat.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="Stats\Functor\Functor.yy" />
+    <LexFile Include="Stats\Functor\Functor.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="Stats\Functor\Lua.yy" />
+    <LexFile Include="Stats\Functor\Lua.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="Stats\Functor\Expression.yy" />
+    <LexFile Include="Stats\Functor\Expression.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="Stats\Functor\Requirement.yy" />
+    <LexFile Include="Stats\Functor\Requirement.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="Stats\Functor\RollConditions.yy" />
+    <LexFile Include="Stats\Functor\RollConditions.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+  </ItemGroup>
+
+  <!--
+    The GPPG/GPLEX runtime (ShiftReduceParserCode.cs, GplexBuffers.cs) is compiled into LSLib and
+    exported (EXPORT_GPPG); this project consumes those public types. Exclude the local copies the
+    YaccLexTools targets emit so the runtime isn't duplicated across assemblies.
+  -->
+  <Target Name="UseSharedGppgRuntime" AfterTargets="YaccLexToolsGppgSingleTarget;YaccLexToolsGplexSingleTarget" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="ShiftReduceParserCode.cs" />
+      <Compile Remove="GplexBuffers.cs" />
+    </ItemGroup>
+  </Target>
 
 </Project>

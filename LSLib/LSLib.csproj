@@ -36,17 +36,30 @@
     <PackageReference Include="SharpGLTF.Core" Version="1.0.6" />
     <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.6" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.3" />
+    <PackageReference Include="YaccLexTools.Gppg" Version="1.5.3.1" />
+    <PackageReference Include="YaccLexTools.Gplex" Version="1.2.3.1" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.7" />
   </ItemGroup>
-  <PropertyGroup />
+  <ItemGroup>
+    <YaccFile Include="LS\Story\GoalParser\Goal.yy" />
+    <LexFile Include="LS\Story\GoalParser\Goal.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+    <YaccFile Include="LS\Story\HeaderParser\StoryHeader.yy" />
+    <LexFile Include="LS\Story\HeaderParser\StoryHeader.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+  </ItemGroup>
+  <!--
+    GPLEX emits ScanBuff/BufferException in GplexBuffers.cs as internal, ignoring EXPORT_GPPG.
+    LSLib exports its scanners publicly, so the public GoalScanner.Buffer/HeaderScanner.Buffer
+    properties would expose an internal type (CS0053). Promote the two buffer types to public.
+    Remove once https://github.com/ernstc/YaccLexTools/issues/8 is fixed upstream.
+  -->
+  <Target Name="MakeGplexBuffersPublic" AfterTargets="YaccLexToolsGplexSingleTarget" BeforeTargets="CoreCompile" Condition="Exists('GplexBuffers.cs')">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$c = Get-Content -Raw 'GplexBuffers.cs'; [IO.File]::WriteAllText('GplexBuffers.cs', ($c -replace 'internal abstract class ScanBuff', 'public abstract class ScanBuff' -replace 'internal class BufferException', 'public class BufferException'))&quot;" />
+  </Target>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.yy.cs" "$(MSBuildProjectDirectory)\LS\Story\GoalParser\Goal.yy"
-
-"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.yy.cs" "$(MSBuildProjectDirectory)\LS\Story\HeaderParser\StoryHeader.yy"
-
-</PreBuildEvent>
     <AssemblyTitle>LSLib</AssemblyTitle>
     <Product>LSLib</Product>
     <Copyright>Copyright © Norbyte 2012-2023</Copyright>

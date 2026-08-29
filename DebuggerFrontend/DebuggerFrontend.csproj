@@ -20,12 +20,29 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="YaccLexTools.Gppg" Version="1.5.3.1" />
+    <PackageReference Include="YaccLexTools.Gplex" Version="1.2.3.1" />
     <Protobuf Include="DbgProtocol.proto" GrpcServices="None" />
     <Protobuf Include="debuginfo.proto" GrpcServices="None" />
   </ItemGroup>
+  <ItemGroup>
+    <YaccFile Include="ExpressionParser\Expression.yy" />
+    <LexFile Include="ExpressionParser\Expression.lex">
+      <Arguments>/noEmbedBuffers</Arguments>
+    </LexFile>
+  </ItemGroup>
+  <!--
+    The GPPG/GPLEX runtime (ShiftReduceParserCode.cs, GplexBuffers.cs) is compiled into LSLib and
+    exported (EXPORT_GPPG); this project consumes those public types. Exclude the local copies the
+    YaccLexTools targets emit so the runtime isn't duplicated across assemblies.
+  -->
+  <Target Name="UseSharedGppgRuntime" AfterTargets="YaccLexToolsGppgSingleTarget;YaccLexToolsGplexSingleTarget" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="ShiftReduceParserCode.cs" />
+      <Compile Remove="GplexBuffers.cs" />
+    </ItemGroup>
+  </Target>
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)\external\gppg\binaries\GpLex" /out:"$(SolutionDir)\DebuggerFrontend\ExpressionParser\Expression.lex.cs" "$(SolutionDir)\DebuggerFrontend\ExpressionParser\Expression.lex"
-"$(SolutionDir)\external\gppg\binaries\Gppg" /out:"$(SolutionDir)\DebuggerFrontend\ExpressionParser\Expression.yy.cs" "$(SolutionDir)\DebuggerFrontend\ExpressionParser\Expression.yy"</PreBuildEvent>
     <AssemblyTitle>Osiris VS Code Debugger Frontend</AssemblyTitle>
     <Product>LSLib</Product>
     <Copyright>Copyright © Norbyte 2012-2018</Copyright>
