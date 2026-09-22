@@ -262,7 +262,9 @@ public class GLTFExporter
         ext.Cloth01 = user.ClothFlags.HasClothFlag01();
         ext.Cloth02 = user.ClothFlags.HasClothFlag02();
         ext.Cloth04 = user.ClothFlags.HasClothFlag04();
-        ext.Impostor = user.IsImpostor[0]  == 1;
+        ext.Impostor = user.IsImpostor != null
+            && user.IsImpostor.Length > 0
+            && user.IsImpostor[0] == 1;
         ext.ExportOrder = mesh.ExportOrder;
         ext.LOD = (user.Lod[0] >= 0) ? user.Lod[0] : 0;
         ext.LODDistance = (user.LodDistance[0] < 100000000.0f) ? user.LodDistance[0] : 0.0f;
