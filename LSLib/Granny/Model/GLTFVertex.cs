@@ -406,6 +406,7 @@ public class GLTFMeshBuildWrapper<TvG, TvM, TvS> : IGLTFMeshBuildWrapper
     private PrimitiveBuilder<MaterialBuilder, TvG, TvM, TvS> Primitives;
     private List<MorphTargetBuilder<MaterialBuilder, TvG, TvS, TvM>> MorphTargets = [];
     private List<IVertexBuilder> Vertices;
+    private List<int> VertexIndices;
     private List<(int A, int B, int C)> TriIndices;
 
     public GLTFMeshBuildWrapper(GLTFVertexBuildHelper helper, string exportedId)
@@ -481,18 +482,26 @@ public class GLTFMeshBuildWrapper<TvG, TvM, TvS> : IGLTFMeshBuildWrapper
         BuildVertices(m);
 
         var useVert = Primitives.GetType().BaseType.GetMethod("UseVertex", BindingFlags.Instance | BindingFlags.NonPublic);
-        // var fun = useVert.CreateDelegate<Func<VertexBuilder<TvG, TvM, TvS>, Int32>>(Primitives);
+        VertexIndices = new List<int>(Vertices.Count);
         foreach (var vertex in Vertices)
         {
-            //fun((VertexBuilder<TvG, TvM, TvS>)vertex);
-            useVert.Invoke(Primitives, [vertex]);
+            var vertexIndex = useVert.Invoke(Primitives, [vertex]);
+            if (vertexIndex is not int index)
+            {
+                throw new InvalidOperationException("SharpGLTF PrimitiveBuilder.UseVertex returned an invalid vertex index");
+            }
+
+            VertexIndices.Add(index);
         }
 
         var inds = m.PrimaryTopology.Indices;
         for (var i = 0; i < inds.Count; i += 3)
         {
-            // Primitives.AddTriangle(Vertices[inds[i]], Vertices[inds[i + 1]], Vertices[inds[i + 2]]);
-            TriIndices.Add((inds[i], inds[i+1], inds[i+2]));
+            TriIndices.Add((
+                VertexIndices[inds[i]],
+                VertexIndices[inds[i + 1]],
+                VertexIndices[inds[i + 2]]
+            ));
         }
 
         if (m.MorphTargets != null && m.PrimaryVertexData.Vertices.Count > 0)
