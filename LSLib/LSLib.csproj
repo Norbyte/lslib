@@ -35,6 +35,7 @@
   <ItemGroup>
     <PackageReference Include="SharpGLTF.Core" Version="1.0.6" />
     <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.6" />
+    <PackageReference Include="Supercluster.KDTree.Standard" Version="1.0.5" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.3" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.7" />
   </ItemGroup>
