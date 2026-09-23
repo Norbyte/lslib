@@ -254,17 +254,15 @@ internal class CommandLineActions
             CommandLineLogger.LogFatal($"Cannot parse path from input: {path}", 1);
         }
 
-        Uri uri = null;
-        try
-        {
-            Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out uri);
-        }
-        catch (InvalidOperationException)
-        {
-            CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E1]: {path}", 1);
-        }
-
-        if (uri != null && (!Path.IsPathRooted(path) || !uri.IsFile))
+        // Path.IsPathRooted() is the real cross-platform "is this absolute" check.
+        // The previous implementation additionally required Uri.TryCreate(path,
+        // UriKind.RelativeOrAbsolute, ...) to parse the path as an absolute file
+        // URI, which silently assumed Windows-style paths: on Linux, a perfectly
+        // valid absolute path like "/tmp/foo" parses as a *relative* URI
+        // (IsAbsoluteUri == false), and reading uri.IsFile on a relative URI
+        // throws InvalidOperationException - crashing Divine on every action that
+        // takes -s/-d when run on Linux, regardless of how valid the path is.
+        if (!Path.IsPathRooted(path))
         {
             CommandLineLogger.LogFatal($"Cannot proceed without absolute path [E2]: {path}", 1);
         }
