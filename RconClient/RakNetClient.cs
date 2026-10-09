@@ -16,7 +16,7 @@ public class AsyncUdpClient
 
     public AsyncUdpClient()
     {
-        Random rnd = new Random();
+        Random rnd = new();
         // Select a port number over 10000 as low port numbers
         // are frequently used by various server apps.
         Port = (UInt16)((rnd.Next() % (65536 - 10000)) + 10000);
@@ -27,7 +27,7 @@ public class AsyncUdpClient
     {
         while (true)
         {
-            IPEndPoint source = new IPEndPoint(0, 0);
+            IPEndPoint source = new(0, 0);
             byte[] packet;
             try
             {
@@ -46,7 +46,7 @@ public class AsyncUdpClient
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
 
@@ -81,30 +81,34 @@ public class RakNetSocket
 
     private Packet DecodePacket(Byte id, BinaryReaderBE reader)
     {
-        Packet packet = null;
-        switch ((PacketId)id)
+        Packet packet = (PacketId)id switch
         {
-            case PacketId.OpenConnectionRequest1: packet = new OpenConnectionRequest1(); break;
-            case PacketId.OpenConnectionResponse1: packet = new OpenConnectionResponse1(); break;
-            case PacketId.OpenConnectionRequest2: packet = new OpenConnectionRequest2(); break;
-            case PacketId.OpenConnectionResponse2: packet = new OpenConnectionResponse2(); break;
-            default: throw new InvalidDataException("Unrecognized packet ID");
-        }
-
+            PacketId.OpenConnectionRequest1 => new OpenConnectionRequest1(),
+            PacketId.OpenConnectionResponse1 => new OpenConnectionResponse1(),
+            PacketId.OpenConnectionRequest2 => new OpenConnectionRequest2(),
+            PacketId.OpenConnectionResponse2 => new OpenConnectionResponse2(),
+            _ => throw new InvalidDataException("Unrecognized packet ID"),
+        };
         packet.Read(reader);
         return packet;
     }
 
     private void HandleConnectionResponse1(IPEndPoint address, OpenConnectionResponse1 response)
     {
+        byte[] ipBytes = IPAddress.Parse("127.0.0.1").GetAddressBytes();
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(ipBytes);
+        }
+        uint ipUint = BitConverter.ToUInt32(ipBytes, 0);
         var connReq = new OpenConnectionRequest2
         {
             Magic = RakNetConstants.Magic,
             ClientId = ClientId,
             Address = new RakAddress
             {
-                Address = (UInt32)IPAddress.Parse("127.0.0.1").Address,
-                Port = Socket.Port
+                Address = ipUint,
+                Port = (ushort)IPAddress.HostToNetworkOrder((short)Socket.Port)
             },
             MTU = 1200
         };
@@ -136,38 +140,34 @@ public class RakNetSocket
 
     private void OnPacketReceived(IPEndPoint address, byte[] packet)
     {
-        using (var stream = new MemoryStream(packet))
-        using (var reader = new BinaryReaderBE(stream))
+        using var stream = new MemoryStream(packet);
+        using var reader = new BinaryReaderBE(stream);
+        byte id = reader.ReadByte();
+        if (id < 0x80)
         {
-            byte id = reader.ReadByte();
-            if (id < 0x80)
+            var decoded = DecodePacket(id, reader);
+            HandlePacket(address, decoded);
+        }
+        else
+        {
+            if (Session != null)
             {
-                var decoded = DecodePacket(id, reader);
-                HandlePacket(address, decoded);
+                Session.HandlePacket(id, reader);
             }
             else
             {
-                if (Session != null)
-                {
-                    Session.HandlePacket(id, reader);
-                }
-                else
-                {
-                    throw new Exception("Unhandled session packet - no session established!");
-                }
+                throw new Exception("Unhandled session packet - no session established!");
             }
         }
     }
 
     public void Send(IPEndPoint address, Packet packet)
     {
-        using (var stream = new MemoryStream())
-        using (var writer = new BinaryWriterBE(stream))
-        {
-            packet.Write(writer);
-            stream.SetLength(stream.Position);
-            Socket.Send(address, stream.ToArray());
-        }
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriterBE(stream);
+        packet.Write(writer);
+        stream.SetLength(stream.Position);
+        Socket.Send(address, stream.ToArray());
     }
 
     public void BeginConnection(IPEndPoint address)
